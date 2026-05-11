@@ -40,14 +40,14 @@
 #include "zf_common_fifo.h"
 
 #define PRINTF_ENABLE               (1)                                             // 使能printf
-#define USER_USB_CDC                (1)
+#define USER_USB_CDC                (0)
 
 // 默认使用USB_CDC进行通信
 #if(USER_USB_CDC == 0)
     #define DEBUG_UART_INDEX            (UART_1)                               	    // 指定 debug uart 所使用的的串口
-    #define DEBUG_UART_BAUDRATE         (115200)                				    // 指定 debug uart 所使用的的串口波特率
-    #define DEBUG_UART_TX_PIN           (UART1_TX_P37 )                        	    // 指定 debug uart 所使用的的串口引脚
-    #define DEBUG_UART_RX_PIN           (UART1_RX_P36 )                        	    // 指定 debug uart 所使用的的串口引脚
+    #define DEBUG_UART_BAUDRATE         (6000000)                				    // 指定 debug uart 所使用的的串口波特率
+    #define DEBUG_UART_TX_PIN           (UART1_TX_P31 )                        	    // 指定 debug uart 所使用的的串口引脚
+    #define DEBUG_UART_RX_PIN           (UART1_RX_P30 )                        	    // 指定 debug uart 所使用的的串口引脚
 #endif
 
 #define DEBUG_UART_USE_INTERRUPT    (1)                                             // 是否启用 debug uart 接收中断
