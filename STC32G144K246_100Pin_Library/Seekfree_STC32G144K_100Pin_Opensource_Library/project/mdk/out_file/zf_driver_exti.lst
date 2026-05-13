@@ -1,0 +1,202 @@
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     13/05/26  10:26:33  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_exti
+OBJECT MODULE PLACED IN .\out_file\zf_driver_exti.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_exti.c LARGE ROM(HUGE) WARNINGLE
+                    -VEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
+                    -..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librarie
+                    -s\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_exti.l
+                    -st) TABS(2) OBJECT(.\out_file\zf_driver_exti.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * STC32G144K Opensource Library 即（STC32G144K 开源库）是一个基于官方 SDK 接口的第三方
+             -开源库
+    3          * Copyright (c) 2025 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC32G144K开源库的一部分
+    6          *
+    7          * STC32G144K 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许
+             -可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修�
+             -�它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可声明为译文版本
+   20          * 许可声明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
+             -声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          STC32G144K
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2025-11-20        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_driver_exti.h"
+   37          #include "zf_common_debug.h"
+   38          
+   39          callback_function int_irq_handlers[5] = {0};
+   40          
+   41          callback_function gpio_int_irq_handlers[12][8] = {0};
+   42          
+   43          //-------------------------------------------------------------------------------------------------------
+             -------------
+   44          //  @brief      外部中断初始化
+   45          //  @param      NULL              
+   46          //  @return     void
+   47          //  Sample usage:               exit_init(INT0_P32,BOTH) //初始化P32 作为外部中断引脚，双边
+             -沿触发。
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     13/05/26  10:26:33  PAGE 2   
+
+   48          //-------------------------------------------------------------------------------------------------------
+             -------------
+   49          void exit_init(INTN_enum int_n,INT_MODE_enum mode)
+   50          {
+   51   1        if(INT0_P32 == int_n)
+   52   1        {
+   53   2              switch(mode)
+   54   2          {
+   55   3                  case BOTH: 
+   56   3                      IT0 = 0;
+   57   3                      break;
+   58   3                  
+   59   3            case FALLING_EDGE: 
+   60   3                      IT0 = 1;
+   61   3              break;
+   62   3                  
+   63   3            default:
+   64   3                      zf_assert(0);
+   65   3              break;
+   66   3          }
+   67   2          EX0 = 1;        //使能INT0中断
+   68   2        }
+   69   1        else if(INT1_P33 == int_n)
+   70   1        {
+   71   2              switch(mode)
+   72   2          {
+   73   3                  case BOTH: 
+   74   3                      IT1 = 0;
+   75   3                      break;
+   76   3            case FALLING_EDGE: 
+   77   3                      IT1 = 1;
+   78   3              break;
+   79   3            default:
+   80   3                      zf_assert(0);
+   81   3              break;
+   82   3          }
+   83   2          EX1 = 1;        //使能INT1中断
+   84   2        }
+   85   1        else if(INT2_P36 == int_n)
+   86   1        {
+   87   2              switch(mode)
+   88   2          {
+   89   3                  case BOTH: 
+   90   3                      IT1 = 0;
+   91   3                      break;
+   92   3            case FALLING_EDGE: 
+   93   3                      IT1 = 1;
+   94   3              break;
+   95   3            default:
+   96   3                      zf_assert(0);
+   97   3              break;
+   98   3          }
+   99   2          INTCLKO |= 1<<4;  //使能INT2中断
+  100   2        }
+  101   1        else if(INT3_P37 == int_n)
+  102   1        {
+  103   2              zf_assert(mode == FALLING_EDGE);
+  104   2          INTCLKO |= 1<<5;  //使能INT3中断
+  105   2        }
+  106   1        else if(INT4_P30 == int_n)
+  107   1        {
+  108   2              zf_assert(mode == FALLING_EDGE);
+  109   2          INTCLKO |= 1<<6;  //使能INT4中断
+  110   2        }
+  111   1        else
+  112   1        {
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     13/05/26  10:26:33  PAGE 3   
+
+  113   2          (*(unsigned char volatile far *)(0X7EFD00 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));//开�
+             -�中断功能
+  114   2          
+  115   2          switch(mode)//初始化中断模式
+  116   2          {
+  117   3            case FALLING_EDGE: 
+  118   3                (*(unsigned char volatile far *)(0X7EF4E0 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  119   3                (*(unsigned char volatile far *)(0X7EFD30 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  120   3                (*(unsigned char volatile far *)(0X7EFD20 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  121   3              break;
+  122   3            case RISING_EDGE: 
+  123   3                (*(unsigned char volatile far *)(0X7EF4E0 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  124   3                (*(unsigned char volatile far *)(0X7EFD30 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  125   3                (*(unsigned char volatile far *)(0X7EFD20 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));
+  126   3              break;
+  127   3            case LOW_LEVEL: 
+  128   3                (*(unsigned char volatile far *)(0X7EF4E0 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  129   3                (*(unsigned char volatile far *)(0X7EFD30 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));
+  130   3                (*(unsigned char volatile far *)(0X7EFD20 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  131   3              break;
+  132   3            case HIGH_LEVEL: 
+  133   3                (*(unsigned char volatile far *)(0X7EF4E0 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  134   3                (*(unsigned char volatile far *)(0X7EFD30 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));
+  135   3                (*(unsigned char volatile far *)(0X7EFD20 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));
+  136   3              break;
+  137   3            case BOTH: 
+  138   3                (*(unsigned char volatile far *)(0X7EF4E0 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));
+  139   3                (*(unsigned char volatile far *)(0X7EFD30 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  140   3                (*(unsigned char volatile far *)(0X7EFD20 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
+  141   3              break;
+  142   3          }
+  143   2        }
+  144   1      }
+  145          
+  146          
+  147          
+  148          
+  149          
+  150          
+  151          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1391     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       408     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       457     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

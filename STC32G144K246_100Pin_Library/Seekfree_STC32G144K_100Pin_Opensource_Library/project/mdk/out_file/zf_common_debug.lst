@@ -1,0 +1,327 @@
+C251 COMPILER V5.60.0,  zf_common_debug                                                    13/05/26  10:26:32  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_debug
+OBJECT MODULE PLACED IN .\out_file\zf_common_debug.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_debug.c LARGE ROM(HUGE) WARNINGL
+                    -EVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
+                    -;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librari
+                    -es\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_debug
+                    -.lst) TABS(2) OBJECT(.\out_file\zf_common_debug.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * STC32G144K Opensource Library 即（STC32G144K 开源库）是一个基于官方 SDK 接口的第三方
+             -开源库
+    3          * Copyright (c) 2025 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC32G144K开源库的一部分
+    6          *
+    7          * STC32G144K 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许
+             -可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修�
+             -�它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可声明为译文版本
+   20          * 许可声明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
+             -声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          STC32G144K
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2025-11-20        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_common_fifo.h"
+   37          #include "zf_common_debug.h"
+   38          #include "zf_common_clock.h"
+   39          #include "zf_common_interrupt.h"
+   40          #include "zf_common_typedef.h"
+   41          
+   42          #include "zf_driver_uart.h"
+   43          #include "zf_driver_usb_cdc.h"
+   44          #include "zf_driver_delay.h"
+   45          
+   46          
+   47          #pragma warning disable = 183
+   48          #pragma warning disable = 177
+   49          
+C251 COMPILER V5.60.0,  zf_common_debug                                                    13/05/26  10:26:32  PAGE 2   
+
+   50          
+   51          #if DEBUG_UART_USE_INTERRUPT                                                    // 如果启用 debug uar
+             -t 接收中断
+   52              uint8                       debug_uart_buffer[DEBUG_RING_BUFFER_LEN];           // 数据存放数组
+   53          #endif
+   54          
+   55          fifo_struct                 debug_uart_fifo;
+   56          
+   57          static volatile uint8       zf_debug_init_flag = 1;
+   58          static volatile uint8       zf_debug_assert_enable = 1;
+   59          
+   60          //-------------------------------------------------------------------------------------------------------
+             -------------
+   61          // 函数简介     调试串口发送缓冲区
+   62          // 参数说明     *buff       读出数据存放的数组指针
+   63          // 参数说明     len         需要发送的长度
+   64          // 返回参数     uint32      剩余未发送的长度
+   65          // 使用示例
+   66          // 备注信息     本函数需要开启 DEBUG_UART_USE_INTERRUPT 宏定义才可使用
+   67          //-------------------------------------------------------------------------------------------------------
+             -------------
+   68          uint32 debug_send_buffer(const uint8 *buff, uint32 len)
+   69          {
+   70   1          
+   71   1      #if(USER_USB_CDC)
+                   if(len > 0xFFFF)
+                 {
+                   usb_cdc_write_buffer(buff, 0xFFFF);
+                   return  len - 0xFFFF;
+                 }
+                 else
+                 {
+                   usb_cdc_write_buffer(buff, (uint16)len);
+                 }
+                   return 0;
+               #else
+   83   1          if(len > 0xFFFF)
+   84   1        {
+   85   2          uart_write_buffer(DEBUG_UART_INDEX, buff, 0xFFFF);
+   86   2          return  len - 0xFFFF;
+   87   2        }
+   88   1        else
+   89   1        {
+   90   2          uart_write_buffer(DEBUG_UART_INDEX, buff, (uint16)len);
+   91   2        }
+   92   1          
+   93   1          return 0;
+   94   1      #endif
+   95   1      
+   96   1      }
+   97          
+   98          //-------------------------------------------------------------------------------------------------------
+             -------------
+   99          // 函数简介     读取 debug 环形缓冲区数据
+  100          // 参数说明     *buff       读出数据存放的数组指针
+  101          // 参数说明     len         需要读取的长度
+  102          // 返回参数     uint32      读出数据的实际长度
+  103          // 使用示例
+  104          // 备注信息     本函数需要开启 DEBUG_UART_USE_INTERRUPT 宏定义才可使用
+  105          //-------------------------------------------------------------------------------------------------------
+             -------------
+  106          uint32 debug_read_buffer (uint8 *buff, uint32 len)
+  107          {
+  108   1          fifo_read_buffer(&debug_uart_fifo, buff, &len, FIFO_READ_AND_CLEAN);
+  109   1          return len;
+  110   1      }
+C251 COMPILER V5.60.0,  zf_common_debug                                                    13/05/26  10:26:32  PAGE 3   
+
+  111          extern uint8 test_count ;
+  112          //-------------------------------------------------------------------------------------------------------
+             -------------
+  113          // 函数简介     debug 串口中断处理函数 isr.c 中对应串口中断服务函数调用
+  114          // 参数说明     void
+  115          // 返回参数     void
+  116          // 使用示例     debug_interrupr_handler();
+  117          // 备注信息     本函数需要开启 DEBUG_UART_USE_INTERRUPT 宏定义才可使用
+  118          //              并且本函数默认放置在 UART1 的串口接收中断处理处
+  119          //-------------------------------------------------------------------------------------------------------
+             -------------
+  120          #if DEBUG_UART_USE_INTERRUPT                                                    // 条件编译 只有在
+             -启用串口中断才编译
+  121              #if(USER_USB_CDC)
+                       void debug_interrupr_handler(uint8 *buff, uint16 len)
+                       {
+                           
+                           // 检测软件复位指令
+                           const uint8 reboot_str[8] = "@STCISP#";
+                           if(0 == strncmp(buff, reboot_str, 8))
+                           {
+                               EA = 0;
+                               CLKSEL = 0;             // 切换为默认系统时钟
+                               USBCON = 0;             // 清除USB设置
+                               USBCLK &= 0xF0;
+                               IRC48MCR = 0;           // 停止48M IRC时钟
+                               XOSCCR = 0;             // 停止外部时钟
+                               system_delay_ms(10);    // 等待USB总线复位
+                               IAP_CONTR = 0x60;       // 触发软件复位
+                           }
+                           
+                           if(zf_debug_init_flag)
+                           {
+                               fifo_write_buffer(&debug_uart_fifo, buff, len);               // 存入 FIFO
+                           }
+                       }
+                   #else
+  145                  void debug_interrupr_handler (uint8 dat)
+  146                  {
+  147   1                  if(zf_debug_init_flag)
+  148   1                  {
+  149   2                      uart_query_byte(DEBUG_UART_INDEX, &dat);                    // 读取串口数据
+  150   2                      fifo_write_buffer(&debug_uart_fifo, &dat, 1);               // 存入 FIFO
+  151   2                  }
+  152   1              }
+  153              #endif
+  154          #endif
+  155          
+  156          
+  157          //-------------------------------------------------------------------------     // printf 重定向 此�
+             -�分不允许用户更改
+  158          //-------------------------------------------------------------------------------------------------------
+             -------------
+  159          // 函数简介     printf重定向
+  160          // 参数说明     void
+  161          // 返回参数     void
+  162          //  @since      v1.0
+  163          // 备注信息              重定向printf到DEBUG串口上
+  164          //-------------------------------------------------------------------------------------------------------
+             -------------
+  165          #if(PRINTF_ENABLE)      //初始化调试串口
+  166              //重定义printf 数字 只能输出uint16
+  167              char putchar(char c)
+  168              {
+  169   1              #if(USER_USB_CDC)
+                           usb_cdc_write_byte(c);
+C251 COMPILER V5.60.0,  zf_common_debug                                                    13/05/26  10:26:32  PAGE 4   
+
+                           return c;
+                       #else
+  173   1                  uart_write_byte(DEBUG_UART_INDEX, c);//把自己实现的串口打印一字节数据的函数
+             -替换到这里
+  174   1                  return c;
+  175   1              #endif
+  176   1      
+  177   1          }
+  178          #endif
+  179          //-------------------------------------------------------------------------     // printf 重定向 此�
+             -�分不允许用户更改
+  180          
+  181          //-------------------------------------------------------------------------------------------------------
+             -------------
+  182          // 函数简介      debug 断言处理函数 此部分不允许用户更改
+  183          // 参数说明     pass        判断是否触发断言
+  184          // 参数说明     *file       文件名
+  185          // 参数说明     line        目标行数
+  186          // 返回参数     void
+  187          // 使用示例     zf_assert(0);
+  188          // 备注信息     这个函数不是直接调用的 此部分不允许用户更改
+  189          //              使用 zf_commmon_debug.h 中的 zf_assert(x) 接口
+  190          //-------------------------------------------------------------------------------------------------------
+             -------------
+  191          void debug_assert_handler (uint8 pass, char *file, int line)
+  192          {
+  193   1        uint8 log_str[] = "Assert error";
+  194   1      
+  195   1        while(!pass)
+  196   1        {
+  197   2          // 如果代码跳转到这里停住了
+  198   2          // 一般你的函数参数传递出错了
+  199   2          // 或者你自己调用的 zf_assert(x) 接口处报错了
+  200   2      
+  201   2          // 如果调用了 debug_init 初始化了 log 输出
+  202   2          // 就在对应串口输出去查看是哪个文件的哪一行报错
+  203   2      
+  204   2          // 如果没有初始化 debug
+  205   2          // 那就看看这个 file 的字符串值和 line 的行数
+  206   2          // 那代表报错的文件路径名称和对应报错行数
+  207   2      
+  208   2          // 再去调试看看是为什么参数出错
+  209   2      
+  210   2      
+  211   2          printf("\r\n %s file %s line %d\r\n", log_str, file, line);
+  212   2      
+  213   2      
+  214   2          system_delay_ms(500);
+  215   2        }
+  216   1      }
+  217          
+  218          
+  219          //-------------------------------------------------------------------------------------------------------
+             -------------
+  220          // 函数简介      debug 串口初始化 此部分不允许用户更改
+  221          // 参数说明     void
+  222          // 返回参数     void
+  223          // 使用示例     debug_init();
+  224          // 备注信息     开源库示例默认调用 但默认禁用中断接收
+  225          //-------------------------------------------------------------------------------------------------------
+             -------------
+  226          void debug_init (void)
+  227          {
+  228   1      #if(USER_USB_CDC)
+                   usb_cdc_init();
+                   #if DEBUG_UART_USE_INTERRUPT                                               // 条件编译 只有在�
+C251 COMPILER V5.60.0,  zf_common_debug                                                    13/05/26  10:26:32  PAGE 5   
+
+             -��用串口中断才编译
+                       fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);
+                       usb_cdc_rx_interrupt(debug_interrupr_handler);
+                   #endif
+               #else
+  235   1          uint8 uartx = DEBUG_UART_INDEX;
+  236   1          
+  237   1          uart_init(
+  238   1              DEBUG_UART_INDEX,                                                       // 在 zf_common_debug.h 
+             -中查看对应值
+  239   1              DEBUG_UART_BAUDRATE,                                                    // 在 zf_common_debug.h 
+             -中查看对应值
+  240   1              DEBUG_UART_TX_PIN,                                                      // 在 zf_common_debug.h 
+             -中查看对应值
+  241   1              DEBUG_UART_RX_PIN);                                                     // 在 zf_common_debug.h 
+             -中查看对应值
+  242   1          
+  243   1          #if DEBUG_UART_USE_INTERRUPT                                                // 条件编译 只有在
+             -启用串口中断才编译
+  244   1              fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);
+  245   1              uart_rx_interrupt(DEBUG_UART_INDEX, 1, debug_interrupr_handler);                                 
+             -    // 使能对应串口接收中断
+  246   1          #endif   
+  247   1      #endif
+  248   1      }
+  249          
+  250          
+  251          
+  252          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       507     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       192     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        49     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

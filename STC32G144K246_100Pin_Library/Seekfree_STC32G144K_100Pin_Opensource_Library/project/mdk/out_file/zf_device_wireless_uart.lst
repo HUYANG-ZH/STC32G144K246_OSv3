@@ -1,0 +1,349 @@
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            13/05/26  10:26:35  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_wireless_uart
+OBJECT MODULE PLACED IN .\out_file\zf_device_wireless_uart.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_wireless_uart.c LARGE ROM(HUGE) 
+                    -WARNINGLEVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
+                    -f_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..
+                    -\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_devi
+                    -ce_wireless_uart.lst) TABS(2) OBJECT(.\out_file\zf_device_wireless_uart.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * STC32G144K Opensource Library 即（STC32G144K 开源库）是一个基于官方 SDK 接口的第三方
+             -开源库
+    3          * Copyright (c) 2025 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC32G144K开源库的一部分
+    6          *
+    7          * STC32G144K 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许
+             -可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修�
+             -�它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可声明为译文版本
+   20          * 许可声明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
+             -声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          STC32G144K
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2024-08-01        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          /********************************************************************************************************
+             -*************
+   36          * 接线定义：
+   37          *                   ------------------------------------
+   38          *                   模块管脚            单片机管脚
+   39          *                   RX                  查看 zf_device_wireless_uart.h 中 WIRELESS_UART_RX_PIN  宏定
+             -义
+   40          *                   TX                  查看 zf_device_wireless_uart.h 中 WIRELESS_UART_TX_PIN  宏定
+             -义
+   41          *                   RTS                 查看 zf_device_wireless_uart.h 中 WIRELESS_UART_RTS_PIN 宏定
+             -义
+   42          *                   VCC                 3.3V电源
+   43          *                   GND                 电源地
+   44          *                   其余引脚悬空
+   45          *                   ------------------------------------
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            13/05/26  10:26:35  PAGE 2   
+
+   46          *********************************************************************************************************
+             -************/
+   47          
+   48          #include "zf_common_clock.h"
+   49          #include "zf_common_debug.h"
+   50          #include "zf_common_fifo.h"
+   51          #include "zf_driver_delay.h"
+   52          #include "zf_driver_gpio.h"
+   53          #include "zf_driver_uart.h"
+   54          #include "zf_device_wireless_uart.h"
+   55          #include "zf_device_type.h"
+   56          
+   57          #pragma warning disable = 183
+   58          #pragma warning disable = 177
+   59          
+   60          
+   61          static  fifo_struct                                     wireless_uart_fifo;
+   62          static  uint8                                           wireless_uart_buffer[WIRELESS_UART_BUFFER_SIZE];
+   63          
+   64          //static          uint8                                   wireless_uart_data          = 0;
+   65          #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+               static volatile wireless_uart_auto_baudrate_state_enum  wireless_auto_baud_flag     = WIRELESS_UART_AUTO_
+             -BAUD_RATE_INIT;
+               static volatile uint8                                   wireless_auto_baud_data[3]  = {0x00, 0x01, 0x03};
+               #endif
+   69          
+   70          //-------------------------------------------------------------------------------------------------------
+             -------------
+   71          // 函数简介     无线转串口模块 发送数据
+   72          // 参数说明     data            8bit 数据
+   73          // 返回参数     uint32          剩余发送长度 0-发送完毕 1-未发送完成
+   74          // 使用示例     wireless_uart_send_byte(data);
+   75          // 备注信息
+   76          //-------------------------------------------------------------------------------------------------------
+             -------------
+   77          uint32 wireless_uart_send_byte (const uint8 dat)
+   78          {
+   79   1        uint16 time_cnt = WIRELESS_UART_TIMEOUT_COUNT;
+   80   1        
+   81   1        while (time_cnt && gpio_get_level(WIRELESS_UART_RTS_PIN)) 
+   82   1        {
+   83   2          system_delay_ms(1);
+   84   2          time_cnt--;
+   85   2        }
+   86   1        
+   87   1        if (time_cnt) 
+   88   1        {
+   89   2          uart_write_byte(WIRELESS_UART_INDEX, dat);
+   90   2        }
+   91   1        
+   92   1        return time_cnt == 0;
+   93   1      }
+   94          
+   95          //-------------------------------------------------------------------------------------------------------
+             -------------
+   96          // 函数简介     无线转串口模块 发送数据块
+   97          // 参数说明     *buff           发送缓冲区
+   98          // 参数说明     len             发送数据长度
+   99          // 返回参数     uint32          剩余发送长度
+  100          // 使用示例     wireless_uart_send_buffer(buff, 64);
+  101          // 备注信息
+  102          //-------------------------------------------------------------------------------------------------------
+             -------------
+  103          uint32 wireless_uart_send_buffer(const uint8 *buff, uint32 len)
+  104          {
+  105   1          #define WIRELESS_PACKET_SIZE 30
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            13/05/26  10:26:35  PAGE 3   
+
+  106   1          #define DELAY_MS 1
+  107   1          
+  108   1          uint16 time_cnt = 0;
+  109   1        uint16 send_len = 0;
+  110   1          zf_assert(NULL != buff);  // 确保缓冲区非空
+  111   1      
+  112   1          while (len && time_cnt < WIRELESS_UART_TIMEOUT_COUNT)
+  113   1          {
+  114   2              if (!gpio_get_level(WIRELESS_UART_RTS_PIN))  // RTS低电平，可发送
+  115   2              {
+  116   3                  send_len = len < WIRELESS_PACKET_SIZE ? len : WIRELESS_PACKET_SIZE;
+  117   3                  uart_write_buffer(WIRELESS_UART_INDEX, buff, send_len);
+  118   3                  buff += send_len;
+  119   3                  len -= send_len;
+  120   3                  time_cnt = 0;  // 重置超时计数
+  121   3              }
+  122   2              else  // RTS高电平，模块忙
+  123   2              {
+  124   3                  system_delay_ms(DELAY_MS);
+  125   3                  time_cnt++;
+  126   3              }
+  127   2          }
+  128   1      
+  129   1          return len;  // 返回未发送的字节数
+  130   1      }
+  131          
+  132          //-------------------------------------------------------------------------------------------------------
+             -------------
+  133          // 函数简介     无线转串口模块 发送字符串
+  134          // 参数说明     *str            要发送的字符串地址
+  135          // 返回参数     uint32          剩余发送长度
+  136          // 使用示例     wireless_uart_send_string("Believe in yourself.");
+  137          // 备注信息
+  138          //-------------------------------------------------------------------------------------------------------
+             -------------
+  139          uint32 wireless_uart_send_string (const char *str)
+  140          {
+  141   1          uint32 len = strlen(str);
+  142   1          zf_assert(NULL != str);
+  143   1        
+  144   1          return  wireless_uart_send_buffer(str, len);
+  145   1      }
+  146          
+  147          
+  148          //-------------------------------------------------------------------------------------------------------
+             -------------
+  149          // 函数简介     无线转串口模块 读取缓冲
+  150          // 参数说明     *buff           接收缓冲区
+  151          // 参数说明     len             读取数据长度
+  152          // 返回参数     uint32          实际读取数据长度
+  153          // 使用示例     wireless_uart_read_buffer(buff, 32);
+  154          // 备注信息
+  155          //-------------------------------------------------------------------------------------------------------
+             -------------
+  156          uint32 wireless_uart_read_buffer (uint8 *buff, uint32 len)
+  157          {
+  158   1          uint32 data_len = len;
+  159   1          zf_assert(NULL != buff);
+  160   1          fifo_read_buffer(&wireless_uart_fifo, buff, &data_len, FIFO_READ_AND_CLEAN);
+  161   1          return data_len;
+  162   1      }
+  163          
+  164          //-------------------------------------------------------------------------------------------------------
+             -------------
+  165          // 函数简介     无线转串口模块 串口中断回调函数
+  166          // 参数说明     void
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            13/05/26  10:26:35  PAGE 4   
+
+  167          // 返回参数     void
+  168          // 使用示例     wireless_uart_callback();
+  169          // 备注信息     该函数在 ISR 文件 串口中断程序被调用
+  170          //              由串口中断服务函数调用 wireless_module_uart_handler() 函数
+  171          //              再由 wireless_module_uart_handler() 函数调用本函数
+  172          //-------------------------------------------------------------------------------------------------------
+             -------------
+  173          void wireless_uart_callback (uint8 uart_dat)
+  174          {
+  175   1      //    uart_query_byte(WIRELESS_UART_INDEX, &uart_dat);
+  176   1          fifo_write_buffer(&wireless_uart_fifo, &uart_dat, 1);
+  177   1      #if WIRELESS_UART_AUTO_BAUD_RATE                                                // 开启自动波特率
+                   
+                   if(WIRELESS_UART_AUTO_BAUD_RATE_START == wireless_auto_baud_flag && 3 == fifo_used(&wireless_uart_fif
+             -o))
+                   {
+                       uint32 wireless_auto_baud_count = 3;
+                       wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_GET_ACK;
+                       fifo_read_buffer(&wireless_uart_fifo, (uint8 *)wireless_auto_baud_data, (uint32 *)&wireless_auto_
+             -baud_count, FIFO_READ_AND_CLEAN);
+                   }
+                   
+               #endif
+  187   1      }
+  188          
+  189          //-------------------------------------------------------------------------------------------------------
+             -------------
+  190          // 函数简介     无线转串口模块 初始化
+  191          // 参数说明     void
+  192          // 返回参数     void
+  193          // 使用示例     wireless_uart_init();
+  194          // 备注信息
+  195          //-------------------------------------------------------------------------------------------------------
+             -------------
+  196          uint8 wireless_uart_init (void)
+  197          {
+  198   1          uint8 return_state = 0;
+  199   1          // set_wireless_type(WIRELESS_UART, WIRELESS_UART_INDEX, wireless_uart_callback);
+  200   1          
+  201   1          fifo_init(&wireless_uart_fifo, FIFO_DATA_8BIT, wireless_uart_buffer, WIRELESS_UART_BUFFER_SIZE);
+  202   1          gpio_init(WIRELESS_UART_RTS_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
+  203   1      #if(0 == WIRELESS_UART_AUTO_BAUD_RATE)                                          // 关闭自动波特率
+  204   1          // 本函数使用的波特率为115200 为无线转串口模块的默认波特率 如需其他波特
+             -率请自行配置模块并修改串口的波特率
+  205   1          uart_init (WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+             -   // 初始化串口
+  206   1          uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
+  207   1      #elif(1 == WIRELESS_UART_AUTO_BAUD_RATE)                                        // 开启自动波特率
+                   uint8 rts_init_status = 0;
+                   uint16 time_count = 0;
+                   
+                   wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_INIT;
+                   wireless_auto_baud_data[0] = 0;
+                   wireless_auto_baud_data[1] = 1;
+                   wireless_auto_baud_data[2] = 3;
+                   
+                   rts_init_status = gpio_get_level(WIRELESS_UART_RTS_PIN);
+                   gpio_init(WIRELESS_UART_RTS_PIN, GPO, rts_init_status, GPO_PUSH_PULL);      // 初始化流控引脚
+                   
+                   uart_init (WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+             -   // 初始化串口
+                   uart_rx_interrupt(WIRELESS_UART_INDEX, 1);
+                   
+                   system_delay_ms(5);                                                         // 模块上电之后需�
+             -��延时等待
+                   gpio_set_level(WIRELESS_UART_RTS_PIN, !rts_init_status);                    // RTS引脚拉高，进�
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            13/05/26  10:26:35  PAGE 5   
+
+             -��自动波特率模式
+                   system_delay_ms(100);                                                       // RTS拉高之后必须�
+             -��时20ms
+                   gpio_toggle_level(WIRELESS_UART_RTS_PIN);                                   // RTS引脚取反
+                   
+                   do
+                   {
+                       wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_START;
+                       uart_write_byte(WIRELESS_UART_INDEX, wireless_auto_baud_data[0]);       // 发送特定数据 用
+             -于模块自动判断波特率
+                       uart_write_byte(WIRELESS_UART_INDEX, wireless_auto_baud_data[1]);       // 发送特定数据 用
+             -于模块自动判断波特率
+                       uart_write_byte(WIRELESS_UART_INDEX, wireless_auto_baud_data[2]);       // 发送特定数据 用
+             -于模块自动判断波特率
+                       system_delay_ms(20);
+                       
+                       if(WIRELESS_UART_AUTO_BAUD_RATE_GET_ACK != wireless_auto_baud_flag)     // 检验自动波特率�
+             -��否完成
+                       {
+                           return_state = 1;                                                   // 如果程序进入到�
+             -��语句内 说明自动波特率失败了
+                           break;
+                       }
+                       
+                       time_count = 0;
+                       
+                       if( 0xa5 != wireless_auto_baud_data[0] &&                               // 检验自动波特率�
+             -��否正确
+                               0xff != wireless_auto_baud_data[1] &&                               // 检验自动波特
+             -率是否正确
+                               0xff != wireless_auto_baud_data[2] )                                // 检验自动波特
+             -率是否正确
+                       {
+                           return_state = 1;                                                   // 如果程序进入到�
+             -��语句内 说明自动波特率失败了
+                           break;
+                       }
+                       
+                       wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_SUCCESS;
+                       
+                       gpio_init(WIRELESS_UART_RTS_PIN, GPI, 0, GPI_PULL_UP);                  // 初始化流控引脚
+                       system_delay_ms(10);                                                    // 延时等待 模块准
+             -备就绪
+                   }
+                   while(0);
+                   
+               #endif
+  259   1          return return_state;
+  260   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       805     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       124     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            13/05/26  10:26:35  PAGE 6   
+
+  const size           =    ------     ------
+  hconst size          =        52     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

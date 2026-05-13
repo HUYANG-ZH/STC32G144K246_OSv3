@@ -1,0 +1,119 @@
+A251 MACRO ASSEMBLER  sys_tfpu                                                              13/05/26 10:26:38 PAGE     1
+
+
+MACRO ASSEMBLER A251 V4.69.13.0
+OBJECT MODULE PLACED IN .\out_file\sys_tfpu.obj
+ASSEMBLER INVOKED BY: D:\APPs\Keil\C251\BIN\A251.EXE ..\L0_SYS\sys_tfpu.asm MODSRC INCDIR(..\..\libraries\zf_common) SET
+                      (LARGE,ROMHUGE) DEBUG PRINT(.\out_file\sys_tfpu.lst) OBJECT(.\out_file\sys_tfpu.obj) EP
+
+LOC    OBJ             LINE     SOURCE
+
+                          1     $nomod51                 ; 防止标准51寄存器定义冲突
+                          2     NAME TFPU_LIB           ; 模块名称
+ 00ED                     3     DMAIR   DATA    0EDH    ; TFPU控制寄存器
+                          4     ;---------------------------------------------------------
+                          5     ; 代码段定义
+                          6     ;---------------------------------------------------------
+------                    7     ?PR?TFPU_MATH?TFPU_LIB SEGMENT ECODE
+------                    8     RSEG    ?PR?TFPU_MATH?TFPU_LIB
+                          9     PUBLIC  tfpu_init?
+                         10     PUBLIC  tfpu_add?
+                         11     PUBLIC  tfpu_sub?
+                         12     PUBLIC  tfpu_mul?
+                         13     PUBLIC  tfpu_div?
+                         14     PUBLIC  tfpu_sin?
+                         15     PUBLIC  tfpu_cos?
+                         16     PUBLIC  tfpu_tan?
+                         17     PUBLIC  tfpu_atan?
+                         18     PUBLIC  tfpu_sqrt?
+                         19     PUBLIC  tfpu_int2float?
+                         20     PUBLIC  tfpu_float2int?
+                         21     ;=========================================================
+                         22     ; 函数: tfpu_init
+                         23     ;=========================================================
+000000                   24     tfpu_init?:
+000000 75ED31            25         MOV     DMAIR, #31H     ; 复位
+000003 00                26         NOP
+000004 00                27         NOP
+000005 75ED32            28         MOV     DMAIR, #32H     ; 清除异常
+000008 00                29         NOP
+000009 00                30         NOP
+00000A 75ED3F            31         MOV     DMAIR, #3FH     ; 使用系统时钟 (最稳)
+00000D 00                32         NOP
+00000E 00                33         NOP
+00000F AA                34         ERET
+                         35     ;=========================================================
+                         36     ; 双操作数函数 (Add, Sub, Mul, Div)
+                         37     ; 编译器已将 Arg1 放入 DR4 (R4-R7) -> 对应 TFPU 的 AR
+                         38     ; 编译器已将 Arg2 放入 DR0 (R0-R3) -> 对应 TFPU 的 BR
+                         39     ; 我们直接发指令即可！无需搬运！
+                         40     ;=========================================================
+000010                   41     tfpu_add?:
+000010 75ED1C            42         MOV     DMAIR, #1CH     ; Result = a + b
+000013 AA                43         ERET
+000014                   44     tfpu_sub?:
+000014 75ED1D            45         MOV     DMAIR, #1DH     ; Result = a - b
+000017 AA                46         ERET
+000018                   47     tfpu_mul?:
+000018 75ED1E            48         MOV     DMAIR, #1EH     ; Result = a * b
+00001B AA                49         ERET
+00001C                   50     tfpu_div?:
+00001C 75ED1F            51         MOV     DMAIR, #1FH     ; Result = a / b
+00001F AA                52         ERET
+                         53     ;=========================================================
+                         54     ; 单操作数函数
+                         55     ; Arg1 在 DR4 -> 对应 TFPU 的 AR
+                         56     ;=========================================================
+000020                   57     tfpu_sqrt?:
+A251 MACRO ASSEMBLER  sys_tfpu                                                              13/05/26 10:26:38 PAGE     2
+
+000020 75ED20            58         MOV     DMAIR, #20H
+000023 AA                59         ERET
+000024                   60     tfpu_sin?:
+000024 75ED2D            61         MOV     DMAIR, #2DH
+000027 AA                62         ERET
+000028                   63     tfpu_cos?:
+000028 75ED2E            64         MOV     DMAIR, #2EH
+00002B AA                65         ERET
+00002C                   66     tfpu_tan?:
+00002C 75ED2F            67         MOV     DMAIR, #2FH
+00002F AA                68         ERET
+000030                   69     tfpu_atan?:
+000030 75ED30            70         MOV     DMAIR, #30H
+000033 AA                71         ERET
+000034                   72     tfpu_int2float?:
+000034 75ED29            73         MOV     DMAIR, #29H
+000037 AA                74         ERET
+000038                   75     tfpu_float2int?:
+000038 75ED25            76         MOV     DMAIR, #25H
+00003B AA                77         ERET
+                         78     END
+A251 MACRO ASSEMBLER  sys_tfpu                                                              13/05/26 10:26:38 PAGE     3
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E                 T Y P E  V A L U E     ATTRIBUTES
+
+?PR?TFPU_MATH?TFPU_LIB  EC SEG   00003CH       REL=UNIT, ALN=BYTE
+DMAIR. . . . . . . . .  D  ADDR  00EDH     A   
+TFPU_ADD?. . . . . . .  EC ADDR  0010H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_ATAN? . . . . . .  EC ADDR  0030H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_COS?. . . . . . .  EC ADDR  0028H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_DIV?. . . . . . .  EC ADDR  001CH     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_FLOAT2INT?. . . .  EC ADDR  0038H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_INIT? . . . . . .  EC ADDR  0000H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_INT2FLOAT?. . . .  EC ADDR  0034H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_LIB . . . . . . .  -- ----  -------       
+TFPU_MUL?. . . . . . .  EC ADDR  0018H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_SIN?. . . . . . .  EC ADDR  0024H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_SQRT? . . . . . .  EC ADDR  0020H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_SUB?. . . . . . .  EC ADDR  0014H     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+TFPU_TAN?. . . . . . .  EC ADDR  002CH     R   SEG=?PR?TFPU_MATH?TFPU_LIB
+
+
+REGISTER BANK(S) USED: 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S).

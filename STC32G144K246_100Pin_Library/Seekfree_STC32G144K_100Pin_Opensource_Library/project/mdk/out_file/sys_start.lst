@@ -1,0 +1,55 @@
+C251 COMPILER V5.60.0,  sys_start                                                          13/05/26  10:26:38  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE sys_start
+OBJECT MODULE PLACED IN .\out_file\sys_start.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L0_SYS\sys_start.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SIZ
+                    -E) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_dr
+                    -iver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32
+                    -g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\sys_start.lst) TABS(2) OBJECT(.\out_f
+                    -ile\sys_start.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "sys_start.h"
+    3          #include "sys_tfpu.h"
+    4          static void tfpu_start(void);
+    5          
+    6          void SystemStart(void)
+    7          {
+    8   1          clock_init(SYSTEM_CLOCK_124M);        // 时钟配置及系统初始化<务必保留>
+    9   1          debug_init();                           // 调试串口信息初始化
+   10   1          tfpu_start();
+   11   1      }
+   12          
+   13          static void tfpu_start(void)
+   14          {
+   15   1          P_SW2 |= 0x80;
+   16   1          TFPU_CLKDIV = 0x02;
+   17   1          tfpu_init();
+   18   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =        41     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

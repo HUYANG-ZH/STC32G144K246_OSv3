@@ -33,12 +33,11 @@
 * 2025-11-20        大W            first version
 ********************************************************************************************************************/
 #include "zf_common_headfile.h"
-
+#include "sys_include.h"
 
 void main(void)
 {
-    clock_init(SYSTEM_CLOCK_124M); 				// 时钟配置及系统初始化<务必保留>
-    debug_init();                       		// 调试串口信息初始化
+    SystemStart();
 
     while(1)
     {
