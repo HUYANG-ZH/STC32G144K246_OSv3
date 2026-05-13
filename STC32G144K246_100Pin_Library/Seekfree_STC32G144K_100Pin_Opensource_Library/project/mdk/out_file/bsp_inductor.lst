@@ -1,0 +1,60 @@
+C251 COMPILER V5.60.0,  bsp_inductor                                                       13/05/26  11:59:59  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_inductor
+OBJECT MODULE PLACED IN .\out_file\bsp_inductor.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_inductor.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,
+                    -SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf
+                    -_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\st
+                    -c32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\bsp_inductor.lst) TABS(2) OBJECT(.
+                    -\out_file\bsp_inductor.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_inductor.h"
+    3          
+    4          #define ADC_CHANNEL_1 ADC2_CH3_P03
+    5          #define ADC_CHANNEL_2 ADC2_CH4_P04
+    6          #define ADC_CHANNEL_3 ADC2_CH6_P06
+    7          #define ADC_CHANNEL_4 ADC2_CH7_P07
+    8          
+    9          void bsp_inductor_init(void)
+   10          {
+   11   1          adc_init(ADC_CHANNEL_1, ADC_12BIT);
+   12   1          adc_init(ADC_CHANNEL_2, ADC_12BIT);
+   13   1          adc_init(ADC_CHANNEL_3, ADC_12BIT);
+   14   1          adc_init(ADC_CHANNEL_4, ADC_12BIT);
+   15   1      }
+   16          
+   17          void bsp_inductor_get(inductor_rawdata_t* out_data)
+   18          {
+   19   1          out_data->Channel_1 = adc_convert(ADC_CHANNEL_1);
+   20   1          out_data->Channel_2 = adc_convert(ADC_CHANNEL_2);
+   21   1          out_data->Channel_3 = adc_convert(ADC_CHANNEL_3);
+   22   1          out_data->Channel_4 = adc_convert(ADC_CHANNEL_4);
+   23   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       152     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =         4     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

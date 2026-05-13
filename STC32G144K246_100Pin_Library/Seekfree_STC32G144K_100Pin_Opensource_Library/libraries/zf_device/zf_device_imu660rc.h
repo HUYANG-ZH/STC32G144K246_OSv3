@@ -91,13 +91,13 @@
 //====================================================软件 IIC 驱动====================================================
 #endif
 
-#define IMU660RC_INT2_PIN		( GPIO_INIT_P36 )	// 中断信号引脚，在读取四元数时需要使用，中断方式模式需要上升沿
+#define IMU660RC_INT2_PIN		( GPIO_INIT_P37 )	// 中断信号引脚，在读取四元数时需要使用，中断方式模式需要上升沿
 
 
 #define IMU660RC_QUARTERNION_GET_GYRO   ( 1 )                                   // 1：在输出四元数的模式时，读取四元数时自动读取角速度 0：不自动读取
 #define IMU660RC_QUARTERNION_GET_ACC    ( 1 )                                   // 1：在输出四元数的模式时，读取四元数时自动读取加速度 0：不自动读取
-#define IMU660RC_ACC_SAMPLE_DEFAULT     ( IMU660RC_ACC_SAMPLE_SGN_8G )          // 在这设置默认的 加速度计 初始化量程
-#define IMU660RC_GYRO_SAMPLE_DEFAULT    ( IMU660RC_GYRO_SAMPLE_SGN_2000DPS )    // 在这设置默认的 陀螺仪   初始化量程
+#define IMU660RC_ACC_SAMPLE_DEFAULT     ( IMU660RC_ACC_SAMPLE_SGN_16G )          // 在这设置默认的 加速度计 初始化量程
+#define IMU660RC_GYRO_SAMPLE_DEFAULT    ( IMU660RC_GYRO_SAMPLE_SGN_4000DPS )    // 在这设置默认的 陀螺仪   初始化量程
 
 typedef enum
 {
