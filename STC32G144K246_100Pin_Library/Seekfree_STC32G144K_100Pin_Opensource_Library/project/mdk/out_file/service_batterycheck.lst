@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               13/05/26  11:59:59  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               13/05/26  13:09:50  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -16,71 +16,48 @@ stmt  level    source
     3          #include "service_batterycheck.h"
     4          #include "service_timetick.h"
     5          
-    6          #define BATTERYCHECK_MIN_VOLTAGE        (11.0f)
-    7          #define BATTERYCHECK_PERIOD_TICK        (20000UL)
-    8          
-    9          static float batterycheck_voltage = 0.0f;
-   10          static uint8 batterycheck_voltage_ok = ZF_FALSE;
-   11          static uint32 batterycheck_last_tick = 0UL;
-   12          
-   13          static void batterycheck_update(void);
-   14          
-   15          void service_batterycheck_init(void)
-   16          {
-   17   1          bsp_battery_init();
-   18   1          batterycheck_update();
-   19   1          batterycheck_last_tick = service_timetick_what();
-   20   1      }
-   21          
-   22          void service_batterycheck_task(void)
-   23          {
-   24   1          uint32 now;
-   25   1      
-   26   1          now = service_timetick_what();
-   27   1          if((uint32)(now - batterycheck_last_tick) >= BATTERYCHECK_PERIOD_TICK)
-   28   1          {
-   29   2              batterycheck_update();
-   30   2              batterycheck_last_tick = now;
-   31   2          }
-   32   1      }
-   33          
-   34          void service_batterycheck_get_voltage(float *voltage)
-   35          {
-   36   1          service_batterycheck_task();
-   37   1          if(NULL != voltage)
-   38   1          {
-   39   2              *voltage = batterycheck_voltage;
-   40   2          }
-   41   1      }
-   42          
-   43          uint8 service_batterycheck_is_voltage_ok(void)
-   44          {
-   45   1          service_batterycheck_task();
-   46   1          return batterycheck_voltage_ok;
-   47   1      }
-   48          
-   49          uint8 service_batterycheck_get_selfcheck(void)
-   50          {
-   51   1          return service_batterycheck_is_voltage_ok();
-   52   1      }
-   53          
-   54          static void batterycheck_update(void)
-   55          {
-C251 COMPILER V5.60.0,  service_batterycheck                                               13/05/26  11:59:59  PAGE 2   
-
-   56   1          bsp_battery_vol(&batterycheck_voltage);
-   57   1          batterycheck_voltage_ok = (batterycheck_voltage >= BATTERYCHECK_MIN_VOLTAGE) ? ZF_TRUE : ZF_FALSE;
-   58   1      }
+    6          #define BATTERYCHECK_PERIOD_TICK        (20000UL)
+    7          
+    8          static float batterycheck_voltage = 0.0f;
+    9          static uint32 batterycheck_last_tick = 0UL;
+   10          
+   11          void service_batterycheck_init(void)
+   12          {
+   13   1          bsp_battery_init();
+   14   1          bsp_battery_vol(&batterycheck_voltage);
+   15   1          batterycheck_last_tick = service_timetick_what();
+   16   1      }
+   17          
+   18          void service_batterycheck_task(void)
+   19          {
+   20   1          uint32 now;
+   21   1      
+   22   1          now = service_timetick_what();
+   23   1          if((uint32)(now - batterycheck_last_tick) >= BATTERYCHECK_PERIOD_TICK)
+   24   1          {
+   25   2              bsp_battery_vol(&batterycheck_voltage);
+   26   2              batterycheck_last_tick = now;
+   27   2          }
+   28   1      }
+   29          
+   30          void service_batterycheck_get_voltage(float *voltage)
+   31          {
+   32   1          service_batterycheck_task();
+   33   1          if(NULL != voltage)
+   34   1          {
+   35   2              *voltage = batterycheck_voltage;
+   36   2          }
+   37   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       202     ------
+  ecode size           =       162     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        17     ------
+  xdata size           =        16     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -90,7 +67,9 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        24     ------
+C251 COMPILER V5.60.0,  service_batterycheck                                               13/05/26  13:09:50  PAGE 2   
+
+  hconst size          =        18     ------
 End of Module Information.
 
 

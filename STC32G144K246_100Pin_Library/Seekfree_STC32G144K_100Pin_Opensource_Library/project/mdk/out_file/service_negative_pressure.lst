@@ -1,0 +1,83 @@
+C251 COMPILER V5.60.0,  service_negative_pressure                                          13/05/26  13:09:51  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_negative_pressure
+OBJECT MODULE PLACED IN .\out_file\service_negative_pressure.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_negative_pressure.c LARGE ROM(HUGE) WARNINGLEV
+                    -EL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;.
+                    -.\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries
+                    -\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_negative_
+                    -pressure.lst) TABS(2) OBJECT(.\out_file\service_negative_pressure.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_negative_pressure.h"
+    3          
+    4          #define NEGATIVE_PRESSURE_PERCENT_MAX       (100U)
+    5          #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
+    6          #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
+    7          
+    8          static uint8 negative_pressure_percent = 0U;
+    9          
+   10          static uint32 negative_pressure_percent_to_duty(uint8 percent)
+   11          {
+   12   1          uint32 duty_range;
+   13   1      
+   14   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+   15   1          {
+   16   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+   17   2          }
+   18   1      
+   19   1          duty_range = NEGATIVE_PRESSURE_DUTY_MAX - NEGATIVE_PRESSURE_DUTY_MIN;
+   20   1      
+   21   1          return NEGATIVE_PRESSURE_DUTY_MIN + (duty_range * percent / NEGATIVE_PRESSURE_PERCENT_MAX);
+   22   1      }
+   23          
+   24          void service_negative_pressure_init(void)
+   25          {
+   26   1          pwm_init(SERVICE_NEGATIVE_PRESSURE_PWM_CH, SERVICE_NEGATIVE_PRESSURE_PWM_FREQ_HZ, 0U);
+   27   1          negative_pressure_percent = 0U;
+   28   1      }
+   29          
+   30          void service_negative_pressure_set_percent(uint8 percent)
+   31          {
+   32   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+   33   1          {
+   34   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+   35   2          }
+   36   1      
+   37   1          pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(percent));
+   38   1          negative_pressure_percent = percent;
+   39   1      }
+   40          
+   41          uint8 service_negative_pressure_get_percent(void)
+   42          {
+   43   1          return negative_pressure_percent;
+   44   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       156     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =         7     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+C251 COMPILER V5.60.0,  service_negative_pressure                                          13/05/26  13:09:51  PAGE 2   
+
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         6     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

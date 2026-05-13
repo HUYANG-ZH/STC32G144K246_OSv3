@@ -1,0 +1,71 @@
+C251 COMPILER V5.60.0,  service_imu                                                        13/05/26  13:09:51  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
+OBJECT MODULE PLACED IN .\out_file\service_imu.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_imu.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE
+                    -(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries
+                    -\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components
+                    -\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_imu.lst) TABS(2) OBJECT
+                    -(.\out_file\service_imu.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_include.h"
+    3          #include "service_imu.h"
+    4          
+    5          void service_imu_init(void)
+    6          {
+    7   1          bsp_imu_init();
+    8   1      }
+    9          
+   10          void service_imu_get_data(service_imu_data_t *out_imu)
+   11          {
+   12   1          imu_data_t bsp_data;
+   13   1      
+   14   1          if(NULL == out_imu)
+   15   1          {
+   16   2              return;
+   17   2          }
+   18   1      
+   19   1          bsp_imu_read(&bsp_data);
+   20   1      
+   21   1          out_imu->acc_x = bsp_data.imu_acc_x;
+   22   1          out_imu->acc_y = bsp_data.imu_acc_y;
+   23   1          out_imu->acc_z = bsp_data.imu_acc_z;
+   24   1          out_imu->gyro_x = bsp_data.imu_gyro_x;
+   25   1          out_imu->gyro_y = bsp_data.imu_gyro_y;
+   26   1          out_imu->gyro_z = bsp_data.imu_gyro_z;
+   27   1          out_imu->quat_x = bsp_data.imu_quat_x;
+   28   1          out_imu->quat_y = bsp_data.imu_quat_y;
+   29   1          out_imu->quat_z = bsp_data.imu_quat_z;
+   30   1          out_imu->quat_w = bsp_data.imu_quat_w;
+   31   1          out_imu->roll = bsp_data.imu_roll_deg;
+   32   1          out_imu->pitch = bsp_data.imu_pitch_deg;
+   33   1          out_imu->yaw = bsp_data.imu_yaw_deg;
+   34   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       442     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        60     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
