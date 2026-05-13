@@ -247,6 +247,16 @@ void service_wireless_uart_init(void)
     wireless_uart_init();
 }
 
+uint32 service_wireless_uart_read_buffer(uint8 *buff, uint32 len)
+{
+    if(NULL == buff)
+    {
+        return 0U;
+    }
+
+    return wireless_uart_read_buffer(buff, len);
+}
+
 uint32 wprint(const char *format, ...)
 {
     uint16 length;

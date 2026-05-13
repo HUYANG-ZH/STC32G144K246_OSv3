@@ -1,0 +1,170 @@
+C251 COMPILER V5.60.0,  service_motor                                                      13/05/26  20:43:54  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_motor
+OBJECT MODULE PLACED IN .\out_file\service_motor.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_motor.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMI
+                    -ZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -es\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_componen
+                    -ts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_motor.lst) TABS(2) OB
+                    -JECT(.\out_file\service_motor.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_include.h"
+    3          #include "service_motor.h"
+    4          
+    5          #define SERVICE_MOTOR_NSLEEP_PRE_HIGH_MS       (1U)
+    6          #define SERVICE_MOTOR_NSLEEP_RESET_LOW_US      (30U)
+    7          #define SERVICE_MOTOR_NSLEEP_POST_HIGH_MS      (1U)
+    8          
+    9          #define SERVICE_MOTOR_LEFT_FORWARD_LEVEL       GPIO_HIGH
+   10          #define SERVICE_MOTOR_RIGHT_FORWARD_LEVEL      GPIO_HIGH
+   11          
+   12          static uint8 motor_initialized = 0U;
+   13          static uint8 motor_ready = 0U;
+   14          
+   15          static void service_motor_init_bsp_once(void)
+   16          {
+   17   1          if(0U == motor_initialized)
+   18   1          {
+   19   2              bsp_motor_init();
+   20   2              motor_initialized = 1U;
+   21   2          }
+   22   1      }
+   23          
+   24          static uint8 service_motor_reverse_level(uint8 level)
+   25          {
+   26   1          return (GPIO_HIGH == level) ? GPIO_LOW : GPIO_HIGH;
+   27   1      }
+   28          
+   29          static uint32 service_motor_abs_duty(int32 pwm)
+   30          {
+   31   1          if((int32)PWM_DUTY_MAX <= pwm)
+   32   1          {
+   33   2              return PWM_DUTY_MAX;
+   34   2          }
+   35   1      
+   36   1          if(-((int32)PWM_DUTY_MAX) >= pwm)
+   37   1          {
+   38   2              return PWM_DUTY_MAX;
+   39   2          }
+   40   1      
+   41   1          if(0 > pwm)
+   42   1          {
+   43   2              return (uint32)(0 - pwm);
+   44   2          }
+   45   1      
+   46   1          return (uint32)pwm;
+   47   1      }
+   48          
+   49          static uint8 service_motor_dir_level(int32 pwm, uint8 forward_level)
+   50          {
+   51   1          if(0 <= pwm)
+   52   1          {
+   53   2              return forward_level;
+   54   2          }
+   55   1      
+C251 COMPILER V5.60.0,  service_motor                                                      13/05/26  20:43:54  PAGE 2   
+
+   56   1          return service_motor_reverse_level(forward_level);
+   57   1      }
+   58          
+   59          void service_motor_init(void)
+   60          {
+   61   1          service_motor_init_bsp_once();
+   62   1          service_motor_reset();
+   63   1      }
+   64          
+   65          void service_motor_reset(void)
+   66          {
+   67   1          service_motor_init_bsp_once();
+   68   1      
+   69   1          motor_ready = 0U;
+   70   1          bsp_motor_set_pwm(0U, 0U);
+   71   1      
+   72   1          bsp_motor_set_nsleep(1U);
+   73   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_PRE_HIGH_MS);
+   74   1          bsp_motor_set_nsleep(0U);
+   75   1          system_delay_us(SERVICE_MOTOR_NSLEEP_RESET_LOW_US);
+   76   1          bsp_motor_set_nsleep(1U);
+   77   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_POST_HIGH_MS);
+   78   1      
+   79   1          motor_ready = 1U;
+   80   1      }
+   81          
+   82          void service_motor_stop(void)
+   83          {
+   84   1          if(0U == motor_initialized)
+   85   1          {
+   86   2              return;
+   87   2          }
+   88   1      
+   89   1          bsp_motor_set_pwm(0U, 0U);
+   90   1      }
+   91          
+   92          void service_motor_set_left_pwm(int32 pwm)
+   93          {
+   94   1          if(0U == motor_ready)
+   95   1          {
+   96   2              return;
+   97   2          }
+   98   1      
+   99   1          bsp_motor_set_left_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL));
+  100   1          bsp_motor_set_left_pwm(service_motor_abs_duty(pwm));
+  101   1      }
+  102          
+  103          void service_motor_set_right_pwm(int32 pwm)
+  104          {
+  105   1          if(0U == motor_ready)
+  106   1          {
+  107   2              return;
+  108   2          }
+  109   1      
+  110   1          bsp_motor_set_right_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
+  111   1          bsp_motor_set_right_pwm(service_motor_abs_duty(pwm));
+  112   1      }
+  113          
+  114          void service_motor_set_pwm(int32 left_pwm, int32 right_pwm)
+  115          {
+  116   1          if(0U == motor_ready)
+  117   1          {
+  118   2              return;
+  119   2          }
+  120   1      
+  121   1          bsp_motor_set_dir(service_motor_dir_level(left_pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL),
+C251 COMPILER V5.60.0,  service_motor                                                      13/05/26  20:43:54  PAGE 3   
+
+  122   1                  service_motor_dir_level(right_pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
+  123   1          bsp_motor_set_pwm(service_motor_abs_duty(left_pwm), service_motor_abs_duty(right_pwm));
+  124   1      }
+  125          
+  126          uint8 service_motor_is_ready(void)
+  127          {
+  128   1          return motor_ready;
+  129   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       553     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        28     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        12     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

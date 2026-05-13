@@ -1,0 +1,62 @@
+C251 COMPILER V5.60.0,  service_inductor                                                   13/05/26  22:14:58  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_inductor
+OBJECT MODULE PLACED IN .\out_file\service_inductor.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_inductor.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPT
+                    -IMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libr
+                    -aries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compo
+                    -nents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_inductor.lst) TABS
+                    -(2) OBJECT(.\out_file\service_inductor.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_include.h"
+    3          #include "service_inductor.h"
+    4          
+    5          void service_inductor_init(void)
+    6          {
+    7   1          bsp_inductor_init();
+    8   1      }
+    9          
+   10          void service_inductor_get_data(service_inductor_data_t *out_data)
+   11          {
+   12   1          inductor_rawdata_t raw_data;
+   13   1      
+   14   1          if(NULL == out_data)
+   15   1          {
+   16   2              return;
+   17   2          }
+   18   1      
+   19   1          bsp_inductor_get(&raw_data);
+   20   1      
+   21   1          out_data->channel_1 = raw_data.Channel_1;
+   22   1          out_data->channel_2 = raw_data.Channel_2;
+   23   1          out_data->channel_3 = raw_data.Channel_3;
+   24   1          out_data->channel_4 = raw_data.Channel_4;
+   25   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       126     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        12     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

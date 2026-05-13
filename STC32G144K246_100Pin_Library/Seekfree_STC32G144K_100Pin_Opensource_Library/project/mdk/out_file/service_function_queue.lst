@@ -1,0 +1,191 @@
+C251 COMPILER V5.60.0,  service_function_queue                                             13/05/26  21:39:04  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_function_queue
+OBJECT MODULE PLACED IN .\out_file\service_function_queue.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_function_queue.c LARGE ROM(HUGE) WARNINGLEVEL(
+                    -3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\.
+                    -.\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf
+                    -_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_function_que
+                    -ue.lst) TABS(2) OBJECT(.\out_file\service_function_queue.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_timetick.h"
+    3          #include "service_function_queue.h"
+    4          
+    5          #define SERVICE_FUNCTION_QUEUE_TICK_PER_MS     (10UL)
+    6          #define SERVICE_FUNCTION_QUEUE_PRIORITY_MIN    (1U)
+    7          #define SERVICE_FUNCTION_QUEUE_PRIORITY_MAX    (4U)
+    8          
+    9          typedef struct
+   10          {
+   11              service_function_queue_func_t func;
+   12              uint32 start_tick;
+   13              uint32 delay_tick;
+   14              uint32 order;
+   15              uint8 priority;
+   16              uint8 used;
+   17          } service_function_queue_item_t;
+   18          
+   19          static service_function_queue_item_t function_queue[SERVICE_FUNCTION_QUEUE_MAX];
+   20          static uint32 function_queue_order = 0U;
+   21          
+   22          static uint8 service_function_queue_time_ready(uint32 now, service_function_queue_item_t *item)
+   23          {
+   24   1          return ((uint32)(now - item->start_tick) >= item->delay_tick);
+   25   1      }
+   26          
+   27          void service_function_queue_init(void)
+   28          {
+   29   1          uint8 i;
+   30   1          uint8 ea_backup;
+   31   1      
+   32   1          ea_backup = EA;
+   33   1          EA = 0;
+   34   1      
+   35   1          for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
+   36   1          {
+   37   2              function_queue[i].func = NULL;
+*** WARNING C150 IN LINE 37 OF ..\L2_SERVICE\service_function_queue.c: 'far' pointer converted to 'far' pointer
+   38   2              function_queue[i].start_tick = 0U;
+   39   2              function_queue[i].delay_tick = 0U;
+   40   2              function_queue[i].order = 0U;
+   41   2              function_queue[i].priority = 0U;
+   42   2              function_queue[i].used = 0U;
+   43   2          }
+   44   1      
+   45   1          function_queue_order = 0U;
+   46   1      
+   47   1          EA = ea_backup;
+   48   1      }
+   49          
+   50          uint8 service_function_queue_add(service_function_queue_func_t func, uint32 delay_ms, uint8 priority)
+   51          {
+   52   1          uint8 i;
+   53   1          uint8 ea_backup;
+   54   1          uint32 now;
+C251 COMPILER V5.60.0,  service_function_queue                                             13/05/26  21:39:04  PAGE 2   
+
+   55   1      
+   56   1          if((NULL == func) || (SERVICE_FUNCTION_QUEUE_PRIORITY_MIN > priority) ||
+   57   1                  (SERVICE_FUNCTION_QUEUE_PRIORITY_MAX < priority))
+   58   1          {
+   59   2              return 0U;
+   60   2          }
+   61   1      
+   62   1          now = service_timetick_what();
+   63   1      
+   64   1          ea_backup = EA;
+   65   1          EA = 0;
+   66   1      
+   67   1          for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
+   68   1          {
+   69   2              if(0U == function_queue[i].used)
+   70   2              {
+   71   3                  function_queue[i].func = func;
+   72   3                  function_queue[i].start_tick = now;
+   73   3                  function_queue[i].delay_tick = delay_ms * SERVICE_FUNCTION_QUEUE_TICK_PER_MS;
+   74   3                  function_queue[i].order = function_queue_order++;
+   75   3                  function_queue[i].priority = priority;
+   76   3                  function_queue[i].used = 1U;
+   77   3      
+   78   3                  EA = ea_backup;
+   79   3                  return 1U;
+   80   3              }
+   81   2          }
+   82   1      
+   83   1          EA = ea_backup;
+   84   1          return 0U;
+   85   1      }
+   86          
+   87          void service_function_queue_update(void)
+   88          {
+   89   1          uint8 priority;
+   90   1          uint8 i;
+   91   1          uint8 selected;
+   92   1          uint8 ea_backup;
+   93   1          uint32 now;
+   94   1          uint32 update_order_limit;
+   95   1          uint32 selected_order;
+   96   1          service_function_queue_func_t selected_func;
+   97   1      
+   98   1          now = service_timetick_what();
+   99   1      
+  100   1          ea_backup = EA;
+  101   1          EA = 0;
+  102   1          update_order_limit = function_queue_order;
+  103   1          EA = ea_backup;
+  104   1      
+  105   1          for(priority = SERVICE_FUNCTION_QUEUE_PRIORITY_MAX; priority >= SERVICE_FUNCTION_QUEUE_PRIORITY_MIN; 
+             -priority--)
+  106   1          {
+  107   2              while(1)
+  108   2              {
+  109   3                  selected = SERVICE_FUNCTION_QUEUE_MAX;
+  110   3                  selected_order = update_order_limit;
+  111   3                  selected_func = NULL;
+*** WARNING C150 IN LINE 111 OF ..\L2_SERVICE\service_function_queue.c: 'far' pointer converted to 'far' pointer
+  112   3      
+  113   3                  ea_backup = EA;
+  114   3                  EA = 0;
+  115   3      
+  116   3                  for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
+  117   3                  {
+  118   4                      if((0U != function_queue[i].used) &&
+C251 COMPILER V5.60.0,  service_function_queue                                             13/05/26  21:39:04  PAGE 3   
+
+  119   4                              (priority == function_queue[i].priority) &&
+  120   4                              (function_queue[i].order < update_order_limit) &&
+  121   4                              service_function_queue_time_ready(now, &function_queue[i]) &&
+  122   4                              (function_queue[i].order < selected_order))
+  123   4                      {
+  124   5                          selected = i;
+  125   5                          selected_order = function_queue[i].order;
+  126   5                          selected_func = function_queue[i].func;
+  127   5                      }
+  128   4                  }
+  129   3      
+  130   3                  if(SERVICE_FUNCTION_QUEUE_MAX != selected)
+  131   3                  {
+  132   4                      function_queue[selected].func = NULL;
+*** WARNING C150 IN LINE 132 OF ..\L2_SERVICE\service_function_queue.c: 'far' pointer converted to 'far' pointer
+  133   4                      function_queue[selected].used = 0U;
+  134   4                  }
+  135   3      
+  136   3                  EA = ea_backup;
+  137   3      
+  138   3                  if(NULL == selected_func)
+  139   3                  {
+  140   4                      break;
+  141   4                  }
+  142   3      
+  143   3                  selected_func();
+  144   3              }
+  145   2          }
+  146   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1307     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       193     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         9     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  3 WARNING(S),  0 ERROR(S)
