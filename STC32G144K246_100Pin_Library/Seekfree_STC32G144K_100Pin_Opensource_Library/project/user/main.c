@@ -34,14 +34,34 @@
 ********************************************************************************************************************/
 #include "zf_common_headfile.h"
 #include "sys_include.h"
-
+#include "service_include.h"
+#include "app_include.h"
+#include "shared_source.h"
 void main(void)
 {
     SystemStart();
 
+    service_timetick_init();
+    service_function_queue_init();
+    service_wireless_uart_init();
+    service_packet_init();
+    service_batterycheck_init();
+    service_buzzer_init();
+    service_buzzer_stop();
+    service_imu_init();
+    service_negative_pressure_init();
+    service_motor_init();
+    service_speed_init();
+    
+    app_inductor_preprocess_init();
+    app_scheduler_init();
+
+    app_scheduler_add(0,service_batterycheck_task,1,2000);
     while(1)
     {
-        
+        app_scheduler_run();
+        service_function_queue_update();
+        service_packet_update();
     }
 }
 

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_imu                                                            13/05/26  11:59:59  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_imu                                                            15/05/26  11:43:41  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_imu
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          IMU660RC_CS(0);
    54   1          spi_read_8bit_registers(IMU660RC_SPI, IMU660RC_OUT_TEMP_L | IMU660RC_SPI_R, datas, 2U);
    55   1          IMU660RC_CS(1);
-C251 COMPILER V5.60.0,  bsp_imu                                                            13/05/26  11:59:59  PAGE 2   
+C251 COMPILER V5.60.0,  bsp_imu                                                            15/05/26  11:43:41  PAGE 2   
 
    56   1          raw_temperature = (int16)(((uint16)datas[1] << 8) | datas[0]);
    57   1          *temperature = ((float)raw_temperature / 256.0f) + 25.0f;

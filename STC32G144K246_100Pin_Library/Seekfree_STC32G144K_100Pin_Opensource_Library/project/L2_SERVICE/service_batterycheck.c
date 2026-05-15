@@ -2,6 +2,7 @@
 #include "bsp_include.h"
 #include "service_batterycheck.h"
 #include "service_timetick.h"
+#include "service_wireless_uart.h"
 
 #define BATTERYCHECK_PERIOD_TICK        (20000UL)
 
@@ -24,6 +25,12 @@ void service_batterycheck_task(void)
     {
         bsp_battery_vol(&batterycheck_voltage);
         batterycheck_last_tick = now;
+    }
+
+    if(batterycheck_voltage <= 11.0f)
+    {
+        printf("batterylow.\r\n");
+        wprint("batterylow.\r\n");
     }
 }
 

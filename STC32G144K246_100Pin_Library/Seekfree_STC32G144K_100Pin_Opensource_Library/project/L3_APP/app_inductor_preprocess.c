@@ -7,8 +7,9 @@
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
 
-static uint16 inductor_min[APP_INDUCTOR_CHANNEL_COUNT];
-static uint16 inductor_max[APP_INDUCTOR_CHANNEL_COUNT];
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {0U, 0U, 0U, 0U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 4095U, 4095U, 4095U};
+
 static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
 static uint8 inductor_history_index = 0U;
 static volatile app_inductor_preprocess_data_t inductor_data;
@@ -109,14 +110,14 @@ static void app_inductor_update_output(void)
 
         filtered[i] = (float)sum / (float)APP_INDUCTOR_AVERAGE_COUNT;
 
-        if(inductor_max[i] <= inductor_min[i])
+        if(app_inductor_preprocess_max_value[i] <= app_inductor_preprocess_min_value[i])
         {
             normalized[i] = 0.0f;
         }
         else
         {
-            normalized[i] = (filtered[i] - (float)inductor_min[i]) * 100.0f /
-                    ((float)inductor_max[i] - (float)inductor_min[i]);
+            normalized[i] = (filtered[i] - (float)app_inductor_preprocess_min_value[i]) * 100.0f /
+                    ((float)app_inductor_preprocess_max_value[i] - (float)app_inductor_preprocess_min_value[i]);
             if(0.0f > normalized[i])
             {
                 normalized[i] = 0.0f;
@@ -159,19 +160,13 @@ static void app_inductor_preprocess_tick(void)
     app_inductor_update_output();
 }
 
-void app_inductor_preprocess_init(const uint16 min_value[4], const uint16 max_value[4])
+void app_inductor_preprocess_init(void)
 {
     uint8 i;
     uint8 j;
     uint16 median[APP_INDUCTOR_CHANNEL_COUNT];
 
     service_inductor_init();
-
-    for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-    {
-        inductor_min[i] = (NULL != min_value) ? min_value[i] : 0U;
-        inductor_max[i] = (NULL != max_value) ? max_value[i] : 0U;
-    }
 
     app_inductor_sample_median(median);
 

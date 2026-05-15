@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               15/05/26  10:21:56  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               15/05/26  11:43:45  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -53,26 +53,46 @@ stmt  level    source
              -***********/
    35          #include "zf_common_headfile.h"
    36          #include "sys_include.h"
-   37          
-   38          void main(void)
-   39          {
-   40   1          SystemStart();
-   41   1      
-   42   1          while(1)
-   43   1          {
-   44   2              
-   45   2          }
-   46   1      }
-   47          
-   48          
+   37          #include "service_include.h"
+   38          #include "app_include.h"
+   39          #include "shared_source.h"
+   40          void main(void)
+   41          {
+   42   1          SystemStart();
+   43   1      
+   44   1          service_timetick_init();
+   45   1          service_function_queue_init();
+   46   1          service_wireless_uart_init();
+   47   1          service_packet_init();
+   48   1          service_batterycheck_init();
+   49   1          service_buzzer_init();
+C251 COMPILER V5.60.0,  main                                                               15/05/26  11:43:45  PAGE 2   
 
-C251 COMPILER V5.60.0,  main                                                               15/05/26  10:21:56  PAGE 2   
+   50   1          service_buzzer_stop();
+   51   1          service_imu_init();
+   52   1          service_negative_pressure_init();
+   53   1          service_motor_init();
+   54   1          service_speed_init();
+   55   1          
+   56   1          app_inductor_preprocess_init();
+   57   1          app_scheduler_init();
+   58   1      
+   59   1          app_scheduler_add(0,service_batterycheck_task,1,2000);
+   60   1          while(1)
+   61   1          {
+   62   2              app_scheduler_run();
+   63   2              service_function_queue_update();
+   64   2              service_packet_update();
+   65   2          }
+   66   1      }
+   67          
+   68          
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =        53     ------
+  ecode size           =       137     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
