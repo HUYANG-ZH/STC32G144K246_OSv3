@@ -41,40 +41,23 @@ static uint16 app_inductor_median3(uint16 a, uint16 b, uint16 c)
     return b;
 }
 
-static void app_inductor_quick_sort(uint16 *data, int16 left, int16 right)
+static void app_inductor_sort_ascending(uint16 *values)
 {
-    int16 i = left;
-    int16 j = right;
+    uint8 i;
+    uint8 j;
     uint16 temp;
-    uint16 pivot = data[(left + right) / 2];
 
-    while(i <= j)
+    for(i = 0U; i < (APP_INDUCTOR_HISTORY_COUNT - 1U); i++)
     {
-        while(data[i] < pivot)
+        for(j = (uint8)(i + 1U); j < APP_INDUCTOR_HISTORY_COUNT; j++)
         {
-            i++;
+            if(values[i] > values[j])
+            {
+                temp = values[i];
+                values[i] = values[j];
+                values[j] = temp;
+            }
         }
-        while(data[j] > pivot)
-        {
-            j--;
-        }
-        if(i <= j)
-        {
-            temp = data[i];
-            data[i] = data[j];
-            data[j] = temp;
-            i++;
-            j--;
-        }
-    }
-
-    if(left < j)
-    {
-        app_inductor_quick_sort(data, left, j);
-    }
-    if(i < right)
-    {
-        app_inductor_quick_sort(data, i, right);
     }
 }
 
@@ -116,7 +99,7 @@ static void app_inductor_update_output(void)
             sorted[j] = inductor_history[i][j];
         }
 
-        app_inductor_quick_sort(sorted, 0, APP_INDUCTOR_HISTORY_COUNT - 1U);
+        app_inductor_sort_ascending(sorted);
 
         sum = 0U;
         for(j = 1U; j < (APP_INDUCTOR_HISTORY_COUNT - 1U); j++)
