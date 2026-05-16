@@ -4,7 +4,7 @@
 #include "zf_common_typedef.h"
 
 #ifndef SERVICE_PACKET_VARIABLE_MAX
-#define SERVICE_PACKET_VARIABLE_MAX        (8U)
+#define SERVICE_PACKET_VARIABLE_MAX        (24U)
 #endif
 
 #ifndef SERVICE_PACKET_ACTION_MAX

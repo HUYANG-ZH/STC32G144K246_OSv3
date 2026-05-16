@@ -54,6 +54,7 @@ void main(void)
     service_speed_init();
     
     app_inductor_preprocess_init();
+    app_speedout_init();
     app_scheduler_init();
 
     service_function_queue_add(service_timetick_debug,0,1);
@@ -66,6 +67,7 @@ void main(void)
     service_function_queue_add(service_speed_debug,0,1);
 
     app_scheduler_add(0,service_batterycheck_task,1,2000);
+    app_scheduler_add(0,app_speedout_debug,1,300);
     while(1)
     {
         app_scheduler_run();

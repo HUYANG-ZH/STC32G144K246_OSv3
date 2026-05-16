@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 1   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_packet
@@ -66,7 +66,7 @@ stmt  level    source
    51   1      }
    52          
    53          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 2   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 2   
 
              -------------
    54          // 函数简介     判断字符是否为数值列表分隔符
@@ -134,7 +134,7 @@ stmt  level    source
   109          //-------------------------------------------------------------------------------------------------------
              -------------
   110          // 函数简介     根据变量名查找变量映射
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 3   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 3   
 
   111          // 参数说明     name            变量名称
   112          // 返回参数     service_packet_variable_t * 变量映射指针 NULL：未找到
@@ -202,7 +202,7 @@ stmt  level    source
   169   2              text = service_packet_skip_value_separator(text);
   170   2              if('\0' == *text)
   171   2              {
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 4   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 4   
 
   172   3                  return 0U;
   173   3              }
@@ -270,7 +270,7 @@ stmt  level    source
   234          // 备注信息     输出格式为 name,value0,value1...\r\n
   235          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 5   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 5   
 
   236          static void service_packet_print_variable(service_packet_variable_t *variable)
   237          {
@@ -338,7 +338,7 @@ stmt  level    source
   295   1          service_packet_variable_t *variable;
   296   1      
   297   1          variable = service_packet_find_variable(name);
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 6   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 6   
 
   298   1          if((NULL == variable) || (NULL == value_text))
   299   1          {
@@ -406,7 +406,7 @@ stmt  level    source
   357   1          command = frame[0];
   358   1          name = service_packet_skip_field_separator(&frame[1]);
   359   1          value_text = name;
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 7   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 7   
 
   360   1      
   361   1          while(('\0' != *value_text) && (0U == service_packet_is_field_separator(*value_text)))
@@ -474,7 +474,7 @@ stmt  level    source
   419   2              packet_frame[packet_frame_index] = value;
   420   2              packet_frame_index++;
   421   2          }
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 8   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 8   
 
   422   1          else
   423   1          {
@@ -542,7 +542,7 @@ stmt  level    source
   483   3                  service_packet_push_body_char('@');
   484   3                  service_packet_push_body_char(value);
   485   3                  packet_rx_state = SERVICE_PACKET_RX_BODY;
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 9   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 9   
 
   486   3              }
   487   2          }
@@ -610,7 +610,7 @@ stmt  level    source
   542   1      
   543   1          if((NULL == name) || (NULL == value) || (0U == value_count) ||
   544   1                  (SERVICE_PACKET_VALUE_MAX < value_count))
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 10  
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 10  
 
   545   1          {
   546   2              return 0U;
@@ -678,7 +678,7 @@ stmt  level    source
   606   1          return 1U;
   607   1      }
   608          
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  15:32:40  PAGE 11  
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 11  
 
   609          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -711,7 +711,7 @@ Module Information          Static   Overlayable
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       486     ------
+  xdata size           =       630     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
