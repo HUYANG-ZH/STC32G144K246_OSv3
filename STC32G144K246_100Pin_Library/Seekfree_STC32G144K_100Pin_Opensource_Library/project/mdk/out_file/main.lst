@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               16/05/26  17:01:27  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               16/05/26  17:18:14  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,7 +66,7 @@ stmt  level    source
    47   1          service_packet_init();
    48   1          service_batterycheck_init();
    49   1          service_buzzer_init();
-C251 COMPILER V5.60.0,  main                                                               16/05/26  17:01:27  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               16/05/26  17:18:14  PAGE 2   
 
    50   1          service_buzzer_stop();
    51   1          service_imu_init();
@@ -94,16 +94,17 @@ stmt  level    source
    73   2              app_scheduler_run();
    74   2              service_function_queue_update();
    75   2              service_packet_update();
-   76   2          }
-   77   1      }
-   78          
+   76   2              service_negative_pressure_task();
+   77   2          }
+   78   1      }
    79          
+   80          
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       289     ------
+  ecode size           =       293     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

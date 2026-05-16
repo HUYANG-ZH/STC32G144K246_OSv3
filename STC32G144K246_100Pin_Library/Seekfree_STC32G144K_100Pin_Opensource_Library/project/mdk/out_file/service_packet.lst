@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 1   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_packet
@@ -66,7 +66,7 @@ stmt  level    source
    51   1      }
    52          
    53          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 2   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 2   
 
              -------------
    54          // 函数简介     判断字符是否为数值列表分隔符
@@ -134,7 +134,7 @@ stmt  level    source
   109          //-------------------------------------------------------------------------------------------------------
              -------------
   110          // 函数简介     根据变量名查找变量映射
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 3   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 3   
 
   111          // 参数说明     name            变量名称
   112          // 返回参数     service_packet_variable_t * 变量映射指针 NULL：未找到
@@ -202,7 +202,7 @@ stmt  level    source
   169   2              text = service_packet_skip_value_separator(text);
   170   2              if('\0' == *text)
   171   2              {
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 4   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 4   
 
   172   3                  return 0U;
   173   3              }
@@ -270,7 +270,7 @@ stmt  level    source
   234          // 备注信息     输出格式为 name,value0,value1...\r\n
   235          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 5   
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 5   
 
   236          static void service_packet_print_variable(service_packet_variable_t *variable)
   237          {
@@ -286,428 +286,434 @@ stmt  level    source
   247   2          }
   248   1          EA = ea_backup;
   249   1      
-  250   1          wprint("%s,", (char *)variable->name);
-  251   1      
-  252   1          for(i = 0; i < variable->value_count; i++)
-  253   1          {
-  254   2              if(0U != i)
-  255   2              {
-  256   3                  wprint(",");
-  257   3              }
-  258   2              wprint("%.3f", (double)value_copy[i]);
-  259   2          }
-  260   1      
-  261   1          wprint("\r\n");
-  262   1      }
-  263          
-  264          //-------------------------------------------------------------------------------------------------------
+  250   1          if(1U == variable->value_count)
+  251   1          {
+  252   2              wprint("%s,%.3f\r\n", (char *)variable->name, (double)value_copy[0]);
+  253   2              return;
+  254   2          }
+  255   1      
+  256   1          wprint("%s,", (char *)variable->name);
+  257   1      
+  258   1          for(i = 0; i < variable->value_count; i++)
+  259   1          {
+  260   2              if(0U != i)
+  261   2              {
+  262   3                  wprint(",");
+  263   3              }
+  264   2              wprint("%.3f", (double)value_copy[i]);
+  265   2          }
+  266   1      
+  267   1          wprint("\r\n");
+  268   1      }
+  269          
+  270          //-------------------------------------------------------------------------------------------------------
              -------------
-  265          // 函数简介     处理读取指令
-  266          // 参数说明     name            变量名称
-  267          // 返回参数     void
-  268          // 使用示例     内部调用，用户无需关心
-  269          //-------------------------------------------------------------------------------------------------------
+  271          // 函数简介     处理读取指令
+  272          // 参数说明     name            变量名称
+  273          // 返回参数     void
+  274          // 使用示例     内部调用，用户无需关心
+  275          //-------------------------------------------------------------------------------------------------------
              -------------
-  270          static void service_packet_handle_read(char *name)
-  271          {
-  272   1          service_packet_variable_t *variable;
-  273   1      
-  274   1          variable = service_packet_find_variable(name);
-  275   1          if(NULL == variable)
-  276   1          {
-  277   2              return;
-  278   2          }
+  276          static void service_packet_handle_read(char *name)
+  277          {
+  278   1          service_packet_variable_t *variable;
   279   1      
-  280   1          service_packet_print_variable(variable);
-  281   1      }
-  282          
-  283          //-------------------------------------------------------------------------------------------------------
-             -------------
-  284          // 函数简介     处理写入指令
-  285          // 参数说明     name            变量名称
-  286          // 参数说明     value_text      待写入的数值字符串
-  287          // 返回参数     void
-  288          // 使用示例     内部调用，用户无需关心
+  280   1          variable = service_packet_find_variable(name);
+  281   1          if(NULL == variable)
+  282   1          {
+  283   2              return;
+  284   2          }
+  285   1      
+  286   1          service_packet_print_variable(variable);
+  287   1      }
+  288          
   289          //-------------------------------------------------------------------------------------------------------
              -------------
-  290          static void service_packet_handle_write(char *name, char *value_text)
-  291          {
-  292   1          uint8 i;
-  293   1          uint8 ea_backup;
-  294   1          float value_copy[SERVICE_PACKET_VALUE_MAX];
-  295   1          service_packet_variable_t *variable;
-  296   1      
-  297   1          variable = service_packet_find_variable(name);
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 6   
-
-  298   1          if((NULL == variable) || (NULL == value_text))
-  299   1          {
-  300   2              return;
-  301   2          }
-  302   1      
-  303   1          if(0U == service_packet_parse_float_list(value_text, value_copy, variable->value_count))
-  304   1          {
-  305   2              return;
-  306   2          }
-  307   1      
-  308   1          ea_backup = EA;
-  309   1          EA = 0;
-  310   1          for(i = 0; i < variable->value_count; i++)
-  311   1          {
-  312   2              variable->value[i] = value_copy[i];
-  313   2          }
-  314   1          EA = ea_backup;
-  315   1      
-  316   1          service_packet_print_variable(variable);
-  317   1      }
-  318          
-  319          //-------------------------------------------------------------------------------------------------------
+  290          // 函数简介     处理写入指令
+  291          // 参数说明     name            变量名称
+  292          // 参数说明     value_text      待写入的数值字符串
+  293          // 返回参数     void
+  294          // 使用示例     内部调用，用户无需关心
+  295          //-------------------------------------------------------------------------------------------------------
              -------------
-  320          // 函数简介     处理触发指令
-  321          // 参数说明     name            操作名称
-  322          // 返回参数     void
-  323          // 使用示例     内部调用，用户无需关心
-  324          // 备注信息     匹配成功后将动作加入 service_function_queue，优先级为 1
+  296          static void service_packet_handle_write(char *name, char *value_text)
+  297          {
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 6   
+
+  298   1          uint8 i;
+  299   1          uint8 ea_backup;
+  300   1          float value_copy[SERVICE_PACKET_VALUE_MAX];
+  301   1          service_packet_variable_t *variable;
+  302   1      
+  303   1          variable = service_packet_find_variable(name);
+  304   1          if((NULL == variable) || (NULL == value_text))
+  305   1          {
+  306   2              return;
+  307   2          }
+  308   1      
+  309   1          if(0U == service_packet_parse_float_list(value_text, value_copy, variable->value_count))
+  310   1          {
+  311   2              return;
+  312   2          }
+  313   1      
+  314   1          ea_backup = EA;
+  315   1          EA = 0;
+  316   1          for(i = 0; i < variable->value_count; i++)
+  317   1          {
+  318   2              variable->value[i] = value_copy[i];
+  319   2          }
+  320   1          EA = ea_backup;
+  321   1      
+  322   1          service_packet_print_variable(variable);
+  323   1      }
+  324          
   325          //-------------------------------------------------------------------------------------------------------
              -------------
-  326          static void service_packet_handle_trigger(char *name)
-  327          {
-  328   1          service_packet_action_t *action;
-  329   1      
-  330   1          action = service_packet_find_action(name);
-  331   1          if(NULL == action)
-  332   1          {
-  333   2              return;
-  334   2          }
-  335   1      
-  336   1          (void)service_function_queue_add(action->func, action->delay_ms, SERVICE_PACKET_TRIGGER_PRIORITY);
-  337   1      }
-  338          
-  339          //-------------------------------------------------------------------------------------------------------
+  326          // 函数简介     处理触发指令
+  327          // 参数说明     name            操作名称
+  328          // 返回参数     void
+  329          // 使用示例     内部调用，用户无需关心
+  330          // 备注信息     匹配成功后将动作加入 service_function_queue，优先级为 1
+  331          //-------------------------------------------------------------------------------------------------------
              -------------
-  340          // 函数简介     解析并处理一帧完整数据
-  341          // 参数说明     frame           去除帧头帧尾后的帧内容
-  342          // 返回参数     void
-  343          // 使用示例     内部调用，用户无需关心
-  344          // 备注信息     帧格式为 $$命令,名称,数值@@，命令支持 W/R/T
+  332          static void service_packet_handle_trigger(char *name)
+  333          {
+  334   1          service_packet_action_t *action;
+  335   1      
+  336   1          action = service_packet_find_action(name);
+  337   1          if(NULL == action)
+  338   1          {
+  339   2              return;
+  340   2          }
+  341   1      
+  342   1          (void)service_function_queue_add(action->func, action->delay_ms, SERVICE_PACKET_TRIGGER_PRIORITY);
+  343   1      }
+  344          
   345          //-------------------------------------------------------------------------------------------------------
              -------------
-  346          static void service_packet_handle_frame(char *frame)
-  347          {
-  348   1          char command;
-  349   1          char *name;
-  350   1          char *value_text;
-  351   1      
-  352   1          if('\0' == frame[0])
-  353   1          {
-  354   2              return;
-  355   2          }
-  356   1      
-  357   1          command = frame[0];
-  358   1          name = service_packet_skip_field_separator(&frame[1]);
-  359   1          value_text = name;
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 7   
+  346          // 函数简介     解析并处理一帧完整数据
+  347          // 参数说明     frame           去除帧头帧尾后的帧内容
+  348          // 返回参数     void
+  349          // 使用示例     内部调用，用户无需关心
+  350          // 备注信息     帧格式为 $$命令,名称,数值@@，命令支持 W/R/T
+  351          //-------------------------------------------------------------------------------------------------------
+             -------------
+  352          static void service_packet_handle_frame(char *frame)
+  353          {
+  354   1          char command;
+  355   1          char *name;
+  356   1          char *value_text;
+  357   1      
+  358   1          if('\0' == frame[0])
+  359   1          {
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 7   
 
-  360   1      
-  361   1          while(('\0' != *value_text) && (0U == service_packet_is_field_separator(*value_text)))
-  362   1          {
-  363   2              value_text++;
-  364   2          }
-  365   1      
-  366   1          if('\0' != *value_text)
-  367   1          {
-  368   2              *value_text = '\0';
+  360   2              return;
+  361   2          }
+  362   1      
+  363   1          command = frame[0];
+  364   1          name = service_packet_skip_field_separator(&frame[1]);
+  365   1          value_text = name;
+  366   1      
+  367   1          while(('\0' != *value_text) && (0U == service_packet_is_field_separator(*value_text)))
+  368   1          {
   369   2              value_text++;
-  370   2              value_text = service_packet_skip_field_separator(value_text);
-  371   2          }
-  372   1          else
+  370   2          }
+  371   1      
+  372   1          if('\0' != *value_text)
   373   1          {
-  374   2              value_text = NULL;
-  375   2          }
-  376   1      
-  377   1          if('\0' == *name)
-  378   1          {
-  379   2              return;
-  380   2          }
-  381   1      
-  382   1          if('R' == command)
-  383   1          {
-  384   2              service_packet_handle_read(name);
-  385   2          }
-  386   1          else if('W' == command)
-  387   1          {
-  388   2              service_packet_handle_write(name, value_text);
-  389   2          }
-  390   1          else if('T' == command)
-  391   1          {
-  392   2              service_packet_handle_trigger(name);
-  393   2          }
-  394   1      }
-  395          
-  396          //-------------------------------------------------------------------------------------------------------
+  374   2              *value_text = '\0';
+  375   2              value_text++;
+  376   2              value_text = service_packet_skip_field_separator(value_text);
+  377   2          }
+  378   1          else
+  379   1          {
+  380   2              value_text = NULL;
+  381   2          }
+  382   1      
+  383   1          if('\0' == *name)
+  384   1          {
+  385   2              return;
+  386   2          }
+  387   1      
+  388   1          if('R' == command)
+  389   1          {
+  390   2              service_packet_handle_read(name);
+  391   2          }
+  392   1          else if('W' == command)
+  393   1          {
+  394   2              service_packet_handle_write(name, value_text);
+  395   2          }
+  396   1          else if('T' == command)
+  397   1          {
+  398   2              service_packet_handle_trigger(name);
+  399   2          }
+  400   1      }
+  401          
+  402          //-------------------------------------------------------------------------------------------------------
              -------------
-  397          // 函数简介     复位接收状态机
-  398          // 参数说明     void
-  399          // 返回参数     void
-  400          // 使用示例     内部调用，用户无需关心
-  401          //-------------------------------------------------------------------------------------------------------
+  403          // 函数简介     复位接收状态机
+  404          // 参数说明     void
+  405          // 返回参数     void
+  406          // 使用示例     内部调用，用户无需关心
+  407          //-------------------------------------------------------------------------------------------------------
              -------------
-  402          static void service_packet_reset_rx(void)
-  403          {
-  404   1          packet_rx_state = SERVICE_PACKET_RX_WAIT_HEAD_1;
-  405   1          packet_frame_index = 0U;
-  406   1      }
-  407          
-  408          //-------------------------------------------------------------------------------------------------------
-             -------------
-  409          // 函数简介     向帧缓存写入一个字符
-  410          // 参数说明     value           待写入字符
-  411          // 返回参数     void
-  412          // 使用示例     内部调用，用户无需关心
-  413          // 备注信息     缓存溢出时自动复位接收状态机
+  408          static void service_packet_reset_rx(void)
+  409          {
+  410   1          packet_rx_state = SERVICE_PACKET_RX_WAIT_HEAD_1;
+  411   1          packet_frame_index = 0U;
+  412   1      }
+  413          
   414          //-------------------------------------------------------------------------------------------------------
              -------------
-  415          static void service_packet_push_body_char(char value)
-  416          {
-  417   1          if(packet_frame_index < (SERVICE_PACKET_FRAME_MAX - 1U))
-  418   1          {
-  419   2              packet_frame[packet_frame_index] = value;
-  420   2              packet_frame_index++;
-  421   2          }
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 8   
-
-  422   1          else
-  423   1          {
-  424   2              service_packet_reset_rx();
-  425   2          }
-  426   1      }
-  427          
-  428          //-------------------------------------------------------------------------------------------------------
+  415          // 函数简介     向帧缓存写入一个字符
+  416          // 参数说明     value           待写入字符
+  417          // 返回参数     void
+  418          // 使用示例     内部调用，用户无需关心
+  419          // 备注信息     缓存溢出时自动复位接收状态机
+  420          //-------------------------------------------------------------------------------------------------------
              -------------
-  429          // 函数简介     输入一个接收字符并推进帧状态机
-  430          // 参数说明     value           接收到的字符
-  431          // 返回参数     void
-  432          // 使用示例     内部调用，用户无需关心
-  433          // 备注信息     检测到完整 $$...@@ 帧后自动解析执行
+  421          static void service_packet_push_body_char(char value)
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 8   
+
+  422          {
+  423   1          if(packet_frame_index < (SERVICE_PACKET_FRAME_MAX - 1U))
+  424   1          {
+  425   2              packet_frame[packet_frame_index] = value;
+  426   2              packet_frame_index++;
+  427   2          }
+  428   1          else
+  429   1          {
+  430   2              service_packet_reset_rx();
+  431   2          }
+  432   1      }
+  433          
   434          //-------------------------------------------------------------------------------------------------------
              -------------
-  435          static void service_packet_input_char(char value)
-  436          {
-  437   1          if(SERVICE_PACKET_RX_WAIT_HEAD_1 == packet_rx_state)
-  438   1          {
-  439   2              if('$' == value)
-  440   2              {
-  441   3                  packet_rx_state = SERVICE_PACKET_RX_WAIT_HEAD_2;
-  442   3              }
-  443   2              return;
-  444   2          }
-  445   1      
-  446   1          if(SERVICE_PACKET_RX_WAIT_HEAD_2 == packet_rx_state)
-  447   1          {
-  448   2              if('$' == value)
-  449   2              {
-  450   3                  packet_frame_index = 0U;
-  451   3                  packet_rx_state = SERVICE_PACKET_RX_BODY;
-  452   3              }
-  453   2              else
-  454   2              {
-  455   3                  packet_rx_state = SERVICE_PACKET_RX_WAIT_HEAD_1;
-  456   3              }
-  457   2              return;
-  458   2          }
-  459   1      
-  460   1          if(SERVICE_PACKET_RX_BODY == packet_rx_state)
-  461   1          {
-  462   2              if('@' == value)
-  463   2              {
-  464   3                  packet_rx_state = SERVICE_PACKET_RX_TAIL_2;
-  465   3              }
-  466   2              else
-  467   2              {
-  468   3                  service_packet_push_body_char(value);
-  469   3              }
-  470   2              return;
-  471   2          }
-  472   1      
-  473   1          if(SERVICE_PACKET_RX_TAIL_2 == packet_rx_state)
-  474   1          {
-  475   2              if('@' == value)
-  476   2              {
-  477   3                  packet_frame[packet_frame_index] = '\0';
-  478   3                  service_packet_handle_frame(packet_frame);
-  479   3                  service_packet_reset_rx();
-  480   3              }
-  481   2              else
+  435          // 函数简介     输入一个接收字符并推进帧状态机
+  436          // 参数说明     value           接收到的字符
+  437          // 返回参数     void
+  438          // 使用示例     内部调用，用户无需关心
+  439          // 备注信息     检测到完整 $$...@@ 帧后自动解析执行
+  440          //-------------------------------------------------------------------------------------------------------
+             -------------
+  441          static void service_packet_input_char(char value)
+  442          {
+  443   1          if(SERVICE_PACKET_RX_WAIT_HEAD_1 == packet_rx_state)
+  444   1          {
+  445   2              if('$' == value)
+  446   2              {
+  447   3                  packet_rx_state = SERVICE_PACKET_RX_WAIT_HEAD_2;
+  448   3              }
+  449   2              return;
+  450   2          }
+  451   1      
+  452   1          if(SERVICE_PACKET_RX_WAIT_HEAD_2 == packet_rx_state)
+  453   1          {
+  454   2              if('$' == value)
+  455   2              {
+  456   3                  packet_frame_index = 0U;
+  457   3                  packet_rx_state = SERVICE_PACKET_RX_BODY;
+  458   3              }
+  459   2              else
+  460   2              {
+  461   3                  packet_rx_state = SERVICE_PACKET_RX_WAIT_HEAD_1;
+  462   3              }
+  463   2              return;
+  464   2          }
+  465   1      
+  466   1          if(SERVICE_PACKET_RX_BODY == packet_rx_state)
+  467   1          {
+  468   2              if('@' == value)
+  469   2              {
+  470   3                  packet_rx_state = SERVICE_PACKET_RX_TAIL_2;
+  471   3              }
+  472   2              else
+  473   2              {
+  474   3                  service_packet_push_body_char(value);
+  475   3              }
+  476   2              return;
+  477   2          }
+  478   1      
+  479   1          if(SERVICE_PACKET_RX_TAIL_2 == packet_rx_state)
+  480   1          {
+  481   2              if('@' == value)
   482   2              {
-  483   3                  service_packet_push_body_char('@');
-  484   3                  service_packet_push_body_char(value);
-  485   3                  packet_rx_state = SERVICE_PACKET_RX_BODY;
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 9   
+  483   3                  packet_frame[packet_frame_index] = '\0';
+  484   3                  service_packet_handle_frame(packet_frame);
+  485   3                  service_packet_reset_rx();
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 9   
 
   486   3              }
-  487   2          }
-  488   1      }
-  489          
-  490          //-------------------------------------------------------------------------------------------------------
-             -------------
-  491          // 函数简介     通讯包服务初始化
-  492          // 参数说明     void
-  493          // 返回参数     void
-  494          // 使用示例     service_packet_init();
-  495          // 备注信息     初始化后需要通过 service_packet_add_variable/action 注册变量和动作
+  487   2              else
+  488   2              {
+  489   3                  service_packet_push_body_char('@');
+  490   3                  service_packet_push_body_char(value);
+  491   3                  packet_rx_state = SERVICE_PACKET_RX_BODY;
+  492   3              }
+  493   2          }
+  494   1      }
+  495          
   496          //-------------------------------------------------------------------------------------------------------
              -------------
-  497          void service_packet_init(void)
-  498          {
-  499   1          uint8 i;
-  500   1      
-  501   1          packet_variable_count = 0U;
-  502   1          packet_action_count = 0U;
-  503   1          service_packet_reset_rx();
-  504   1      
-  505   1          for(i = 0; i < SERVICE_PACKET_VARIABLE_MAX; i++)
-  506   1          {
-  507   2              packet_variables[i].name = NULL;
-  508   2              packet_variables[i].value = NULL;
-  509   2              packet_variables[i].value_count = 0U;
-  510   2          }
-  511   1      
-  512   1          for(i = 0; i < SERVICE_PACKET_ACTION_MAX; i++)
-  513   1          {
-  514   2              packet_actions[i].name = NULL;
-  515   2              packet_actions[i].func = NULL;
-*** WARNING C150 IN LINE 515 OF ..\L2_SERVICE\service_packet.c: 'far' pointer converted to 'far' pointer
-  516   2              packet_actions[i].delay_ms = 0U;
-  517   2          }
-  518   1      }
-  519          
-  520          //-------------------------------------------------------------------------------------------------------
+  497          // 函数简介     通讯包服务初始化
+  498          // 参数说明     void
+  499          // 返回参数     void
+  500          // 使用示例     service_packet_init();
+  501          // 备注信息     初始化后需要通过 service_packet_add_variable/action 注册变量和动作
+  502          //-------------------------------------------------------------------------------------------------------
              -------------
-  521          // 函数简介     通讯包服务调试接口
-  522          // 参数说明     void
-  523          // 返回参数     void
-  524          // 使用示例     service_packet_debug();
-  525          //-------------------------------------------------------------------------------------------------------
+  503          void service_packet_init(void)
+  504          {
+  505   1          uint8 i;
+  506   1      
+  507   1          packet_variable_count = 0U;
+  508   1          packet_action_count = 0U;
+  509   1          service_packet_reset_rx();
+  510   1      
+  511   1          for(i = 0; i < SERVICE_PACKET_VARIABLE_MAX; i++)
+  512   1          {
+  513   2              packet_variables[i].name = NULL;
+  514   2              packet_variables[i].value = NULL;
+  515   2              packet_variables[i].value_count = 0U;
+  516   2          }
+  517   1      
+  518   1          for(i = 0; i < SERVICE_PACKET_ACTION_MAX; i++)
+  519   1          {
+  520   2              packet_actions[i].name = NULL;
+  521   2              packet_actions[i].func = NULL;
+*** WARNING C150 IN LINE 521 OF ..\L2_SERVICE\service_packet.c: 'far' pointer converted to 'far' pointer
+  522   2              packet_actions[i].delay_ms = 0U;
+  523   2          }
+  524   1      }
+  525          
+  526          //-------------------------------------------------------------------------------------------------------
              -------------
-  526          void service_packet_debug(void)
-  527          {
-  528   1      }
-  529          
-  530          //-------------------------------------------------------------------------------------------------------
+  527          // 函数简介     通讯包服务调试接口
+  528          // 参数说明     void
+  529          // 返回参数     void
+  530          // 使用示例     service_packet_debug();
+  531          //-------------------------------------------------------------------------------------------------------
              -------------
-  531          // 函数简介     注册可读写变量
-  532          // 参数说明     name            变量名称
-  533          // 参数说明     value           变量数据地址
-  534          // 参数说明     value_count     变量包含的 float 数量
-  535          // 返回参数     uint8           1：注册成功 0：注册失败
-  536          // 使用示例     service_packet_add_variable("speed", speed_value, 2);
-  537          // 备注信息     相同名称重复注册时会更新变量地址和数量
-  538          //-------------------------------------------------------------------------------------------------------
+  532          void service_packet_debug(void)
+  533          {
+  534   1      }
+  535          
+  536          //-------------------------------------------------------------------------------------------------------
              -------------
-  539          uint8 service_packet_add_variable(const char *name, float *value, uint8 value_count)
-  540          {
-  541   1          service_packet_variable_t *variable;
-  542   1      
-  543   1          if((NULL == name) || (NULL == value) || (0U == value_count) ||
-  544   1                  (SERVICE_PACKET_VALUE_MAX < value_count))
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 10  
+  537          // 函数简介     注册可读写变量
+  538          // 参数说明     name            变量名称
+  539          // 参数说明     value           变量数据地址
+  540          // 参数说明     value_count     变量包含的 float 数量
+  541          // 返回参数     uint8           1：注册成功 0：注册失败
+  542          // 使用示例     service_packet_add_variable("speed", speed_value, 2);
+  543          // 备注信息     相同名称重复注册时会更新变量地址和数量
+  544          //-------------------------------------------------------------------------------------------------------
+             -------------
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 10  
 
-  545   1          {
-  546   2              return 0U;
-  547   2          }
+  545          uint8 service_packet_add_variable(const char *name, float *value, uint8 value_count)
+  546          {
+  547   1          service_packet_variable_t *variable;
   548   1      
-  549   1          variable = service_packet_find_variable(name);
-  550   1          if(NULL != variable)
+  549   1          if((NULL == name) || (NULL == value) || (0U == value_count) ||
+  550   1                  (SERVICE_PACKET_VALUE_MAX < value_count))
   551   1          {
-  552   2              variable->value = value;
-  553   2              variable->value_count = value_count;
-  554   2              return 1U;
-  555   2          }
-  556   1      
-  557   1          if(SERVICE_PACKET_VARIABLE_MAX <= packet_variable_count)
-  558   1          {
-  559   2              return 0U;
-  560   2          }
-  561   1      
-  562   1          packet_variables[packet_variable_count].name = name;
-  563   1          packet_variables[packet_variable_count].value = value;
-  564   1          packet_variables[packet_variable_count].value_count = value_count;
-  565   1          packet_variable_count++;
-  566   1      
-  567   1          return 1U;
-  568   1      }
-  569          
-  570          //-------------------------------------------------------------------------------------------------------
+  552   2              return 0U;
+  553   2          }
+  554   1      
+  555   1          variable = service_packet_find_variable(name);
+  556   1          if(NULL != variable)
+  557   1          {
+  558   2              variable->value = value;
+  559   2              variable->value_count = value_count;
+  560   2              return 1U;
+  561   2          }
+  562   1      
+  563   1          if(SERVICE_PACKET_VARIABLE_MAX <= packet_variable_count)
+  564   1          {
+  565   2              return 0U;
+  566   2          }
+  567   1      
+  568   1          packet_variables[packet_variable_count].name = name;
+  569   1          packet_variables[packet_variable_count].value = value;
+  570   1          packet_variables[packet_variable_count].value_count = value_count;
+  571   1          packet_variable_count++;
+  572   1      
+  573   1          return 1U;
+  574   1      }
+  575          
+  576          //-------------------------------------------------------------------------------------------------------
              -------------
-  571          // 函数简介     注册触发动作
-  572          // 参数说明     name            操作名称
-  573          // 参数说明     func            触发动作函数
-  574          // 参数说明     delay_ms        触发后延迟执行时间 单位 ms
-  575          // 返回参数     uint8           1：注册成功 0：注册失败
-  576          // 使用示例     service_packet_add_action("reset", service_motor_reset, 0);
-  577          // 备注信息     相同名称重复注册时会更新函数和延迟时间
-  578          //-------------------------------------------------------------------------------------------------------
+  577          // 函数简介     注册触发动作
+  578          // 参数说明     name            操作名称
+  579          // 参数说明     func            触发动作函数
+  580          // 参数说明     delay_ms        触发后延迟执行时间 单位 ms
+  581          // 返回参数     uint8           1：注册成功 0：注册失败
+  582          // 使用示例     service_packet_add_action("reset", service_motor_reset, 0);
+  583          // 备注信息     相同名称重复注册时会更新函数和延迟时间
+  584          //-------------------------------------------------------------------------------------------------------
              -------------
-  579          uint8 service_packet_add_action(const char *name, service_packet_action_func_t func, uint32 delay_ms)
-  580          {
-  581   1          service_packet_action_t *action;
-  582   1      
-  583   1          if((NULL == name) || (NULL == func))
-  584   1          {
-  585   2              return 0U;
-  586   2          }
-  587   1      
-  588   1          action = service_packet_find_action(name);
-  589   1          if(NULL != action)
+  585          uint8 service_packet_add_action(const char *name, service_packet_action_func_t func, uint32 delay_ms)
+  586          {
+  587   1          service_packet_action_t *action;
+  588   1      
+  589   1          if((NULL == name) || (NULL == func))
   590   1          {
-  591   2              action->func = func;
-  592   2              action->delay_ms = delay_ms;
-  593   2              return 1U;
-  594   2          }
-  595   1      
-  596   1          if(SERVICE_PACKET_ACTION_MAX <= packet_action_count)
-  597   1          {
-  598   2              return 0U;
-  599   2          }
-  600   1      
-  601   1          packet_actions[packet_action_count].name = name;
-  602   1          packet_actions[packet_action_count].func = func;
-  603   1          packet_actions[packet_action_count].delay_ms = delay_ms;
-  604   1          packet_action_count++;
-  605   1      
-  606   1          return 1U;
-  607   1      }
-  608          
-C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:01:24  PAGE 11  
+  591   2              return 0U;
+  592   2          }
+  593   1      
+  594   1          action = service_packet_find_action(name);
+  595   1          if(NULL != action)
+  596   1          {
+  597   2              action->func = func;
+  598   2              action->delay_ms = delay_ms;
+  599   2              return 1U;
+  600   2          }
+  601   1      
+  602   1          if(SERVICE_PACKET_ACTION_MAX <= packet_action_count)
+  603   1          {
+  604   2              return 0U;
+  605   2          }
+  606   1      
+  607   1          packet_actions[packet_action_count].name = name;
+  608   1          packet_actions[packet_action_count].func = func;
+C251 COMPILER V5.60.0,  service_packet                                                     16/05/26  17:23:20  PAGE 11  
 
-  609          //-------------------------------------------------------------------------------------------------------
-             -------------
-  610          // 函数简介     通讯包服务周期更新
-  611          // 参数说明     void
-  612          // 返回参数     void
-  613          // 使用示例     service_packet_update();
-  614          // 备注信息     从无线串口读取数据并送入帧状态机，建议在主循环中周期调用
+  609   1          packet_actions[packet_action_count].delay_ms = delay_ms;
+  610   1          packet_action_count++;
+  611   1      
+  612   1          return 1U;
+  613   1      }
+  614          
   615          //-------------------------------------------------------------------------------------------------------
              -------------
-  616          void service_packet_update(void)
-  617          {
-  618   1          uint8 i;
-  619   1          uint8 read_buffer[SERVICE_PACKET_RX_READ_SIZE];
-  620   1          uint8 read_length;
-  621   1      
-  622   1          read_length = (uint8)service_wireless_uart_read_buffer(read_buffer, SERVICE_PACKET_RX_READ_SIZE);
-  623   1      
-  624   1          for(i = 0; i < read_length; i++)
-  625   1          {
-  626   2              service_packet_input_char((char)read_buffer[i]);
-  627   2          }
-  628   1      }
+  616          // 函数简介     通讯包服务周期更新
+  617          // 参数说明     void
+  618          // 返回参数     void
+  619          // 使用示例     service_packet_update();
+  620          // 备注信息     从无线串口读取数据并送入帧状态机，建议在主循环中周期调用
+  621          //-------------------------------------------------------------------------------------------------------
+             -------------
+  622          void service_packet_update(void)
+  623          {
+  624   1          uint8 i;
+  625   1          uint8 read_buffer[SERVICE_PACKET_RX_READ_SIZE];
+  626   1          uint8 read_length;
+  627   1      
+  628   1          read_length = (uint8)service_wireless_uart_read_buffer(read_buffer, SERVICE_PACKET_RX_READ_SIZE);
+  629   1      
+  630   1          for(i = 0; i < read_length; i++)
+  631   1          {
+  632   2              service_packet_input_char((char)read_buffer[i]);
+  633   2          }
+  634   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      3440     ------
+  ecode size           =      3524     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -721,7 +727,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        39     ------
+  hconst size          =        49     ------
 End of Module Information.
 
 

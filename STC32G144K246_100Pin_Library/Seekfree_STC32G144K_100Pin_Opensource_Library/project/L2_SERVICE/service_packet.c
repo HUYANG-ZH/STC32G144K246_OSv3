@@ -247,6 +247,12 @@ static void service_packet_print_variable(service_packet_variable_t *variable)
     }
     EA = ea_backup;
 
+    if(1U == variable->value_count)
+    {
+        wprint("%s,%.3f\r\n", (char *)variable->name, (double)value_copy[0]);
+        return;
+    }
+
     wprint("%s,", (char *)variable->name);
 
     for(i = 0; i < variable->value_count; i++)

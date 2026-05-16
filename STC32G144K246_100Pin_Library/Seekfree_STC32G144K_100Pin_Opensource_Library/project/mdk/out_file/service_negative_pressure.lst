@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_negative_pressure                                          16/05/26  17:01:24  PAGE 1   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          16/05/26  17:18:13  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_negative_pressure
@@ -12,67 +12,100 @@ COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_negati
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "service_negative_pressure.h"
-    3          
-    4          #define NEGATIVE_PRESSURE_PERCENT_MAX       (100U)
-    5          #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
-    6          #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
-    7          
-    8          static uint8 negative_pressure_percent = 0U;
+    2          #include "service_packet.h"
+    3          #include "service_negative_pressure.h"
+    4          
+    5          #define NEGATIVE_PRESSURE_PERCENT_MAX       (100U)
+    6          #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
+    7          #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
+    8          #define NEGATIVE_PRESSURE_PACKET_COUNT      (1U)
     9          
-   10          static uint32 negative_pressure_percent_to_duty(uint8 percent)
-   11          {
-   12   1          uint32 duty_range;
-   13   1      
-   14   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
-   15   1          {
-   16   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
-   17   2          }
-   18   1      
-   19   1          duty_range = NEGATIVE_PRESSURE_DUTY_MAX - NEGATIVE_PRESSURE_DUTY_MIN;
-   20   1      
-   21   1          return NEGATIVE_PRESSURE_DUTY_MIN + (duty_range * percent / NEGATIVE_PRESSURE_PERCENT_MAX);
-   22   1      }
-   23          
-   24          void service_negative_pressure_init(void)
-   25          {
-   26   1          pwm_init(SERVICE_NEGATIVE_PRESSURE_PWM_CH, SERVICE_NEGATIVE_PRESSURE_PWM_FREQ_HZ, 0U);
-   27   1          negative_pressure_percent = 0U;
-   28   1      }
-   29          
-   30          void service_negative_pressure_debug(void)
-   31          {
-   32   1          printf("[pressure] : 30\r\n");
-   33   1          service_negative_pressure_set_percent(30);
-   34   1      }
-   35          
-   36          void service_negative_pressure_set_percent(uint8 percent)
-   37          {
-   38   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
-   39   1          {
-   40   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
-   41   2          }
-   42   1      
-   43   1          pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(percent));
-   44   1          negative_pressure_percent = percent;
-   45   1      }
-   46          
-   47          uint8 service_negative_pressure_get_percent(void)
-   48          {
-   49   1          return negative_pressure_percent;
-   50   1      }
+   10          static uint8 negative_pressure_percent = 0U;
+   11          static float negative_pressure_percent_config = 0.0f;
+   12          
+   13          static uint32 negative_pressure_percent_to_duty(uint8 percent)
+   14          {
+   15   1          uint32 duty_range;
+   16   1      
+   17   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+   18   1          {
+   19   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+   20   2          }
+   21   1      
+   22   1          duty_range = NEGATIVE_PRESSURE_DUTY_MAX - NEGATIVE_PRESSURE_DUTY_MIN;
+   23   1      
+   24   1          return NEGATIVE_PRESSURE_DUTY_MIN + (duty_range * percent / NEGATIVE_PRESSURE_PERCENT_MAX);
+   25   1      }
+   26          
+   27          static uint8 negative_pressure_float_to_percent(float percent)
+   28          {
+   29   1          if(0.0f >= percent)
+   30   1          {
+   31   2              return 0U;
+   32   2          }
+   33   1      
+   34   1          if((float)NEGATIVE_PRESSURE_PERCENT_MAX <= percent)
+   35   1          {
+   36   2              return NEGATIVE_PRESSURE_PERCENT_MAX;
+   37   2          }
+   38   1      
+   39   1          return (uint8)(percent + 0.5f);
+   40   1      }
+   41          
+   42          void service_negative_pressure_init(void)
+   43          {
+   44   1          pwm_init(SERVICE_NEGATIVE_PRESSURE_PWM_CH, SERVICE_NEGATIVE_PRESSURE_PWM_FREQ_HZ, 0U);
+   45   1          negative_pressure_percent = 0U;
+   46   1          negative_pressure_percent_config = 0.0f;
+   47   1          (void)service_packet_add_variable("negative_pressure", &negative_pressure_percent_config, NEGATIVE_PR
+             -ESSURE_PACKET_COUNT);
+   48   1      }
+   49          
+   50          void service_negative_pressure_debug(void)
+   51          {
+   52   1          printf("[pressure] : 30\r\n");
+   53   1          service_negative_pressure_set_percent(30);
+   54   1      }
+C251 COMPILER V5.60.0,  service_negative_pressure                                          16/05/26  17:18:13  PAGE 2   
+
+   55          
+   56          void service_negative_pressure_task(void)
+   57          {
+   58   1          uint8 percent;
+   59   1      
+   60   1          percent = negative_pressure_float_to_percent(negative_pressure_percent_config);
+   61   1          if(percent != negative_pressure_percent)
+   62   1          {
+   63   2              service_negative_pressure_set_percent(percent);
+   64   2          }
+   65   1      }
+   66          
+   67          void service_negative_pressure_set_percent(uint8 percent)
+   68          {
+   69   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+   70   1          {
+   71   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+   72   2          }
+   73   1      
+   74   1          pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(percent));
+   75   1          negative_pressure_percent = percent;
+   76   1          negative_pressure_percent_config = (float)percent;
+   77   1      }
+   78          
+   79          uint8 service_negative_pressure_get_percent(void)
+   80          {
+   81   1          return negative_pressure_percent;
+   82   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       175     ------
-C251 COMPILER V5.60.0,  service_negative_pressure                                          16/05/26  17:01:24  PAGE 2   
-
+  ecode size           =       354     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         7     ------
+  xdata size           =        16     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -82,7 +115,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        24     ------
+  hconst size          =        51     ------
 End of Module Information.
 
 

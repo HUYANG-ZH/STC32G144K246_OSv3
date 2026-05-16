@@ -73,6 +73,7 @@ void main(void)
         app_scheduler_run();
         service_function_queue_update();
         service_packet_update();
+        service_negative_pressure_task();
     }
 }
 
