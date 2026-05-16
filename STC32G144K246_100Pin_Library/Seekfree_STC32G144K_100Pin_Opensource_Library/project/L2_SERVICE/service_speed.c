@@ -1,5 +1,6 @@
 #include "zf_common_headfile.h"
 #include "bsp_include.h"
+#include "service_delay.h"
 #include "service_speed.h"
 
 #define SERVICE_SPEED_PI                     (3.1415926f)
@@ -24,6 +25,14 @@ void service_speed_init(void)
     speed_data.left_mps = 0.0f;
     speed_data.right_mps = 0.0f;
     pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
+}
+
+void service_speed_debug(void)
+{
+    service_speed_data_t testdata;
+    service_delay_ms(1000U);
+    service_speed_get(&testdata);
+    printf("[speed:] %f,%f\r\n",testdata.left_mps,testdata.right_mps);
 }
 
 void service_speed_update(void)

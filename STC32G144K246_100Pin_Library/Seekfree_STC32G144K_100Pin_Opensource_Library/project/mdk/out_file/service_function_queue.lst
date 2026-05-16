@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_function_queue                                             15/05/26  11:43:42  PAGE 1   
+C251 COMPILER V5.60.0,  service_function_queue                                             16/05/26  15:32:39  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_function_queue
@@ -61,116 +61,120 @@ stmt  level    source
    47   1          EA = ea_backup;
    48   1      }
    49          
-   50          uint8 service_function_queue_add(service_function_queue_func_t func, uint32 delay_ms, uint8 priority)
+   50          void service_function_queue_debug(void)
    51          {
-   52   1          uint8 i;
-   53   1          uint8 ea_backup;
-   54   1          uint32 now;
-C251 COMPILER V5.60.0,  service_function_queue                                             15/05/26  11:43:42  PAGE 2   
+   52   1      }
+   53          
+   54          uint8 service_function_queue_add(service_function_queue_func_t func, uint32 delay_ms, uint8 priority)
+C251 COMPILER V5.60.0,  service_function_queue                                             16/05/26  15:32:39  PAGE 2   
 
-   55   1      
-   56   1          if((NULL == func) || (SERVICE_FUNCTION_QUEUE_PRIORITY_MIN > priority) ||
-   57   1                  (SERVICE_FUNCTION_QUEUE_PRIORITY_MAX < priority))
-   58   1          {
-   59   2              return 0U;
-   60   2          }
-   61   1      
-   62   1          now = service_timetick_what();
-   63   1      
-   64   1          ea_backup = EA;
-   65   1          EA = 0;
-   66   1      
-   67   1          for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
-   68   1          {
-   69   2              if(0U == function_queue[i].used)
-   70   2              {
-   71   3                  function_queue[i].func = func;
-   72   3                  function_queue[i].start_tick = now;
-   73   3                  function_queue[i].delay_tick = delay_ms * SERVICE_FUNCTION_QUEUE_TICK_PER_MS;
-   74   3                  function_queue[i].order = function_queue_order++;
-   75   3                  function_queue[i].priority = priority;
-   76   3                  function_queue[i].used = 1U;
-   77   3      
-   78   3                  EA = ea_backup;
-   79   3                  return 1U;
-   80   3              }
-   81   2          }
-   82   1      
-   83   1          EA = ea_backup;
-   84   1          return 0U;
-   85   1      }
-   86          
-   87          void service_function_queue_update(void)
-   88          {
-   89   1          uint8 priority;
-   90   1          uint8 i;
-   91   1          uint8 selected;
-   92   1          uint8 ea_backup;
-   93   1          uint32 now;
-   94   1          uint32 update_order_limit;
-   95   1          uint32 selected_order;
-   96   1          service_function_queue_func_t selected_func;
-   97   1      
-   98   1          now = service_timetick_what();
-   99   1      
-  100   1          ea_backup = EA;
-  101   1          EA = 0;
-  102   1          update_order_limit = function_queue_order;
-  103   1          EA = ea_backup;
-  104   1      
-  105   1          for(priority = SERVICE_FUNCTION_QUEUE_PRIORITY_MAX; priority >= SERVICE_FUNCTION_QUEUE_PRIORITY_MIN; 
+   55          {
+   56   1          uint8 i;
+   57   1          uint8 ea_backup;
+   58   1          uint32 now;
+   59   1      
+   60   1          if((NULL == func) || (SERVICE_FUNCTION_QUEUE_PRIORITY_MIN > priority) ||
+   61   1                  (SERVICE_FUNCTION_QUEUE_PRIORITY_MAX < priority))
+   62   1          {
+   63   2              return 0U;
+   64   2          }
+   65   1      
+   66   1          now = service_timetick_what();
+   67   1      
+   68   1          ea_backup = EA;
+   69   1          EA = 0;
+   70   1      
+   71   1          for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
+   72   1          {
+   73   2              if(0U == function_queue[i].used)
+   74   2              {
+   75   3                  function_queue[i].func = func;
+   76   3                  function_queue[i].start_tick = now;
+   77   3                  function_queue[i].delay_tick = delay_ms * SERVICE_FUNCTION_QUEUE_TICK_PER_MS;
+   78   3                  function_queue[i].order = function_queue_order++;
+   79   3                  function_queue[i].priority = priority;
+   80   3                  function_queue[i].used = 1U;
+   81   3      
+   82   3                  EA = ea_backup;
+   83   3                  return 1U;
+   84   3              }
+   85   2          }
+   86   1      
+   87   1          EA = ea_backup;
+   88   1          return 0U;
+   89   1      }
+   90          
+   91          void service_function_queue_update(void)
+   92          {
+   93   1          uint8 priority;
+   94   1          uint8 i;
+   95   1          uint8 selected;
+   96   1          uint8 ea_backup;
+   97   1          uint32 now;
+   98   1          uint32 update_order_limit;
+   99   1          uint32 selected_order;
+  100   1          service_function_queue_func_t selected_func;
+  101   1      
+  102   1          now = service_timetick_what();
+  103   1      
+  104   1          ea_backup = EA;
+  105   1          EA = 0;
+  106   1          update_order_limit = function_queue_order;
+  107   1          EA = ea_backup;
+  108   1      
+  109   1          for(priority = SERVICE_FUNCTION_QUEUE_PRIORITY_MAX; priority >= SERVICE_FUNCTION_QUEUE_PRIORITY_MIN; 
              -priority--)
-  106   1          {
-  107   2              while(1)
-  108   2              {
-  109   3                  selected = SERVICE_FUNCTION_QUEUE_MAX;
-  110   3                  selected_order = update_order_limit;
-  111   3                  selected_func = NULL;
-*** WARNING C150 IN LINE 111 OF ..\L2_SERVICE\service_function_queue.c: 'far' pointer converted to 'far' pointer
-  112   3      
-  113   3                  ea_backup = EA;
-  114   3                  EA = 0;
-  115   3      
-  116   3                  for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
-  117   3                  {
-  118   4                      if((0U != function_queue[i].used) &&
-C251 COMPILER V5.60.0,  service_function_queue                                             15/05/26  11:43:42  PAGE 3   
+  110   1          {
+  111   2              while(1)
+  112   2              {
+  113   3                  selected = SERVICE_FUNCTION_QUEUE_MAX;
+  114   3                  selected_order = update_order_limit;
+  115   3                  selected_func = NULL;
+*** WARNING C150 IN LINE 115 OF ..\L2_SERVICE\service_function_queue.c: 'far' pointer converted to 'far' pointer
+  116   3      
+  117   3                  ea_backup = EA;
+  118   3                  EA = 0;
+C251 COMPILER V5.60.0,  service_function_queue                                             16/05/26  15:32:39  PAGE 3   
 
-  119   4                              (priority == function_queue[i].priority) &&
-  120   4                              (function_queue[i].order < update_order_limit) &&
-  121   4                              service_function_queue_time_ready(now, &function_queue[i]) &&
-  122   4                              (function_queue[i].order < selected_order))
-  123   4                      {
-  124   5                          selected = i;
-  125   5                          selected_order = function_queue[i].order;
-  126   5                          selected_func = function_queue[i].func;
-  127   5                      }
-  128   4                  }
-  129   3      
-  130   3                  if(SERVICE_FUNCTION_QUEUE_MAX != selected)
-  131   3                  {
-  132   4                      function_queue[selected].func = NULL;
-*** WARNING C150 IN LINE 132 OF ..\L2_SERVICE\service_function_queue.c: 'far' pointer converted to 'far' pointer
-  133   4                      function_queue[selected].used = 0U;
-  134   4                  }
-  135   3      
-  136   3                  EA = ea_backup;
-  137   3      
-  138   3                  if(NULL == selected_func)
-  139   3                  {
-  140   4                      break;
-  141   4                  }
-  142   3      
-  143   3                  selected_func();
-  144   3              }
-  145   2          }
-  146   1      }
+  119   3      
+  120   3                  for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
+  121   3                  {
+  122   4                      if((0U != function_queue[i].used) &&
+  123   4                              (priority == function_queue[i].priority) &&
+  124   4                              (function_queue[i].order < update_order_limit) &&
+  125   4                              service_function_queue_time_ready(now, &function_queue[i]) &&
+  126   4                              (function_queue[i].order < selected_order))
+  127   4                      {
+  128   5                          selected = i;
+  129   5                          selected_order = function_queue[i].order;
+  130   5                          selected_func = function_queue[i].func;
+  131   5                      }
+  132   4                  }
+  133   3      
+  134   3                  if(SERVICE_FUNCTION_QUEUE_MAX != selected)
+  135   3                  {
+  136   4                      function_queue[selected].func = NULL;
+*** WARNING C150 IN LINE 136 OF ..\L2_SERVICE\service_function_queue.c: 'far' pointer converted to 'far' pointer
+  137   4                      function_queue[selected].used = 0U;
+  138   4                  }
+  139   3      
+  140   3                  EA = ea_backup;
+  141   3      
+  142   3                  if(NULL == selected_func)
+  143   3                  {
+  144   4                      break;
+  145   4                  }
+  146   3      
+  147   3                  selected_func();
+  148   3              }
+  149   2          }
+  150   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1307     ------
+  ecode size           =      1308     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

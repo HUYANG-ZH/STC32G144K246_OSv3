@@ -35,6 +35,10 @@ void bsp_motor_init(void)
     pwm_init(BSP_MOTOR_RIGHT_PWM_CH, BSP_MOTOR_PWM_FREQ_HZ, BSP_MOTOR_INIT_DUTY);
 }
 
+void bsp_motor_debug(void)
+{
+}
+
 void bsp_motor_set_left_pwm(uint32 duty)
 {
     pwm_set_duty(BSP_MOTOR_LEFT_PWM_CH, bsp_motor_limit_duty(duty));

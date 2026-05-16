@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_inductor                                                       15/05/26  11:43:41  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_inductor                                                       16/05/26  15:32:37  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_inductor
@@ -27,19 +27,23 @@ stmt  level    source
    14   1          adc_init(ADC_CHANNEL_4, ADC_12BIT);
    15   1      }
    16          
-   17          void bsp_inductor_get(inductor_rawdata_t* out_data)
+   17          void bsp_inductor_debug(void)
    18          {
-   19   1          out_data->Channel_1 = adc_convert(ADC_CHANNEL_1);
-   20   1          out_data->Channel_2 = adc_convert(ADC_CHANNEL_2);
-   21   1          out_data->Channel_3 = adc_convert(ADC_CHANNEL_3);
-   22   1          out_data->Channel_4 = adc_convert(ADC_CHANNEL_4);
-   23   1      }
+   19   1      }
+   20          
+   21          void bsp_inductor_get(inductor_rawdata_t* out_data)
+   22          {
+   23   1          out_data->Channel_1 = adc_convert(ADC_CHANNEL_1);
+   24   1          out_data->Channel_2 = adc_convert(ADC_CHANNEL_2);
+   25   1          out_data->Channel_3 = adc_convert(ADC_CHANNEL_3);
+   26   1          out_data->Channel_4 = adc_convert(ADC_CHANNEL_4);
+   27   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       152     ------
+  ecode size           =       153     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

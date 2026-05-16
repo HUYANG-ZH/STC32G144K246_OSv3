@@ -13,6 +13,7 @@
 #endif
 
 void bsp_buzzer_init(void);
+void bsp_buzzer_debug(void);
 void bsp_buzzer_on(void);
 void bsp_buzzer_off(void);
 void bsp_buzzer_set(uint8 enable);

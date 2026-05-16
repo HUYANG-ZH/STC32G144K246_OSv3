@@ -41,6 +41,10 @@ void bsp_encoder_init(void)
     bsp_encoder_clear();
 }
 
+void bsp_encoder_debug(void)
+{
+}
+
 void bsp_encoder_clear(void)
 {
     encoder_clear_count(BSP_ENCODER_LEFT_INDEX);

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               15/05/26  11:43:42  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               16/05/26  15:32:38  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -29,46 +29,52 @@ stmt  level    source
    16   1          batterycheck_last_tick = service_timetick_what();
    17   1      }
    18          
-   19          void service_batterycheck_task(void)
+   19          void service_batterycheck_debug(void)
    20          {
-   21   1          uint32 now;
-   22   1      
-   23   1          now = service_timetick_what();
-   24   1          if((uint32)(now - batterycheck_last_tick) >= BATTERYCHECK_PERIOD_TICK)
-   25   1          {
-   26   2              bsp_battery_vol(&batterycheck_voltage);
-   27   2              batterycheck_last_tick = now;
-   28   2          }
-   29   1      
-   30   1          if(batterycheck_voltage <= 11.0f)
-   31   1          {
-   32   2              printf("batterylow.\r\n");
-   33   2              wprint("batterylow.\r\n");
+   21   1          printf("[batterycheck:voltage=%.4f]\r\n",batterycheck_voltage);
+   22   1      }
+   23          
+   24          void service_batterycheck_task(void)
+   25          {
+   26   1          uint32 now;
+   27   1      
+   28   1          now = service_timetick_what();
+   29   1          if((uint32)(now - batterycheck_last_tick) >= BATTERYCHECK_PERIOD_TICK)
+   30   1          {
+   31   2              bsp_battery_vol(&batterycheck_voltage);
+   32   2              printf("battery%f\r\n",batterycheck_voltage);
+   33   2              batterycheck_last_tick = now;
    34   2          }
-   35   1      }
-   36          
-   37          void service_batterycheck_get_voltage(float *voltage)
-   38          {
-   39   1          service_batterycheck_task();
-   40   1          if(NULL != voltage)
-   41   1          {
-   42   2              *voltage = batterycheck_voltage;
-   43   2          }
-   44   1      }
+   35   1      
+   36   1          if(batterycheck_voltage <= 11.0f)
+   37   1          {
+   38   2              printf("batterylow:%f\r\n",batterycheck_voltage);
+   39   2              wprint("batterylow.\r\n");
+   40   2          }
+   41   1      }
+   42          
+   43          void service_batterycheck_get_voltage(float *voltage)
+   44          {
+   45   1          service_batterycheck_task();
+   46   1          if(NULL != voltage)
+   47   1          {
+   48   2              *voltage = batterycheck_voltage;
+   49   2          }
+   50   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       208     ------
+  ecode size           =       293     ------
+C251 COMPILER V5.60.0,  service_batterycheck                                               16/05/26  15:32:38  PAGE 2   
+
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =        16     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
-C251 COMPILER V5.60.0,  service_batterycheck                                               15/05/26  11:43:42  PAGE 2   
-
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
@@ -76,7 +82,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        32     ------
+  hconst size          =        90     ------
 End of Module Information.
 
 

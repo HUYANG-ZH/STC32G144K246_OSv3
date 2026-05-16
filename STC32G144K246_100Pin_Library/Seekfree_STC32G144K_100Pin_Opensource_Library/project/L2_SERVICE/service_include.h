@@ -4,6 +4,7 @@
 #include "service_timetick.h"
 #include "service_batterycheck.h"
 #include "service_buzzer.h"
+#include "service_delay.h"
 #include "service_function_queue.h"
 #include "service_imu.h"
 #include "service_inductor.h"

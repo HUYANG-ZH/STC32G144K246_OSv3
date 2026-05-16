@@ -7,6 +7,14 @@ void service_imu_init(void)
     bsp_imu_init();
 }
 
+void service_imu_debug(void)
+{
+    service_imu_data_t testdata;
+    printf("[imu:get]\r\n");
+    service_imu_get_data(&testdata);
+    printf("[imu:gx/gy/gz] %f,%f,%f\r\n", testdata.gyro_x,testdata.gyro_y,testdata.gyro_z);
+}
+
 void service_imu_get_data(service_imu_data_t *out_imu)
 {
     imu_data_t bsp_data;

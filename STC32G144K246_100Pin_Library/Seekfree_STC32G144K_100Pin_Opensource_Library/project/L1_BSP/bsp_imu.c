@@ -9,6 +9,10 @@ void bsp_imu_init(void)
     s_bsp_imu_ready = 1U;
 }
 
+void bsp_imu_debug(void)
+{
+}
+
 void bsp_imu_read(imu_data_t *out_data)
 {
     uint8 ea_backup;

@@ -62,6 +62,12 @@ void service_motor_init(void)
     service_motor_reset();
 }
 
+void service_motor_debug(void)
+{
+    printf("[motor:30/100]\r\n");
+    service_motor_set_pwm(3000,3000);
+}
+
 void service_motor_reset(void)
 {
     service_motor_init_bsp_once();

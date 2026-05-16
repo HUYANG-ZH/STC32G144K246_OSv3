@@ -247,6 +247,13 @@ void service_wireless_uart_init(void)
     wireless_uart_init();
 }
 
+void service_wireless_uart_debug(void)
+{
+    printf("[wireless_uart:send start.]\r\n");
+    wprint("[wireless_uart:] success.\r\n");
+    printf("[wireless_uart:send end.]\r\n");
+}
+
 uint32 service_wireless_uart_read_buffer(uint8 *buff, uint32 len)
 {
     if(NULL == buff)

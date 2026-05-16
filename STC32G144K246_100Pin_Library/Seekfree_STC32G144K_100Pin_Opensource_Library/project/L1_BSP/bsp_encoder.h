@@ -10,6 +10,7 @@ typedef struct
 } bsp_encoder_count_t;
 
 void bsp_encoder_init(void);
+void bsp_encoder_debug(void);
 void bsp_encoder_clear(void);
 void bsp_encoder_get_delta(bsp_encoder_count_t *out_count);
 

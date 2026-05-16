@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_timetick                                                   15/05/26  11:43:44  PAGE 1   
+C251 COMPILER V5.60.0,  service_timetick                                                   16/05/26  15:32:42  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_timetick
@@ -23,29 +23,34 @@ stmt  level    source
    10   1          pit_us_init(TIM0_PIT,100,timetick_new);
    11   1      }
    12          
-   13          uint32 service_timetick_what(void)
+   13          void service_timetick_debug(void)
    14          {
-   15   1          uint8 ea_backup;
-   16   1          uint32 now;
-   17   1      
-   18   1          ea_backup = EA;
-   19   1          EA = 0;
-   20   1          now = time;
-   21   1          EA = ea_backup;
+   15   1          printf("[timetick:time=%ld.]\r\n",time);
+   16   1      }
+   17          
+   18          uint32 service_timetick_what(void)
+   19          {
+   20   1          uint8 ea_backup;
+   21   1          uint32 now;
    22   1      
-   23   1          return now;
-   24   1      }
-   25          
-   26          static void timetick_new(void)
-   27          {
-   28   1          time++;
+   23   1          ea_backup = EA;
+   24   1          EA = 0;
+   25   1          now = time;
+   26   1          EA = ea_backup;
+   27   1      
+   28   1          return now;
    29   1      }
+   30          
+   31          static void timetick_new(void)
+   32          {
+   33   1          time++;
+   34   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       147     ------
+  ecode size           =       180     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -59,7 +64,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =    ------     ------
+  hconst size          =        23     ------
 End of Module Information.
 
 

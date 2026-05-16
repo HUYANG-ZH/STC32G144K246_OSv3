@@ -184,6 +184,10 @@ void app_inductor_preprocess_init(void)
     pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_tick);
 }
 
+void app_inductor_preprocess_debug(void)
+{
+}
+
 void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
 {
     uint8 i;

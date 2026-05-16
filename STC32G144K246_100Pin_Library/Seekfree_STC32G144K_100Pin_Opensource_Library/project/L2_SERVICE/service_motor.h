@@ -4,6 +4,7 @@
 #include "zf_common_typedef.h"
 
 void service_motor_init(void);
+void service_motor_debug(void);
 void service_motor_reset(void);
 void service_motor_stop(void);
 void service_motor_set_left_pwm(int32 pwm);

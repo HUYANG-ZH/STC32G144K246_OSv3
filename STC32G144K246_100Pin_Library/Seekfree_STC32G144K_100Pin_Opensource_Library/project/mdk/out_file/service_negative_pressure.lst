@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_negative_pressure                                          15/05/26  11:43:43  PAGE 1   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          16/05/26  15:32:40  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_negative_pressure
@@ -40,35 +40,41 @@ stmt  level    source
    27   1          negative_pressure_percent = 0U;
    28   1      }
    29          
-   30          void service_negative_pressure_set_percent(uint8 percent)
+   30          void service_negative_pressure_debug(void)
    31          {
-   32   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
-   33   1          {
-   34   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
-   35   2          }
-   36   1      
-   37   1          pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(percent));
-   38   1          negative_pressure_percent = percent;
-   39   1      }
-   40          
-   41          uint8 service_negative_pressure_get_percent(void)
-   42          {
-   43   1          return negative_pressure_percent;
-   44   1      }
+   32   1          printf("[pressure] : 30\r\n");
+   33   1          service_negative_pressure_set_percent(30);
+   34   1      }
+   35          
+   36          void service_negative_pressure_set_percent(uint8 percent)
+   37          {
+   38   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+   39   1          {
+   40   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+   41   2          }
+   42   1      
+   43   1          pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(percent));
+   44   1          negative_pressure_percent = percent;
+   45   1      }
+   46          
+   47          uint8 service_negative_pressure_get_percent(void)
+   48          {
+   49   1          return negative_pressure_percent;
+   50   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       156     ------
+  ecode size           =       175     ------
+C251 COMPILER V5.60.0,  service_negative_pressure                                          16/05/26  15:32:40  PAGE 2   
+
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =         7     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
-C251 COMPILER V5.60.0,  service_negative_pressure                                          15/05/26  11:43:43  PAGE 2   
-
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
@@ -76,7 +82,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =         6     ------
+  hconst size          =        24     ------
 End of Module Information.
 
 

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/05/26  11:43:44  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/05/26  15:32:42  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    53   2              for(j = (uint8)(i + 1U); j < APP_INDUCTOR_HISTORY_COUNT; j++)
    54   2              {
    55   3                  if(values[i] > values[j])
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/05/26  11:43:44  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/05/26  15:32:42  PAGE 2   
 
    56   3                  {
    57   4                      temp = values[i];
@@ -134,7 +134,7 @@ stmt  level    source
   119   3                  normalized[i] = (filtered[i] - (float)app_inductor_preprocess_min_value[i]) * 100.0f /
   120   3                          ((float)app_inductor_preprocess_max_value[i] - (float)app_inductor_preprocess_min_val
              -ue[i]);
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/05/26  11:43:44  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/05/26  15:32:42  PAGE 3   
 
   121   3                  if(0.0f > normalized[i])
   122   3                  {
@@ -202,34 +202,38 @@ stmt  level    source
   184   1          pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_t
              -ick);
   185   1      }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/05/26  11:43:44  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/05/26  15:32:42  PAGE 4   
 
   186          
-  187          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
+  187          void app_inductor_preprocess_debug(void)
   188          {
-  189   1          uint8 i;
-  190   1          uint8 ea_backup;
-  191   1      
-  192   1          if(NULL == out_data)
-  193   1          {
-  194   2              return;
-  195   2          }
-  196   1      
-  197   1          ea_backup = EA;
-  198   1          EA = 0;
-  199   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  200   1          {
-  201   2              out_data->filtered[i] = inductor_data.filtered[i];
-  202   2              out_data->normalized[i] = inductor_data.normalized[i];
-  203   2          }
-  204   1          EA = ea_backup;
-  205   1      }
+  189   1      }
+  190          
+  191          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
+  192          {
+  193   1          uint8 i;
+  194   1          uint8 ea_backup;
+  195   1      
+  196   1          if(NULL == out_data)
+  197   1          {
+  198   2              return;
+  199   2          }
+  200   1      
+  201   1          ea_backup = EA;
+  202   1          EA = 0;
+  203   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  204   1          {
+  205   2              out_data->filtered[i] = inductor_data.filtered[i];
+  206   2              out_data->normalized[i] = inductor_data.normalized[i];
+  207   2          }
+  208   1          EA = ea_backup;
+  209   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2163     ------
+  ecode size           =      2164     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

@@ -39,6 +39,10 @@ void app_scheduler_init(void)
     pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
 }
 
+void app_scheduler_debug(void)
+{
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     app 层任务注册
 // 参数说明     id              任务编号，范围 0 - APP_SCHEDULER_TASK_MAX-1

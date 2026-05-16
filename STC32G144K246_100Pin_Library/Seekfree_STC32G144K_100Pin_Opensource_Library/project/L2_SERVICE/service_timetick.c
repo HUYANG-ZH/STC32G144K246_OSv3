@@ -10,6 +10,11 @@ void service_timetick_init(void)
     pit_us_init(TIM0_PIT,100,timetick_new);
 }
 
+void service_timetick_debug(void)
+{
+    printf("[timetick:time=%ld.]\r\n",time);
+}
+
 uint32 service_timetick_what(void)
 {
     uint8 ea_backup;

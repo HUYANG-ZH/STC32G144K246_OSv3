@@ -4,6 +4,7 @@
 #include "zf_common_typedef.h"
 
 void service_buzzer_init(void);
+void service_buzzer_debug(void);
 void service_buzzer_beep_ms(uint32 duration_ms);
 void service_buzzer_task(void);
 void service_buzzer_stop(void);

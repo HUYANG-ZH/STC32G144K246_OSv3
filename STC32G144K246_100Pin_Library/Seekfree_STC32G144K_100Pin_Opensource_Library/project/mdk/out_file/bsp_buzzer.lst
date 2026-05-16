@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_buzzer                                                         15/05/26  11:43:41  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_buzzer                                                         16/05/26  15:32:36  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_buzzer
@@ -21,33 +21,37 @@ stmt  level    source
     8   1          gpio_init(BSP_BUZZER_PIN, GPO, BSP_BUZZER_ACTIVE_LEVEL, GPO_PUSH_PULL);
     9   1      }
    10          
-   11          void bsp_buzzer_on(void)
+   11          void bsp_buzzer_debug(void)
    12          {
-   13   1          gpio_set_level(BSP_BUZZER_PIN, BSP_BUZZER_ACTIVE_LEVEL);
-   14   1      }
-   15          
-   16          void bsp_buzzer_off(void)
-   17          {
-   18   1          gpio_set_level(BSP_BUZZER_PIN, BSP_BUZZER_INACTIVE_LEVEL);
-   19   1      }
-   20          
-   21          void bsp_buzzer_set(uint8 enable)
-   22          {
-   23   1          if(0U != enable)
-   24   1          {
-   25   2              bsp_buzzer_on();
-   26   2          }
-   27   1          else
+   13   1      }
+   14          
+   15          void bsp_buzzer_on(void)
+   16          {
+   17   1          gpio_set_level(BSP_BUZZER_PIN, BSP_BUZZER_ACTIVE_LEVEL);
+   18   1      }
+   19          
+   20          void bsp_buzzer_off(void)
+   21          {
+   22   1          gpio_set_level(BSP_BUZZER_PIN, BSP_BUZZER_INACTIVE_LEVEL);
+   23   1      }
+   24          
+   25          void bsp_buzzer_set(uint8 enable)
+   26          {
+   27   1          if(0U != enable)
    28   1          {
-   29   2              bsp_buzzer_off();
+   29   2              bsp_buzzer_on();
    30   2          }
-   31   1      }
+   31   1          else
+   32   1          {
+   33   2              bsp_buzzer_off();
+   34   2          }
+   35   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =        64     ------
+  ecode size           =        65     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -63,6 +67,8 @@ Module Information          Static   Overlayable
   const size           =    ------     ------
   hconst size          =    ------     ------
 End of Module Information.
+
+C251 COMPILER V5.60.0,  bsp_buzzer                                                         16/05/26  15:32:36  PAGE 2   
 
 
 C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

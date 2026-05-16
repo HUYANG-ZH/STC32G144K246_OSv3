@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               15/05/26  11:43:45  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               16/05/26  15:38:02  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,7 +66,7 @@ stmt  level    source
    47   1          service_packet_init();
    48   1          service_batterycheck_init();
    49   1          service_buzzer_init();
-C251 COMPILER V5.60.0,  main                                                               15/05/26  11:43:45  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               16/05/26  15:38:02  PAGE 2   
 
    50   1          service_buzzer_stop();
    51   1          service_imu_init();
@@ -77,22 +77,31 @@ stmt  level    source
    56   1          app_inductor_preprocess_init();
    57   1          app_scheduler_init();
    58   1      
-   59   1          app_scheduler_add(0,service_batterycheck_task,1,2000);
-   60   1          while(1)
-   61   1          {
-   62   2              app_scheduler_run();
-   63   2              service_function_queue_update();
-   64   2              service_packet_update();
-   65   2          }
-   66   1      }
-   67          
-   68          
+   59   1          service_function_queue_add(service_timetick_debug,0,1);
+   60   1          service_function_queue_add(service_wireless_uart_debug,0,1);
+   61   1          service_function_queue_add(service_batterycheck_debug,0,1);
+   62   1          service_function_queue_add(service_buzzer_debug,0,1);
+   63   1          service_function_queue_add(service_imu_debug,0,1);
+   64   1          service_function_queue_add(service_negative_pressure_debug,0,1);
+   65   1          // service_function_queue_add(service_motor_debug,0,1);
+   66   1          // service_function_queue_add(service_speed_debug,0,1);
+   67   1      
+   68   1          app_scheduler_add(0,service_batterycheck_task,1,2000);
+   69   1          while(1)
+   70   1          {
+   71   2              app_scheduler_run();
+   72   2              service_function_queue_update();
+   73   2              service_packet_update();
+   74   2          }
+   75   1      }
+   76          
+   77          
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       137     ------
+  ecode size           =       233     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

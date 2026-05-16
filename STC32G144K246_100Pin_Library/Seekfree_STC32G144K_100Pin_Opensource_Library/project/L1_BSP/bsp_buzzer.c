@@ -8,6 +8,10 @@ void bsp_buzzer_init(void)
     gpio_init(BSP_BUZZER_PIN, GPO, BSP_BUZZER_ACTIVE_LEVEL, GPO_PUSH_PULL);
 }
 
+void bsp_buzzer_debug(void)
+{
+}
+
 void bsp_buzzer_on(void)
 {
     gpio_set_level(BSP_BUZZER_PIN, BSP_BUZZER_ACTIVE_LEVEL);

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_encoder                                                        15/05/26  11:43:41  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_encoder                                                        16/05/26  15:32:37  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_encoder
@@ -54,32 +54,36 @@ stmt  level    source
    41   1          bsp_encoder_clear();
    42   1      }
    43          
-   44          void bsp_encoder_clear(void)
+   44          void bsp_encoder_debug(void)
    45          {
-   46   1          encoder_clear_count(BSP_ENCODER_LEFT_INDEX);
-   47   1          encoder_clear_count(BSP_ENCODER_RIGHT_INDEX);
-   48   1      }
-   49          
-   50          void bsp_encoder_get_delta(bsp_encoder_count_t *out_count)
-   51          {
-   52   1          if(NULL == out_count)
-   53   1          {
-   54   2              return;
-   55   2          }
-C251 COMPILER V5.60.0,  bsp_encoder                                                        15/05/26  11:43:41  PAGE 2   
+   46   1      }
+   47          
+   48          void bsp_encoder_clear(void)
+   49          {
+   50   1          encoder_clear_count(BSP_ENCODER_LEFT_INDEX);
+   51   1          encoder_clear_count(BSP_ENCODER_RIGHT_INDEX);
+   52   1      }
+   53          
+   54          void bsp_encoder_get_delta(bsp_encoder_count_t *out_count)
+   55          {
+C251 COMPILER V5.60.0,  bsp_encoder                                                        16/05/26  15:32:37  PAGE 2   
 
-   56   1      
-   57   1          out_count->left = encoder_get_count(BSP_ENCODER_LEFT_INDEX) * BSP_ENCODER_LEFT_SIGN;
-   58   1          out_count->right = encoder_get_count(BSP_ENCODER_RIGHT_INDEX) * BSP_ENCODER_RIGHT_SIGN;
-   59   1      
-   60   1          bsp_encoder_clear();
-   61   1      }
+   56   1          if(NULL == out_count)
+   57   1          {
+   58   2              return;
+   59   2          }
+   60   1      
+   61   1          out_count->left = encoder_get_count(BSP_ENCODER_LEFT_INDEX) * BSP_ENCODER_LEFT_SIGN;
+   62   1          out_count->right = encoder_get_count(BSP_ENCODER_RIGHT_INDEX) * BSP_ENCODER_RIGHT_SIGN;
+   63   1      
+   64   1          bsp_encoder_clear();
+   65   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       131     ------
+  ecode size           =       132     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

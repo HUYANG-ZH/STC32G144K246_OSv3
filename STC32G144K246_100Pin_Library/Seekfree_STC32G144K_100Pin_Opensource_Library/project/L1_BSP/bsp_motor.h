@@ -4,6 +4,7 @@
 #include "zf_common_typedef.h"
 
 void bsp_motor_init(void);
+void bsp_motor_debug(void);
 void bsp_motor_set_left_pwm(uint32 duty);
 void bsp_motor_set_right_pwm(uint32 duty);
 void bsp_motor_set_pwm(uint32 left_duty, uint32 right_duty);

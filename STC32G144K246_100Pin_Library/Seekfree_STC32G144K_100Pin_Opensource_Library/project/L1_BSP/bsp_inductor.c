@@ -14,6 +14,10 @@ void bsp_inductor_init(void)
     adc_init(ADC_CHANNEL_4, ADC_12BIT);
 }
 
+void bsp_inductor_debug(void)
+{
+}
+
 void bsp_inductor_get(inductor_rawdata_t* out_data)
 {
     out_data->Channel_1 = adc_convert(ADC_CHANNEL_1);

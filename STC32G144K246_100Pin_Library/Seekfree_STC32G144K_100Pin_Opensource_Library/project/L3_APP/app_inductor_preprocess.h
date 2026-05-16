@@ -21,6 +21,7 @@ extern uint16 app_inductor_preprocess_min_value[4];
 extern uint16 app_inductor_preprocess_max_value[4];
 
 void app_inductor_preprocess_init(void);
+void app_inductor_preprocess_debug(void);
 void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data);
 
 #endif

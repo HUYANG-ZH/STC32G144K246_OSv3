@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_motor                                                          15/05/26  11:43:42  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_motor                                                          16/05/26  15:32:38  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_motor
@@ -48,51 +48,55 @@ stmt  level    source
    35   1          pwm_init(BSP_MOTOR_RIGHT_PWM_CH, BSP_MOTOR_PWM_FREQ_HZ, BSP_MOTOR_INIT_DUTY);
    36   1      }
    37          
-   38          void bsp_motor_set_left_pwm(uint32 duty)
+   38          void bsp_motor_debug(void)
    39          {
-   40   1          pwm_set_duty(BSP_MOTOR_LEFT_PWM_CH, bsp_motor_limit_duty(duty));
-   41   1      }
-   42          
-   43          void bsp_motor_set_right_pwm(uint32 duty)
-   44          {
-   45   1          pwm_set_duty(BSP_MOTOR_RIGHT_PWM_CH, bsp_motor_limit_duty(duty));
-   46   1      }
-   47          
-   48          void bsp_motor_set_pwm(uint32 left_duty, uint32 right_duty)
-   49          {
-   50   1          bsp_motor_set_left_pwm(left_duty);
-   51   1          bsp_motor_set_right_pwm(right_duty);
-   52   1      }
-   53          
-   54          void bsp_motor_set_left_dir(uint8 level)
-   55          {
-C251 COMPILER V5.60.0,  bsp_motor                                                          15/05/26  11:43:42  PAGE 2   
+   40   1      }
+   41          
+   42          void bsp_motor_set_left_pwm(uint32 duty)
+   43          {
+   44   1          pwm_set_duty(BSP_MOTOR_LEFT_PWM_CH, bsp_motor_limit_duty(duty));
+   45   1      }
+   46          
+   47          void bsp_motor_set_right_pwm(uint32 duty)
+   48          {
+   49   1          pwm_set_duty(BSP_MOTOR_RIGHT_PWM_CH, bsp_motor_limit_duty(duty));
+   50   1      }
+   51          
+   52          void bsp_motor_set_pwm(uint32 left_duty, uint32 right_duty)
+   53          {
+   54   1          bsp_motor_set_left_pwm(left_duty);
+   55   1          bsp_motor_set_right_pwm(right_duty);
+C251 COMPILER V5.60.0,  bsp_motor                                                          16/05/26  15:32:38  PAGE 2   
 
-   56   1          gpio_set_level(BSP_MOTOR_LEFT_DIR_PIN, level);
-   57   1      }
-   58          
-   59          void bsp_motor_set_right_dir(uint8 level)
-   60          {
-   61   1          gpio_set_level(BSP_MOTOR_RIGHT_DIR_PIN, level);
-   62   1      }
-   63          
-   64          void bsp_motor_set_dir(uint8 left_level, uint8 right_level)
-   65          {
-   66   1          bsp_motor_set_left_dir(left_level);
-   67   1          bsp_motor_set_right_dir(right_level);
-   68   1      }
-   69          
-   70          void bsp_motor_set_nsleep(uint8 enable)
-   71          {
-   72   1          gpio_set_level(BSP_MOTOR_NSLEEP_PIN, (0U != enable) ? BSP_MOTOR_NSLEEP_ACTIVE : BSP_MOTOR_NSLEEP_INAC
+   56   1      }
+   57          
+   58          void bsp_motor_set_left_dir(uint8 level)
+   59          {
+   60   1          gpio_set_level(BSP_MOTOR_LEFT_DIR_PIN, level);
+   61   1      }
+   62          
+   63          void bsp_motor_set_right_dir(uint8 level)
+   64          {
+   65   1          gpio_set_level(BSP_MOTOR_RIGHT_DIR_PIN, level);
+   66   1      }
+   67          
+   68          void bsp_motor_set_dir(uint8 left_level, uint8 right_level)
+   69          {
+   70   1          bsp_motor_set_left_dir(left_level);
+   71   1          bsp_motor_set_right_dir(right_level);
+   72   1      }
+   73          
+   74          void bsp_motor_set_nsleep(uint8 enable)
+   75          {
+   76   1          gpio_set_level(BSP_MOTOR_NSLEEP_PIN, (0U != enable) ? BSP_MOTOR_NSLEEP_ACTIVE : BSP_MOTOR_NSLEEP_INAC
              -TIVE);
-   73   1      }
+   77   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       348     ------
+  ecode size           =       349     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

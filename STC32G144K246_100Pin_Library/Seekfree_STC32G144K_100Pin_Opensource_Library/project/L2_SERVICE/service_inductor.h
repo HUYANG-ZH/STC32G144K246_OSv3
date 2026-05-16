@@ -12,6 +12,7 @@ typedef struct
 } service_inductor_data_t;
 
 void service_inductor_init(void);
+void service_inductor_debug(void);
 void service_inductor_get_data(service_inductor_data_t *out_data);
 
 #endif

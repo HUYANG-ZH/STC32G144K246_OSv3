@@ -13,6 +13,7 @@
 #endif
 
 void service_negative_pressure_init(void);
+void service_negative_pressure_debug(void);
 void service_negative_pressure_set_percent(uint8 percent);
 uint8 service_negative_pressure_get_percent(void);
 

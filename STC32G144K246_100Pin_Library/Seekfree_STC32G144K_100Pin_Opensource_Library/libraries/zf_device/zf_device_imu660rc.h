@@ -61,6 +61,7 @@
 
 #include "zf_common_typedef.h"
 #include "zf_device_type.h"
+#include "zf_common_headfile.h"
 
 
 
@@ -73,8 +74,8 @@
 	#define IMU660RC_SPC_PIN            ( SPI3_CH3_SCLK_P87 )             	// 硬件 SPI SCK 引脚
 	#define IMU660RC_SDI_PIN            ( SPI3_CH3_MOSI_P85 )             	// 硬件 SPI MOSI 引脚
 	#define IMU660RC_SDO_PIN            ( SPI3_CH3_MISO_P86 )              	// 硬件 SPI MISO 引脚
-	#define IMU660RC_CS_PIN             ( IO_P34  )                       	// CS 片选引脚
-	#define IMU660RC_CS(x)              ( P34 = x )
+	#define IMU660RC_CS_PIN             ( IO_P84  )                       	// CS 片选引脚
+	#define IMU660RC_CS(x)              ( gpio_set_level(IO_P84,x) )
 //====================================================硬件 SPI 驱动====================================================
 #elif (IMU660RC_USE_INTERFACE==SOFT_SPI)
 //====================================================软件 SPI 驱动====================================================

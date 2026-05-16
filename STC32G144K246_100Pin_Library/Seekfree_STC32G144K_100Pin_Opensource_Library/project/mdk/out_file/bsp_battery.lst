@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_battery                                                        15/05/26  11:43:41  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_battery                                                        16/05/26  15:32:36  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_battery
@@ -14,23 +14,37 @@ stmt  level    source
     1          #include "zf_common_headfile.h"
     2          #include "bsp_battery.h"
     3          
-    4          void bsp_battery_init(void)
-    5          {
-    6   1          adc_init(ADC1_CH0_P10,ADC_12BIT);
-    7   1      }
-    8          
-    9          void bsp_battery_vol(float *vol)
-   10          {
-   11   1          uint16 rawdatas;
-   12   1          rawdatas = adc_mean_filter_convert(ADC1_CH0_P10,20U);
-   13   1          *vol = ((float)rawdatas / 4096.0f) * 33.0f;
-   14   1      }
+    4          #define BSP_BATTERY_ADC_CH              ADC1_CH0_P10
+    5          #define BSP_BATTERY_ADC_FULL_SCALE      (4096.0f)
+    6          #define BSP_BATTERY_VOLTAGE_SCALE       (36.4737f)
+    7          
+    8          void bsp_battery_init(void)
+    9          {
+   10   1          adc_init(BSP_BATTERY_ADC_CH, ADC_12BIT);
+   11   1      }
+   12          
+   13          void bsp_battery_debug(void)
+   14          {
+   15   1      }
+   16          
+   17          void bsp_battery_vol(float *vol)
+   18          {
+   19   1          uint16 rawdatas;
+   20   1      
+   21   1          if(NULL == vol)
+   22   1          {
+   23   2              return;
+   24   2          }
+   25   1      
+   26   1          rawdatas = adc_mean_filter_convert(BSP_BATTERY_ADC_CH, 20U);
+   27   1          *vol = ((float)rawdatas / BSP_BATTERY_ADC_FULL_SCALE) * BSP_BATTERY_VOLTAGE_SCALE;
+   28   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =        88     ------
+  ecode size           =       105     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

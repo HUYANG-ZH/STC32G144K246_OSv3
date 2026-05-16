@@ -10,6 +10,7 @@ typedef struct
 } service_speed_data_t;
 
 void service_speed_init(void);
+void service_speed_debug(void);
 void service_speed_update(void);
 void service_speed_get(service_speed_data_t *out_speed);
 

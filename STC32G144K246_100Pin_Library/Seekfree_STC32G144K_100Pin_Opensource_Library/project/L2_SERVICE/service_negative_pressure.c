@@ -27,6 +27,12 @@ void service_negative_pressure_init(void)
     negative_pressure_percent = 0U;
 }
 
+void service_negative_pressure_debug(void)
+{
+    printf("[pressure] : 30\r\n");
+    service_negative_pressure_set_percent(30);
+}
+
 void service_negative_pressure_set_percent(uint8 percent)
 {
     if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)

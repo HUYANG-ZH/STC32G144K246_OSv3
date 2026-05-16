@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_imu                                                        15/05/26  11:43:42  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        16/05/26  15:32:39  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
@@ -20,51 +20,61 @@ stmt  level    source
     7   1          bsp_imu_init();
     8   1      }
     9          
-   10          void service_imu_get_data(service_imu_data_t *out_imu)
+   10          void service_imu_debug(void)
    11          {
-   12   1          imu_data_t bsp_data;
-   13   1      
-   14   1          if(NULL == out_imu)
-   15   1          {
-   16   2              return;
-   17   2          }
-   18   1      
-   19   1          bsp_imu_read(&bsp_data);
-   20   1      
-   21   1          out_imu->acc_x = bsp_data.imu_acc_x;
-   22   1          out_imu->acc_y = bsp_data.imu_acc_y;
-   23   1          out_imu->acc_z = bsp_data.imu_acc_z;
-   24   1          out_imu->gyro_x = bsp_data.imu_gyro_x;
-   25   1          out_imu->gyro_y = bsp_data.imu_gyro_y;
-   26   1          out_imu->gyro_z = bsp_data.imu_gyro_z;
-   27   1          out_imu->quat_x = bsp_data.imu_quat_x;
-   28   1          out_imu->quat_y = bsp_data.imu_quat_y;
-   29   1          out_imu->quat_z = bsp_data.imu_quat_z;
-   30   1          out_imu->quat_w = bsp_data.imu_quat_w;
-   31   1          out_imu->roll = bsp_data.imu_roll_deg;
-   32   1          out_imu->pitch = bsp_data.imu_pitch_deg;
-   33   1          out_imu->yaw = bsp_data.imu_yaw_deg;
-   34   1      }
+   12   1          service_imu_data_t testdata;
+   13   1          printf("[imu:get]\r\n");
+   14   1          service_imu_get_data(&testdata);
+   15   1          printf("[imu:gx/gy/gz] %f,%f,%f\r\n", testdata.gyro_x,testdata.gyro_y,testdata.gyro_z);
+   16   1      }
+   17          
+   18          void service_imu_get_data(service_imu_data_t *out_imu)
+   19          {
+   20   1          imu_data_t bsp_data;
+   21   1      
+   22   1          if(NULL == out_imu)
+   23   1          {
+   24   2              return;
+   25   2          }
+   26   1      
+   27   1          bsp_imu_read(&bsp_data);
+   28   1      
+   29   1          out_imu->acc_x = bsp_data.imu_acc_x;
+   30   1          out_imu->acc_y = bsp_data.imu_acc_y;
+   31   1          out_imu->acc_z = bsp_data.imu_acc_z;
+   32   1          out_imu->gyro_x = bsp_data.imu_gyro_x;
+   33   1          out_imu->gyro_y = bsp_data.imu_gyro_y;
+   34   1          out_imu->gyro_z = bsp_data.imu_gyro_z;
+   35   1          out_imu->quat_x = bsp_data.imu_quat_x;
+   36   1          out_imu->quat_y = bsp_data.imu_quat_y;
+   37   1          out_imu->quat_z = bsp_data.imu_quat_z;
+   38   1          out_imu->quat_w = bsp_data.imu_quat_w;
+   39   1          out_imu->roll = bsp_data.imu_roll_deg;
+   40   1          out_imu->pitch = bsp_data.imu_pitch_deg;
+   41   1          out_imu->yaw = bsp_data.imu_yaw_deg;
+   42   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       442     ------
+  ecode size           =       539     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        60     ------
+  xdata size           =       112     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------
+C251 COMPILER V5.60.0,  service_imu                                                        16/05/26  15:32:39  PAGE 2   
+
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =    ------     ------
+  hconst size          =        38     ------
 End of Module Information.
 
 

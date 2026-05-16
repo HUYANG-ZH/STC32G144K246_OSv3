@@ -9,6 +9,7 @@ typedef struct {
 } inductor_rawdata_t;
 
 void bsp_inductor_init(void);
+void bsp_inductor_debug(void);
 void bsp_inductor_get(inductor_rawdata_t* out_data);
 
 #endif

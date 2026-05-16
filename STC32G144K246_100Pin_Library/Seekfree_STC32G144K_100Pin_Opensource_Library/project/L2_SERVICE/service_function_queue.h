@@ -10,6 +10,7 @@
 typedef void (*service_function_queue_func_t)(void);
 
 void service_function_queue_init(void);
+void service_function_queue_debug(void);
 uint8 service_function_queue_add(service_function_queue_func_t func, uint32 delay_ms, uint8 priority);
 void service_function_queue_update(void);
 
