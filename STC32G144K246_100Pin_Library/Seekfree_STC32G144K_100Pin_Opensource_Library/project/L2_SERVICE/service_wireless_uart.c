@@ -242,9 +242,19 @@ static uint16 wprint_format(char *buffer, const char *format, va_list args)
     return index;
 }
 
+uint32 service_wireless_uart_send_buffer(const uint8 *buff, uint32 len)
+{
+    if(NULL == buff)
+    {
+        return len;
+    }
+
+    return wireless_uart_send_buffer(buff, len);
+}
+
 void service_wireless_uart_init(void)
 {
-    wireless_uart_init();
+    (void)wireless_uart_init();
 }
 
 void service_wireless_uart_debug(void)
@@ -278,5 +288,5 @@ uint32 wprint(const char *format, ...)
     length = wprint_format(wprint_buffer, format, args);
     va_end(args);
 
-    return wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
+    return service_wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
 }

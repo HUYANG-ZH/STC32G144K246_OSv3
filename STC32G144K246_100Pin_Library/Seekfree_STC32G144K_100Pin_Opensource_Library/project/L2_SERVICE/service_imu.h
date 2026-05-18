@@ -22,6 +22,7 @@ typedef struct
 
 void service_imu_init(void);
 void service_imu_debug(void);
+void service_imu_task(void);
 void service_imu_get_data(service_imu_data_t *out_imu);
 
 #endif

@@ -1,4 +1,5 @@
 #include "zf_common_headfile.h"
+#include "sys_tfpu.h"
 #include "bsp_include.h"
 #include "service_delay.h"
 #include "service_speed.h"
@@ -40,22 +41,17 @@ void service_speed_update(void)
     bsp_encoder_count_t encoder_delta;
 
     bsp_encoder_get_delta(&encoder_delta);
-    speed_data.left_mps = (float)encoder_delta.left * SERVICE_SPEED_MPS_PER_PULSE;
-    speed_data.right_mps = (float)encoder_delta.right * SERVICE_SPEED_MPS_PER_PULSE;
+    speed_data.left_mps = tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_MPS_PER_PULSE);
+    speed_data.right_mps = tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_MPS_PER_PULSE);
 }
 
 void service_speed_get(service_speed_data_t *out_speed)
 {
-    uint8 ea_backup;
-
     if(NULL == out_speed)
     {
         return;
     }
 
-    ea_backup = EA;
-    EA = 0;
     out_speed->left_mps = speed_data.left_mps;
     out_speed->right_mps = speed_data.right_mps;
-    EA = ea_backup;
 }

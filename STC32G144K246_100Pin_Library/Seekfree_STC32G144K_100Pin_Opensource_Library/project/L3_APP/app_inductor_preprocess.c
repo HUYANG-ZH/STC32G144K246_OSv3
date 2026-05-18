@@ -1,4 +1,5 @@
 #include "zf_common_headfile.h"
+#include "sys_tfpu.h"
 #include "service_inductor.h"
 #include "app_inductor_preprocess.h"
 
@@ -92,6 +93,8 @@ static void app_inductor_update_output(void)
     uint16 sorted[APP_INDUCTOR_HISTORY_COUNT];
     float filtered[APP_INDUCTOR_CHANNEL_COUNT];
     float normalized[APP_INDUCTOR_CHANNEL_COUNT];
+    float min_value;
+    float max_value;
 
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
@@ -108,7 +111,7 @@ static void app_inductor_update_output(void)
             sum += sorted[j];
         }
 
-        filtered[i] = (float)sum / (float)APP_INDUCTOR_AVERAGE_COUNT;
+        filtered[i] = tfpu_div(tfpu_int2float((long)sum), tfpu_int2float((long)APP_INDUCTOR_AVERAGE_COUNT));
 
         if(app_inductor_preprocess_max_value[i] <= app_inductor_preprocess_min_value[i])
         {
@@ -116,8 +119,10 @@ static void app_inductor_update_output(void)
         }
         else
         {
-            normalized[i] = (filtered[i] - (float)app_inductor_preprocess_min_value[i]) * 100.0f /
-                    ((float)app_inductor_preprocess_max_value[i] - (float)app_inductor_preprocess_min_value[i]);
+            min_value = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
+            max_value = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
+            normalized[i] = tfpu_div(tfpu_mul(tfpu_sub(filtered[i], min_value), 100.0f),
+                    tfpu_sub(max_value, min_value));
             if(0.0f > normalized[i])
             {
                 normalized[i] = 0.0f;

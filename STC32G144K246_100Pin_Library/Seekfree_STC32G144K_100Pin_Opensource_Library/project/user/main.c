@@ -34,46 +34,46 @@
 ********************************************************************************************************************/
 #include "zf_common_headfile.h"
 #include "sys_include.h"
-#include "service_include.h"
-#include "app_include.h"
-#include "shared_source.h"
+#include "service_timetick.h"
+#include "service_function_queue.h"
+#include "service_wireless_uart.h"
+#include "service_packet.h"
+#include "service_batterycheck.h"
+#include "service_buzzer.h"
+#include "service_imu.h"
+#include "service_motor.h"
+#include "service_negative_pressure.h"
+#include "service_speed.h"
+#include "app_inductor_preprocess.h"
+#include "app_scheduler.h"
+#include "app_speedout.h"
+
 void main(void)
 {
     SystemStart();
 
     service_timetick_init();
     service_function_queue_init();
+    app_scheduler_init();
     service_wireless_uart_init();
     service_packet_init();
     service_batterycheck_init();
     service_buzzer_init();
     service_buzzer_stop();
     service_imu_init();
-    service_negative_pressure_init();
     service_motor_init();
+    service_negative_pressure_init();
     service_speed_init();
-    
     app_inductor_preprocess_init();
     app_speedout_init();
-    app_scheduler_init();
 
-    service_function_queue_add(service_timetick_debug,0,1);
-    service_function_queue_add(service_wireless_uart_debug,0,1);
-    service_function_queue_add(service_batterycheck_debug,0,1);
-    service_function_queue_add(service_buzzer_debug,0,1);
-    service_function_queue_add(service_imu_debug,0,1);
-    service_function_queue_add(service_negative_pressure_debug,0,1);
-    service_function_queue_add(service_motor_debug,0,1);
-    service_function_queue_add(service_speed_debug,0,1);
-
-    app_scheduler_add(0,service_batterycheck_task,1,2000);
-    app_scheduler_add(0,app_speedout_debug,1,300);
     while(1)
     {
-        app_scheduler_run();
         service_function_queue_update();
         service_packet_update();
+        app_scheduler_run();
         service_negative_pressure_task();
+        service_imu_task();
     }
 }
 

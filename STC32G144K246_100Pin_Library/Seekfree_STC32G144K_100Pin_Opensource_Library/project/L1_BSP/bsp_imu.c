@@ -1,16 +1,25 @@
 #include "zf_common_headfile.h"
 #include "bsp_imu.h"
 
+#ifndef BSP_IMU_QUARTERNION_RATE
+#define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_480HZ)
+#endif
+
 static volatile uint8 s_bsp_imu_ready = 0U;
 
 void bsp_imu_init(void)
 {
-    imu660rc_init(IMU660RC_QUARTERNION_480HZ);
+    (void)imu660rc_init(BSP_IMU_QUARTERNION_RATE);
     s_bsp_imu_ready = 1U;
 }
 
 void bsp_imu_debug(void)
 {
+}
+
+void bsp_imu_task(void)
+{
+    imu660rc_update_quarternion();
 }
 
 void bsp_imu_read(imu_data_t *out_data)
@@ -22,6 +31,9 @@ void bsp_imu_read(imu_data_t *out_data)
     int16 gyro_x;
     int16 gyro_y;
     int16 gyro_z;
+
+    imu660rc_get_acc();
+    imu660rc_get_gyro();
 
     ea_backup = EA;
     EA = 0;

@@ -67,6 +67,7 @@
 #include "zf_driver_exti.h"
 #include "zf_common_interrupt.h"
 #include "zf_device_imu660rc.h"
+#include "sys_tfpu.h"
 
 #pragma warning disable = 183
 #pragma warning disable = 177
@@ -76,8 +77,12 @@
 #define M_PI 3.1415926f
 #endif
 
+#define IMU660RC_HALF_PI      (1.5707963f)
+#define IMU660RC_RAD_TO_DEG   (57.2957795f)
+
 
 static uint8 imu660rc_quarternion_rate;
+static volatile uint8 imu660rc_quarternion_update_flag = 0U;
 
 float imu660rc_transition_factor[2];
 int16 imu660rc_gyro_x = 0,  imu660rc_gyro_y = 0,    imu660rc_gyro_z = 0;    // 三轴陀螺仪数据   gyro (陀螺仪)
@@ -368,17 +373,18 @@ static void quarternion_normalize(float quat[4], uint16 *fp16)
     *(uint32 *)(&temp[2]) = fp16_to_float(fp16[2]);
     *(uint32 *)(&temp[3]) = fp16_to_float(fp16[3]);
     
-    n = temp[0] * temp[0] + temp[1] * temp[1] + temp[2] * temp[2] + temp[3] * temp[3];
-    n = sqrt(n);
+    n = tfpu_add(tfpu_add(tfpu_mul(temp[0], temp[0]), tfpu_mul(temp[1], temp[1])),
+            tfpu_add(tfpu_mul(temp[2], temp[2]), tfpu_mul(temp[3], temp[3])));
+    n = tfpu_sqrt(n);
     
     if(n > 0.001f)  // 避免除以接近0的值
     {
-        n = temp[3] < 0.0f ? -n : n;
+        n = temp[3] < 0.0f ? tfpu_sub(0.0f, n) : n;
         
-        quat[0] = temp[1] / n;
-        quat[1] = temp[2] / n;
-        quat[2] = temp[0] / n;
-        quat[3] = temp[3] / n;
+        quat[0] = tfpu_div(temp[1], n);
+        quat[1] = tfpu_div(temp[2], n);
+        quat[2] = tfpu_div(temp[0], n);
+        quat[3] = tfpu_div(temp[3], n);
     }
 }
 
@@ -389,25 +395,84 @@ static void quarternion_normalize(float quat[4], uint16 *fp16)
 // 使用示例     
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
+static float imu660rc_tfpu_atan2(float y, float x)
+{
+    float value;
+
+    if(x > 0.0f)
+    {
+        value = tfpu_atan(tfpu_div(y, x));
+    }
+    else if(x < 0.0f)
+    {
+        value = tfpu_atan(tfpu_div(y, x));
+        value = (y >= 0.0f) ? tfpu_add(value, M_PI) : tfpu_sub(value, M_PI);
+    }
+    else
+    {
+        if(y > 0.0f)
+        {
+            value = IMU660RC_HALF_PI;
+        }
+        else if(y < 0.0f)
+        {
+            value = tfpu_sub(0.0f, IMU660RC_HALF_PI);
+        }
+        else
+        {
+            value = 0.0f;
+        }
+    }
+
+    return value;
+}
+
+static float imu660rc_tfpu_asin(float value)
+{
+    float denominator;
+
+    if(value >= 1.0f)
+    {
+        return IMU660RC_HALF_PI;
+    }
+
+    if(value <= -1.0f)
+    {
+        return tfpu_sub(0.0f, IMU660RC_HALF_PI);
+    }
+
+    denominator = tfpu_sqrt(tfpu_sub(1.0f, tfpu_mul(value, value)));
+    return tfpu_atan(tfpu_div(value, denominator));
+}
+
 static void quarternion_to_euler(float quat[4], float *roll, float *pitch, float *yaw)
 {
     float euler[3];
+    float temp_a;
+    float temp_b;
 
-  	float sqx = quat[0] * quat[0];
-  	float sqy = quat[1] * quat[1];
-  	float sqz = quat[2] * quat[2];
+    float sqx = tfpu_mul(quat[0], quat[0]);
+    float sqy = tfpu_mul(quat[1], quat[1]);
+    float sqz = tfpu_mul(quat[2], quat[2]);
 
-  	euler[0] =  atan2(2.0f * (quat[1] * quat[3] + quat[0] * quat[2]), 1.0f - 2.0f * (sqy + sqx));
-  	euler[1] = -asin(2.0f * (quat[0] * quat[3] - quat[1] * quat[2]));
-  	euler[2] =  atan2(2.0f * (quat[0] * quat[1] + quat[2] * quat[3]), 1.0f - 2.0f * (sqx + sqz));
+    temp_a = tfpu_mul(2.0f, tfpu_add(tfpu_mul(quat[1], quat[3]), tfpu_mul(quat[0], quat[2])));
+    temp_b = tfpu_sub(1.0f, tfpu_mul(2.0f, tfpu_add(sqy, sqx)));
+    euler[0] = imu660rc_tfpu_atan2(temp_a, temp_b);
+
+    temp_a = tfpu_mul(2.0f, tfpu_sub(tfpu_mul(quat[0], quat[3]), tfpu_mul(quat[1], quat[2])));
+    euler[1] = tfpu_sub(0.0f, imu660rc_tfpu_asin(temp_a));
+
+    temp_a = tfpu_mul(2.0f, tfpu_add(tfpu_mul(quat[0], quat[1]), tfpu_mul(quat[2], quat[3])));
+    temp_b = tfpu_sub(1.0f, tfpu_mul(2.0f, tfpu_add(sqx, sqz)));
+    euler[2] = imu660rc_tfpu_atan2(temp_a, temp_b);
     
     // 弧度转角度
-    euler[0] = 180 * (euler[0]) / M_PI;
-    euler[1] = 180 * (euler[1]) / M_PI;
-    euler[2] = 180 * (euler[2]) / M_PI;
+    euler[0] = tfpu_mul(euler[0], IMU660RC_RAD_TO_DEG);
+    euler[1] = tfpu_mul(euler[1], IMU660RC_RAD_TO_DEG);
+    euler[2] = tfpu_mul(euler[2], IMU660RC_RAD_TO_DEG);
     
     // 角度调整
-    euler[2] = 0 > euler[2] ? euler[2] + 360 : euler[2];
+    euler[2] = 0 > euler[2] ? tfpu_add(euler[2], 360.0f) : euler[2];
     
     *roll   = euler[0];
     *pitch  = euler[1];
@@ -558,7 +623,24 @@ void imu660rc_get_quarternion(void)
 //-------------------------------------------------------------------------------------------------------------------
 void imu660rc_callback(void)
 {
-	imu660rc_get_quarternion();
+	imu660rc_quarternion_update_flag = 1U;
+}
+
+void imu660rc_update_quarternion(void)
+{
+    uint8 ea_backup;
+    uint8 update_flag;
+
+    ea_backup = EA;
+    EA = 0;
+    update_flag = imu660rc_quarternion_update_flag;
+    imu660rc_quarternion_update_flag = 0U;
+    EA = ea_backup;
+
+    if(0U != update_flag)
+    {
+        imu660rc_get_quarternion();
+    }
 }
 
 //-------------------------------------------------------------------------------------------------------------------

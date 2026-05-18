@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               16/05/26  17:18:14  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               17/05/26  22:49:28  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -53,48 +53,48 @@ stmt  level    source
              -***********/
    35          #include "zf_common_headfile.h"
    36          #include "sys_include.h"
-   37          #include "service_include.h"
-   38          #include "app_include.h"
-   39          #include "shared_source.h"
-   40          void main(void)
-   41          {
-   42   1          SystemStart();
-   43   1      
-   44   1          service_timetick_init();
-   45   1          service_function_queue_init();
-   46   1          service_wireless_uart_init();
-   47   1          service_packet_init();
-   48   1          service_batterycheck_init();
-   49   1          service_buzzer_init();
-C251 COMPILER V5.60.0,  main                                                               16/05/26  17:18:14  PAGE 2   
+   37          #include "service_timetick.h"
+   38          #include "service_function_queue.h"
+   39          #include "service_wireless_uart.h"
+   40          #include "service_packet.h"
+   41          #include "service_batterycheck.h"
+   42          #include "service_buzzer.h"
+   43          #include "service_imu.h"
+   44          #include "service_motor.h"
+   45          #include "service_negative_pressure.h"
+   46          #include "service_speed.h"
+   47          #include "app_inductor_preprocess.h"
+   48          #include "app_scheduler.h"
+   49          #include "app_speedout.h"
+C251 COMPILER V5.60.0,  main                                                               17/05/26  22:49:28  PAGE 2   
 
-   50   1          service_buzzer_stop();
-   51   1          service_imu_init();
-   52   1          service_negative_pressure_init();
-   53   1          service_motor_init();
-   54   1          service_speed_init();
-   55   1          
-   56   1          app_inductor_preprocess_init();
-   57   1          app_speedout_init();
-   58   1          app_scheduler_init();
-   59   1      
-   60   1          service_function_queue_add(service_timetick_debug,0,1);
-   61   1          service_function_queue_add(service_wireless_uart_debug,0,1);
-   62   1          service_function_queue_add(service_batterycheck_debug,0,1);
-   63   1          service_function_queue_add(service_buzzer_debug,0,1);
-   64   1          service_function_queue_add(service_imu_debug,0,1);
-   65   1          service_function_queue_add(service_negative_pressure_debug,0,1);
-   66   1          service_function_queue_add(service_motor_debug,0,1);
-   67   1          service_function_queue_add(service_speed_debug,0,1);
-   68   1      
-   69   1          app_scheduler_add(0,service_batterycheck_task,1,2000);
-   70   1          app_scheduler_add(0,app_speedout_debug,1,300);
-   71   1          while(1)
-   72   1          {
-   73   2              app_scheduler_run();
-   74   2              service_function_queue_update();
-   75   2              service_packet_update();
-   76   2              service_negative_pressure_task();
+   50          
+   51          void main(void)
+   52          {
+   53   1          SystemStart();
+   54   1      
+   55   1          service_timetick_init();
+   56   1          service_function_queue_init();
+   57   1          app_scheduler_init();
+   58   1          service_wireless_uart_init();
+   59   1          service_packet_init();
+   60   1          service_batterycheck_init();
+   61   1          service_buzzer_init();
+   62   1          service_buzzer_stop();
+   63   1          service_imu_init();
+   64   1          service_motor_init();
+   65   1          service_negative_pressure_init();
+   66   1          service_speed_init();
+   67   1          app_inductor_preprocess_init();
+   68   1          app_speedout_init();
+   69   1      
+   70   1          while(1)
+   71   1          {
+   72   2              service_function_queue_update();
+   73   2              service_packet_update();
+   74   2              app_scheduler_run();
+   75   2              service_negative_pressure_task();
+   76   2              service_imu_task();
    77   2          }
    78   1      }
    79          
@@ -104,7 +104,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       293     ------
+  ecode size           =       129     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

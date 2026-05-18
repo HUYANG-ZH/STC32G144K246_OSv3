@@ -29,15 +29,9 @@ void service_batterycheck_task(void)
     if((uint32)(now - batterycheck_last_tick) >= BATTERYCHECK_PERIOD_TICK)
     {
         bsp_battery_vol(&batterycheck_voltage);
-        printf("battery%f\r\n",batterycheck_voltage);
         batterycheck_last_tick = now;
     }
 
-    if(batterycheck_voltage <= 11.0f)
-    {
-        printf("batterylow:%f\r\n",batterycheck_voltage);
-        wprint("batterylow.\r\n");
-    }
 }
 
 void service_batterycheck_get_voltage(float *voltage)

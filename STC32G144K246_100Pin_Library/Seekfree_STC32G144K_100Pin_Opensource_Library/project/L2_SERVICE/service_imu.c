@@ -7,6 +7,11 @@ void service_imu_init(void)
     bsp_imu_init();
 }
 
+void service_imu_task(void)
+{
+    bsp_imu_task();
+}
+
 void service_imu_debug(void)
 {
     service_imu_data_t testdata;

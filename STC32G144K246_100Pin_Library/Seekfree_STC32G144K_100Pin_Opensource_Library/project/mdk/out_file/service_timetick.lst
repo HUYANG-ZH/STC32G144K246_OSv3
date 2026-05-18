@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_timetick                                                   16/05/26  17:01:25  PAGE 1   
+C251 COMPILER V5.60.0,  service_timetick                                                   17/05/26  22:28:38  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_timetick
@@ -30,31 +30,23 @@ stmt  level    source
    17          
    18          uint32 service_timetick_what(void)
    19          {
-   20   1          uint8 ea_backup;
-   21   1          uint32 now;
-   22   1      
-   23   1          ea_backup = EA;
-   24   1          EA = 0;
-   25   1          now = time;
-   26   1          EA = ea_backup;
-   27   1      
-   28   1          return now;
-   29   1      }
-   30          
-   31          static void timetick_new(void)
-   32          {
-   33   1          time++;
-   34   1      }
+   20   1          return time;
+   21   1      }
+   22          
+   23          static void timetick_new(void)
+   24          {
+   25   1          time++;
+   26   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       180     ------
+  ecode size           =       141     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         9     ------
+  xdata size           =         4     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

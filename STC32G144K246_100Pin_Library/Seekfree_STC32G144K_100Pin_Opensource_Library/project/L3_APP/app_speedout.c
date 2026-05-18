@@ -108,15 +108,11 @@ static void app_speedout_register_packet(void)
 
 void app_speedout_init(void)
 {
-    uint8 ea_backup;
-
     app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
     app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
     shared_pos_pid_init(&speedout_left_pid);
     shared_pos_pid_init(&speedout_right_pid);
 
-    ea_backup = EA;
-    EA = 0;
     app_speedout_config.left.target_mps = 0.0f;
     app_speedout_config.right.target_mps = 0.0f;
     app_speedout_data.left_target_mps = 0.0f;
@@ -127,7 +123,6 @@ void app_speedout_init(void)
     app_speedout_data.right_pwm = 0.0f;
     app_speedout_data.enabled = 1.0f;
     speedout_last_enabled = 1U;
-    EA = ea_backup;
 
     app_speedout_register_packet();
     pit_ms_init(APP_SPEEDOUT_PIT, APP_SPEEDOUT_PERIOD_MS, app_speedout_tick);
@@ -146,10 +141,6 @@ void app_speedout_debug(void)
 
 void app_speedout_stop(void)
 {
-    uint8 ea_backup;
-
-    ea_backup = EA;
-    EA = 0;
     app_speedout_config.left.target_mps = 0.0f;
     app_speedout_config.right.target_mps = 0.0f;
     app_speedout_data.left_target_mps = 0.0f;
@@ -159,24 +150,18 @@ void app_speedout_stop(void)
     app_speedout_data.enabled = 0.0f;
     speedout_last_enabled = 0U;
     app_speedout_clear_pid();
-    EA = ea_backup;
 
     service_motor_stop();
 }
 
 void app_speedout_get_data(app_speedout_data_t *out_data)
 {
-    uint8 ea_backup;
-
     if(NULL == out_data)
     {
         return;
     }
 
-    ea_backup = EA;
-    EA = 0;
     *out_data = app_speedout_data;
-    EA = ea_backup;
 }
 
 static void app_speedout_tick(void)

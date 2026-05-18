@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               16/05/26  17:01:21  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               17/05/26  22:28:36  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -42,39 +42,33 @@ stmt  level    source
    29   1          if((uint32)(now - batterycheck_last_tick) >= BATTERYCHECK_PERIOD_TICK)
    30   1          {
    31   2              bsp_battery_vol(&batterycheck_voltage);
-   32   2              printf("battery%f\r\n",batterycheck_voltage);
-   33   2              batterycheck_last_tick = now;
-   34   2          }
-   35   1      
-   36   1          if(batterycheck_voltage <= 11.0f)
-   37   1          {
-   38   2              printf("batterylow:%f\r\n",batterycheck_voltage);
-   39   2              wprint("batterylow.\r\n");
-   40   2          }
-   41   1      }
-   42          
-   43          void service_batterycheck_get_voltage(float *voltage)
-   44          {
-   45   1          service_batterycheck_task();
-   46   1          if(NULL != voltage)
-   47   1          {
-   48   2              *voltage = batterycheck_voltage;
-   49   2          }
-   50   1      }
+   32   2              batterycheck_last_tick = now;
+   33   2          }
+   34   1      
+   35   1      }
+   36          
+   37          void service_batterycheck_get_voltage(float *voltage)
+   38          {
+   39   1          service_batterycheck_task();
+   40   1          if(NULL != voltage)
+   41   1          {
+   42   2              *voltage = batterycheck_voltage;
+   43   2          }
+   44   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       293     ------
-C251 COMPILER V5.60.0,  service_batterycheck                                               16/05/26  17:01:21  PAGE 2   
-
+  ecode size           =       195     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =        16     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
+C251 COMPILER V5.60.0,  service_batterycheck                                               17/05/26  22:28:36  PAGE 2   
+
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
@@ -82,7 +76,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        90     ------
+  hconst size          =        48     ------
 End of Module Information.
 
 

@@ -212,6 +212,7 @@ void    imu660rc_get_quarternion    (void);
 //-------------------------------------------------------------------------------------------------------------------
 #define imu660rc_gyro_transition(gyro_value)    ((float)(gyro_value) / imu660rc_transition_factor[1])
 void    imu660rc_callback           (void);
+void    imu660rc_update_quarternion (void);
 uint8   imu660rc_init               (imu660rc_quarternion_rate_config quarternion_rate);
 
 

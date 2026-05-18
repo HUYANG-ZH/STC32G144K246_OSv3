@@ -25,6 +25,7 @@ typedef struct
 
 void bsp_imu_init(void);
 void bsp_imu_debug(void);
+void bsp_imu_task(void);
 void bsp_imu_read(imu_data_t *out_data);
 void bsp_imu_get_temperature(float *temperature);
 uint8 bsp_imu_is_ready(void);

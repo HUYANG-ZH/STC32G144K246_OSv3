@@ -1,3 +1,4 @@
+#include "sys_tfpu.h"
 #include "shared_pos_pid.h"
 
 static void shared_pos_pid_fix_config(shared_pos_pid_t *pid);
@@ -84,13 +85,13 @@ void shared_pos_pid_reset_state(shared_pos_pid_t *pid, float output, float targe
 
     shared_pos_pid_fix_config(pid);
 
-    error = shared_pos_pid_get_direction_sign(pid) * (target - feedback);
+    error = tfpu_mul(shared_pos_pid_get_direction_sign(pid), tfpu_sub(target, feedback));
     error = shared_pos_pid_apply_deadband(error, pid->deadband);
     use_output = shared_pos_pid_limit_output(pid, output);
 
     pid->output = use_output;
     pid->ramp_target = target;
-    pid->integral = shared_pos_pid_limit_integral(pid, use_output - pid->kp * error);
+    pid->integral = shared_pos_pid_limit_integral(pid, tfpu_sub(use_output, tfpu_mul(pid->kp, error)));
     pid->last_error = error;
     pid->last_feedback = feedback;
     pid->initialized = ZF_TRUE;
@@ -124,7 +125,7 @@ float shared_pos_pid_update(shared_pos_pid_t *pid, float target, float feedback,
     shared_pos_pid_fix_config(pid);
 
     use_target = shared_pos_pid_update_target(pid, target, dt);
-    error = shared_pos_pid_get_direction_sign(pid) * (use_target - feedback);
+    error = tfpu_mul(shared_pos_pid_get_direction_sign(pid), tfpu_sub(use_target, feedback));
 
     return shared_pos_pid_update_common(pid, error, feedback, dt, ZF_TRUE);
 }
@@ -327,9 +328,9 @@ static float shared_pos_pid_limit_delta(const shared_pos_pid_t *pid, float outpu
 
     if((NULL != pid) && (ZF_ENABLE == pid->delta_limit_enable))
     {
-        delta = output - pid->output;
+        delta = tfpu_sub(output, pid->output);
         delta = shared_pos_pid_clamp(delta, pid->delta_min, pid->delta_max);
-        output = pid->output + delta;
+        output = tfpu_add(pid->output, delta);
     }
 
     return output;
@@ -393,8 +394,8 @@ static float shared_pos_pid_update_target(shared_pos_pid_t *pid, float target, f
         return target;
     }
 
-    max_step = pid->setpoint_rate * dt;
-    delta = target - pid->ramp_target;
+    max_step = tfpu_mul(pid->setpoint_rate, dt);
+    delta = tfpu_sub(target, pid->ramp_target);
 
     if(shared_pos_pid_abs(delta) <= max_step)
     {
@@ -402,11 +403,11 @@ static float shared_pos_pid_update_target(shared_pos_pid_t *pid, float target, f
     }
     else if(0.0f < delta)
     {
-        pid->ramp_target += max_step;
+        pid->ramp_target = tfpu_add(pid->ramp_target, max_step);
     }
     else
     {
-        pid->ramp_target -= max_step;
+        pid->ramp_target = tfpu_sub(pid->ramp_target, max_step);
     }
 
     return pid->ramp_target;
@@ -443,8 +444,8 @@ static float shared_pos_pid_update_common(shared_pos_pid_t *pid, float error, fl
 
     error = shared_pos_pid_apply_deadband(error, pid->deadband);
 
-    p_output = pid->kp * error;
-    i_delta = pid->ki * error * dt;
+    p_output = tfpu_mul(pid->kp, error);
+    i_delta = tfpu_mul(tfpu_mul(pid->ki, error), dt);
     d_output = 0.0f;
 
     if((0.0f < pid->integral_separation) && (pid->integral_separation < shared_pos_pid_abs(error)))
@@ -463,7 +464,7 @@ static float shared_pos_pid_update_common(shared_pos_pid_t *pid, float error, fl
 
     if(ZF_TRUE == integral_enable)
     {
-        pid->integral = shared_pos_pid_limit_integral(pid, pid->integral + i_delta);
+        pid->integral = shared_pos_pid_limit_integral(pid, tfpu_add(pid->integral, i_delta));
     }
 
     if(ZF_FALSE == first_update)
@@ -472,16 +473,17 @@ static float shared_pos_pid_update_common(shared_pos_pid_t *pid, float error, fl
         {
             if(ZF_TRUE == pid->feedback_initialized)
             {
-                d_output = -direction_sign * pid->kd * (feedback - pid->last_feedback) / dt;
+                d_output = tfpu_div(tfpu_mul(tfpu_mul(tfpu_sub(0.0f, direction_sign), pid->kd),
+                        tfpu_sub(feedback, pid->last_feedback)), dt);
             }
         }
         else
         {
-            d_output = pid->kd * (error - pid->last_error) / dt;
+            d_output = tfpu_div(tfpu_mul(pid->kd, tfpu_sub(error, pid->last_error)), dt);
         }
     }
 
-    output = p_output + pid->integral + d_output;
+    output = tfpu_add(tfpu_add(p_output, pid->integral), d_output);
     output = shared_pos_pid_limit_delta(pid, output);
     output = shared_pos_pid_limit_output(pid, output);
     pid->output = output;

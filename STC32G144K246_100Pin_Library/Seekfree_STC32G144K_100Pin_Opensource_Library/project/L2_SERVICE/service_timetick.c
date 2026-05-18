@@ -17,15 +17,7 @@ void service_timetick_debug(void)
 
 uint32 service_timetick_what(void)
 {
-    uint8 ea_backup;
-    uint32 now;
-
-    ea_backup = EA;
-    EA = 0;
-    now = time;
-    EA = ea_backup;
-
-    return now;
+    return time;
 }
 
 static void timetick_new(void)
