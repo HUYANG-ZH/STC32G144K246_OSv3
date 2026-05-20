@@ -7,9 +7,9 @@ void service_imu_init(void)
     bsp_imu_init();
 }
 
-void service_imu_task(void)
+uint8 service_imu_task(void)
 {
-    bsp_imu_task();
+    return bsp_imu_task();
 }
 
 void service_imu_debug(void)

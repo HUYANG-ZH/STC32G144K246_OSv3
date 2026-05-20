@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_imu                                                        17/05/26  22:28:36  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        20/05/26  14:47:21  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
@@ -20,9 +20,9 @@ stmt  level    source
     7   1          bsp_imu_init();
     8   1      }
     9          
-   10          void service_imu_task(void)
+   10          uint8 service_imu_task(void)
    11          {
-   12   1          bsp_imu_task();
+   12   1          return bsp_imu_task();
    13   1      }
    14          
    15          void service_imu_debug(void)
@@ -67,7 +67,7 @@ Module Information          Static   Overlayable
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-C251 COMPILER V5.60.0,  service_imu                                                        17/05/26  22:28:36  PAGE 2   
+C251 COMPILER V5.60.0,  service_imu                                                        20/05/26  14:47:21  PAGE 2   
 
   xdata size           =       112     ------
   xdata-const size     =    ------     ------

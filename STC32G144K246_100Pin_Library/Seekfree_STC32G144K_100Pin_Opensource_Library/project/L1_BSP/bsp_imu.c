@@ -17,9 +17,9 @@ void bsp_imu_debug(void)
 {
 }
 
-void bsp_imu_task(void)
+uint8 bsp_imu_task(void)
 {
-    imu660rc_update_quarternion();
+    return imu660rc_update_quarternion();
 }
 
 void bsp_imu_read(imu_data_t *out_data)

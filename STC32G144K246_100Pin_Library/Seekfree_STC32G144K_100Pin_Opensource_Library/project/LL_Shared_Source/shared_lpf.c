@@ -1,4 +1,5 @@
 #include "shared_lpf.h"
+#include "sys_tfpu.h"
 
 static float shared_lpf_clamp_alpha(float alpha);
 
@@ -49,7 +50,12 @@ void shared_lpf_reset(shared_lpf_t *filter, float value)
 //-------------------------------------------------------------------------------------------------------------------
 float shared_lpf_update(shared_lpf_t *filter, float input)
 {
-    filter->output = filter->output + filter->alpha * (input - filter->output);
+    float delta;
+    float step;
+
+    delta = tfpu_sub(input, filter->output);
+    step = tfpu_mul(filter->alpha, delta);
+    filter->output = tfpu_add(filter->output, step);
 
     return filter->output;
 }

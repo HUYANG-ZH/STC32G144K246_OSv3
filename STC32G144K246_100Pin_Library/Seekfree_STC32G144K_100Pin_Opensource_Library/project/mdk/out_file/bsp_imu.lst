@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_imu                                                            17/05/26  22:28:35  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_imu                                                            20/05/26  14:47:19  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_imu
@@ -30,9 +30,9 @@ stmt  level    source
    17          {
    18   1      }
    19          
-   20          void bsp_imu_task(void)
+   20          uint8 bsp_imu_task(void)
    21          {
-   22   1          imu660rc_update_quarternion();
+   22   1          return imu660rc_update_quarternion();
    23   1      }
    24          
    25          void bsp_imu_read(imu_data_t *out_data)
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          EA = ea_backup;
    54   1      
    55   1          out_data->imu_acc_x = imu660rc_acc_transition(acc_x);
-C251 COMPILER V5.60.0,  bsp_imu                                                            17/05/26  22:28:35  PAGE 2   
+C251 COMPILER V5.60.0,  bsp_imu                                                            20/05/26  14:47:19  PAGE 2   
 
    56   1          out_data->imu_acc_y = imu660rc_acc_transition(acc_y);
    57   1          out_data->imu_acc_z = imu660rc_acc_transition(acc_z);

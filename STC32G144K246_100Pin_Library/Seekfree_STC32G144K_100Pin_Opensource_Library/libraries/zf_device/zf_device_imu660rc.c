@@ -626,7 +626,7 @@ void imu660rc_callback(void)
 	imu660rc_quarternion_update_flag = 1U;
 }
 
-void imu660rc_update_quarternion(void)
+uint8 imu660rc_update_quarternion(void)
 {
     uint8 ea_backup;
     uint8 update_flag;
@@ -640,7 +640,10 @@ void imu660rc_update_quarternion(void)
     if(0U != update_flag)
     {
         imu660rc_get_quarternion();
+        return 1U;
     }
+
+    return 0U;
 }
 
 //-------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,129 @@
+C251 COMPILER V5.60.0,  app_attitude                                                       20/05/26  14:47:24  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_attitude
+OBJECT MODULE PLACED IN .\out_file\app_attitude.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_attitude.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,
+                    -SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf
+                    -_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\st
+                    -c32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_attitude.lst) TABS(2) OBJECT(.
+                    -\out_file\app_attitude.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "shared_lpf.h"
+    3          #include "service_imu.h"
+    4          #include "app_attitude.h"
+    5          
+    6          static shared_lpf_t attitude_acc_x_lpf;
+    7          static shared_lpf_t attitude_acc_y_lpf;
+    8          static shared_lpf_t attitude_acc_z_lpf;
+    9          static shared_lpf_t attitude_gyro_x_lpf;
+   10          static shared_lpf_t attitude_gyro_y_lpf;
+   11          static shared_lpf_t attitude_gyro_z_lpf;
+   12          static volatile app_attitude_data_t attitude_data;
+   13          
+   14          static void app_attitude_copy_to_output(const service_imu_data_t *imu_data);
+   15          
+   16          void app_attitude_init(void)
+   17          {
+   18   1          service_imu_data_t imu_data;
+   19   1      
+   20   1          service_imu_get_data(&imu_data);
+   21   1      
+   22   1          shared_lpf_init(&attitude_acc_x_lpf, APP_ATTITUDE_ACC_LPF_ALPHA_DEFAULT, imu_data.acc_x);
+   23   1          shared_lpf_init(&attitude_acc_y_lpf, APP_ATTITUDE_ACC_LPF_ALPHA_DEFAULT, imu_data.acc_y);
+   24   1          shared_lpf_init(&attitude_acc_z_lpf, APP_ATTITUDE_ACC_LPF_ALPHA_DEFAULT, imu_data.acc_z);
+   25   1          shared_lpf_init(&attitude_gyro_x_lpf, APP_ATTITUDE_GYRO_LPF_ALPHA_DEFAULT, imu_data.gyro_x);
+   26   1          shared_lpf_init(&attitude_gyro_y_lpf, APP_ATTITUDE_GYRO_LPF_ALPHA_DEFAULT, imu_data.gyro_y);
+   27   1          shared_lpf_init(&attitude_gyro_z_lpf, APP_ATTITUDE_GYRO_LPF_ALPHA_DEFAULT, imu_data.gyro_z);
+   28   1      
+   29   1          app_attitude_copy_to_output(&imu_data);
+   30   1      }
+   31          
+   32          void app_attitude_task(void)
+   33          {
+   34   1          service_imu_data_t imu_data;
+   35   1      
+   36   1          service_imu_get_data(&imu_data);
+   37   1          app_attitude_copy_to_output(&imu_data);
+   38   1      }
+   39          
+   40          void app_attitude_get_data(app_attitude_data_t *out_data)
+   41          {
+   42   1          uint8 ea_backup;
+   43   1      
+   44   1          if(NULL == out_data)
+   45   1          {
+   46   2              return;
+   47   2          }
+   48   1      
+   49   1          ea_backup = EA;
+   50   1          EA = 0;
+   51   1          out_data->roll = attitude_data.roll;
+   52   1          out_data->pitch = attitude_data.pitch;
+   53   1          out_data->yaw = attitude_data.yaw;
+   54   1          out_data->acc_x = attitude_data.acc_x;
+   55   1          out_data->acc_y = attitude_data.acc_y;
+C251 COMPILER V5.60.0,  app_attitude                                                       20/05/26  14:47:24  PAGE 2   
+
+   56   1          out_data->acc_z = attitude_data.acc_z;
+   57   1          out_data->gyro_x = attitude_data.gyro_x;
+   58   1          out_data->gyro_y = attitude_data.gyro_y;
+   59   1          out_data->gyro_z = attitude_data.gyro_z;
+   60   1          EA = ea_backup;
+   61   1      }
+   62          
+   63          static void app_attitude_copy_to_output(const service_imu_data_t *imu_data)
+   64          {
+   65   1          uint8 ea_backup;
+   66   1          app_attitude_data_t output;
+   67   1      
+   68   1          output.roll = imu_data->roll;
+   69   1          output.pitch = imu_data->pitch;
+   70   1          output.yaw = imu_data->yaw;
+   71   1          output.acc_x = shared_lpf_update(&attitude_acc_x_lpf, imu_data->acc_x);
+   72   1          output.acc_y = shared_lpf_update(&attitude_acc_y_lpf, imu_data->acc_y);
+   73   1          output.acc_z = shared_lpf_update(&attitude_acc_z_lpf, imu_data->acc_z);
+   74   1          output.gyro_x = shared_lpf_update(&attitude_gyro_x_lpf, imu_data->gyro_x);
+   75   1          output.gyro_y = shared_lpf_update(&attitude_gyro_y_lpf, imu_data->gyro_y);
+   76   1          output.gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, imu_data->gyro_z);
+   77   1      
+   78   1          ea_backup = EA;
+   79   1          EA = 0;
+   80   1          attitude_data.roll = output.roll;
+   81   1          attitude_data.pitch = output.pitch;
+   82   1          attitude_data.yaw = output.yaw;
+   83   1          attitude_data.acc_x = output.acc_x;
+   84   1          attitude_data.acc_y = output.acc_y;
+   85   1          attitude_data.acc_z = output.acc_z;
+   86   1          attitude_data.gyro_x = output.gyro_x;
+   87   1          attitude_data.gyro_y = output.gyro_y;
+   88   1          attitude_data.gyro_z = output.gyro_z;
+   89   1          EA = ea_backup;
+   90   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1163     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       234     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

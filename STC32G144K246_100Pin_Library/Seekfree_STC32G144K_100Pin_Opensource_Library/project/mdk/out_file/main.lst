@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               17/05/26  22:49:28  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               20/05/26  14:47:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -63,48 +63,53 @@ stmt  level    source
    44          #include "service_motor.h"
    45          #include "service_negative_pressure.h"
    46          #include "service_speed.h"
-   47          #include "app_inductor_preprocess.h"
-   48          #include "app_scheduler.h"
-   49          #include "app_speedout.h"
-C251 COMPILER V5.60.0,  main                                                               17/05/26  22:49:28  PAGE 2   
+   47          #include "app_attitude.h"
+   48          #include "app_inductor_preprocess.h"
+   49          #include "app_scheduler.h"
+C251 COMPILER V5.60.0,  main                                                               20/05/26  14:47:26  PAGE 2   
 
-   50          
-   51          void main(void)
-   52          {
-   53   1          SystemStart();
-   54   1      
-   55   1          service_timetick_init();
-   56   1          service_function_queue_init();
-   57   1          app_scheduler_init();
-   58   1          service_wireless_uart_init();
-   59   1          service_packet_init();
-   60   1          service_batterycheck_init();
-   61   1          service_buzzer_init();
-   62   1          service_buzzer_stop();
-   63   1          service_imu_init();
-   64   1          service_motor_init();
-   65   1          service_negative_pressure_init();
-   66   1          service_speed_init();
-   67   1          app_inductor_preprocess_init();
-   68   1          app_speedout_init();
-   69   1      
-   70   1          while(1)
-   71   1          {
-   72   2              service_function_queue_update();
-   73   2              service_packet_update();
-   74   2              app_scheduler_run();
-   75   2              service_negative_pressure_task();
-   76   2              service_imu_task();
-   77   2          }
-   78   1      }
-   79          
-   80          
+   50          #include "app_speedout.h"
+   51          
+   52          void main(void)
+   53          {
+   54   1          SystemStart();
+   55   1      
+   56   1          service_timetick_init();
+   57   1          service_function_queue_init();
+   58   1          app_scheduler_init();
+   59   1          service_wireless_uart_init();
+   60   1          service_packet_init();
+   61   1          service_batterycheck_init();
+   62   1          service_buzzer_init();
+   63   1          service_buzzer_stop();
+   64   1          service_imu_init();
+   65   1          service_motor_init();
+   66   1          service_negative_pressure_init();
+   67   1          service_speed_init();
+   68   1          app_attitude_init();
+   69   1          app_inductor_preprocess_init();
+   70   1          app_speedout_init();
+   71   1      
+   72   1          while(1)
+   73   1          {
+   74   2              service_function_queue_update();
+   75   2              service_packet_update();
+   76   2              app_scheduler_run();
+   77   2              service_negative_pressure_task();
+   78   2              if(0U != service_imu_task())
+   79   2              {
+   80   3                  app_attitude_task();
+   81   3              }
+   82   2          }
+   83   1      }
+   84          
+   85          
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       129     ------
+  ecode size           =       142     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
