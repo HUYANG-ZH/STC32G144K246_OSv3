@@ -3,6 +3,7 @@
 
 #include "app_attitude.h"
 #include "app_inductor_preprocess.h"
+#include "app_motion_preprocess.h"
 #include "app_scheduler.h"
 #include "app_speedout.h"
 

@@ -46,6 +46,7 @@
 #include "service_speed.h"
 #include "app_attitude.h"
 #include "app_inductor_preprocess.h"
+#include "app_motion_preprocess.h"
 #include "app_scheduler.h"
 #include "app_speedout.h"
 
@@ -67,6 +68,7 @@ void main(void)
     service_speed_init();
     app_attitude_init();
     app_inductor_preprocess_init();
+    app_motion_preprocess_init();
     app_speedout_init();
 
     while(1)
@@ -81,5 +83,3 @@ void main(void)
         }
     }
 }
-
-

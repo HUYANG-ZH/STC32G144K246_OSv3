@@ -11,8 +11,8 @@
 #define APP_SPEEDOUT_TARGET_LIMIT_MPS        (10.0f)
 #define APP_SPEEDOUT_DEFAULT_LEFT_KP         (0.0f)
 #define APP_SPEEDOUT_DEFAULT_LEFT_KI         (0.0f)
-#define APP_SPEEDOUT_DEFAULT_RIGHT_KP        (0.0f)
-#define APP_SPEEDOUT_DEFAULT_RIGHT_KI        (0.0f)
+#define APP_SPEEDOUT_DEFAULT_RIGHT_KP        (300.0f)
+#define APP_SPEEDOUT_DEFAULT_RIGHT_KI        (2000.0f)
 #define APP_SPEEDOUT_DEFAULT_KD              (0.0f)
 #define APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT  (0.0f)
 #define APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT    ((float)PWM_DUTY_MAX)
@@ -133,10 +133,8 @@ void app_speedout_debug(void)
     app_speedout_data_t datas;
 
     app_speedout_get_data(&datas);
-    printf("[speedout:l=%.3f/%.3f,r=%.3f/%.3f,pwm=%.0f,%.0f,en=%.0f]\r\n",
-            datas.left_actual_mps, datas.left_target_mps,
-            datas.right_actual_mps, datas.right_target_mps,
-            datas.left_pwm, datas.right_pwm, datas.enabled);
+    printf("%.3f,%.3f,%.0f\r\n",
+            datas.right_target_mps, datas.right_actual_mps, datas.right_pwm);
 }
 
 void app_speedout_stop(void)

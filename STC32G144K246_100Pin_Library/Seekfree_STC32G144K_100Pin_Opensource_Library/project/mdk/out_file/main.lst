@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               20/05/26  14:47:26  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               20/05/26  21:34:04  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,50 +66,52 @@ stmt  level    source
    47          #include "app_attitude.h"
    48          #include "app_inductor_preprocess.h"
    49          #include "app_scheduler.h"
-C251 COMPILER V5.60.0,  main                                                               20/05/26  14:47:26  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               20/05/26  21:34:04  PAGE 2   
 
    50          #include "app_speedout.h"
    51          
-   52          void main(void)
-   53          {
-   54   1          SystemStart();
-   55   1      
-   56   1          service_timetick_init();
-   57   1          service_function_queue_init();
-   58   1          app_scheduler_init();
-   59   1          service_wireless_uart_init();
-   60   1          service_packet_init();
-   61   1          service_batterycheck_init();
-   62   1          service_buzzer_init();
-   63   1          service_buzzer_stop();
-   64   1          service_imu_init();
-   65   1          service_motor_init();
-   66   1          service_negative_pressure_init();
-   67   1          service_speed_init();
-   68   1          app_attitude_init();
-   69   1          app_inductor_preprocess_init();
-   70   1          app_speedout_init();
-   71   1      
-   72   1          while(1)
-   73   1          {
-   74   2              service_function_queue_update();
-   75   2              service_packet_update();
-   76   2              app_scheduler_run();
-   77   2              service_negative_pressure_task();
-   78   2              if(0U != service_imu_task())
-   79   2              {
-   80   3                  app_attitude_task();
-   81   3              }
-   82   2          }
-   83   1      }
-   84          
-   85          
+   52          #define MAIN_LEFT_MOTOR_DEBUG_PWM      ((int32)(PWM_DUTY_MAX * 40UL / 100UL))
+   53          
+   54          void main(void)
+   55          {
+   56   1          SystemStart();
+   57   1      
+   58   1          service_timetick_init();
+   59   1          service_function_queue_init();
+   60   1          app_scheduler_init();
+   61   1          service_wireless_uart_init();
+   62   1          service_packet_init();
+   63   1          service_batterycheck_init();
+   64   1          service_buzzer_init();
+   65   1          service_buzzer_stop();
+   66   1          service_imu_init();
+   67   1          service_motor_init();
+   68   1          service_negative_pressure_init();
+   69   1          service_speed_init();
+   70   1          app_attitude_init();
+   71   1          app_inductor_preprocess_init();
+   72   1          service_motor_set_pwm(MAIN_LEFT_MOTOR_DEBUG_PWM, 0);
+   73   1      
+   74   1          while(1)
+   75   1          {
+   76   2              service_function_queue_update();
+   77   2              service_packet_update();
+   78   2              app_scheduler_run();
+   79   2              service_negative_pressure_task();
+   80   2              service_motor_set_pwm(MAIN_LEFT_MOTOR_DEBUG_PWM, 0);
+   81   2              if(0U != service_imu_task())
+   82   2              {
+   83   3                  app_attitude_task();
+   84   3              }
+   85   2          }
+   86   1      }
+   87          
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       142     ------
+  ecode size           =       158     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

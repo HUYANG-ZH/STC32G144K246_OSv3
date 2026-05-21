@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_motor                                                      20/05/26  14:47:23  PAGE 1   
+C251 COMPILER V5.60.0,  service_motor                                                      20/05/26  18:16:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_motor
@@ -20,7 +20,7 @@ stmt  level    source
     7          #define SERVICE_MOTOR_NSLEEP_POST_HIGH_MS      (1U)
     8          
     9          #define SERVICE_MOTOR_LEFT_FORWARD_LEVEL       GPIO_HIGH
-   10          #define SERVICE_MOTOR_RIGHT_FORWARD_LEVEL      GPIO_HIGH
+   10          #define SERVICE_MOTOR_RIGHT_FORWARD_LEVEL      GPIO_LOW
    11          
    12          static uint8 motor_initialized = 0U;
    13          static uint8 motor_ready = 0U;
@@ -66,7 +66,7 @@ stmt  level    source
    53   2              return forward_level;
    54   2          }
    55   1      
-C251 COMPILER V5.60.0,  service_motor                                                      20/05/26  14:47:23  PAGE 2   
+C251 COMPILER V5.60.0,  service_motor                                                      20/05/26  18:16:29  PAGE 2   
 
    56   1          return service_motor_reverse_level(forward_level);
    57   1      }
@@ -134,7 +134,7 @@ stmt  level    source
   119          
   120          void service_motor_set_pwm(int32 left_pwm, int32 right_pwm)
   121          {
-C251 COMPILER V5.60.0,  service_motor                                                      20/05/26  14:47:23  PAGE 3   
+C251 COMPILER V5.60.0,  service_motor                                                      20/05/26  18:16:29  PAGE 3   
 
   122   1          if(0U == motor_ready)
   123   1          {
@@ -155,7 +155,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       578     ------
+  ecode size           =       576     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

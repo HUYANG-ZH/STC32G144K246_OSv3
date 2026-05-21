@@ -32,7 +32,7 @@ tfpu_init?:
     MOV     DMAIR, #32H     ; 清除异常
     NOP
     NOP
-    MOV     DMAIR, #3FH     ; 使用系统时钟 (最稳)
+    MOV     DMAIR, #3EH     ; 使用系统时钟 (最稳)
     NOP
     NOP
     ERET
