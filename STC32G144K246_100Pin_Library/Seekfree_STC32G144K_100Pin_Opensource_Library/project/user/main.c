@@ -45,6 +45,7 @@
 #include "service_negative_pressure.h"
 #include "service_speed.h"
 #include "app_attitude.h"
+#include "app_element.h"
 #include "app_inductor_preprocess.h"
 #include "app_motion_preprocess.h"
 #include "app_scheduler.h"
@@ -69,6 +70,7 @@ void main(void)
     app_attitude_init();
     app_inductor_preprocess_init();
     app_motion_preprocess_init();
+    app_element_init();
     app_speedout_init();
 
     while(1)
