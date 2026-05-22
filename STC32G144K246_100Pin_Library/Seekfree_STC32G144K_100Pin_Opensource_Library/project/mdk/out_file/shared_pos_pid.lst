@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 1   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE shared_pos_pid
 OBJECT MODULE PLACED IN .\out_file\shared_pos_pid.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\LL_Shared_Source\shared_pos_pid.c LARGE ROM(HUGE) WARNINGLEVEL(3)
-                    - OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\
-                    -libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_c
-                    -omponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\shared_pos_pid.lst) TA
-                    -BS(2) OBJECT(.\out_file\shared_pos_pid.obj) 
+                    - OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..
+                    -\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_
+                    -components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\shared_pos_pid.lst) T
+                    -ABS(2) OBJECT(.\out_file\shared_pos_pid.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    48          void shared_pos_pid_reset(shared_pos_pid_t *pid, float output)
    49          {
    50   1          if(NULL == pid)
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 2   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 2   
 
    51   1          {
    52   2              return;
@@ -134,7 +134,7 @@ stmt  level    source
              -------------
   111          float shared_pos_pid_update(shared_pos_pid_t *pid, float target, float feedback, float dt)
   112          {
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 3   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 3   
 
   113   1          float use_target;
   114   1          float error;
@@ -202,7 +202,7 @@ stmt  level    source
   172   1      
   173   1          return pid->output;
   174   1      }
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 4   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 4   
 
   175          
   176          //-------------------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ stmt  level    source
   234   1          {
   235   2              return;
   236   2          }
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 5   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 5   
 
   237   1      
   238   1          if(*max_value < *min_value)
@@ -338,7 +338,7 @@ stmt  level    source
   294   1          {
   295   2              output = shared_pos_pid_clamp(output, pid->output_min, pid->output_max);
   296   2          }
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 6   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 6   
 
   297   1      
   298   1          return output;
@@ -406,7 +406,7 @@ stmt  level    source
   354   1      }
   355          
   356          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 7   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 7   
 
              -------------
   357          // 函数简介     获取 PID 控制方向系数
@@ -474,7 +474,7 @@ stmt  level    source
   416          //-------------------------------------------------------------------------------------------------------
              -------------
   417          // 函数简介     执行位置式 PID 核心计算
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 8   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 8   
 
   418          // 参数说明     pid             PID 控制器对象指针
   419          // 参数说明     error           本次误差值
@@ -542,7 +542,7 @@ stmt  level    source
   478   4                  }
   479   3              }
   480   2              else
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     16/05/26  17:37:53  PAGE 9   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     22/05/26  22:36:20  PAGE 9   
 
   481   2              {
   482   3                  d_output = tfpu_div(tfpu_mul(pid->kd, tfpu_sub(error, pid->last_error)), dt);
@@ -569,11 +569,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      4651     ------
+  ecode size           =      2360     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       207     ------
+  xdata size           =    ------        115
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_imu660rb
 OBJECT MODULE PLACED IN .\out_file\zf_device_imu660rb.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_imu660rb.c LARGE ROM(HUGE) WARNI
-                    -NGLEVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
-                    -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
-                    -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_im
-                    -u660rb.lst) TABS(2) OBJECT(.\out_file\zf_device_imu660rb.obj) 
+                    -NGLEVEL(3) OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_de
+                    -vice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\lib
+                    -raries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_i
+                    -mu660rb.lst) TABS(2) OBJECT(.\out_file\zf_device_imu660rb.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   其余引脚悬空
    47          *
    48          *                   // 软件 IIC 引脚
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 2   
 
    49          *                   SCL/SPC           查看 zf_device_imu660rb.h 中 IMU660RB_SCL_PIN 宏定义
    50          *                   SDA/DSI           查看 zf_device_imu660rb.h 中 IMU660RB_SDA_PIN 宏定义
@@ -134,7 +134,7 @@ stmt  level    source
   103          
   104            //------------------------------------------------------------------------------------------------------
              --------------
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 3   
 
   105            // 函数简介     IMU660RB 读寄存器
   106            // 参数说明     reg             寄存器地址
@@ -202,7 +202,7 @@ stmt  level    source
                    IMU660RB_SCK (0);
                    return(byte);
                  }
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 4   
 
                  
                  //------------------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ stmt  level    source
                  //------------------------------------------------------------------------------------------------------
              --------------
                  static void imu660rb_simspi_r_reg_bytes(uint8 cmd, uint8 *val, uint32 num)
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 5   
 
                  {
                    cmd |= IMU660RB_SPI_R;
@@ -338,7 +338,7 @@ stmt  level    source
                  
                
                #elif (IMU660RB_USE_INTERFACE==SOFT_IIC)
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 6   
 
                  
                  static soft_iic_info_struct imu660rb_iic_struct;
@@ -406,7 +406,7 @@ stmt  level    source
   335   1      }
   336          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 7   
 
   337          // 函数简介     获取 IMU660RB 陀螺仪数据
   338          // 参数说明     void
@@ -474,7 +474,7 @@ stmt  level    source
              -��:±250dps  获取到的陀螺仪数据除以 114.3，   可以转化为带物理单位的数据，单位为：°/s
   389   2              case 0x54: gyro_data = (float)gyro_value / 57.1f;   break;              //  0x54 陀螺仪量程�
              -��:±500dps  获取到的陀螺仪数据除以 57.1，    可以转化为带物理单位的数据，单位为：°/s
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 8   
 
   390   2              case 0x58: gyro_data = (float)gyro_value / 28.6f;   break;              //  0x58 陀螺仪量程�
              -��:±1000dps 获取到的陀螺仪数据除以 28.6，    可以转化为带物理单位的数据，单位为：°/s
@@ -542,7 +542,7 @@ stmt  level    source
              -�� ±8G 以及数据输出速率 52hz 以及加速度信息从第一级滤波器输出
   441   2              // IMU660RB_CTRL1_XL 寄存器
   442   2              // 设置为:0x30 加速度量程为:±2G      获取到的加速度计数据 除以16393，可�
-C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 15/05/26  11:43:39  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_imu660rb                                                 22/05/26  22:36:15  PAGE 9   
 
              -�转化为带物理单位的数据，单位：g(m/s^2)
   443   2              // 设置为:0x38 加速度量程为:±4G      获取到的加速度计数据 除以8197， 可�
@@ -590,11 +590,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1130     ------
+  ecode size           =       525     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        54     ------
+  xdata size           =        12         12
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

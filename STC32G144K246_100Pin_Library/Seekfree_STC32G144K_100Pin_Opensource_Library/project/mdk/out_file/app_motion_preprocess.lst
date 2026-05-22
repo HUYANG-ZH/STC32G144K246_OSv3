@@ -1,0 +1,151 @@
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              22/05/26  22:36:20  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_preprocess
+OBJECT MODULE PLACED IN .\out_file\app_motion_preprocess.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_motion_preprocess.c LARGE ROM(HUGE) WARNINGLEVEL(3) OP
+                    -TIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\li
+                    -braries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_com
+                    -ponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_motion_preprocess.ls
+                    -t) TABS(2) OBJECT(.\out_file\app_motion_preprocess.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "sys_tfpu.h"
+    3          #include "service_packet.h"
+    4          #include "app_inductor_preprocess.h"
+    5          #include "app_motion_preprocess.h"
+    6          
+    7          #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
+    8          #define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.3f)      // x轴差比融合权重
+    9          #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (0.7f)      // y轴差比融合权重
+   10          #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
+   11          #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
+   12          #define APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN    (0.0f)      // 默认角速度增益，单位 rad/
+             -s
+   13          
+   14          app_motion_preprocess_config_t app_motion_preprocess_config =
+   15          {
+   16              APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS,
+   17              APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN
+   18          };
+   19          
+   20          static volatile app_motion_preprocess_data_t motion_preprocess_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+   21          
+   22          static void app_motion_preprocess_tick(void);
+   23          
+   24          static float app_motion_preprocess_diff_ratio(float left_value, float right_value)
+   25          {
+   26   1          float sum;
+   27   1      
+   28   1          sum = tfpu_add(left_value, right_value);
+   29   1          if(APP_MOTION_PREPROCESS_SUM_MIN >= sum)
+   30   1          {
+   31   2              return 0.0f;
+   32   2          }
+   33   1      
+   34   1          return tfpu_div(tfpu_sub(left_value, right_value), sum);
+   35   1      }
+   36          
+   37          static void app_motion_preprocess_register_packet(void)
+   38          {
+   39   1          (void)service_packet_add_variable("motion_pre_linear_mps",
+   40   1                  &app_motion_preprocess_config.linear_mps, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+   41   1          (void)service_packet_add_variable("motion_pre_yaw_rate_gain",
+   42   1                  &app_motion_preprocess_config.yaw_rate_gain, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+   43   1      }
+   44          
+   45          //-------------------------------------------------------------------------------------------------------
+             -------------
+   46          // 函数简介     运动前处理初始化
+   47          // 参数说明     void
+   48          // 返回参数     void
+   49          // 使用示例     app_motion_preprocess_init();
+   50          // 备注信息     使用 APP_MOTION_PREPROCESS_PIT 每 APP_MOTION_PREPROCESS_PERIOD_MS ms 更新一次
+   51          //-------------------------------------------------------------------------------------------------------
+             -------------
+   52          void app_motion_preprocess_init(void)
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              22/05/26  22:36:20  PAGE 2   
+
+   53          {
+   54   1          app_motion_preprocess_register_packet();
+   55   1          app_motion_preprocess_tick();
+   56   1          pit_ms_init(APP_MOTION_PREPROCESS_PIT, APP_MOTION_PREPROCESS_PERIOD_MS, app_motion_preprocess_tick);
+   57   1      }
+   58          
+   59          //-------------------------------------------------------------------------------------------------------
+             -------------
+   60          // 函数简介     获取运动前处理数据
+   61          // 参数说明     out_data        数据输出地址
+   62          // 返回参数     void
+   63          // 使用示例     app_motion_preprocess_get_data(&motion_data);
+   64          //-------------------------------------------------------------------------------------------------------
+             -------------
+   65          void app_motion_preprocess_get_data(app_motion_preprocess_data_t *out_data)
+   66          {
+   67   1          uint8 ea_backup;
+   68   1      
+   69   1          if(NULL == out_data)
+   70   1          {
+   71   2              return;
+   72   2          }
+   73   1      
+   74   1          ea_backup = EA;
+   75   1          EA = 0;
+   76   1          out_data->x_error = motion_preprocess_data.x_error;
+   77   1          out_data->y_error = motion_preprocess_data.y_error;
+   78   1          out_data->line_error = motion_preprocess_data.line_error;
+   79   1          out_data->linear_mps = motion_preprocess_data.linear_mps;
+   80   1          out_data->target_yaw_rate_rps = motion_preprocess_data.target_yaw_rate_rps;
+   81   1          EA = ea_backup;
+   82   1      }
+   83          
+   84          static void app_motion_preprocess_tick(void)
+   85          {
+   86   1          app_inductor_preprocess_data_t inductor_data;
+   87   1          app_motion_preprocess_data_t output;
+   88   1      
+   89   1          app_inductor_preprocess_get_data(&inductor_data);
+   90   1      
+   91   1          output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normaliz
+             -ed[3]);
+   92   1          output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normaliz
+             -ed[2]);
+   93   1          output.line_error = tfpu_add(tfpu_mul(output.y_error, APP_MOTION_PREPROCESS_Y_WEIGHT),
+   94   1                  tfpu_mul(output.x_error, APP_MOTION_PREPROCESS_X_WEIGHT));
+   95   1          output.linear_mps = app_motion_preprocess_config.linear_mps;
+   96   1          output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
+   97   1      
+   98   1          motion_preprocess_data.x_error = output.x_error;
+   99   1          motion_preprocess_data.y_error = output.y_error;
+  100   1          motion_preprocess_data.line_error = output.line_error;
+  101   1          motion_preprocess_data.linear_mps = output.linear_mps;
+  102   1          motion_preprocess_data.target_yaw_rate_rps = output.target_yaw_rate_rps;
+  103   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       599     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        28         60
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              22/05/26  22:36:20  PAGE 3   
+
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        85     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

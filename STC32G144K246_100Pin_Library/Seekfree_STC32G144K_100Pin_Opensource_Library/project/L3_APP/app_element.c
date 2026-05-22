@@ -13,6 +13,14 @@
 #define APP_ELEMENT_ROUNDABOUT_INSIDE_MS_DEFAULT        (120U)      // 环岛入内保持时间，单位 ms
 #define APP_ELEMENT_ROUNDABOUT_EXIT_MS_DEFAULT          (50U)       // 环岛退出确认时间，单位 ms
 #define APP_ELEMENT_ROUNDABOUT_DONE_MS_DEFAULT          (200U)      // 环岛结束冷却时间，单位 ms
+#define APP_ELEMENT_CROSSROAD_ENABLE_DEFAULT            (1.0f)      // 十字识别默认使能
+#define APP_ELEMENT_CROSSROAD_CENTER_ERROR_DEFAULT      (0.18f)     // 十字中心误差阈值
+#define APP_ELEMENT_CROSSROAD_SIGNAL_MIN_DEFAULT        (18.0f)     // 十字单路最小电感归一化值
+#define APP_ELEMENT_CROSSROAD_SIGNAL_SUM_MIN_DEFAULT    (120.0f)    // 十字四路电感归一化和值阈值
+#define APP_ELEMENT_CROSSROAD_ENTER_MS_DEFAULT          (20U)       // 十字进入确认时间，单位 ms
+#define APP_ELEMENT_CROSSROAD_INSIDE_MS_DEFAULT         (80U)       // 十字入内保持时间，单位 ms
+#define APP_ELEMENT_CROSSROAD_EXIT_MS_DEFAULT           (30U)       // 十字退出确认时间，单位 ms
+#define APP_ELEMENT_CROSSROAD_DONE_MS_DEFAULT           (150U)      // 十字结束冷却时间，单位 ms
 
 typedef struct
 {
@@ -30,6 +38,13 @@ typedef struct
     uint16 confirm_ms;
 } app_element_roundabout_t;
 
+typedef struct
+{
+    app_element_state_t state;
+    uint16 state_ms;
+    uint16 confirm_ms;
+} app_element_crossroad_t;
+
 app_element_config_t app_element_config =
 {
     APP_ELEMENT_ROUNDABOUT_ENABLE_DEFAULT,
@@ -39,10 +54,19 @@ app_element_config_t app_element_config =
     APP_ELEMENT_ROUNDABOUT_ENTER_MS_DEFAULT,
     APP_ELEMENT_ROUNDABOUT_INSIDE_MS_DEFAULT,
     APP_ELEMENT_ROUNDABOUT_EXIT_MS_DEFAULT,
-    APP_ELEMENT_ROUNDABOUT_DONE_MS_DEFAULT
+    APP_ELEMENT_ROUNDABOUT_DONE_MS_DEFAULT,
+    APP_ELEMENT_CROSSROAD_ENABLE_DEFAULT,
+    APP_ELEMENT_CROSSROAD_CENTER_ERROR_DEFAULT,
+    APP_ELEMENT_CROSSROAD_SIGNAL_MIN_DEFAULT,
+    APP_ELEMENT_CROSSROAD_SIGNAL_SUM_MIN_DEFAULT,
+    APP_ELEMENT_CROSSROAD_ENTER_MS_DEFAULT,
+    APP_ELEMENT_CROSSROAD_INSIDE_MS_DEFAULT,
+    APP_ELEMENT_CROSSROAD_EXIT_MS_DEFAULT,
+    APP_ELEMENT_CROSSROAD_DONE_MS_DEFAULT
 };
 
 static app_element_roundabout_t element_roundabout;
+static app_element_crossroad_t element_crossroad;
 static volatile app_element_data_t element_data =
 {
     APP_ELEMENT_TYPE_NONE,
@@ -52,8 +76,12 @@ static volatile app_element_data_t element_data =
 };
 
 static void app_element_tick(void);
-static void app_element_roundabout_update(app_element_candidate_t *candidate);
-static void app_element_arbitrate(const app_element_candidate_t *roundabout_candidate);
+static void app_element_roundabout_update(app_element_candidate_t *candidate,
+        const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_data);
+static void app_element_crossroad_update(app_element_candidate_t *candidate,
+        const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_data);
+static void app_element_arbitrate(const app_element_candidate_t *roundabout_candidate,
+        const app_element_candidate_t *crossroad_candidate);
 
 static float app_element_abs(float value)
 {
@@ -81,6 +109,13 @@ static void app_element_roundabout_set_state(app_element_state_t state, app_elem
     element_roundabout.dir = dir;
     element_roundabout.state_ms = 0U;
     element_roundabout.confirm_ms = 0U;
+}
+
+static void app_element_crossroad_set_state(app_element_state_t state)
+{
+    element_crossroad.state = state;
+    element_crossroad.state_ms = 0U;
+    element_crossroad.confirm_ms = 0U;
 }
 
 static float app_element_roundabout_signal_max(const app_inductor_preprocess_data_t *inductor_data)
@@ -132,6 +167,50 @@ static uint8 app_element_roundabout_exit_check(const app_motion_preprocess_data_
     return (app_element_abs(motion_data->line_error) < app_element_config.roundabout_exit_error) ? 1U : 0U;
 }
 
+static uint8 app_element_crossroad_enter_check(const app_motion_preprocess_data_t *motion_data,
+        const app_inductor_preprocess_data_t *inductor_data)
+{
+    uint8 i;
+    float signal_sum;
+
+    if(app_element_config.crossroad_enable < APP_ELEMENT_ENABLE_THRESHOLD)
+    {
+        return 0U;
+    }
+
+    if(app_element_abs(motion_data->line_error) > app_element_config.crossroad_center_error)
+    {
+        return 0U;
+    }
+
+    signal_sum = 0.0f;
+    for(i = 0U; i < 4U; i++)
+    {
+        if(inductor_data->normalized[i] < app_element_config.crossroad_signal_min)
+        {
+            return 0U;
+        }
+        signal_sum = tfpu_add(signal_sum, inductor_data->normalized[i]);
+    }
+
+    return (signal_sum >= app_element_config.crossroad_signal_sum_min) ? 1U : 0U;
+}
+
+static uint8 app_element_crossroad_exit_check(const app_inductor_preprocess_data_t *inductor_data)
+{
+    uint8 i;
+
+    for(i = 0U; i < 4U; i++)
+    {
+        if(inductor_data->normalized[i] < app_element_config.crossroad_signal_min)
+        {
+            return 1U;
+        }
+    }
+
+    return 0U;
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     元素识别初始化
 // 参数说明     void
@@ -142,6 +221,7 @@ static uint8 app_element_roundabout_exit_check(const app_motion_preprocess_data_
 void app_element_init(void)
 {
     app_element_roundabout_set_state(APP_ELEMENT_STATE_IDLE, APP_ELEMENT_DIR_NONE);
+    app_element_crossroad_set_state(APP_ELEMENT_STATE_IDLE);
     app_element_tick();
     pit_ms_init(APP_ELEMENT_PIT, APP_ELEMENT_PERIOD_MS, app_element_tick);
 }
@@ -164,16 +244,22 @@ void app_element_get_data(app_element_data_t *out_data)
 
 static void app_element_tick(void)
 {
-    app_element_candidate_t roundabout_candidate;
-
-    app_element_roundabout_update(&roundabout_candidate);
-    app_element_arbitrate(&roundabout_candidate);
-}
-
-static void app_element_roundabout_update(app_element_candidate_t *candidate)
-{
     app_inductor_preprocess_data_t inductor_data;
     app_motion_preprocess_data_t motion_data;
+    app_element_candidate_t roundabout_candidate;
+    app_element_candidate_t crossroad_candidate;
+
+    app_inductor_preprocess_get_data(&inductor_data);
+    app_motion_preprocess_get_data(&motion_data);
+
+    app_element_roundabout_update(&roundabout_candidate, &inductor_data, &motion_data);
+    app_element_crossroad_update(&crossroad_candidate, &inductor_data, &motion_data);
+    app_element_arbitrate(&roundabout_candidate, &crossroad_candidate);
+}
+
+static void app_element_roundabout_update(app_element_candidate_t *candidate,
+        const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_data)
+{
     app_element_dir_t enter_dir;
 
     candidate->type = APP_ELEMENT_TYPE_NONE;
@@ -181,16 +267,18 @@ static void app_element_roundabout_update(app_element_candidate_t *candidate)
     candidate->dir = APP_ELEMENT_DIR_NONE;
     candidate->active = 0.0f;
 
-    app_inductor_preprocess_get_data(&inductor_data);
-    app_motion_preprocess_get_data(&motion_data);
-
     element_roundabout.state_ms = app_element_add_period(element_roundabout.state_ms);
 
     switch(element_roundabout.state)
     {
         case APP_ELEMENT_STATE_IDLE:
         {
-            if(0U != app_element_roundabout_enter_check(&motion_data, &inductor_data, &enter_dir))
+            if(APP_ELEMENT_STATE_IDLE != element_crossroad.state)
+            {
+                element_roundabout.confirm_ms = 0U;
+                element_roundabout.dir = APP_ELEMENT_DIR_NONE;
+            }
+            else if(0U != app_element_roundabout_enter_check(motion_data, inductor_data, &enter_dir))
             {
                 element_roundabout.confirm_ms = app_element_add_period(element_roundabout.confirm_ms);
                 element_roundabout.dir = enter_dir;
@@ -218,7 +306,7 @@ static void app_element_roundabout_update(app_element_candidate_t *candidate)
 
         case APP_ELEMENT_STATE_INSIDE:
         {
-            if(0U != app_element_roundabout_exit_check(&motion_data))
+            if(0U != app_element_roundabout_exit_check(motion_data))
             {
                 element_roundabout.confirm_ms = app_element_add_period(element_roundabout.confirm_ms);
                 if(element_roundabout.confirm_ms >= app_element_config.roundabout_exit_ms)
@@ -264,13 +352,111 @@ static void app_element_roundabout_update(app_element_candidate_t *candidate)
     }
 }
 
-static void app_element_arbitrate(const app_element_candidate_t *roundabout_candidate)
+static void app_element_crossroad_update(app_element_candidate_t *candidate,
+        const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_data)
+{
+    candidate->type = APP_ELEMENT_TYPE_NONE;
+    candidate->state = APP_ELEMENT_STATE_IDLE;
+    candidate->dir = APP_ELEMENT_DIR_NONE;
+    candidate->active = 0.0f;
+
+    element_crossroad.state_ms = app_element_add_period(element_crossroad.state_ms);
+
+    switch(element_crossroad.state)
+    {
+        case APP_ELEMENT_STATE_IDLE:
+        {
+            if(APP_ELEMENT_STATE_IDLE != element_roundabout.state)
+            {
+                element_crossroad.confirm_ms = 0U;
+            }
+            else if(0U != app_element_crossroad_enter_check(motion_data, inductor_data))
+            {
+                element_crossroad.confirm_ms = app_element_add_period(element_crossroad.confirm_ms);
+                if(element_crossroad.confirm_ms >= app_element_config.crossroad_enter_ms)
+                {
+                    app_element_crossroad_set_state(APP_ELEMENT_STATE_ENTER);
+                }
+            }
+            else
+            {
+                element_crossroad.confirm_ms = 0U;
+            }
+            break;
+        }
+
+        case APP_ELEMENT_STATE_ENTER:
+        {
+            if(element_crossroad.state_ms >= app_element_config.crossroad_inside_ms)
+            {
+                app_element_crossroad_set_state(APP_ELEMENT_STATE_INSIDE);
+            }
+            break;
+        }
+
+        case APP_ELEMENT_STATE_INSIDE:
+        {
+            if(0U != app_element_crossroad_exit_check(inductor_data))
+            {
+                element_crossroad.confirm_ms = app_element_add_period(element_crossroad.confirm_ms);
+                if(element_crossroad.confirm_ms >= app_element_config.crossroad_exit_ms)
+                {
+                    app_element_crossroad_set_state(APP_ELEMENT_STATE_EXIT);
+                }
+            }
+            else
+            {
+                element_crossroad.confirm_ms = 0U;
+            }
+            break;
+        }
+
+        case APP_ELEMENT_STATE_EXIT:
+        {
+            app_element_crossroad_set_state(APP_ELEMENT_STATE_DONE);
+            break;
+        }
+
+        case APP_ELEMENT_STATE_DONE:
+        {
+            if(element_crossroad.state_ms >= app_element_config.crossroad_done_ms)
+            {
+                app_element_crossroad_set_state(APP_ELEMENT_STATE_IDLE);
+            }
+            break;
+        }
+
+        default:
+        {
+            app_element_crossroad_set_state(APP_ELEMENT_STATE_IDLE);
+            break;
+        }
+    }
+
+    if(APP_ELEMENT_STATE_IDLE != element_crossroad.state)
+    {
+        candidate->type = APP_ELEMENT_TYPE_CROSSROAD;
+        candidate->state = element_crossroad.state;
+        candidate->dir = APP_ELEMENT_DIR_NONE;
+        candidate->active = 1.0f;
+    }
+}
+
+static void app_element_arbitrate(const app_element_candidate_t *roundabout_candidate,
+        const app_element_candidate_t *crossroad_candidate)
 {
     if(0.0f < roundabout_candidate->active)
     {
         element_data.type = roundabout_candidate->type;
         element_data.state = roundabout_candidate->state;
         element_data.dir = roundabout_candidate->dir;
+        element_data.active = 1.0f;
+    }
+    else if(0.0f < crossroad_candidate->active)
+    {
+        element_data.type = crossroad_candidate->type;
+        element_data.state = crossroad_candidate->state;
+        element_data.dir = crossroad_candidate->dir;
         element_data.active = 1.0f;
     }
     else

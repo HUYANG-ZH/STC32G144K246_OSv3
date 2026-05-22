@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  service_negative_pressure                                          20/05/26  14:47:22  PAGE 1   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          22/05/26  22:36:18  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_negative_pressure
 OBJECT MODULE PLACED IN .\out_file\service_negative_pressure.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_negative_pressure.c LARGE ROM(HUGE) WARNINGLEV
-                    -EL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;.
-                    -.\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries
-                    -\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_negative_
-                    -pressure.lst) TABS(2) OBJECT(.\out_file\service_negative_pressure.obj) 
+                    -EL(3) OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
+                    -..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librarie
+                    -s\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_negative
+                    -_pressure.lst) TABS(2) OBJECT(.\out_file\service_negative_pressure.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    52   1          printf("[pressure] : 30\r\n");
    53   1          service_negative_pressure_set_percent(30);
    54   1      }
-C251 COMPILER V5.60.0,  service_negative_pressure                                          20/05/26  14:47:22  PAGE 2   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          22/05/26  22:36:18  PAGE 2   
 
    55          
    56          void service_negative_pressure_task(void)
@@ -96,16 +96,17 @@ stmt  level    source
    80          {
    81   1          return negative_pressure_percent;
    82   1      }
+*** WARNING C183 IN LINE 22 OF ..\L2_SERVICE\service_negative_pressure.c: dead assignment eliminated
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       354     ------
+  ecode size           =       254     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        16     ------
+  xdata size           =         5     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -119,4 +120,4 @@ Module Information          Static   Overlayable
 End of Module Information.
 
 
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

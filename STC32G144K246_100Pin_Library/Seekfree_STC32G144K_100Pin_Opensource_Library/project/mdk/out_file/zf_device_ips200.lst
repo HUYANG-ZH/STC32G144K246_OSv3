@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_ips200
 OBJECT MODULE PLACED IN .\out_file\zf_device_ips200.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_ips200.c LARGE ROM(HUGE) WARNING
-                    -LEVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
-                    -e;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librar
-                    -ies\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_ips2
-                    -00.lst) TABS(2) OBJECT(.\out_file\zf_device_ips200.obj) 
+                    -LEVEL(3) OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
+                    -ce;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libra
+                    -ries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_ips
+                    -200.lst) TABS(2) OBJECT(.\out_file\zf_device_ips200.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   GND                 电源地
    47          *                   最大分辨率 135 * 240
    48          *                   ------------------------------------
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 2   
 
    49          *********************************************************************************************************
              -***********/
@@ -134,7 +134,7 @@ stmt  level    source
   107   1          zf_assert(x1 < ips200_x_max);
   108   1          zf_assert(y1 < ips200_y_max);
   109   1          zf_assert(x2 < ips200_x_max);
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 3   
 
   110   1          zf_assert(y2 < ips200_y_max);
   111   1      
@@ -202,7 +202,7 @@ stmt  level    source
   167   2              {
   168   3                  ips200_x_max = IPS_WIGHT;
   169   3                  ips200_y_max = IPS_LEN;
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 4   
 
   170   3              }break;
   171   2          }
@@ -270,7 +270,7 @@ stmt  level    source
   223   2              temp = ascii_font_8x16[dat-32][i];                                            //减 32 因为是�
              -��模是从空格开始取得 空格在 ascii 中序号是 32
   224   2              for(j=0; j<8; j++)
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 5   
 
   225   2              {
   226   3                  if(temp&0x01)   
@@ -338,7 +338,7 @@ stmt  level    source
   284   1          i = 0;
   285   1          while(i<3)
   286   1          {
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 6   
 
   287   2              ips200_show_char(x+(8*(i+1)),y,(uint8)('0' + a[i]));
   288   2              i++;
@@ -406,7 +406,7 @@ stmt  level    source
   346   1          a[2] = dat/100%10;
   347   1          a[3] = dat/10%10;
   348   1          a[4] = dat%10;
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 7   
 
   349   1          
   350   1          i = 0;
@@ -474,7 +474,7 @@ stmt  level    source
   407   1          
   408   1          num++;
   409   1          if(0>dat)   length = zf_sprintf( &buff[0],(const int8 *)"%d",dat);        // 负数
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 8   
 
   410   1          else
   411   1          {
@@ -542,7 +542,7 @@ stmt  level    source
   466   2          }
   467   1          
   468   1          if(0>dat)   buff[start] = '-';
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 9   
 
   469   1          else        buff[start] = ' ';
   470   1          
@@ -610,7 +610,7 @@ stmt  level    source
              -�   16*16
   525          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 10  
 
   526          void ips200_show_chinese (uint16 x, uint16 y, uint8 siz, const uint8 *p, uint8 number, uint16 color)
   527          {
@@ -678,7 +678,7 @@ stmt  level    source
   582   1          uint16 data_buffer[IPS_LEN];
   583   1          const uint8 *image_temp;
   584   1      
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 11  
 
   585   1          // 如果程序在输出了断言信息 并且提示出错位置在这里
   586   1          // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
@@ -746,7 +746,7 @@ stmt  level    source
   643   1          ips200_set_color(ips200_pencolor, ips200_bgcolor);
   644   1      
   645   1          IPS200_RST(0);
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 12  
 
   646   1          system_delay_ms(200);
   647   1      
@@ -814,7 +814,7 @@ stmt  level    source
   709   1          ips200_write_index(0xE1);
   710   1          ips200_write_8bit_data(0xD0);
   711   1          ips200_write_8bit_data(0x04);
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   15/05/26  11:43:38  PAGE 13  
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   22/05/26  22:36:14  PAGE 13  
 
   712   1          ips200_write_8bit_data(0x0C);
   713   1          ips200_write_8bit_data(0x11);
@@ -843,11 +843,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      5920     ------
+  ecode size           =      4699     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =      1237     ------
+  xdata size           =        10       1159
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

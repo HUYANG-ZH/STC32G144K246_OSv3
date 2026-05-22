@@ -3,6 +3,7 @@
 
 #include "app_attitude.h"
 #include "app_element.h"
+#include "app_feedforward.h"
 #include "app_fuzzy_pid.h"
 #include "app_inductor_preprocess.h"
 #include "app_motion_preprocess.h"

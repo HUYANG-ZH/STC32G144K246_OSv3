@@ -15,6 +15,7 @@ typedef enum
 {
     APP_ELEMENT_TYPE_NONE = 0,
     APP_ELEMENT_TYPE_ROUNDABOUT,
+    APP_ELEMENT_TYPE_CROSSROAD,
 } app_element_type_t;
 
 typedef enum
@@ -43,6 +44,14 @@ typedef struct
     uint16 roundabout_inside_ms;
     uint16 roundabout_exit_ms;
     uint16 roundabout_done_ms;
+    float crossroad_enable;
+    float crossroad_center_error;
+    float crossroad_signal_min;
+    float crossroad_signal_sum_min;
+    uint16 crossroad_enter_ms;
+    uint16 crossroad_inside_ms;
+    uint16 crossroad_exit_ms;
+    uint16 crossroad_done_ms;
 } app_element_config_t;
 
 typedef struct

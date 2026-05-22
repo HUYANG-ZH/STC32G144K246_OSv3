@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/05/26  14:47:25  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            22/05/26  22:36:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
 OBJECT MODULE PLACED IN .\out_file\app_inductor_preprocess.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_inductor_preprocess.c LARGE ROM(HUGE) WARNINGLEVEL(3) 
-                    -OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\l
-                    -ibraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_co
-                    -mponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_inductor_preprocess
-                    -.lst) TABS(2) OBJECT(.\out_file\app_inductor_preprocess.obj) 
+                    -OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\
+                    -libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_c
+                    -omponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_inductor_preproces
+                    -s.lst) TABS(2) OBJECT(.\out_file\app_inductor_preprocess.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          {
    54   2              for(j = (uint8)(i + 1U); j < APP_INDUCTOR_HISTORY_COUNT; j++)
    55   2              {
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/05/26  14:47:25  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            22/05/26  22:36:20  PAGE 2   
 
    56   3                  if(values[i] > values[j])
    57   3                  {
@@ -134,7 +134,7 @@ stmt  level    source
   118   3                  normalized[i] = 0.0f;
   119   3              }
   120   2              else
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/05/26  14:47:25  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            22/05/26  22:36:20  PAGE 3   
 
   121   2              {
   122   3                  min_value = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
@@ -202,7 +202,7 @@ stmt  level    source
   184   2          }
   185   1      
   186   1          inductor_history_index = 0U;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/05/26  14:47:25  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            22/05/26  22:36:20  PAGE 4   
 
   187   1          app_inductor_update_output();
   188   1      
@@ -233,16 +233,19 @@ stmt  level    source
   212   2          }
   213   1          EA = ea_backup;
   214   1      }
+*** WARNING C183 IN LINE 34 OF ..\L3_APP\app_inductor_preprocess.c: dead assignment eliminated
+*** WARNING C183 IN LINE 32 OF ..\L3_APP\app_inductor_preprocess.c: dead assignment eliminated
+*** WARNING C183 IN LINE 39 OF ..\L3_APP\app_inductor_preprocess.c: dead assignment eliminated
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2189     ------
+  ecode size           =      1244     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       324     ------
+  xdata size           =       169        123
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -256,4 +259,4 @@ Module Information          Static   Overlayable
 End of Module Information.
 
 
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  3 WARNING(S),  0 ERROR(S)

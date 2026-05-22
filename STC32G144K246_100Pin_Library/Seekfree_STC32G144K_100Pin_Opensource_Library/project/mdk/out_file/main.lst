@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  main                                                               20/05/26  21:34:04  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               22/05/26  22:36:21  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
 OBJECT MODULE PLACED IN .\out_file\main.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\user\main.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SIZE) BROW
-                    -SE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..
-                    -\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32g_usb_l
-                    -ib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\main.lst) TABS(2) OBJECT(.\out_file\main.obj
-                    -) 
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\user\main.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(9,SPEED) BRO
+                    -WSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;.
+                    -.\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32g_usb_
+                    -lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\main.lst) TABS(2) OBJECT(.\out_file\main.ob
+                    -j) 
 
 stmt  level    source
 
@@ -64,54 +64,56 @@ stmt  level    source
    45          #include "service_negative_pressure.h"
    46          #include "service_speed.h"
    47          #include "app_attitude.h"
-   48          #include "app_inductor_preprocess.h"
-   49          #include "app_scheduler.h"
-C251 COMPILER V5.60.0,  main                                                               20/05/26  21:34:04  PAGE 2   
+   48          #include "app_element.h"
+   49          #include "app_feedforward.h"
+C251 COMPILER V5.60.0,  main                                                               22/05/26  22:36:21  PAGE 2   
 
-   50          #include "app_speedout.h"
-   51          
-   52          #define MAIN_LEFT_MOTOR_DEBUG_PWM      ((int32)(PWM_DUTY_MAX * 40UL / 100UL))
-   53          
-   54          void main(void)
-   55          {
-   56   1          SystemStart();
-   57   1      
-   58   1          service_timetick_init();
-   59   1          service_function_queue_init();
-   60   1          app_scheduler_init();
-   61   1          service_wireless_uart_init();
-   62   1          service_packet_init();
-   63   1          service_batterycheck_init();
-   64   1          service_buzzer_init();
-   65   1          service_buzzer_stop();
-   66   1          service_imu_init();
-   67   1          service_motor_init();
-   68   1          service_negative_pressure_init();
-   69   1          service_speed_init();
-   70   1          app_attitude_init();
-   71   1          app_inductor_preprocess_init();
-   72   1          service_motor_set_pwm(MAIN_LEFT_MOTOR_DEBUG_PWM, 0);
-   73   1      
-   74   1          while(1)
-   75   1          {
-   76   2              service_function_queue_update();
-   77   2              service_packet_update();
-   78   2              app_scheduler_run();
-   79   2              service_negative_pressure_task();
-   80   2              service_motor_set_pwm(MAIN_LEFT_MOTOR_DEBUG_PWM, 0);
-   81   2              if(0U != service_imu_task())
-   82   2              {
-   83   3                  app_attitude_task();
-   84   3              }
-   85   2          }
-   86   1      }
-   87          
+   50          #include "app_inductor_preprocess.h"
+   51          #include "app_motion_preprocess.h"
+   52          #include "app_scheduler.h"
+   53          #include "app_speedout.h"
+   54          
+   55          void main(void)
+   56          {
+   57   1          SystemStart();
+   58   1      
+   59   1          service_timetick_init();
+   60   1          service_function_queue_init();
+   61   1          app_scheduler_init();
+   62   1          service_wireless_uart_init();
+   63   1          service_packet_init();
+   64   1          service_batterycheck_init();
+   65   1          service_buzzer_init();
+   66   1          service_buzzer_stop();
+   67   1          service_imu_init();
+   68   1          service_motor_init();
+   69   1          service_negative_pressure_init();
+   70   1          service_speed_init();
+   71   1          app_attitude_init();
+   72   1          app_inductor_preprocess_init();
+   73   1          app_motion_preprocess_init();
+   74   1          app_feedforward_init();
+   75   1          app_element_init();
+   76   1          app_speedout_init();
+   77   1      
+   78   1          while(1)
+   79   1          {
+   80   2              service_function_queue_update();
+   81   2              service_packet_update();
+   82   2              app_scheduler_run();
+   83   2              service_negative_pressure_task();
+   84   2              if(0U != service_imu_task())
+   85   2              {
+   86   3                  app_attitude_task();
+   87   3              }
+   88   2          }
+   89   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       158     ------
+  ecode size           =       142     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

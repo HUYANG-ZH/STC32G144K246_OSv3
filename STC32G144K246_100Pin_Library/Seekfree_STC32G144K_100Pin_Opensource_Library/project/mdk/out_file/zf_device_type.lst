@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_device_type                                                     15/05/26  11:43:37  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_type                                                     22/05/26  22:36:14  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_type
 OBJECT MODULE PLACED IN .\out_file\zf_device_type.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_type.c LARGE ROM(HUGE) WARNINGLE
-                    -VEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
-                    -..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librarie
-                    -s\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_type.l
-                    -st) TABS(2) OBJECT(.\out_file\zf_device_type.obj) 
+                    -VEL(3) OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
+                    -;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librari
+                    -es\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_type.
+                    -lst) TABS(2) OBJECT(.\out_file\zf_device_type.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
              -数指针，根据初始化时设置的函数进行跳转
    44          
    45          wireless_type_enum  wireless_type                   = NO_WIRELESS;
-C251 COMPILER V5.60.0,  zf_device_type                                                     15/05/26  11:43:37  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_type                                                     22/05/26  22:36:14  PAGE 2   
 
    46          callback_function   wireless_module_uart_handler    = type_default_callback;        // 无线串口接收
              -中断函数指针，根据初始化时设置的函数进行跳转
@@ -134,7 +134,7 @@ stmt  level    source
    98   1          {
    99   2              wireless_module_uart_handler = ((wireless_callback == NULL) ? (type_default_callback) : (wireless
              -_callback));
-C251 COMPILER V5.60.0,  zf_device_type                                                     15/05/26  11:43:37  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_type                                                     22/05/26  22:36:14  PAGE 3   
 
   100   2          }
   101   1      }
@@ -159,11 +159,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       368     ------
+  ecode size           =       223     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        56     ------
+  xdata size           =        30          8
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

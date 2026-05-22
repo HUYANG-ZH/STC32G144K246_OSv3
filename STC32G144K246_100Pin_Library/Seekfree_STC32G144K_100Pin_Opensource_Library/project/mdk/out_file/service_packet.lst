@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 1   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_packet
 OBJECT MODULE PLACED IN .\out_file\service_packet.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_packet.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIM
-                    -IZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
-                    -ies\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compone
-                    -nts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_packet.lst) TABS(2) 
-                    -OBJECT(.\out_file\service_packet.obj) 
+                    -IZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libra
+                    -ries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compon
+                    -ents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_packet.lst) TABS(2)
+                    - OBJECT(.\out_file\service_packet.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    53          static char packet_last_miss_name[SERVICE_PACKET_NAME_SNAPSHOT_MAX];
    54          
    55          static void service_packet_save_miss_name(const char *name);
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 2   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 2   
 
    56          static void service_packet_append_char(char *buffer, uint8 *index, char value);
    57          static void service_packet_append_string(char *buffer, uint8 *index, const char *text);
@@ -134,7 +134,7 @@ stmt  level    source
   111   2              text++;
   112   2          }
   113   1      
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 3   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 3   
 
   114   1          return text;
   115   1      }
@@ -202,7 +202,7 @@ stmt  level    source
   171          static void service_packet_save_miss_name(const char *name)
   172          {
   173   1          uint8 i = 0U;
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 4   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 4   
 
   174   1      
   175   1          if(NULL == name)
@@ -270,7 +270,7 @@ stmt  level    source
   237          
   238          static void service_packet_append_float3(char *buffer, uint8 *index, float value)
   239          {
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 5   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 5   
 
   240   1          uint32 scaled;
   241   1          uint32 integer_part;
@@ -338,7 +338,7 @@ stmt  level    source
   301   3                  else if('.' == *text)
   302   3                  {
   303   4                      point_found = 1U;
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 6   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 6   
 
   304   4                  }
   305   3                  else if(('0' <= *text) && ('9' >= *text))
@@ -406,7 +406,7 @@ stmt  level    source
   365   3              }
   366   2              service_packet_append_float3(packet_reply, &index, value_copy[i]);
   367   2          }
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 7   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 7   
 
   368   1      
   369   1          service_packet_append_string(packet_reply, &index, "\r\n");
@@ -474,7 +474,7 @@ stmt  level    source
   427   1      
   428   1          packet_write_ok_total++;
   429   1          service_packet_print_variable(variable);
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 8   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 8   
 
   430   1      }
   431          
@@ -542,7 +542,7 @@ stmt  level    source
   489   1      
   490   1          if('\0' == *name)
   491   1          {
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 9   
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 9   
 
   492   2              return;
   493   2          }
@@ -610,7 +610,7 @@ stmt  level    source
   549          {
   550   1          if(SERVICE_PACKET_RX_WAIT_HEAD_1 == packet_rx_state)
   551   1          {
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 10  
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 10  
 
   552   2              if('$' == value)
   553   2              {
@@ -678,7 +678,7 @@ stmt  level    source
              -------------
   614          void service_packet_init(void)
   615          {
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 11  
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 11  
 
   616   1          uint8 i;
   617   1      
@@ -746,7 +746,7 @@ stmt  level    source
   674   1      
   675   1          if((NULL == name) || (NULL == value) || (0U == value_count) ||
   676   1                  (SERVICE_PACKET_VALUE_MAX < value_count))
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 12  
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 12  
 
   677   1          {
   678   2              return 0U;
@@ -814,7 +814,7 @@ stmt  level    source
   738   1          return 1U;
   739   1      }
   740          
-C251 COMPILER V5.60.0,  service_packet                                                     20/05/26  14:47:23  PAGE 13  
+C251 COMPILER V5.60.0,  service_packet                                                     22/05/26  22:36:18  PAGE 13  
 
   741          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -848,11 +848,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      5229     ------
+  ecode size           =      3416     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       926     ------
+  xdata size           =       605        213
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
