@@ -60,7 +60,6 @@ void main(void)
 
     service_timetick_init();
     service_function_queue_init();
-    app_scheduler_init();
     service_wireless_uart_init();
     service_packet_init();
     service_batterycheck_init();
@@ -70,24 +69,11 @@ void main(void)
     service_motor_init();
     service_negative_pressure_init();
     service_speed_init();
-    app_attitude_init();
-    app_inductor_preprocess_init();
-    app_motion_preprocess_init();
-    app_feedforward_init();
-    app_load_distribution_init();
-    app_element_init();
     app_speedout_init();
-    app_motion_postprocess_init();
 
     while(1)
     {
         service_function_queue_update();
         service_packet_update();
-        app_scheduler_run();
-        service_negative_pressure_task();
-        if(0U != service_imu_task())
-        {
-            app_attitude_task();
-        }
     }
 }

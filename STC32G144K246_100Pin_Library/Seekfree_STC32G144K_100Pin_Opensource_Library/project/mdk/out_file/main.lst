@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               25/05/26  22:28:48  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               26/05/26  21:23:39  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,47 +66,48 @@ stmt  level    source
    47          #include "app_attitude.h"
    48          #include "app_element.h"
    49          #include "app_feedforward.h"
-C251 COMPILER V5.60.0,  main                                                               25/05/26  22:28:48  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               26/05/26  21:23:39  PAGE 2   
 
    50          #include "app_inductor_preprocess.h"
    51          #include "app_load_distribution.h"
    52          #include "app_motion_preprocess.h"
-   53          #include "app_scheduler.h"
-   54          #include "app_speedout.h"
-   55          
-   56          void main(void)
-   57          {
-   58   1          SystemStart();
-   59   1      
-   60   1          service_imu_init();
-   61   1      
-   62   1          printf("[IMU DEBUG] IMU660RC ready, start streaming...\r\n");
-   63   1      
-   64   1          while(1)
-   65   1          {
-   66   2              if(0U != service_imu_task())
-   67   2              {
-   68   3                  service_imu_data_t d;
-   69   3                  service_imu_get_data(&d);
-   70   3      
-   71   3                  printf("[acc]  %.3f, %.3f, %.3f\r\n",  d.acc_x,  d.acc_y,  d.acc_z);
-   72   3                  printf("[gyro] %.3f, %.3f, %.3f\r\n",  d.gyro_x, d.gyro_y, d.gyro_z);
-   73   3                  printf("[quat] %.4f, %.4f, %.4f, %.4f\r\n", d.quat_x, d.quat_y, d.quat_z, d.quat_w);
-   74   3                  printf("[euler] roll=%.2f pitch=%.2f yaw=%.2f\r\n", d.roll, d.pitch, d.yaw);
-   75   3                  printf("---\r\n");
-   76   3              }
-   77   2          }
-   78   1      }
+   53          #include "app_motion_postprocess.h"
+   54          #include "app_scheduler.h"
+   55          #include "app_speedout.h"
+   56          
+   57          void main(void)
+   58          {
+   59   1          SystemStart();
+   60   1      
+   61   1          service_timetick_init();
+   62   1          service_function_queue_init();
+   63   1          service_wireless_uart_init();
+   64   1          service_packet_init();
+   65   1          service_batterycheck_init();
+   66   1          service_buzzer_init();
+   67   1          service_buzzer_stop();
+   68   1          service_imu_init();
+   69   1          service_motor_init();
+   70   1          service_negative_pressure_init();
+   71   1          service_speed_init();
+   72   1          app_speedout_init();
+   73   1      
+   74   1          while(1)
+   75   1          {
+   76   2              service_function_queue_update();
+   77   2              service_packet_update();
+   78   2          }
+   79   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       398     ------
+  ecode size           =       100     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =    ------         52
+  xdata size           =    ------     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -116,7 +117,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       181     ------
+  hconst size          =         2     ------
 End of Module Information.
 
 
