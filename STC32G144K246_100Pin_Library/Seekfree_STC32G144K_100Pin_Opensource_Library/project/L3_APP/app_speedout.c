@@ -152,6 +152,14 @@ void app_speedout_stop(void)
     service_motor_stop();
 }
 
+void app_speedout_set_target(float left_mps, float right_mps)
+{
+    app_speedout_config.left.target_mps = left_mps;
+    app_speedout_config.right.target_mps = right_mps;
+    app_speedout_data.left_target_mps = left_mps;
+    app_speedout_data.right_target_mps = right_mps;
+}
+
 void app_speedout_get_data(app_speedout_data_t *out_data)
 {
     if(NULL == out_data)

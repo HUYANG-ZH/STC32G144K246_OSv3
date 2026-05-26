@@ -44,6 +44,7 @@ extern app_speedout_data_t app_speedout_data;
 void app_speedout_init(void);
 void app_speedout_debug(void);
 void app_speedout_stop(void);
+void app_speedout_set_target(float left_mps, float right_mps);
 void app_speedout_get_data(app_speedout_data_t *out_data);
 
 #endif

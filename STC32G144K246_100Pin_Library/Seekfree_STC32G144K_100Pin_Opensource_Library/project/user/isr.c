@@ -47,7 +47,7 @@ void P0_IRQHandler() interrupt P0INT_VECTOR
     {
         if(flags & (0x01 << i))
         {
-            gpio_int_irq_handlers[0x01][i]();
+            gpio_int_irq_handlers[0x00][i]();
         }
     }
 }

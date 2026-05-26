@@ -1,0 +1,97 @@
+C251 COMPILER V5.60.0,  app_load_distribution                                              25/05/26  22:28:47  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_load_distribution
+OBJECT MODULE PLACED IN .\out_file\app_load_distribution.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_load_distribution.c LARGE ROM(HUGE) WARNINGLEVEL(3) OP
+                    -TIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\li
+                    -braries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_com
+                    -ponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_load_distribution.ls
+                    -t) TABS(2) OBJECT(.\out_file\app_load_distribution.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "sys_tfpu.h"
+    3          #include "app_load_distribution.h"
+    4          
+    5          #define APP_LOAD_DISTRIBUTION_CAR_WIDTH_M            (0.15f)       // 车辆宽度，单位 m
+    6          #define APP_LOAD_DISTRIBUTION_CAR_HEIGHT_M           (0.05f)       // 车辆重心高度，单位 m
+    7          #define APP_LOAD_DISTRIBUTION_GRAVITY_MPS2           (29.43f)      // 实际重力加速度，单位 m/s^
+             -2
+    8          #define APP_LOAD_DISTRIBUTION_DEG_TO_RAD             (0.01745f)    // 角度转弧度系数
+    9          #define APP_LOAD_DISTRIBUTION_LTC_LIMIT              (0.5f)        // 荷载转移比例限幅
+   10          
+   11          static float app_load_distribution_limit_ltc(float ltc)
+   12          {
+   13   1          float ltc_min;
+   14   1      
+   15   1          if(ltc > APP_LOAD_DISTRIBUTION_LTC_LIMIT)
+   16   1          {
+   17   2              return APP_LOAD_DISTRIBUTION_LTC_LIMIT;
+   18   2          }
+   19   1      
+   20   1          ltc_min = tfpu_sub(0.0f, APP_LOAD_DISTRIBUTION_LTC_LIMIT);
+   21   1          if(ltc < ltc_min)
+   22   1          {
+   23   2              return ltc_min;
+   24   2          }
+   25   1      
+   26   1          return ltc;
+   27   1      }
+   28          
+   29          void app_load_distribution_init(void)
+   30          {
+   31   1      }
+   32          
+   33          void app_load_distribution_process(app_load_distribution_data_t *datas)
+   34          {
+   35   1          float turn_radps;
+   36   1          float ltc_denominator;
+   37   1          float left_ratio;
+   38   1          float right_ratio;
+   39   1      
+   40   1          if(NULL == datas)
+   41   1          {
+   42   2              return;
+   43   2          }
+   44   1      
+   45   1          turn_radps = tfpu_mul(datas->turn_current, APP_LOAD_DISTRIBUTION_DEG_TO_RAD);
+   46   1          datas->ay = tfpu_mul(datas->straight_current, turn_radps);
+   47   1      
+   48   1          ltc_denominator = tfpu_mul(APP_LOAD_DISTRIBUTION_GRAVITY_MPS2, APP_LOAD_DISTRIBUTION_CAR_WIDTH_M);
+   49   1          datas->LTC = tfpu_div(tfpu_mul(datas->ay, APP_LOAD_DISTRIBUTION_CAR_HEIGHT_M), ltc_denominator);
+   50   1          datas->LTC = app_load_distribution_limit_ltc(datas->LTC);
+   51   1      
+   52   1          left_ratio = tfpu_sub(0.5f, datas->LTC);
+   53   1          right_ratio = tfpu_add(0.5f, datas->LTC);
+   54   1      
+C251 COMPILER V5.60.0,  app_load_distribution                                              25/05/26  22:28:47  PAGE 2   
+
+   55   1          datas->load_left = tfpu_mul(datas->Target_differential_speed, left_ratio);
+   56   1          datas->load_right = tfpu_mul(datas->Target_differential_speed, right_ratio);
+   57   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       316     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------         12
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

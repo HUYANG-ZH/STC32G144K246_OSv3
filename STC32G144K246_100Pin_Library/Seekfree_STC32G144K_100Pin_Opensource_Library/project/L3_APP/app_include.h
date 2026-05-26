@@ -8,6 +8,7 @@
 #include "app_inductor_preprocess.h"
 #include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
+#include "app_motion_postprocess.h"
 #include "app_scheduler.h"
 #include "app_speedout.h"
 
