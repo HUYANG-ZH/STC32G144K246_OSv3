@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       26/05/26  22:24:05  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       27/05/26  19:46:35  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -22,10 +22,10 @@ stmt  level    source
     9          #define APP_SPEEDOUT_ENABLE_THRESHOLD        (0.5f)
    10          #define APP_SPEEDOUT_DT_SECOND               ((float)APP_SPEEDOUT_PERIOD_MS / 1000.0f)
    11          #define APP_SPEEDOUT_TARGET_LIMIT_MPS        (10.0f)
-   12          #define APP_SPEEDOUT_DEFAULT_LEFT_KP         (2500.0f)
-   13          #define APP_SPEEDOUT_DEFAULT_LEFT_KI         (30000.0f)
-   14          #define APP_SPEEDOUT_DEFAULT_RIGHT_KP        (2500.0f)
-   15          #define APP_SPEEDOUT_DEFAULT_RIGHT_KI        (30000.0f)
+   12          #define APP_SPEEDOUT_DEFAULT_LEFT_KP         (1500.0f)
+   13          #define APP_SPEEDOUT_DEFAULT_LEFT_KI         (20000.0f)
+   14          #define APP_SPEEDOUT_DEFAULT_RIGHT_KP        (1500.0f)
+   15          #define APP_SPEEDOUT_DEFAULT_RIGHT_KI        (20000.0f)
    16          #define APP_SPEEDOUT_DEFAULT_KD              (0.0f)
    17          #define APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT  (0.0f)
    18          #define APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT    ((float)PWM_DUTY_MAX)
@@ -66,7 +66,7 @@ stmt  level    source
    51   1          if(target > APP_SPEEDOUT_TARGET_LIMIT_MPS)
    52   1          {
    53   2              return APP_SPEEDOUT_TARGET_LIMIT_MPS;
-C251 COMPILER V5.60.0,  app_speedout                                                       26/05/26  22:24:05  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       27/05/26  19:46:35  PAGE 2   
 
    54   2          }
    55   1      
@@ -134,7 +134,7 @@ stmt  level    source
   111   1          app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
   112   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
   113   1          shared_pos_pid_init(&speedout_left_pid);
-C251 COMPILER V5.60.0,  app_speedout                                                       26/05/26  22:24:05  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       27/05/26  19:46:35  PAGE 3   
 
   114   1          shared_pos_pid_init(&speedout_right_pid);
   115   1      
@@ -202,7 +202,7 @@ stmt  level    source
   177   1          int32 right_pwm;
   178   1          float left_target;
   179   1          float right_target;
-C251 COMPILER V5.60.0,  app_speedout                                                       26/05/26  22:24:05  PAGE 4   
+C251 COMPILER V5.60.0,  app_speedout                                                       27/05/26  19:46:35  PAGE 4   
 
   180   1          service_speed_data_t speed;
   181   1      
@@ -258,33 +258,21 @@ stmt  level    source
   230   1          app_speedout_data.left_pwm = (float)left_pwm;
   231   1          app_speedout_data.right_pwm = (float)right_pwm;
   232   1          app_speedout_data.enabled = 1.0f;
-  233   1      
-  234   1          {
-  235   2              static uint16 dbg_cnt = 0U;
-  236   2              dbg_cnt++;
-  237   2              if(dbg_cnt >= 10U)
-  238   2              {
-  239   3                  dbg_cnt = 0U;
-  240   3                  printf("%.4f,%.4f,%.4f,%.4f\r\n",
-  241   3                          left_target, speed.left_mps,
-  242   3                          right_target, speed.right_mps);
-  243   3              }
-  244   2          }
-C251 COMPILER V5.60.0,  app_speedout                                                       26/05/26  22:24:05  PAGE 5   
-
-  245   1      }
+  233   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1843     ------
+  ecode size           =      1747     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       237         52
+  xdata size           =       235         52
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
+C251 COMPILER V5.60.0,  app_speedout                                                       27/05/26  19:46:35  PAGE 5   
+
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
@@ -292,7 +280,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       244     ------
+  hconst size          =       215     ------
 End of Module Information.
 
 

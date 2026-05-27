@@ -230,16 +230,4 @@ static void app_speedout_tick(void)
     app_speedout_data.left_pwm = (float)left_pwm;
     app_speedout_data.right_pwm = (float)right_pwm;
     app_speedout_data.enabled = 1.0f;
-
-    {
-        static uint16 dbg_cnt = 0U;
-        dbg_cnt++;
-        if(dbg_cnt >= 10U)
-        {
-            dbg_cnt = 0U;
-            printf("%.4f,%.4f,%.4f,%.4f\r\n",
-                    left_target, speed.left_mps,
-                    right_target, speed.right_mps);
-        }
-    }
 }

@@ -17,11 +17,11 @@
 *
 * 额外注明：
 * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
-* 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+* 许可证英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
 * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
 * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本声明）
 *
-* 文件名称          
+* 文件名称
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
 * 开发环境          MDK FOR C251
@@ -60,6 +60,7 @@ void main(void)
 
     service_timetick_init();
     service_function_queue_init();
+    app_scheduler_init();
     service_wireless_uart_init();
     service_packet_init();
     service_batterycheck_init();
@@ -69,11 +70,24 @@ void main(void)
     service_motor_init();
     service_negative_pressure_init();
     service_speed_init();
+    app_attitude_init();
+    app_inductor_preprocess_init();
+    app_motion_preprocess_init();
+    app_feedforward_init();
+    app_load_distribution_init();
+    app_element_init();
     app_speedout_init();
+    app_motion_postprocess_init();
 
     while(1)
     {
         service_function_queue_update();
         service_packet_update();
+        app_scheduler_run();
+        service_negative_pressure_task();
+        if(0U != service_imu_task())
+        {
+            app_attitude_task();
+        }
     }
 }

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               26/05/26  21:23:39  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               27/05/26  19:46:37  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -34,12 +34,12 @@ stmt  level    source
    17          *
    18          * 额外注明：
    19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
-   20          * 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   20          * 许可证英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
    21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
    22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
              -声明）
    23          *
-   24          * 文件名称          
+   24          * 文件名称
    25          * 公司名称          成都逐飞科技有限公司
    26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
    27          * 开发环境          MDK FOR C251
@@ -66,7 +66,7 @@ stmt  level    source
    47          #include "app_attitude.h"
    48          #include "app_element.h"
    49          #include "app_feedforward.h"
-C251 COMPILER V5.60.0,  main                                                               26/05/26  21:23:39  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               27/05/26  19:46:37  PAGE 2   
 
    50          #include "app_inductor_preprocess.h"
    51          #include "app_load_distribution.h"
@@ -81,29 +81,43 @@ stmt  level    source
    60   1      
    61   1          service_timetick_init();
    62   1          service_function_queue_init();
-   63   1          service_wireless_uart_init();
-   64   1          service_packet_init();
-   65   1          service_batterycheck_init();
-   66   1          service_buzzer_init();
-   67   1          service_buzzer_stop();
-   68   1          service_imu_init();
-   69   1          service_motor_init();
-   70   1          service_negative_pressure_init();
-   71   1          service_speed_init();
-   72   1          app_speedout_init();
-   73   1      
-   74   1          while(1)
-   75   1          {
-   76   2              service_function_queue_update();
-   77   2              service_packet_update();
-   78   2          }
-   79   1      }
+   63   1          app_scheduler_init();
+   64   1          service_wireless_uart_init();
+   65   1          service_packet_init();
+   66   1          service_batterycheck_init();
+   67   1          service_buzzer_init();
+   68   1          service_buzzer_stop();
+   69   1          service_imu_init();
+   70   1          service_motor_init();
+   71   1          service_negative_pressure_init();
+   72   1          service_speed_init();
+   73   1          app_attitude_init();
+   74   1          app_inductor_preprocess_init();
+   75   1          app_motion_preprocess_init();
+   76   1          app_feedforward_init();
+   77   1          app_load_distribution_init();
+   78   1          app_element_init();
+   79   1          app_speedout_init();
+   80   1          app_motion_postprocess_init();
+   81   1      
+   82   1          while(1)
+   83   1          {
+   84   2              service_function_queue_update();
+   85   2              service_packet_update();
+   86   2              app_scheduler_run();
+   87   2              service_negative_pressure_task();
+   88   2              if(0U != service_imu_task())
+   89   2              {
+   90   3                  app_attitude_task();
+   91   3              }
+   92   2          }
+   93   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       100     ------
+  ecode size           =       150     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

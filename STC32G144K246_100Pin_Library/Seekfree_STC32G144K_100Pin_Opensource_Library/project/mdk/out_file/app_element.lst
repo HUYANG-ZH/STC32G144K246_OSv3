@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -66,7 +66,7 @@ stmt  level    source
    42          {
    43              app_element_state_t state;
    44              uint16 state_ms;
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 2   
 
    45              uint16 confirm_ms;
    46          } app_element_crossroad_t;
@@ -134,7 +134,7 @@ stmt  level    source
   106          static void app_element_roundabout_set_state(app_element_state_t state, app_element_dir_t dir)
   107          {
   108   1          element_roundabout.state = state;
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 3   
 
   109   1          element_roundabout.dir = dir;
   110   1          element_roundabout.state_ms = 0U;
@@ -202,7 +202,7 @@ stmt  level    source
   171                  const app_inductor_preprocess_data_t *inductor_data)
   172          {
   173   1          uint8 i;
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 4   
 
   174   1          float signal_sum;
   175   1      
@@ -270,7 +270,7 @@ stmt  level    source
   234          //-------------------------------------------------------------------------------------------------------
              -------------
   235          void app_element_get_data(app_element_data_t *out_data)
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 5   
 
   236          {
   237   1          if(NULL == out_data)
@@ -338,7 +338,7 @@ stmt  level    source
   298   2              case APP_ELEMENT_STATE_ENTER:
   299   2              {
   300   3                  if(element_roundabout.state_ms >= app_element_config.roundabout_inside_ms)
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 6   
 
   301   3                  {
   302   4                      app_element_roundabout_set_state(APP_ELEMENT_STATE_INSIDE, element_roundabout.dir);
@@ -406,7 +406,7 @@ stmt  level    source
   363   1          element_crossroad.state_ms = app_element_add_period(element_crossroad.state_ms);
   364   1      
   365   1          switch(element_crossroad.state)
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 7   
 
   366   1          {
   367   2              case APP_ELEMENT_STATE_IDLE:
@@ -474,7 +474,7 @@ stmt  level    source
   429   2              default:
   430   2              {
   431   3                  app_element_crossroad_set_state(APP_ELEMENT_STATE_IDLE);
-C251 COMPILER V5.60.0,  app_element                                                        22/05/26  22:36:19  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        27/05/26  19:46:32  PAGE 8   
 
   432   3                  break;
   433   3              }
