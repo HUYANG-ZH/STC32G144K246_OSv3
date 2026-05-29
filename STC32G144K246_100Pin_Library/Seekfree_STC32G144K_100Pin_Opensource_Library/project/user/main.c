@@ -35,26 +35,59 @@
 #include "zf_common_headfile.h"
 #include "sys_include.h"
 #include "service_timetick.h"
+#include "service_function_queue.h"
 #include "service_wireless_uart.h"
-#include "service_inductor.h"
-#include "service_delay.h"
+#include "service_packet.h"
+#include "service_batterycheck.h"
+#include "service_buzzer.h"
+#include "service_imu.h"
+#include "service_motor.h"
+#include "service_negative_pressure.h"
+#include "service_speed.h"
+#include "app_attitude.h"
+#include "app_element.h"
+#include "app_feedforward.h"
+#include "app_inductor_preprocess.h"
+#include "app_load_distribution.h"
+#include "app_motion_preprocess.h"
+#include "app_motion_postprocess.h"
+#include "app_scheduler.h"
+#include "app_speedout.h"
 
 void main(void)
 {
-    service_inductor_data_t inductor;
-
     SystemStart();
 
     service_timetick_init();
+    service_function_queue_init();
+    app_scheduler_init();
     service_wireless_uart_init();
-    service_inductor_init();
+    service_packet_init();
+    service_batterycheck_init();
+    service_buzzer_init();
+    service_buzzer_stop();
+    service_imu_init();
+    service_motor_init();
+    service_negative_pressure_init();
+    service_speed_init();
+    app_attitude_init();
+    app_inductor_preprocess_init();
+    app_motion_preprocess_init();
+    app_feedforward_init();
+    app_load_distribution_init();
+    app_element_init();
+    app_speedout_init();
+    app_motion_postprocess_init();
 
     while(1)
     {
-        service_inductor_get_data(&inductor);
-        printf("%d,%d,%d,%d\r\n",
-                inductor.channel_1, inductor.channel_2,
-                inductor.channel_3, inductor.channel_4);
-        service_delay_ms(20U);
+        service_function_queue_update();
+        service_packet_update();
+        app_scheduler_run();
+        service_negative_pressure_task();
+        if(0U != service_imu_task())
+        {
+            app_attitude_task();
+        }
     }
 }
