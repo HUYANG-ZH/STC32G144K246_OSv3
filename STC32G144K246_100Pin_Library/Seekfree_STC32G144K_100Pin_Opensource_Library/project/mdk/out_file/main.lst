@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               27/05/26  19:46:37  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               27/05/26  21:06:01  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -54,74 +54,41 @@ stmt  level    source
    35          #include "zf_common_headfile.h"
    36          #include "sys_include.h"
    37          #include "service_timetick.h"
-   38          #include "service_function_queue.h"
-   39          #include "service_wireless_uart.h"
-   40          #include "service_packet.h"
-   41          #include "service_batterycheck.h"
-   42          #include "service_buzzer.h"
-   43          #include "service_imu.h"
-   44          #include "service_motor.h"
-   45          #include "service_negative_pressure.h"
-   46          #include "service_speed.h"
-   47          #include "app_attitude.h"
-   48          #include "app_element.h"
-   49          #include "app_feedforward.h"
-C251 COMPILER V5.60.0,  main                                                               27/05/26  19:46:37  PAGE 2   
+   38          #include "service_wireless_uart.h"
+   39          #include "service_inductor.h"
+   40          #include "service_delay.h"
+   41          
+   42          void main(void)
+   43          {
+   44   1          service_inductor_data_t inductor;
+   45   1      
+   46   1          SystemStart();
+   47   1      
+   48   1          service_timetick_init();
+   49   1          service_wireless_uart_init();
+C251 COMPILER V5.60.0,  main                                                               27/05/26  21:06:01  PAGE 2   
 
-   50          #include "app_inductor_preprocess.h"
-   51          #include "app_load_distribution.h"
-   52          #include "app_motion_preprocess.h"
-   53          #include "app_motion_postprocess.h"
-   54          #include "app_scheduler.h"
-   55          #include "app_speedout.h"
-   56          
-   57          void main(void)
-   58          {
-   59   1          SystemStart();
-   60   1      
-   61   1          service_timetick_init();
-   62   1          service_function_queue_init();
-   63   1          app_scheduler_init();
-   64   1          service_wireless_uart_init();
-   65   1          service_packet_init();
-   66   1          service_batterycheck_init();
-   67   1          service_buzzer_init();
-   68   1          service_buzzer_stop();
-   69   1          service_imu_init();
-   70   1          service_motor_init();
-   71   1          service_negative_pressure_init();
-   72   1          service_speed_init();
-   73   1          app_attitude_init();
-   74   1          app_inductor_preprocess_init();
-   75   1          app_motion_preprocess_init();
-   76   1          app_feedforward_init();
-   77   1          app_load_distribution_init();
-   78   1          app_element_init();
-   79   1          app_speedout_init();
-   80   1          app_motion_postprocess_init();
-   81   1      
-   82   1          while(1)
-   83   1          {
-   84   2              service_function_queue_update();
-   85   2              service_packet_update();
-   86   2              app_scheduler_run();
-   87   2              service_negative_pressure_task();
-   88   2              if(0U != service_imu_task())
-   89   2              {
-   90   3                  app_attitude_task();
-   91   3              }
-   92   2          }
-   93   1      }
+   50   1          service_inductor_init();
+   51   1      
+   52   1          while(1)
+   53   1          {
+   54   2              service_inductor_get_data(&inductor);
+   55   2              printf("%d,%d,%d,%d\r\n",
+   56   2                      inductor.channel_1, inductor.channel_2,
+   57   2                      inductor.channel_3, inductor.channel_4);
+   58   2              service_delay_ms(20U);
+   59   2          }
+   60   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       150     ------
+  ecode size           =       136     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =    ------     ------
+  xdata size           =    ------          8
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -131,7 +98,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =         2     ------
+  hconst size          =        16     ------
 End of Module Information.
 
 
