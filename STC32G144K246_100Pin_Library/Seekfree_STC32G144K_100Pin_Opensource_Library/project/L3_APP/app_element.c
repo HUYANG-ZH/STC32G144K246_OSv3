@@ -21,6 +21,8 @@
 #define APP_ELEMENT_CROSSROAD_INSIDE_MS_DEFAULT         (80U)       // 十字入内保持时间，单位 ms
 #define APP_ELEMENT_CROSSROAD_EXIT_MS_DEFAULT           (30U)       // 十字退出确认时间，单位 ms
 #define APP_ELEMENT_CROSSROAD_DONE_MS_DEFAULT           (150U)      // 十字结束冷却时间，单位 ms
+#define APP_ELEMENT_LOST_LINE_SIGNAL_SUM_MAX_DEFAULT    (30.0f)
+#define APP_ELEMENT_LOST_LINE_CONFIRM_MS_DEFAULT        (20U)
 
 typedef struct
 {
@@ -62,11 +64,16 @@ app_element_config_t app_element_config =
     APP_ELEMENT_CROSSROAD_ENTER_MS_DEFAULT,
     APP_ELEMENT_CROSSROAD_INSIDE_MS_DEFAULT,
     APP_ELEMENT_CROSSROAD_EXIT_MS_DEFAULT,
-    APP_ELEMENT_CROSSROAD_DONE_MS_DEFAULT
+    APP_ELEMENT_CROSSROAD_DONE_MS_DEFAULT,
+    APP_ELEMENT_LOST_LINE_SIGNAL_SUM_MAX_DEFAULT,
+    APP_ELEMENT_LOST_LINE_CONFIRM_MS_DEFAULT
 };
 
+#if 0
 static app_element_roundabout_t element_roundabout;
 static app_element_crossroad_t element_crossroad;
+#endif
+static uint16 element_lost_line_confirm_ms = 0U;
 static volatile app_element_data_t element_data =
 {
     APP_ELEMENT_TYPE_NONE,
@@ -76,13 +83,17 @@ static volatile app_element_data_t element_data =
 };
 
 static void app_element_tick(void);
+#if 0
 static void app_element_roundabout_update(app_element_candidate_t *candidate,
         const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_data);
 static void app_element_crossroad_update(app_element_candidate_t *candidate,
         const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_data);
 static void app_element_arbitrate(const app_element_candidate_t *roundabout_candidate,
         const app_element_candidate_t *crossroad_candidate);
+#endif
+static void app_element_lost_line_update(const app_inductor_preprocess_data_t *inductor_data);
 
+#if 0
 static float app_element_abs(float value)
 {
     if(0.0f > value)
@@ -92,6 +103,7 @@ static float app_element_abs(float value)
 
     return value;
 }
+#endif
 
 static uint16 app_element_add_period(uint16 value)
 {
@@ -103,6 +115,7 @@ static uint16 app_element_add_period(uint16 value)
     return (uint16)(value + APP_ELEMENT_PERIOD_MS);
 }
 
+#if 0
 static void app_element_roundabout_set_state(app_element_state_t state, app_element_dir_t dir)
 {
     element_roundabout.state = state;
@@ -210,6 +223,7 @@ static uint8 app_element_crossroad_exit_check(const app_inductor_preprocess_data
 
     return 0U;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     元素识别初始化
@@ -220,8 +234,7 @@ static uint8 app_element_crossroad_exit_check(const app_inductor_preprocess_data
 //-------------------------------------------------------------------------------------------------------------------
 void app_element_init(void)
 {
-    app_element_roundabout_set_state(APP_ELEMENT_STATE_IDLE, APP_ELEMENT_DIR_NONE);
-    app_element_crossroad_set_state(APP_ELEMENT_STATE_IDLE);
+    element_lost_line_confirm_ms = 0U;
     app_element_tick();
     pit_ms_init(APP_ELEMENT_PIT, APP_ELEMENT_PERIOD_MS, app_element_tick);
 }
@@ -245,18 +258,47 @@ void app_element_get_data(app_element_data_t *out_data)
 static void app_element_tick(void)
 {
     app_inductor_preprocess_data_t inductor_data;
-    app_motion_preprocess_data_t motion_data;
-    app_element_candidate_t roundabout_candidate;
-    app_element_candidate_t crossroad_candidate;
 
     app_inductor_preprocess_get_data(&inductor_data);
-    app_motion_preprocess_get_data(&motion_data);
 
-    app_element_roundabout_update(&roundabout_candidate, &inductor_data, &motion_data);
-    app_element_crossroad_update(&crossroad_candidate, &inductor_data, &motion_data);
-    app_element_arbitrate(&roundabout_candidate, &crossroad_candidate);
+    app_element_lost_line_update(&inductor_data);
 }
 
+static void app_element_lost_line_update(const app_inductor_preprocess_data_t *inductor_data)
+{
+    uint8 i;
+    float signal_sum;
+
+    signal_sum = 0.0f;
+    for(i = 0U; i < 4U; i++)
+    {
+        signal_sum = tfpu_add(signal_sum, inductor_data->normalized[i]);
+    }
+
+    if(signal_sum < app_element_config.lost_line_signal_sum_max)
+    {
+        element_lost_line_confirm_ms = app_element_add_period(element_lost_line_confirm_ms);
+        if(element_lost_line_confirm_ms >= app_element_config.lost_line_confirm_ms)
+        {
+            element_data.type = APP_ELEMENT_TYPE_LOST_LINE;
+            element_data.state = APP_ELEMENT_STATE_INSIDE;
+            element_data.dir = APP_ELEMENT_DIR_NONE;
+            element_data.active = 1.0f;
+            return;
+        }
+    }
+    else
+    {
+        element_lost_line_confirm_ms = 0U;
+    }
+
+    element_data.type = APP_ELEMENT_TYPE_NONE;
+    element_data.state = APP_ELEMENT_STATE_IDLE;
+    element_data.dir = APP_ELEMENT_DIR_NONE;
+    element_data.active = 0.0f;
+}
+
+#if 0
 static void app_element_roundabout_update(app_element_candidate_t *candidate,
         const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_data)
 {
@@ -467,3 +509,4 @@ static void app_element_arbitrate(const app_element_candidate_t *roundabout_cand
         element_data.active = 0.0f;
     }
 }
+#endif

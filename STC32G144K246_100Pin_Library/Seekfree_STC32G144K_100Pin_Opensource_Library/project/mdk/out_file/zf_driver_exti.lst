@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     27/05/26  19:46:18  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     29/05/26  22:52:42  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_exti
 OBJECT MODULE PLACED IN .\out_file\zf_driver_exti.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_exti.c LARGE ROM(HUGE) WARNINGLE
-                    -VEL(3) OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
+                    -VEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
                     -;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librari
                     -es\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_exti.
                     -lst) TABS(2) OBJECT(.\out_file\zf_driver_exti.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    46          //  @return     void
    47          //  Sample usage:               exit_init(INT0_P32,BOTH) //初始化P32 作为外部中断引脚，双边
              -沿触发。
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     27/05/26  19:46:18  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     29/05/26  22:52:42  PAGE 2   
 
    48          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -134,7 +134,7 @@ stmt  level    source
   110   2        }
   111   1        else
   112   1        {
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     27/05/26  19:46:18  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     29/05/26  22:52:42  PAGE 3   
 
   113   2          (*(unsigned char volatile far *)(0X7EFD00 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));//开�
              -�中断功能
@@ -181,11 +181,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       711     ------
+  ecode size           =      1391     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       404     ------
+  xdata size           =       408     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

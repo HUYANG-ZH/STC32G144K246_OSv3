@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              27/05/26  19:46:34  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              30/05/26  16:32:55  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_preprocess
 OBJECT MODULE PLACED IN .\out_file\app_motion_preprocess.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_motion_preprocess.c LARGE ROM(HUGE) WARNINGLEVEL(3) OP
-                    -TIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\li
+                    -TIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\li
                     -braries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_com
                     -ponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_motion_preprocess.ls
                     -t) TABS(2) OBJECT(.\out_file\app_motion_preprocess.obj) 
@@ -22,7 +22,7 @@ stmt  level    source
     9          #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (0.7f)      // y轴差比融合权重
    10          #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
    11          #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
-   12          #define APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN    (0.0f)      // 默认角速度增益，单位 rad/
+   12          #define APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN    (1.0f)      // 默认角速度增益，单位 rad/
              -s
    13          
    14          app_motion_preprocess_config_t app_motion_preprocess_config =
@@ -66,7 +66,7 @@ stmt  level    source
    51          //-------------------------------------------------------------------------------------------------------
              -------------
    52          void app_motion_preprocess_init(void)
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              27/05/26  19:46:34  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              30/05/26  16:32:55  PAGE 2   
 
    53          {
    54   1          app_motion_preprocess_register_packet();
@@ -128,14 +128,14 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       599     ------
+  ecode size           =       725     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        28         60
+  xdata size           =        97     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              27/05/26  19:46:34  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              30/05/26  16:32:55  PAGE 3   
 
   bit size             =    ------     ------
   ebit size            =    ------     ------

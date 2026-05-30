@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/05/26  19:46:22  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/05/26  22:52:45  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_ble6a20
 OBJECT MODULE PLACED IN .\out_file\zf_device_ble6a20.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_ble6a20.c LARGE ROM(HUGE) WARNIN
-                    -GLEVEL(3) OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
+                    -GLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
                     -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
                     -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_bl
                     -e6a20.lst) TABS(2) OBJECT(.\out_file\zf_device_ble6a20.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   ------------------------------------
    47          *********************************************************************************************************
              -************/
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/05/26  19:46:22  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/05/26  22:52:45  PAGE 2   
 
    48          
    49          #include "zf_device_ble6a20.h"
@@ -134,7 +134,7 @@ stmt  level    source
   107   1          {
   108   2              if(!gpio_get_level(BLE6A20_RTS_PIN))  // RTS低电平，可发送
   109   2              {
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/05/26  19:46:22  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/05/26  22:52:45  PAGE 3   
 
   110   3                  send_len = len < PKT_SIZE ? len : PKT_SIZE;
   111   3                  uart_write_buffer(BLE6A20_INDEX, buff, send_len);
@@ -202,7 +202,7 @@ stmt  level    source
   167          void ble6a20_callback (uint8 uart_dat)
   168          {
   169   1      //    uart_query_byte(BLE6A20_INDEX, &ble6a20_data);
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/05/26  19:46:22  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/05/26  22:52:45  PAGE 4   
 
   170   1          fifo_write_buffer(&ble6a20_fifo, &uart_dat, 1);
   171   1      }
@@ -240,11 +240,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       627     ------
+  ecode size           =       835     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        87         17
+  xdata size           =       124     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

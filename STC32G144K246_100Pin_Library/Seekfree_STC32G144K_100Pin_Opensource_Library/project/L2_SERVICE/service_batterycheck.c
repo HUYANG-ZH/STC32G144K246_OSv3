@@ -1,6 +1,7 @@
 #include "zf_common_headfile.h"
 #include "bsp_include.h"
 #include "service_batterycheck.h"
+#include "service_packet.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 
@@ -9,11 +10,26 @@
 static float batterycheck_voltage = 0.0f;
 static uint32 batterycheck_last_tick = 0UL;
 
+static void service_batterycheck_update_now(void);
+static void service_batterycheck_voltage_reply(void);
+
+static void service_batterycheck_update_now(void)
+{
+    bsp_battery_vol(&batterycheck_voltage);
+    batterycheck_last_tick = service_timetick_what();
+}
+
+static void service_batterycheck_voltage_reply(void)
+{
+    service_batterycheck_update_now();
+    wprint("battery_voltage,%.3f\r\n", batterycheck_voltage);
+}
+
 void service_batterycheck_init(void)
 {
     bsp_battery_init();
-    bsp_battery_vol(&batterycheck_voltage);
-    batterycheck_last_tick = service_timetick_what();
+    service_batterycheck_update_now();
+    (void)service_packet_add_action("battery_voltage", service_batterycheck_voltage_reply, 0UL);
 }
 
 void service_batterycheck_debug(void)
@@ -28,8 +44,7 @@ void service_batterycheck_task(void)
     now = service_timetick_what();
     if((uint32)(now - batterycheck_last_tick) >= BATTERYCHECK_PERIOD_TICK)
     {
-        bsp_battery_vol(&batterycheck_voltage);
-        batterycheck_last_tick = now;
+        service_batterycheck_update_now();
     }
 
 }

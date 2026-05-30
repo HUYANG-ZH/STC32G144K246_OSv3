@@ -16,6 +16,7 @@ typedef enum
     APP_ELEMENT_TYPE_NONE = 0,
     APP_ELEMENT_TYPE_ROUNDABOUT,
     APP_ELEMENT_TYPE_CROSSROAD,
+    APP_ELEMENT_TYPE_LOST_LINE,
 } app_element_type_t;
 
 typedef enum
@@ -52,6 +53,8 @@ typedef struct
     uint16 crossroad_inside_ms;
     uint16 crossroad_exit_ms;
     uint16 crossroad_done_ms;
+    float lost_line_signal_sum_max;
+    uint16 lost_line_confirm_ms;
 } app_element_config_t;
 
 typedef struct

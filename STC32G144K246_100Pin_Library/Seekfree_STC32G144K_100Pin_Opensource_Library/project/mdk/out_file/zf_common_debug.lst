@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_common_debug                                                    27/05/26  19:46:17  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/05/26  22:52:40  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_debug
 OBJECT MODULE PLACED IN .\out_file\zf_common_debug.obj
 COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_debug.c LARGE ROM(HUGE) WARNINGL
-                    -EVEL(3) OPTIMIZE(9,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
+                    -EVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
                     -e;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librar
                     -ies\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_debu
                     -g.lst) TABS(2) OBJECT(.\out_file\zf_common_debug.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    47          #pragma warning disable = 183
    48          #pragma warning disable = 177
    49          
-C251 COMPILER V5.60.0,  zf_common_debug                                                    27/05/26  19:46:17  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/05/26  22:52:40  PAGE 2   
 
    50          
    51          #if DEBUG_UART_USE_INTERRUPT                                                    // 如果启用 debug uar
@@ -134,7 +134,7 @@ stmt  level    source
   108   1          fifo_read_buffer(&debug_uart_fifo, buff, &len, FIFO_READ_AND_CLEAN);
   109   1          return len;
   110   1      }
-C251 COMPILER V5.60.0,  zf_common_debug                                                    27/05/26  19:46:17  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/05/26  22:52:40  PAGE 3   
 
   111          extern uint8 test_count ;
   112          //-------------------------------------------------------------------------------------------------------
@@ -202,7 +202,7 @@ stmt  level    source
   168              {
   169   1              #if(USER_USB_CDC)
                            usb_cdc_write_byte(c);
-C251 COMPILER V5.60.0,  zf_common_debug                                                    27/05/26  19:46:17  PAGE 4   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/05/26  22:52:40  PAGE 4   
 
                            return c;
                        #else
@@ -270,7 +270,7 @@ stmt  level    source
   228   1      #if(USER_USB_CDC)
                    usb_cdc_init();
                    #if DEBUG_UART_USE_INTERRUPT                                               // 条件编译 只有在�
-C251 COMPILER V5.60.0,  zf_common_debug                                                    27/05/26  19:46:17  PAGE 5   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/05/26  22:52:40  PAGE 5   
 
              -��用串口中断才编译
                        fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);
@@ -306,11 +306,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       403     ------
+  ecode size           =       507     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       153         21
+  xdata size           =       192     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
