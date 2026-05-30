@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             29/05/26  22:52:58  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             30/05/26  23:10:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -25,11 +25,11 @@ stmt  level    source
    12          
    13          #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
    14          #define APP_MOTION_POSTPROCESS_TASK_PRIORITY           (4U)
-   15          #define APP_MOTION_POSTPROCESS_DEFAULT_KP              (0.0f)
+   15          #define APP_MOTION_POSTPROCESS_DEFAULT_KP              (2.894f)
    16          #define APP_MOTION_POSTPROCESS_DEFAULT_KI              (0.0f)
-   17          #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.0f)
+   17          #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.3f)
    18          #define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (0.0f)
-   19          #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (10.0f)
+   19          #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (3.0f)
    20          #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
    21          #define APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD        (0.5f)
    22          #define APP_MOTION_POSTPROCESS_DT_SECOND               ((float)APP_MOTION_POSTPROCESS_PERIOD_MS / 1000.0f
@@ -66,7 +66,7 @@ stmt  level    source
    52   2              return app_motion_postprocess_config.output_limit;
    53   2          }
    54   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             29/05/26  22:52:58  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             30/05/26  23:10:20  PAGE 2   
 
    55   1          return APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT;
    56   1      }
@@ -134,7 +134,7 @@ stmt  level    source
   118   1          EA = 0;
   119   1          motion_postprocess_data = *output;
   120   1          EA = ea_backup;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             29/05/26  22:52:58  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             30/05/26  23:10:20  PAGE 3   
 
   121   1      }
   122          
@@ -202,7 +202,7 @@ stmt  level    source
   184   1      
   185   1          app_motion_preprocess_get_data(&motion_preprocess);
   186   1          app_feedforward_get_data(&feedforward);
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             29/05/26  22:52:58  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             30/05/26  23:10:20  PAGE 4   
 
   187   1          app_attitude_get_data(&attitude);
   188   1      
@@ -271,7 +271,7 @@ Module Information          Static   Overlayable
   pdata size           =    ------     ------
   xdata size           =       391     ------
   xdata-const size     =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             29/05/26  22:52:58  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             30/05/26  23:10:20  PAGE 5   
 
   edata size           =    ------     ------
   bit size             =    ------     ------

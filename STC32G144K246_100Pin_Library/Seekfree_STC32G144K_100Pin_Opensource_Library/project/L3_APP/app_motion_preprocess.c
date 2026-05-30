@@ -5,11 +5,11 @@
 #include "app_motion_preprocess.h"
 
 #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
-#define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.0f)      // x轴差比融合权重
-#define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.0f)      // y轴差比融合权重
+#define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.3f)      // x轴差比融合权重
+#define APP_MOTION_PREPROCESS_Y_WEIGHT                 (0.7f)      // y轴差比融合权重
 #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
 #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
-#define APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN    (1.0f)      // 默认角速度增益，单位 rad/s
+#define APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN    (1.04f)     // 默认角速度增益，单位 rad/s
 
 app_motion_preprocess_config_t app_motion_preprocess_config =
 {
