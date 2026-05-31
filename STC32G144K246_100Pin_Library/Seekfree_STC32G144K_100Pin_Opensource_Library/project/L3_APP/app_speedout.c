@@ -32,6 +32,8 @@ static shared_pos_pid_t speedout_right_pid;
 static uint8 speedout_last_enabled = 0U;
 
 static void app_speedout_tick(void);
+static void app_speedout_restart_left_pid(void);
+static void app_speedout_restart_right_pid(void);
 
 static float app_speedout_output_limit(app_speedout_pid_config_t *config)
 {
@@ -95,14 +97,40 @@ static void app_speedout_clear_pid(void)
     shared_pos_pid_reset(&speedout_right_pid, 0.0f);
 }
 
+static void app_speedout_restart_left_pid(void)
+{
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
+    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
+    shared_pos_pid_restart(&speedout_left_pid);
+    EA = ea_backup;
+}
+
+static void app_speedout_restart_right_pid(void)
+{
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
+    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
+    shared_pos_pid_restart(&speedout_right_pid);
+    EA = ea_backup;
+}
+
 static void app_speedout_register_packet(void)
 {
     (void)service_packet_add_variable("speed_left_target", &app_speedout_config.left.target_mps, APP_SPEEDOUT_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("speed_left_kp", &app_speedout_config.left.kp, APP_SPEEDOUT_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("speed_left_ki", &app_speedout_config.left.ki, APP_SPEEDOUT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable_with_callback("speed_left_kp", &app_speedout_config.left.kp,
+            APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
+    (void)service_packet_add_variable_with_callback("speed_left_ki", &app_speedout_config.left.ki,
+            APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
     (void)service_packet_add_variable("speed_right_target", &app_speedout_config.right.target_mps, APP_SPEEDOUT_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("speed_right_kp", &app_speedout_config.right.kp, APP_SPEEDOUT_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("speed_right_ki", &app_speedout_config.right.ki, APP_SPEEDOUT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable_with_callback("speed_right_kp", &app_speedout_config.right.kp,
+            APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
+    (void)service_packet_add_variable_with_callback("speed_right_ki", &app_speedout_config.right.ki,
+            APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
     (void)service_packet_add_action("speed_stop", app_speedout_stop, 0UL);
 }
 

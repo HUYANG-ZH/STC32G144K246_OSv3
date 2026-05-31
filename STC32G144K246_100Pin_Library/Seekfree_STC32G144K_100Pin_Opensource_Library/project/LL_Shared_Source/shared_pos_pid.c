@@ -64,6 +64,11 @@ void shared_pos_pid_reset(shared_pos_pid_t *pid, float output)
     pid->feedback_initialized = ZF_FALSE;
 }
 
+void shared_pos_pid_restart(shared_pos_pid_t *pid)
+{
+    shared_pos_pid_reset(pid, 0.0f);
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     按指定目标和反馈复位位置式 PID 控制器状态
 // 参数说明     pid             PID 控制器对象指针

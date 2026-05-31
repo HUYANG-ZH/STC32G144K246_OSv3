@@ -15,7 +15,7 @@
 #define APP_MOTION_POSTPROCESS_DEFAULT_KP              (2.894f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KI              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.3f)
-#define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (0.0f)
+#define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (3.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
 #define APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD        (0.5f)
@@ -44,6 +44,7 @@ static shared_pos_pid_t motion_postprocess_yaw_pid;
 static uint8 motion_postprocess_last_enabled = 0U;
 
 static void app_motion_postprocess_task(void);
+static void app_motion_postprocess_restart_pid(void);
 
 static float app_motion_postprocess_output_limit(void)
 {
@@ -89,18 +90,34 @@ static void app_motion_postprocess_clear_pid(void)
     shared_pos_pid_reset(&motion_postprocess_yaw_pid, 0.0f);
 }
 
+static void app_motion_postprocess_restart_pid(void)
+{
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
+    app_motion_postprocess_sync_pid();
+    shared_pos_pid_restart(&motion_postprocess_yaw_pid);
+    EA = ea_backup;
+}
+
 static void app_motion_postprocess_register_packet(void)
 {
-    (void)service_packet_add_variable("motion_post_kp",
-            &app_motion_postprocess_config.kp, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("motion_post_ki",
-            &app_motion_postprocess_config.ki, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("motion_post_kd",
-            &app_motion_postprocess_config.kd, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("motion_post_integral_limit",
-            &app_motion_postprocess_config.integral_limit, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("motion_post_output_limit",
-            &app_motion_postprocess_config.output_limit, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable_with_callback("motion_post_kp",
+            &app_motion_postprocess_config.kp, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
+            app_motion_postprocess_restart_pid);
+    (void)service_packet_add_variable_with_callback("motion_post_ki",
+            &app_motion_postprocess_config.ki, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
+            app_motion_postprocess_restart_pid);
+    (void)service_packet_add_variable_with_callback("motion_post_kd",
+            &app_motion_postprocess_config.kd, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
+            app_motion_postprocess_restart_pid);
+    (void)service_packet_add_variable_with_callback("motion_post_integral_limit",
+            &app_motion_postprocess_config.integral_limit, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
+            app_motion_postprocess_restart_pid);
+    (void)service_packet_add_variable_with_callback("motion_post_output_limit",
+            &app_motion_postprocess_config.output_limit, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
+            app_motion_postprocess_restart_pid);
     (void)service_packet_add_variable("motion_post_enable",
             &app_motion_postprocess_config.enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
 }

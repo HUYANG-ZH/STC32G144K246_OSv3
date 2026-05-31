@@ -16,6 +16,7 @@ typedef struct
     const char *name;
     float *value;
     uint8 value_count;
+    service_packet_write_callback_t callback;
 } service_packet_variable_t;
 
 typedef struct
@@ -57,6 +58,7 @@ static void service_packet_append_char(char *buffer, uint8 *index, char value);
 static void service_packet_append_string(char *buffer, uint8 *index, const char *text);
 static void service_packet_append_uint32(char *buffer, uint8 *index, uint32 value);
 static void service_packet_append_float3(char *buffer, uint8 *index, float value);
+static uint8 service_packet_value_changed(service_packet_variable_t *variable, const float *value);
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     判断字符是否为帧字段分隔符
@@ -259,6 +261,26 @@ static void service_packet_append_float3(char *buffer, uint8 *index, float value
     service_packet_append_char(buffer, index, (char)('0' + (fraction_part % 10UL)));
 }
 
+static uint8 service_packet_value_changed(service_packet_variable_t *variable, const float *value)
+{
+    uint8 i;
+
+    if((NULL == variable) || (NULL == value))
+    {
+        return 0U;
+    }
+
+    for(i = 0U; i < variable->value_count; i++)
+    {
+        if(variable->value[i] != value[i])
+        {
+            return 1U;
+        }
+    }
+
+    return 0U;
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     解析浮点数列表
 // 参数说明     text            数值字符串
@@ -402,6 +424,7 @@ static void service_packet_handle_read(char *name)
 static void service_packet_handle_write(char *name, char *value_text)
 {
     uint8 i;
+    uint8 changed;
     float value_copy[SERVICE_PACKET_VALUE_MAX];
     service_packet_variable_t *variable;
 
@@ -420,12 +443,17 @@ static void service_packet_handle_write(char *name, char *value_text)
         return;
     }
 
+    changed = service_packet_value_changed(variable, value_copy);
     for(i = 0; i < variable->value_count; i++)
     {
         variable->value[i] = value_copy[i];
     }
 
     packet_write_ok_total++;
+    if((0U != changed) && (NULL != variable->callback))
+    {
+        variable->callback();
+    }
     service_packet_print_variable(variable);
 }
 
@@ -633,12 +661,13 @@ void service_packet_init(void)
         packet_variables[i].name = NULL;
         packet_variables[i].value = NULL;
         packet_variables[i].value_count = 0U;
+        packet_variables[i].callback = (service_packet_write_callback_t)0;
     }
 
     for(i = 0; i < SERVICE_PACKET_ACTION_MAX; i++)
     {
         packet_actions[i].name = NULL;
-        packet_actions[i].func = NULL;
+        packet_actions[i].func = (service_packet_action_func_t)0;
         packet_actions[i].delay_ms = 0U;
     }
 }
@@ -670,6 +699,12 @@ void service_packet_debug(void)
 //-------------------------------------------------------------------------------------------------------------------
 uint8 service_packet_add_variable(const char *name, float *value, uint8 value_count)
 {
+    return service_packet_add_variable_with_callback(name, value, value_count, (service_packet_write_callback_t)0);
+}
+
+uint8 service_packet_add_variable_with_callback(const char *name, float *value, uint8 value_count,
+        service_packet_write_callback_t callback)
+{
     service_packet_variable_t *variable;
 
     if((NULL == name) || (NULL == value) || (0U == value_count) ||
@@ -683,6 +718,7 @@ uint8 service_packet_add_variable(const char *name, float *value, uint8 value_co
     {
         variable->value = value;
         variable->value_count = value_count;
+        variable->callback = callback;
         return 1U;
     }
 
@@ -694,6 +730,7 @@ uint8 service_packet_add_variable(const char *name, float *value, uint8 value_co
     packet_variables[packet_variable_count].name = name;
     packet_variables[packet_variable_count].value = value;
     packet_variables[packet_variable_count].value_count = value_count;
+    packet_variables[packet_variable_count].callback = callback;
     packet_variable_count++;
 
     return 1U;

@@ -53,6 +53,7 @@ typedef struct
 
 void shared_pos_pid_init(shared_pos_pid_t *pid);
 void shared_pos_pid_reset(shared_pos_pid_t *pid, float output);
+void shared_pos_pid_restart(shared_pos_pid_t *pid);
 void shared_pos_pid_reset_state(shared_pos_pid_t *pid, float output, float target, float feedback);
 float shared_pos_pid_update(shared_pos_pid_t *pid, float target, float feedback, float dt);
 float shared_pos_pid_update_error(shared_pos_pid_t *pid, float error, float dt);
