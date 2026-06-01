@@ -10,7 +10,7 @@
 #include "app_motion_postprocess.h"
 
 #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
-#define APP_MOTION_POSTPROCESS_DEFAULT_KP              (2.894f)
+#define APP_MOTION_POSTPROCESS_DEFAULT_KP              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KI              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.3f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)

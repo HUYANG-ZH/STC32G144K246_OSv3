@@ -8,8 +8,8 @@
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
 
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {0U, 5U, 5U, 0U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {3586U, 1896U, 1851U, 3500U};
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {0U, 50U, 140U, 140U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4055U, 2200U, 2200U, 3500U};
 
 static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
 static uint8 inductor_history_index = 0U;
