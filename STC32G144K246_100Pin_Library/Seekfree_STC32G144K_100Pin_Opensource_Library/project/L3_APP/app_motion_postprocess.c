@@ -78,7 +78,7 @@ static void app_motion_postprocess_sync_pid(void)
     motion_postprocess_yaw_pid.setpoint_rate = 0.0f;
     motion_postprocess_yaw_pid.integral_separation = 0.0f;
     motion_postprocess_yaw_pid.conditional_integral_enable = ZF_ENABLE;
-    motion_postprocess_yaw_pid.direction = SHARED_POS_PID_DIRECTION_DIRECT;
+    motion_postprocess_yaw_pid.direction = SHARED_POS_PID_DIRECTION_REVERSE;
     motion_postprocess_yaw_pid.derivative_mode = SHARED_POS_PID_DERIVATIVE_ON_ERROR;
 }
 

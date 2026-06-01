@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_wireless_uart                                              29/05/26  22:52:55  PAGE 1   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              01/06/26  21:41:08  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_wireless_uart
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          while(0U != temp_index)
    54   1          {
    55   2              temp_index--;
-C251 COMPILER V5.60.0,  service_wireless_uart                                              29/05/26  22:52:55  PAGE 2   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              01/06/26  21:41:08  PAGE 2   
 
    56   2              wprint_put_char(buffer, index, temp[temp_index]);
    57   2          }
@@ -134,7 +134,7 @@ stmt  level    source
   119   2          }
   120   1      
   121   1          wprint_put_unsigned(buffer, index, integer_part, 10U, 0U);
-C251 COMPILER V5.60.0,  service_wireless_uart                                              29/05/26  22:52:55  PAGE 3   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              01/06/26  21:41:08  PAGE 3   
 
   122   1      
   123   1          if(0U == precision)
@@ -202,7 +202,7 @@ stmt  level    source
   185   4                      wprint_put_char(buffer, &index, '.');
   186   4                      continue;
   187   4                  }
-C251 COMPILER V5.60.0,  service_wireless_uart                                              29/05/26  22:52:55  PAGE 4   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              01/06/26  21:41:08  PAGE 4   
 
   188   3              }
   189   2      
@@ -270,57 +270,58 @@ stmt  level    source
   251   1      
   252   1          return wireless_uart_send_buffer(buff, len);
   253   1      }
-C251 COMPILER V5.60.0,  service_wireless_uart                                              29/05/26  22:52:55  PAGE 5   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              01/06/26  21:41:08  PAGE 5   
 
   254          
   255          void service_wireless_uart_init(void)
   256          {
-  257   1          (void)wireless_uart_init();
-  258   1      }
-  259          
-  260          void service_wireless_uart_debug(void)
-  261          {
-  262   1          printf("[wireless_uart:send start.]\r\n");
-  263   1          wprint("[wireless_uart:] success.\r\n");
-  264   1          printf("[wireless_uart:send end.]\r\n");
-  265   1      }
-  266          
-  267          uint32 service_wireless_uart_read_buffer(uint8 *buff, uint32 len)
-  268          {
-  269   1          if(NULL == buff)
-  270   1          {
-  271   2              return 0U;
-  272   2          }
-  273   1      
-  274   1          return wireless_uart_read_buffer(buff, len);
-  275   1      }
-  276          
-  277          uint32 wprint(const char *format, ...)
-  278          {
-  279   1          uint16 length;
-  280   1          va_list args;
-  281   1      
-  282   1          if(NULL == format)
-  283   1          {
-  284   2              return 0U;
-  285   2          }
-  286   1      
-  287   1          va_start(args, format);
-  288   1          length = wprint_format(wprint_buffer, format, args);
-  289   1          va_end(args);
-  290   1      
-  291   1          return service_wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
-  292   1      }
+  257   1          uint8 result = wireless_uart_init();
+  258   1          printf("[wireless_uart:init result=%d]\r\n", result);
+  259   1      }
+  260          
+  261          void service_wireless_uart_debug(void)
+  262          {
+  263   1          printf("[wireless_uart:send start.]\r\n");
+  264   1          wprint("[wireless_uart:] success.\r\n");
+  265   1          printf("[wireless_uart:send end.]\r\n");
+  266   1      }
+  267          
+  268          uint32 service_wireless_uart_read_buffer(uint8 *buff, uint32 len)
+  269          {
+  270   1          if(NULL == buff)
+  271   1          {
+  272   2              return 0U;
+  273   2          }
+  274   1      
+  275   1          return wireless_uart_read_buffer(buff, len);
+  276   1      }
+  277          
+  278          uint32 wprint(const char *format, ...)
+  279          {
+  280   1          uint16 length;
+  281   1          va_list args;
+  282   1      
+  283   1          if(NULL == format)
+  284   1          {
+  285   2              return 0U;
+  286   2          }
+  287   1      
+  288   1          va_start(args, format);
+  289   1          length = wprint_format(wprint_buffer, format, args);
+  290   1          va_end(args);
+  291   1      
+  292   1          return service_wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
+  293   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2878     ------
+  ecode size           =      2906     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       316     ------
+  xdata size           =       317     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -330,7 +331,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       127     ------
+  hconst size          =       160     ------
 End of Module Information.
 
 

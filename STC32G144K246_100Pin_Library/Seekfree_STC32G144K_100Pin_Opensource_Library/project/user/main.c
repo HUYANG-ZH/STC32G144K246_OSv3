@@ -81,9 +81,7 @@ void main(void)
 
     while(1)
     {
-        // static uint32 last_debug_time = 0;
-        // app_speedout_data_t speed_data;
-
+        
         service_function_queue_update();
         service_packet_update();
         app_scheduler_run();
@@ -93,14 +91,6 @@ void main(void)
             app_attitude_task();
         }
 
-        // // 调试输出：左轮速，右轮速，左target，右target (每100ms输出一次)
-        // if((service_timetick_what() - last_debug_time) >= 100)
-        // {
-        //     last_debug_time = service_timetick_what();
-        //     app_speedout_get_data(&speed_data);
-        //     printf("%.3f,%.3f,%.3f,%.3f\r\n",
-        //             speed_data.left_actual_mps, speed_data.right_actual_mps,
-        //             speed_data.left_target_mps, speed_data.right_target_mps);
-        // }
+
     }
 }

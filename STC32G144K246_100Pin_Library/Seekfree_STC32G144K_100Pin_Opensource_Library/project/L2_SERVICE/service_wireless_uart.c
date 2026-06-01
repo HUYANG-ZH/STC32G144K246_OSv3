@@ -254,7 +254,8 @@ uint32 service_wireless_uart_send_buffer(const uint8 *buff, uint32 len)
 
 void service_wireless_uart_init(void)
 {
-    (void)wireless_uart_init();
+    uint8 result = wireless_uart_init();
+    printf("[wireless_uart:init result=%d]\r\n", result);
 }
 
 void service_wireless_uart_debug(void)

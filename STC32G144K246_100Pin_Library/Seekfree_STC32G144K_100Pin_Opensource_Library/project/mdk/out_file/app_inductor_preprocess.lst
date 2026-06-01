@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/05/26  22:52:57  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            01/06/26  21:41:10  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -21,8 +21,8 @@ stmt  level    source
     8          #define APP_INDUCTOR_HISTORY_COUNT             (15U)
     9          #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
    10          
-   11          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {0U, 5U, 5U, 0U};
-   12          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {3586U, 1896U, 1851U, 3500U};
+   11          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {0U, 50U, 140U, 140U};
+   12          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4055U, 2200U, 2200U, 3500U};
    13          
    14          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
    15          static uint8 inductor_history_index = 0U;
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          {
    54   2              for(j = (uint8)(i + 1U); j < APP_INDUCTOR_HISTORY_COUNT; j++)
    55   2              {
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/05/26  22:52:57  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            01/06/26  21:41:10  PAGE 2   
 
    56   3                  if(values[i] > values[j])
    57   3                  {
@@ -134,7 +134,7 @@ stmt  level    source
   118   3                  normalized[i] = 0.0f;
   119   3              }
   120   2              else
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/05/26  22:52:57  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            01/06/26  21:41:10  PAGE 3   
 
   121   2              {
   122   3                  min_value = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
@@ -202,7 +202,7 @@ stmt  level    source
   184   2          }
   185   1      
   186   1          inductor_history_index = 0U;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/05/26  22:52:57  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            01/06/26  21:41:10  PAGE 4   
 
   187   1          app_inductor_update_output();
   188   1      
