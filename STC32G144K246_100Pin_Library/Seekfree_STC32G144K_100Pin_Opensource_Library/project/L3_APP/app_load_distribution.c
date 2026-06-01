@@ -5,7 +5,6 @@
 #define APP_LOAD_DISTRIBUTION_CAR_WIDTH_M            (0.15f)       // 车辆宽度，单位 m
 #define APP_LOAD_DISTRIBUTION_CAR_HEIGHT_M           (0.05f)       // 车辆重心高度，单位 m
 #define APP_LOAD_DISTRIBUTION_GRAVITY_MPS2           (29.43f)      // 实际重力加速度，单位 m/s^2
-#define APP_LOAD_DISTRIBUTION_DEG_TO_RAD             (0.01745f)    // 角度转弧度系数
 #define APP_LOAD_DISTRIBUTION_LTC_LIMIT              (0.5f)        // 荷载转移比例限幅
 
 static float app_load_distribution_limit_ltc(float ltc)
@@ -32,7 +31,6 @@ void app_load_distribution_init(void)
 
 void app_load_distribution_process(app_load_distribution_data_t *datas)
 {
-    float turn_radps;
     float ltc_denominator;
     float left_ratio;
     float right_ratio;
@@ -42,8 +40,8 @@ void app_load_distribution_process(app_load_distribution_data_t *datas)
         return;
     }
 
-    turn_radps = tfpu_mul(datas->turn_current, APP_LOAD_DISTRIBUTION_DEG_TO_RAD);
-    datas->ay = tfpu_mul(datas->straight_current, turn_radps);
+    // turn_current unit is rad/s, converted once in app_motion_postprocess.
+    datas->ay = tfpu_mul(datas->straight_current, datas->turn_current);
 
     ltc_denominator = tfpu_mul(APP_LOAD_DISTRIBUTION_GRAVITY_MPS2, APP_LOAD_DISTRIBUTION_CAR_WIDTH_M);
     datas->LTC = tfpu_div(tfpu_mul(datas->ay, APP_LOAD_DISTRIBUTION_CAR_HEIGHT_M), ltc_denominator);

@@ -1,10 +1,10 @@
 #include "zf_common_headfile.h"
 #include "bsp_inductor.h"
 
-#define ADC_CHANNEL_1 ADC2_CH7_P07
-#define ADC_CHANNEL_2 ADC2_CH6_P06
-#define ADC_CHANNEL_3 ADC2_CH3_P03
-#define ADC_CHANNEL_4 ADC2_CH4_P04
+#define ADC_CHANNEL_1 ADC2_CH3_P03
+#define ADC_CHANNEL_2 ADC2_CH4_P04
+#define ADC_CHANNEL_3 ADC2_CH6_P06
+#define ADC_CHANNEL_4 ADC2_CH7_P07
 
 void bsp_inductor_init(void)
 {

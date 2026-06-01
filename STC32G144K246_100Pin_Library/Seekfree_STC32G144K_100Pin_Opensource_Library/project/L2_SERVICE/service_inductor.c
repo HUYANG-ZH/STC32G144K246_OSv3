@@ -9,8 +9,6 @@ void service_inductor_init(void)
 
 void service_inductor_debug(void)
 {
-    // service_inductor_data_t testdata;
-    // service_inductor_get_data(&testdata);
 }
 
 void service_inductor_get_data(service_inductor_data_t *out_data)

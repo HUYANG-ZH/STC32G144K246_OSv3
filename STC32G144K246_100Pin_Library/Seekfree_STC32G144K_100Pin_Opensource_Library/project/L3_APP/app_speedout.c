@@ -161,8 +161,9 @@ void app_speedout_debug(void)
     app_speedout_data_t datas;
 
     app_speedout_get_data(&datas);
-    printf("%.3f,%.3f,%.0f\r\n",
-            datas.right_target_mps, datas.right_actual_mps, datas.right_pwm);
+    printf("%.3f,%.3f,%.3f,%.3f\r\n",
+            datas.left_target_mps, datas.right_target_mps,
+            datas.left_actual_mps, datas.right_actual_mps);
 }
 
 void app_speedout_stop(void)
@@ -244,7 +245,6 @@ static void app_speedout_tick(void)
 
     left_pwm = (int32)shared_pos_pid_update(&speedout_left_pid,
             left_target, speed.left_mps, APP_SPEEDOUT_DT_SECOND);
-    left_pwm = -left_pwm;
     right_pwm = (int32)shared_pos_pid_update(&speedout_right_pid,
             right_target, speed.right_mps, APP_SPEEDOUT_DT_SECOND);
 

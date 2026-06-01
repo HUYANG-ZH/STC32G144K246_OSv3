@@ -6,12 +6,10 @@
 #include "app_feedforward.h"
 #include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
-#include "app_scheduler.h"
 #include "app_speedout.h"
 #include "app_motion_postprocess.h"
 
 #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
-#define APP_MOTION_POSTPROCESS_TASK_PRIORITY           (4U)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KP              (2.894f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KI              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.3f)
@@ -162,10 +160,9 @@ void app_motion_postprocess_init(void)
 
     app_motion_postprocess_register_packet();
     app_motion_postprocess_task();
-    (void)app_scheduler_add(APP_MOTION_POSTPROCESS_TASK_ID,
-            app_motion_postprocess_task,
-            APP_MOTION_POSTPROCESS_TASK_PRIORITY,
-            APP_MOTION_POSTPROCESS_PERIOD_MS);
+    pit_ms_init(APP_MOTION_POSTPROCESS_PIT,
+            APP_MOTION_POSTPROCESS_PERIOD_MS,
+            app_motion_postprocess_task);
 }
 
 void app_motion_postprocess_get_data(app_motion_postprocess_data_t *out_data)

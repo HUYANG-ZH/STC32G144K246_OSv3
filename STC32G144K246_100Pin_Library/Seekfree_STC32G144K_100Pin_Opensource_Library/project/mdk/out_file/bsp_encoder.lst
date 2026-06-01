@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_encoder                                                        29/05/26  22:52:50  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_encoder                                                        31/05/26  22:33:30  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_encoder
@@ -16,15 +16,15 @@ stmt  level    source
     3          #include "zf_driver_encoder.h"
     4          
     5          #ifndef BSP_ENCODER_LEFT_INDEX
-    6          #define BSP_ENCODER_LEFT_INDEX         PWMF_ENCODER
+    6          #define BSP_ENCODER_LEFT_INDEX         PWME_ENCODER
     7          #endif
     8          
     9          #ifndef BSP_ENCODER_LEFT_PULSE_PIN
-   10          #define BSP_ENCODER_LEFT_PULSE_PIN     PWMF_ENCODER_CH1_PA1
+   10          #define BSP_ENCODER_LEFT_PULSE_PIN     PWME_ENCODER_CH1P_PA0
    11          #endif
    12          
    13          #ifndef BSP_ENCODER_LEFT_DIR_PIN
-   14          #define BSP_ENCODER_LEFT_DIR_PIN       PWMF_ENCODER_CH2_PA3
+   14          #define BSP_ENCODER_LEFT_DIR_PIN       PWME_ENCODER_CH2P_PA2
    15          #endif
    16          
    17          #ifndef BSP_ENCODER_LEFT_SIGN
@@ -32,15 +32,15 @@ stmt  level    source
    19          #endif
    20          
    21          #ifndef BSP_ENCODER_RIGHT_INDEX
-   22          #define BSP_ENCODER_RIGHT_INDEX        PWME_ENCODER
+   22          #define BSP_ENCODER_RIGHT_INDEX        PWMF_ENCODER
    23          #endif
    24          
    25          #ifndef BSP_ENCODER_RIGHT_PULSE_PIN
-   26          #define BSP_ENCODER_RIGHT_PULSE_PIN    PWME_ENCODER_CH1P_PA0
+   26          #define BSP_ENCODER_RIGHT_PULSE_PIN    PWMF_ENCODER_CH1_PA1
    27          #endif
    28          
    29          #ifndef BSP_ENCODER_RIGHT_DIR_PIN
-   30          #define BSP_ENCODER_RIGHT_DIR_PIN      PWME_ENCODER_CH2P_PA2
+   30          #define BSP_ENCODER_RIGHT_DIR_PIN      PWMF_ENCODER_CH2_PA3
    31          #endif
    32          
    33          #ifndef BSP_ENCODER_RIGHT_SIGN
@@ -66,7 +66,7 @@ stmt  level    source
    53          
    54          void bsp_encoder_get_delta(bsp_encoder_count_t *out_count)
    55          {
-C251 COMPILER V5.60.0,  bsp_encoder                                                        29/05/26  22:52:50  PAGE 2   
+C251 COMPILER V5.60.0,  bsp_encoder                                                        31/05/26  22:33:30  PAGE 2   
 
    56   1          if(NULL == out_count)
    57   1          {

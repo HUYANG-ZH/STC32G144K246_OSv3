@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_inductor                                                   29/05/26  22:52:53  PAGE 1   
+C251 COMPILER V5.60.0,  service_inductor                                                   31/05/26  21:47:23  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_inductor
@@ -22,26 +22,24 @@ stmt  level    source
     9          
    10          void service_inductor_debug(void)
    11          {
-   12   1          // service_inductor_data_t testdata;
-   13   1          // service_inductor_get_data(&testdata);
-   14   1      }
-   15          
-   16          void service_inductor_get_data(service_inductor_data_t *out_data)
-   17          {
-   18   1          inductor_rawdata_t raw_data;
-   19   1      
-   20   1          if(NULL == out_data)
-   21   1          {
-   22   2              return;
-   23   2          }
+   12   1      }
+   13          
+   14          void service_inductor_get_data(service_inductor_data_t *out_data)
+   15          {
+   16   1          inductor_rawdata_t raw_data;
+   17   1      
+   18   1          if(NULL == out_data)
+   19   1          {
+   20   2              return;
+   21   2          }
+   22   1      
+   23   1          bsp_inductor_get(&raw_data);
    24   1      
-   25   1          bsp_inductor_get(&raw_data);
-   26   1      
-   27   1          out_data->channel_1 = raw_data.Channel_1;
-   28   1          out_data->channel_2 = raw_data.Channel_2;
-   29   1          out_data->channel_3 = raw_data.Channel_3;
-   30   1          out_data->channel_4 = raw_data.Channel_4;
-   31   1      }
+   25   1          out_data->channel_1 = raw_data.Channel_1;
+   26   1          out_data->channel_2 = raw_data.Channel_2;
+   27   1          out_data->channel_3 = raw_data.Channel_3;
+   28   1          out_data->channel_4 = raw_data.Channel_4;
+   29   1      }
 
 
 Module Information          Static   Overlayable
