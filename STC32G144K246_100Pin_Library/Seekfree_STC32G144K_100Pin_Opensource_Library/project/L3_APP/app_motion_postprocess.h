@@ -4,7 +4,7 @@
 #include "zf_common_typedef.h"
 
 #ifndef APP_MOTION_POSTPROCESS_PIT
-#define APP_MOTION_POSTPROCESS_PIT            TIM8_PIT
+#define APP_MOTION_POSTPROCESS_PIT            TIM9_PIT
 #endif
 
 #ifndef APP_MOTION_POSTPROCESS_PERIOD_MS

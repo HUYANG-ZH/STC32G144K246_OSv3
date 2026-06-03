@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       01/06/26  21:41:11  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       02/06/26  22:36:02  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -66,7 +66,7 @@ stmt  level    source
    51          static float app_speedout_limit_target(float target)
    52          {
    53   1          if(target > APP_SPEEDOUT_TARGET_LIMIT_MPS)
-C251 COMPILER V5.60.0,  app_speedout                                                       01/06/26  21:41:11  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       02/06/26  22:36:02  PAGE 2   
 
    54   1          {
    55   2              return APP_SPEEDOUT_TARGET_LIMIT_MPS;
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
   118   1          shared_pos_pid_restart(&speedout_right_pid);
   119   1          EA = ea_backup;
-C251 COMPILER V5.60.0,  app_speedout                                                       01/06/26  21:41:11  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       02/06/26  22:36:02  PAGE 3   
 
   120   1      }
   121          
@@ -202,7 +202,7 @@ stmt  level    source
   181   1          service_motor_stop();
   182   1      }
   183          
-C251 COMPILER V5.60.0,  app_speedout                                                       01/06/26  21:41:11  PAGE 4   
+C251 COMPILER V5.60.0,  app_speedout                                                       02/06/26  22:36:02  PAGE 4   
 
   184          void app_speedout_set_target(float left_mps, float right_mps)
   185          {
@@ -270,7 +270,7 @@ stmt  level    source
   246   1          left_pwm = (int32)shared_pos_pid_update(&speedout_left_pid,
   247   1                  left_target, speed.left_mps, APP_SPEEDOUT_DT_SECOND);
   248   1          right_pwm = (int32)shared_pos_pid_update(&speedout_right_pid,
-C251 COMPILER V5.60.0,  app_speedout                                                       01/06/26  21:41:11  PAGE 5   
+C251 COMPILER V5.60.0,  app_speedout                                                       02/06/26  22:36:02  PAGE 5   
 
   249   1                  right_target, speed.right_mps, APP_SPEEDOUT_DT_SECOND);
   250   1      

@@ -1,10 +1,13 @@
 #include "zf_common_headfile.h"
+#include "zf_common_interrupt.h"
+#include "zf_device_wireless_uart.h"
 #include "service_wireless_uart.h"
 #include <stdarg.h>
 
 #define WPRINT_BUFFER_SIZE              (128U)
 #define WPRINT_FLOAT_DEFAULT_PRECISION  (3U)
 #define WPRINT_FLOAT_MAX_PRECISION      (6U)
+#define SERVICE_WIRELESS_UART_DMA_PRIORITY (3U)
 
 static char wprint_buffer[WPRINT_BUFFER_SIZE];
 
@@ -254,8 +257,11 @@ uint32 service_wireless_uart_send_buffer(const uint8 *buff, uint32 len)
 
 void service_wireless_uart_init(void)
 {
-    uint8 result = wireless_uart_init();
-    printf("[wireless_uart:init result=%d]\r\n", result);
+    (void)wireless_uart_init();
+    if(WIRELESS_UART_INDEX == UART_8)
+    {
+        interrupt_set_priority(UART8_DMA_IRQn, SERVICE_WIRELESS_UART_DMA_PRIORITY);
+    }
 }
 
 void service_wireless_uart_debug(void)

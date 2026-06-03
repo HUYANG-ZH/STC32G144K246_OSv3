@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/06/26  21:41:10  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             02/06/26  23:00:00  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -25,7 +25,7 @@ stmt  level    source
    12          #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
    13          #define APP_MOTION_POSTPROCESS_DEFAULT_KP              (0.0f)
    14          #define APP_MOTION_POSTPROCESS_DEFAULT_KI              (0.0f)
-   15          #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.3f)
+   15          #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.0f)
    16          #define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)
    17          #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (3.0f)
    18          #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
@@ -66,7 +66,7 @@ stmt  level    source
    52   2          }
    53   1      
    54   1          return APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/06/26  21:41:10  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             02/06/26  23:00:00  PAGE 2   
 
    55   1      }
    56          
@@ -134,7 +134,7 @@ stmt  level    source
   118   1                  app_motion_postprocess_restart_pid);
   119   1          (void)service_packet_add_variable("motion_post_enable",
   120   1                  &app_motion_postprocess_config.enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/06/26  21:41:10  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             02/06/26  23:00:00  PAGE 3   
 
   121   1      }
   122          
@@ -202,7 +202,7 @@ stmt  level    source
   184          {
   185   1          uint8 enabled;
   186   1          float raw_error;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/06/26  21:41:10  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             02/06/26  23:00:00  PAGE 4   
 
   187   1          float feedforward_value;
   188   1          float processed_error;
@@ -270,7 +270,7 @@ stmt  level    source
   249   1          output.right_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN, linear_mps),
   250   1                  output.load_right);
   251   1          output.enabled = (0U != enabled) ? 1.0f : 0.0f;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/06/26  21:41:10  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             02/06/26  23:00:00  PAGE 5   
 
   252   1      
   253   1          app_speedout_set_target(output.left_target_mps, output.right_target_mps);
