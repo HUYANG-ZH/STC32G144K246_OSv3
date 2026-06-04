@@ -1,8 +1,10 @@
 #include "zf_common_headfile.h"
 #include "shared_pos_pid.h"
 #include "service_motor.h"
+#include "service_negative_pressure.h"
 #include "service_packet.h"
 #include "service_speed.h"
+#include "service_wireless_uart.h"
 #include "app_speedout.h"
 
 #define APP_SPEEDOUT_PACKET_SINGLE_COUNT     (1U)
@@ -34,6 +36,8 @@ static uint8 speedout_last_enabled = 0U;
 static void app_speedout_tick(void);
 static void app_speedout_restart_left_pid(void);
 static void app_speedout_restart_right_pid(void);
+static void app_speedout_stop_all(void);
+static void app_speedout_start(void);
 
 static float app_speedout_output_limit(app_speedout_pid_config_t *config)
 {
@@ -132,6 +136,8 @@ static void app_speedout_register_packet(void)
     (void)service_packet_add_variable_with_callback("speed_right_ki", &app_speedout_config.right.ki,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
     (void)service_packet_add_action("speed_stop", app_speedout_stop, 0UL);
+    (void)service_packet_add_action("stop", app_speedout_stop_all, 0UL);
+    (void)service_packet_add_action("start", app_speedout_start, 0UL);
 }
 
 void app_speedout_init(void)
@@ -179,6 +185,29 @@ void app_speedout_stop(void)
     app_speedout_clear_pid();
 
     service_motor_stop();
+}
+
+static void app_speedout_stop_all(void)
+{
+    app_speedout_stop();
+    service_negative_pressure_set_percent(0U);
+    wprint("stop,0.000\r\n");
+}
+
+static void app_speedout_start(void)
+{
+    app_speedout_config.left.target_mps = 0.0f;
+    app_speedout_config.right.target_mps = 0.0f;
+    app_speedout_data.left_target_mps = 0.0f;
+    app_speedout_data.right_target_mps = 0.0f;
+    app_speedout_data.left_pwm = 0.0f;
+    app_speedout_data.right_pwm = 0.0f;
+    app_speedout_data.enabled = 1.0f;
+    speedout_last_enabled = 1U;
+    app_speedout_clear_pid();
+
+    service_motor_stop();
+    wprint("start,0.000\r\n");
 }
 
 void app_speedout_set_target(float left_mps, float right_mps)
