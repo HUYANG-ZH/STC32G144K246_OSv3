@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_imu                                                            01/06/26  21:41:06  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_imu                                                            05/06/26  22:57:08  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_imu
@@ -15,7 +15,7 @@ stmt  level    source
     2          #include "bsp_imu.h"
     3          
     4          #ifndef BSP_IMU_QUARTERNION_RATE
-    5          #define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_480HZ)
+    5          #define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_DISABLE)
     6          #endif
     7          
     8          static volatile uint8 s_bsp_imu_ready = 0U;
@@ -26,82 +26,33 @@ stmt  level    source
    13   1          s_bsp_imu_ready = 1U;
    14   1      }
    15          
-   16          void bsp_imu_debug(void)
+   16          float bsp_imu_read_gyro_z(void)
    17          {
-   18   1      }
-   19          
-   20          uint8 bsp_imu_task(void)
-   21          {
-   22   1          return imu660rc_update_quarternion();
-   23   1      }
-   24          
-   25          void bsp_imu_read(imu_data_t *out_data)
-   26          {
-   27   1          uint8 ea_backup;
-   28   1          int16 acc_x;
-   29   1          int16 acc_y;
-   30   1          int16 acc_z;
-   31   1          int16 gyro_x;
-   32   1          int16 gyro_y;
-   33   1          int16 gyro_z;
-   34   1      
-   35   1          imu660rc_get_acc();
-   36   1          imu660rc_get_gyro();
-   37   1      
-   38   1          ea_backup = EA;
-   39   1          EA = 0;
-   40   1          acc_x = imu660rc_acc_x;
-   41   1          acc_y = imu660rc_acc_y;
-   42   1          acc_z = imu660rc_acc_z;
-   43   1          gyro_x = imu660rc_gyro_x;
-   44   1          gyro_y = imu660rc_gyro_y;
-   45   1          gyro_z = imu660rc_gyro_z;
-   46   1          out_data->imu_quat_x = imu660rc_quarternion[0];
-   47   1          out_data->imu_quat_y = imu660rc_quarternion[1];
-   48   1          out_data->imu_quat_z = imu660rc_quarternion[2];
-   49   1          out_data->imu_quat_w = imu660rc_quarternion[3];
-   50   1          out_data->imu_roll_deg = imu660rc_roll;
-   51   1          out_data->imu_pitch_deg = imu660rc_pitch;
-   52   1          out_data->imu_yaw_deg = imu660rc_yaw;
-   53   1          EA = ea_backup;
-   54   1      
-   55   1          out_data->imu_acc_x = imu660rc_acc_transition(acc_x);
-C251 COMPILER V5.60.0,  bsp_imu                                                            01/06/26  21:41:06  PAGE 2   
-
-   56   1          out_data->imu_acc_y = imu660rc_acc_transition(acc_y);
-   57   1          out_data->imu_acc_z = imu660rc_acc_transition(acc_z);
-   58   1          out_data->imu_gyro_x = imu660rc_gyro_transition(gyro_x);
-   59   1          out_data->imu_gyro_y = imu660rc_gyro_transition(gyro_y);
-   60   1          out_data->imu_gyro_z = imu660rc_gyro_transition(gyro_z);
-   61   1          bsp_imu_get_temperature(&out_data->imu_temperture);
-   62   1      }
-   63          
-   64          void bsp_imu_get_temperature(float *temperature)
-   65          {
-   66   1          uint8 datas[2];
-   67   1          int16 raw_temperature;
-   68   1      
-   69   1          IMU660RC_CS(0);
-   70   1          spi_read_8bit_registers(IMU660RC_SPI, IMU660RC_OUT_TEMP_L | IMU660RC_SPI_R, datas, 2U);
-   71   1          IMU660RC_CS(1);
-   72   1          raw_temperature = (int16)(((uint16)datas[1] << 8) | datas[0]);
-   73   1          *temperature = ((float)raw_temperature / 256.0f) + 25.0f;
-   74   1      }
-   75          
-   76          uint8 bsp_imu_is_ready(void)
-   77          {
-   78   1          return s_bsp_imu_ready;
-   79   1      }
+   18   1          uint8 datas[2];
+   19   1          int16 gyro_z;
+   20   1      
+   21   1          IMU660RC_CS(0);
+   22   1          spi_read_8bit_registers(IMU660RC_SPI, IMU660RC_OUTZ_L_G | IMU660RC_SPI_R, datas, 2U);
+   23   1          IMU660RC_CS(1);
+   24   1      
+   25   1          gyro_z = (int16)(((uint16)datas[1] << 8) | datas[0]);
+   26   1          return imu660rc_gyro_transition(gyro_z);
+   27   1      }
+   28          
+   29          uint8 bsp_imu_is_ready(void)
+   30          {
+   31   1          return s_bsp_imu_ready;
+   32   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       796     ------
+  ecode size           =       122     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        26     ------
+  xdata size           =         5     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

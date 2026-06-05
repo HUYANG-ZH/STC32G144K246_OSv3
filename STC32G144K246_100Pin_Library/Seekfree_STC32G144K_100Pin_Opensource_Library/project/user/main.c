@@ -44,7 +44,6 @@
 #include "service_motor.h"
 #include "service_negative_pressure.h"
 #include "service_speed.h"
-#include "app_attitude.h"
 #include "app_element.h"
 #include "app_feedforward.h"
 #include "app_inductor_preprocess.h"
@@ -70,7 +69,6 @@ void main(void)
     service_motor_init();
     service_negative_pressure_init();
     service_speed_init();
-    app_attitude_init();
     app_inductor_preprocess_init();
     app_motion_preprocess_init();
     app_feedforward_init();
@@ -86,11 +84,5 @@ void main(void)
         service_packet_update();
         app_scheduler_run();
         service_negative_pressure_task();
-        if(0U != service_imu_task())
-        {
-            app_attitude_task();
-        }
-
-
     }
 }

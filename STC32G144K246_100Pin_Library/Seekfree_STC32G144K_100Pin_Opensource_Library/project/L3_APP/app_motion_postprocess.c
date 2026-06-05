@@ -1,8 +1,9 @@
 #include "zf_common_headfile.h"
 #include "sys_tfpu.h"
+#include "shared_lpf.h"
 #include "shared_pos_pid.h"
+#include "service_imu.h"
 #include "service_packet.h"
-#include "app_attitude.h"
 #include "app_feedforward.h"
 #include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
@@ -16,6 +17,7 @@
 #define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (3.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
+#define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (0.5f)
 #define APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD        (0.5f)
 #define APP_MOTION_POSTPROCESS_DT_SECOND               ((float)APP_MOTION_POSTPROCESS_PERIOD_MS / 1000.0f)
 #define APP_MOTION_POSTPROCESS_DEG_TO_RAD              (0.0174532925f)
@@ -39,6 +41,7 @@ static volatile app_motion_postprocess_data_t motion_postprocess_data =
 };
 
 static shared_pos_pid_t motion_postprocess_yaw_pid;
+static shared_lpf_t motion_postprocess_gyro_z_lpf;
 static uint8 motion_postprocess_last_enabled = 0U;
 
 static void app_motion_postprocess_task(void);
@@ -137,8 +140,13 @@ static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output
 
 void app_motion_postprocess_init(void)
 {
+    float gyro_z;
     app_motion_postprocess_data_t output;
 
+    gyro_z = service_imu_read_gyro_z();
+    shared_lpf_init(&motion_postprocess_gyro_z_lpf,
+            APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT,
+            gyro_z);
     app_motion_postprocess_sync_pid();
     shared_pos_pid_init(&motion_postprocess_yaw_pid);
     motion_postprocess_last_enabled =
@@ -189,23 +197,23 @@ static void app_motion_postprocess_task(void)
     float linear_mps;
     float target_yaw_rate_radps;
     float actual_yaw_rate_radps;
+    float gyro_z;
     float target_differential_speed;
     app_motion_preprocess_data_t motion_preprocess;
     app_feedforward_data_t feedforward;
-    app_attitude_data_t attitude;
     app_load_distribution_data_t load_distribution;
     app_motion_postprocess_data_t output;
 
     app_motion_preprocess_get_data(&motion_preprocess);
     app_feedforward_get_data(&feedforward);
-    app_attitude_get_data(&attitude);
+    gyro_z = shared_lpf_update(&motion_postprocess_gyro_z_lpf, service_imu_read_gyro_z());
 
     raw_error = motion_preprocess.line_error;
     feedforward_value = feedforward.feedforward;
     processed_error = tfpu_add(raw_error, feedforward_value);
     linear_mps = motion_preprocess.linear_mps;
     target_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, processed_error);
-    actual_yaw_rate_radps = tfpu_mul(attitude.gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
+    actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
     if(0U == enabled)
