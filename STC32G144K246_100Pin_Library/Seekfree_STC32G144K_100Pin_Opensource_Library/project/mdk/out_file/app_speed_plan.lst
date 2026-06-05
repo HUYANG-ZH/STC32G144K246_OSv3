@@ -1,0 +1,144 @@
+C251 COMPILER V5.60.0,  app_speed_plan                                                     05/06/26  23:45:36  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speed_plan
+OBJECT MODULE PLACED IN .\out_file\app_speed_plan.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_speed_plan.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(
+                    -0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries
+                    -\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components
+                    -\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_speed_plan.lst) TABS(2) OBJ
+                    -ECT(.\out_file\app_speed_plan.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "sys_tfpu.h"
+    3          #include "service_packet.h"
+    4          #include "app_motion_preprocess.h"
+    5          #include "app_scheduler.h"
+    6          #include "app_speed_plan.h"
+    7          
+    8          #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
+    9          #define APP_SPEED_PLAN_TASK_PRIORITY            (6U)
+   10          #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (0.8f)
+   11          #define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (19.6f)
+   12          #define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (40.0f)
+   13          #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
+   14          
+   15          static float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
+   16          static volatile float speed_plan_linear_mps = 0.0f;
+   17          
+   18          static void app_speed_plan_task(void);
+   19          
+   20          static float app_speed_plan_abs(float value)
+   21          {
+   22   1          return (0.0f > value) ? tfpu_sub(0.0f, value) : value;
+   23   1      }
+   24          
+   25          static float app_speed_plan_limit(float value, float min, float max)
+   26          {
+   27   1          if(value < min)
+   28   1          {
+   29   2              return min;
+   30   2          }
+   31   1      
+   32   1          if(value > max)
+   33   1          {
+   34   2              return max;
+   35   2          }
+   36   1      
+   37   1          return value;
+   38   1      }
+   39          
+   40          static float app_speed_plan_ramp(float current, float target)
+   41          {
+   42   1          float delta;
+   43   1          float limit;
+   44   1      
+   45   1          delta = tfpu_sub(target, current);
+   46   1          limit = (0.0f < delta) ?
+   47   1                  tfpu_mul(APP_SPEED_PLAN_ACCEL_LIMIT_MPS2, (float)APP_SPEED_PLAN_PERIOD_MS / 1000.0f) :
+   48   1                  tfpu_mul(APP_SPEED_PLAN_DECEL_LIMIT_MPS2, (float)APP_SPEED_PLAN_PERIOD_MS / 1000.0f);
+   49   1      
+   50   1          if(delta > limit)
+   51   1          {
+   52   2              delta = limit;
+   53   2          }
+   54   1          else if(delta < tfpu_sub(0.0f, limit))
+   55   1          {
+C251 COMPILER V5.60.0,  app_speed_plan                                                     05/06/26  23:45:36  PAGE 2   
+
+   56   2              delta = tfpu_sub(0.0f, limit);
+   57   2          }
+   58   1      
+   59   1          return tfpu_add(current, delta);
+   60   1      }
+   61          
+   62          static void app_speed_plan_register_packet(void)
+   63          {
+   64   1          (void)service_packet_add_variable("speed_plan_min_ratio",
+   65   1                  &speed_plan_min_ratio, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
+   66   1      }
+   67          
+   68          void app_speed_plan_init(void)
+   69          {
+   70   1          app_motion_preprocess_data_t motion_preprocess;
+   71   1      
+   72   1          app_motion_preprocess_get_data(&motion_preprocess);
+   73   1          speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
+   74   1          speed_plan_linear_mps = motion_preprocess.linear_mps;
+   75   1      
+   76   1          app_speed_plan_register_packet();
+   77   1          app_speed_plan_task();
+   78   1          (void)app_scheduler_add(APP_SPEED_PLAN_TASK_ID, app_speed_plan_task,
+   79   1                  APP_SPEED_PLAN_TASK_PRIORITY, APP_SPEED_PLAN_PERIOD_MS);
+   80   1      }
+   81          
+   82          float app_speed_plan_get_linear_mps(void)
+   83          {
+   84   1          return speed_plan_linear_mps;
+   85   1      }
+   86          
+   87          static void app_speed_plan_task(void)
+   88          {
+   89   1          float error;
+   90   1          float ratio;
+   91   1          float target_raw_mps;
+   92   1          app_motion_preprocess_data_t motion_preprocess;
+   93   1      
+   94   1          app_motion_preprocess_get_data(&motion_preprocess);
+   95   1      
+   96   1          error = app_speed_plan_abs(motion_preprocess.line_error);
+   97   1          error = app_speed_plan_limit(error, 0.0f, APP_SPEED_PLAN_ERROR_MAX);
+   98   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
+   99   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
+  100   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), error)));
+  101   1      
+  102   1          speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
+  103   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       755     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        92     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+C251 COMPILER V5.60.0,  app_speed_plan                                                     05/06/26  23:45:36  PAGE 3   
+
+  hconst size          =        39     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

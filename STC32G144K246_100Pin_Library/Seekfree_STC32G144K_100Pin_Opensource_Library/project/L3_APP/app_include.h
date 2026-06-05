@@ -10,6 +10,7 @@
 #include "app_motion_preprocess.h"
 #include "app_motion_postprocess.h"
 #include "app_scheduler.h"
+#include "app_speed_plan.h"
 #include "app_speedout.h"
 
 #endif

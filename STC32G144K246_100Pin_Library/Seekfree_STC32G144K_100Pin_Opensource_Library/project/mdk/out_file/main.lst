@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               05/06/26  22:57:10  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               05/06/26  23:45:36  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,53 +66,55 @@ stmt  level    source
    47          #include "app_element.h"
    48          #include "app_feedforward.h"
    49          #include "app_inductor_preprocess.h"
-C251 COMPILER V5.60.0,  main                                                               05/06/26  22:57:10  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               05/06/26  23:45:36  PAGE 2   
 
    50          #include "app_load_distribution.h"
    51          #include "app_motion_preprocess.h"
    52          #include "app_motion_postprocess.h"
    53          #include "app_scheduler.h"
-   54          #include "app_speedout.h"
-   55          
-   56          void main(void)
-   57          {
-   58   1          SystemStart();
-   59   1      
-   60   1          service_timetick_init();
-   61   1          service_function_queue_init();
-   62   1          app_scheduler_init();
-   63   1          service_wireless_uart_init();
-   64   1          service_packet_init();
-   65   1          service_batterycheck_init();
-   66   1          service_buzzer_init();
-   67   1          service_buzzer_stop();
-   68   1          service_imu_init();
-   69   1          service_motor_init();
-   70   1          service_negative_pressure_init();
-   71   1          service_speed_init();
-   72   1          app_inductor_preprocess_init();
-   73   1          app_motion_preprocess_init();
-   74   1          app_feedforward_init();
-   75   1          app_load_distribution_init();
-   76   1          app_element_init();
-   77   1          app_speedout_init();
-   78   1          app_motion_postprocess_init();
-   79   1      
-   80   1          while(1)
-   81   1          {
-   82   2              
-   83   2              service_function_queue_update();
-   84   2              service_packet_update();
-   85   2              app_scheduler_run();
-   86   2              service_negative_pressure_task();
-   87   2          }
-   88   1      }
+   54          #include "app_speed_plan.h"
+   55          #include "app_speedout.h"
+   56          
+   57          void main(void)
+   58          {
+   59   1          SystemStart();
+   60   1      
+   61   1          service_timetick_init();
+   62   1          service_function_queue_init();
+   63   1          app_scheduler_init();
+   64   1          service_wireless_uart_init();
+   65   1          service_packet_init();
+   66   1          service_batterycheck_init();
+   67   1          service_buzzer_init();
+   68   1          service_buzzer_stop();
+   69   1          service_imu_init();
+   70   1          service_motor_init();
+   71   1          service_negative_pressure_init();
+   72   1          service_speed_init();
+   73   1          app_inductor_preprocess_init();
+   74   1          app_motion_preprocess_init();
+   75   1          app_speed_plan_init();
+   76   1          app_feedforward_init();
+   77   1          app_load_distribution_init();
+   78   1          app_element_init();
+   79   1          app_speedout_init();
+   80   1          app_motion_postprocess_init();
+   81   1      
+   82   1          while(1)
+   83   1          {
+   84   2              
+   85   2              service_function_queue_update();
+   86   2              service_packet_update();
+   87   2              app_scheduler_run();
+   88   2              service_negative_pressure_task();
+   89   2          }
+   90   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       145     ------
+  ecode size           =       149     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
