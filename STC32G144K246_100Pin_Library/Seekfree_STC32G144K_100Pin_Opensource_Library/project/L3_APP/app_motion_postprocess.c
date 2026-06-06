@@ -7,7 +7,6 @@
 #include "app_feedforward.h"
 #include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
-#include "app_speed_plan.h"
 #include "app_speedout.h"
 #include "app_motion_postprocess.h"
 
@@ -15,7 +14,7 @@
 #define APP_MOTION_POSTPROCESS_DEFAULT_KP              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KI              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.0f)
-#define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.0f)
+#define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (5.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
 #define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (0.5f)
@@ -212,7 +211,7 @@ static void app_motion_postprocess_task(void)
     raw_error = motion_preprocess.line_error;
     feedforward_value = feedforward.feedforward;
     processed_error = tfpu_add(raw_error, feedforward_value);
-    linear_mps = app_speed_plan_get_linear_mps();
+    linear_mps = motion_preprocess.linear_mps;
     target_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, processed_error);
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;

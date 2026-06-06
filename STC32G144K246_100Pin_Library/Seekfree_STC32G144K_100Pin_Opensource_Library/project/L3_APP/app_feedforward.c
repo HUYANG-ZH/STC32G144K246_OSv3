@@ -8,7 +8,7 @@
 #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
 #define APP_FEEDFORWARD_TASK_PRIORITY            (5U)        // 前馈计算任务优先级
 #define APP_FEEDFORWARD_DEFAULT_KFF              (2.38f)     // 默认前馈增益
-#define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.1f)      // 曲率分母偏置
+#define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
 
 app_feedforward_config_t app_feedforward_config =
 {
