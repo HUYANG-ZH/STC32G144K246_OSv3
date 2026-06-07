@@ -1,6 +1,7 @@
 #include "zf_common_headfile.h"
 #include "sys_tfpu.h"
 #include "service_inductor.h"
+#include "service_timetick.h"
 #include "app_inductor_preprocess.h"
 
 #define APP_INDUCTOR_CHANNEL_COUNT             (4U)
@@ -8,8 +9,8 @@
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
 
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {0U, 50U, 140U, 140U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4055U, 2200U, 2200U, 3500U};
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {5U, 0U, 200U, 170U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2480U, 2530U, 4095U};
 
 static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
 static uint8 inductor_history_index = 0U;
@@ -191,6 +192,15 @@ void app_inductor_preprocess_init(void)
 
 void app_inductor_preprocess_debug(void)
 {
+    static uint32 last_tick = 0U;
+    service_inductor_data_t raw;
+
+    if((service_timetick_what() - last_tick) >= 100U)  // 10Hz
+    {
+        last_tick = service_timetick_what();
+        service_inductor_get_data(&raw);
+        printf("%d,%d,%d,%d\r\n", raw.channel_1, raw.channel_2, raw.channel_3, raw.channel_4);
+    }
 }
 
 void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)

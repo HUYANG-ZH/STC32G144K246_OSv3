@@ -79,7 +79,6 @@ void main(void)
 
     while(1)
     {
-        
         service_function_queue_update();
         service_packet_update();
         app_scheduler_run();
