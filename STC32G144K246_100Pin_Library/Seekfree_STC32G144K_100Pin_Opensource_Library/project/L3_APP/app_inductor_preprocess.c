@@ -12,6 +12,10 @@
 uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {5U, 0U, 200U, 170U};
 uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2480U, 2530U, 4095U};
 
+static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
+static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
+static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
+
 static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
 static uint8 inductor_history_index = 0U;
 static volatile app_inductor_preprocess_data_t inductor_data;
@@ -85,6 +89,27 @@ static void app_inductor_sample_median(uint16 median[APP_INDUCTOR_CHANNEL_COUNT]
     }
 }
 
+static void app_inductor_update_precomputed(void)
+{
+    uint8 i;
+    uint16 range;
+
+    for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+    {
+        inductor_min_float[i] = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
+        inductor_max_float[i] = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
+        range = app_inductor_preprocess_max_value[i] - app_inductor_preprocess_min_value[i];
+        if(0U < range)
+        {
+            inductor_range_inv[i] = tfpu_div(100.0f, tfpu_int2float((long)range));
+        }
+        else
+        {
+            inductor_range_inv[i] = 0.0f;
+        }
+    }
+}
+
 static void app_inductor_update_output(void)
 {
     uint8 i;
@@ -94,8 +119,6 @@ static void app_inductor_update_output(void)
     uint16 sorted[APP_INDUCTOR_HISTORY_COUNT];
     float filtered[APP_INDUCTOR_CHANNEL_COUNT];
     float normalized[APP_INDUCTOR_CHANNEL_COUNT];
-    float min_value;
-    float max_value;
 
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
@@ -114,16 +137,13 @@ static void app_inductor_update_output(void)
 
         filtered[i] = tfpu_div(tfpu_int2float((long)sum), tfpu_int2float((long)APP_INDUCTOR_AVERAGE_COUNT));
 
-        if(app_inductor_preprocess_max_value[i] <= app_inductor_preprocess_min_value[i])
+        if(0.0f >= inductor_range_inv[i])
         {
             normalized[i] = 0.0f;
         }
         else
         {
-            min_value = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
-            max_value = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
-            normalized[i] = tfpu_div(tfpu_mul(tfpu_sub(filtered[i], min_value), 100.0f),
-                    tfpu_sub(max_value, min_value));
+            normalized[i] = tfpu_mul(tfpu_sub(filtered[i], inductor_min_float[i]), inductor_range_inv[i]);
             if(0.0f > normalized[i])
             {
                 normalized[i] = 0.0f;
@@ -166,6 +186,11 @@ static void app_inductor_preprocess_tick(void)
     app_inductor_update_output();
 }
 
+void app_inductor_preprocess_update_calibration(void)
+{
+    app_inductor_update_precomputed();
+}
+
 void app_inductor_preprocess_init(void)
 {
     uint8 i;
@@ -185,6 +210,7 @@ void app_inductor_preprocess_init(void)
     }
 
     inductor_history_index = 0U;
+    app_inductor_update_precomputed();
     app_inductor_update_output();
 
     pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_tick);

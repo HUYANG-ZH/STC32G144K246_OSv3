@@ -142,6 +142,12 @@ static void app_speedout_register_packet(void)
 
 void app_speedout_init(void)
 {
+    app_speedout_config.left.kd = APP_SPEEDOUT_DEFAULT_KD;
+    app_speedout_config.right.kd = APP_SPEEDOUT_DEFAULT_KD;
+    app_speedout_config.left.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
+    app_speedout_config.right.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
+    app_speedout_config.left.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
+    app_speedout_config.right.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
     app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
     app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
     shared_pos_pid_init(&speedout_left_pid);
@@ -238,12 +244,6 @@ static void app_speedout_tick(void)
     service_speed_data_t speed;
 
     service_speed_get(&speed);
-    app_speedout_config.left.kd = APP_SPEEDOUT_DEFAULT_KD;
-    app_speedout_config.right.kd = APP_SPEEDOUT_DEFAULT_KD;
-    app_speedout_config.left.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
-    app_speedout_config.right.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
-    app_speedout_config.left.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
-    app_speedout_config.right.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
     app_speedout_config.left.target_mps = app_speedout_limit_target(app_speedout_config.left.target_mps);
     app_speedout_config.right.target_mps = app_speedout_limit_target(app_speedout_config.right.target_mps);
     left_target = app_speedout_config.left.target_mps;
@@ -268,9 +268,6 @@ static void app_speedout_tick(void)
         app_speedout_data.enabled = 0.0f;
         return;
     }
-
-    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
-    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
 
     left_pwm = (int32)shared_pos_pid_update(&speedout_left_pid,
             left_target, speed.left_mps, APP_SPEEDOUT_DT_SECOND);
