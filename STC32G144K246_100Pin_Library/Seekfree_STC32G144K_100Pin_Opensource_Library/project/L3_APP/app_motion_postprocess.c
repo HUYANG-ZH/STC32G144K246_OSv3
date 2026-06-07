@@ -8,6 +8,7 @@
 #include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
 #include "app_speedout.h"
+#include "app_scheduler.h"
 #include "app_motion_postprocess.h"
 
 #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
@@ -23,6 +24,9 @@
 #define APP_MOTION_POSTPROCESS_DEG_TO_RAD              (0.0174532925f)
 #define APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN      (-1.0f)
 #define APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN     (1.0f)
+#define APP_MOTION_POSTPROCESS_GYRO_TASK_ID            (1U)
+#define APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY      (10U)
+#define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (2U)
 
 app_motion_postprocess_config_t app_motion_postprocess_config =
 {
@@ -42,10 +46,12 @@ static volatile app_motion_postprocess_data_t motion_postprocess_data =
 
 static shared_pos_pid_t motion_postprocess_yaw_pid;
 static shared_lpf_t motion_postprocess_gyro_z_lpf;
+static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
 static uint8 motion_postprocess_last_enabled = 0U;
 
 static void app_motion_postprocess_task(void);
 static void app_motion_postprocess_restart_pid(void);
+static void app_motion_postprocess_gyro_task(void);
 
 static float app_motion_postprocess_output_limit(void)
 {
@@ -138,6 +144,19 @@ static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output
     EA = ea_backup;
 }
 
+static void app_motion_postprocess_gyro_task(void)
+{
+    float raw_gyro;
+    uint8 ea_backup;
+
+    raw_gyro = service_imu_read_gyro_z();
+
+    ea_backup = EA;
+    EA = 0;
+    motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, raw_gyro);
+    EA = ea_backup;
+}
+
 void app_motion_postprocess_init(void)
 {
     float gyro_z;
@@ -147,6 +166,7 @@ void app_motion_postprocess_init(void)
     shared_lpf_init(&motion_postprocess_gyro_z_lpf,
             APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT,
             gyro_z);
+    motion_postprocess_gyro_z_filtered = gyro_z;
     app_motion_postprocess_sync_pid();
     shared_pos_pid_init(&motion_postprocess_yaw_pid);
     motion_postprocess_last_enabled =
@@ -167,6 +187,10 @@ void app_motion_postprocess_init(void)
     app_motion_postprocess_publish(&output);
 
     app_motion_postprocess_register_packet();
+    (void)app_scheduler_add(APP_MOTION_POSTPROCESS_GYRO_TASK_ID,
+            app_motion_postprocess_gyro_task,
+            APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY,
+            APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS);
     app_motion_postprocess_task();
     pit_ms_init(APP_MOTION_POSTPROCESS_PIT,
             APP_MOTION_POSTPROCESS_PERIOD_MS,
@@ -204,11 +228,9 @@ static void app_motion_postprocess_task(void)
     app_load_distribution_data_t load_distribution;
     app_motion_postprocess_data_t output;
 
-    printf("t\r\n");
-
     app_motion_preprocess_get_data(&motion_preprocess);
     app_feedforward_get_data(&feedforward);
-    gyro_z = shared_lpf_update(&motion_postprocess_gyro_z_lpf, service_imu_read_gyro_z());
+    gyro_z = motion_postprocess_gyro_z_filtered;
 
     raw_error = motion_preprocess.line_error;
     feedforward_value = feedforward.feedforward;
