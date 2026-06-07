@@ -12,7 +12,7 @@
 #include "app_motion_postprocess.h"
 
 #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
-#define APP_MOTION_POSTPROCESS_DEFAULT_KP              (0.0f)
+#define APP_MOTION_POSTPROCESS_DEFAULT_KP              (0.29f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KI              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KD              (0.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)
@@ -26,7 +26,7 @@
 #define APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN     (1.0f)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_ID            (1U)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY      (10U)
-#define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (2U)
+#define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (1U)
 
 app_motion_postprocess_config_t app_motion_postprocess_config =
 {
@@ -48,7 +48,6 @@ static shared_pos_pid_t motion_postprocess_yaw_pid;
 static shared_lpf_t motion_postprocess_gyro_z_lpf;
 static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
 static uint8 motion_postprocess_last_enabled = 0U;
-static float motion_post_target_yaw_rate_override = 0.0f;
 
 static void app_motion_postprocess_task(void);
 static void app_motion_postprocess_restart_pid(void);
@@ -128,8 +127,6 @@ static void app_motion_postprocess_register_packet(void)
             app_motion_postprocess_restart_pid);
     (void)service_packet_add_variable("motion_post_enable",
             &app_motion_postprocess_config.enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("motion_post_target_yaw_rate",
-            &motion_post_target_yaw_rate_override, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
 }
 
 static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output)
@@ -239,7 +236,7 @@ static void app_motion_postprocess_task(void)
     feedforward_value = feedforward.feedforward;
     processed_error = tfpu_add(raw_error, feedforward_value);
     linear_mps = motion_preprocess.linear_mps;
-    target_yaw_rate_radps = motion_post_target_yaw_rate_override;
+    target_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, processed_error);
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
