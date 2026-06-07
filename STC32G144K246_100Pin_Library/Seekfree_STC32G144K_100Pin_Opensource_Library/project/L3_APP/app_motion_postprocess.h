@@ -8,7 +8,7 @@
 #endif
 
 #ifndef APP_MOTION_POSTPROCESS_PERIOD_MS
-#define APP_MOTION_POSTPROCESS_PERIOD_MS      (3U)
+#define APP_MOTION_POSTPROCESS_PERIOD_MS      (5U)
 #endif
 
 typedef struct

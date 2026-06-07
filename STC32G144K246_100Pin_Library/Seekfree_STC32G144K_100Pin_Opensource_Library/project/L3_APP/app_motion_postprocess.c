@@ -204,6 +204,8 @@ static void app_motion_postprocess_task(void)
     app_load_distribution_data_t load_distribution;
     app_motion_postprocess_data_t output;
 
+    printf("t\r\n");
+
     app_motion_preprocess_get_data(&motion_preprocess);
     app_feedforward_get_data(&feedforward);
     gyro_z = shared_lpf_update(&motion_postprocess_gyro_z_lpf, service_imu_read_gyro_z());
