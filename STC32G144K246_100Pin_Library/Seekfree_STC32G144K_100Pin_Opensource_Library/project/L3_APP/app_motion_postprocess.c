@@ -48,6 +48,7 @@ static shared_pos_pid_t motion_postprocess_yaw_pid;
 static shared_lpf_t motion_postprocess_gyro_z_lpf;
 static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
 static uint8 motion_postprocess_last_enabled = 0U;
+static float motion_post_target_yaw_rate_override = 0.0f;
 
 static void app_motion_postprocess_task(void);
 static void app_motion_postprocess_restart_pid(void);
@@ -127,6 +128,8 @@ static void app_motion_postprocess_register_packet(void)
             app_motion_postprocess_restart_pid);
     (void)service_packet_add_variable("motion_post_enable",
             &app_motion_postprocess_config.enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("motion_post_target_yaw_rate",
+            &motion_post_target_yaw_rate_override, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
 }
 
 static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output)
@@ -275,7 +278,7 @@ static void app_motion_postprocess_task(void)
     output.actual_yaw_rate_radps = actual_yaw_rate_radps;
     output.target_differential_speed = target_differential_speed;
     output.load_left = load_distribution.load_left;
-    output.load_right = load_distribution.load_right;
+    output.load_right = -load_distribution.load_right;
     output.left_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN, linear_mps),
             output.load_left);
     output.right_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN, linear_mps),

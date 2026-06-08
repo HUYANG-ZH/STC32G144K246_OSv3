@@ -219,7 +219,7 @@ static void app_speedout_start(void)
 void app_speedout_set_target(float left_mps, float right_mps)
 {
     app_speedout_config.left.target_mps = left_mps;
-    app_speedout_config.right.target_mps = right_mps;
+    app_speedout_config.right.target_mps = -right_mps;
     app_speedout_data.left_target_mps = left_mps;
     app_speedout_data.right_target_mps = right_mps;
 }
