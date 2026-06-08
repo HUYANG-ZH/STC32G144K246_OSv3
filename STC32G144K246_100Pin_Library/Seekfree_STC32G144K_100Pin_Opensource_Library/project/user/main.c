@@ -76,6 +76,7 @@ void main(void)
     app_element_init();
     app_speedout_init();
     app_motion_postprocess_init();
+    service_negative_pressure_set_percent(25U);
 
     while(1)
     {
