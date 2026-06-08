@@ -38,6 +38,7 @@
 #include "service_function_queue.h"
 #include "service_wireless_uart.h"
 #include "service_packet.h"
+#include "service_batterycheck.h"
 #include "service_motor.h"
 #include "service_speed.h"
 #include "app_speedout.h"
@@ -50,6 +51,7 @@ void main(void)
     service_function_queue_init();
     service_wireless_uart_init();
     service_packet_init();
+    service_batterycheck_init();
     service_motor_init();
     service_speed_init();
     app_speedout_init();
