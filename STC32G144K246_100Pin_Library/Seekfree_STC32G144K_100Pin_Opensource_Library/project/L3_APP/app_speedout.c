@@ -18,6 +18,7 @@
 #define APP_SPEEDOUT_DEFAULT_KD              (0.0f)
 #define APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT  (0.0f)
 #define APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT    ((float)PWM_DUTY_MAX)
+#define APP_SPEEDOUT_RIGHT_TARGET_SIGN       (-1.0f)
 
 app_speedout_config_t app_speedout_config =
 {
@@ -219,9 +220,9 @@ static void app_speedout_start(void)
 void app_speedout_set_target(float left_mps, float right_mps)
 {
     app_speedout_config.left.target_mps = left_mps;
-    app_speedout_config.right.target_mps = -right_mps;
+    app_speedout_config.right.target_mps = right_mps;
     app_speedout_data.left_target_mps = left_mps;
-    app_speedout_data.right_target_mps = right_mps;
+    app_speedout_data.right_target_mps = right_mps * APP_SPEEDOUT_RIGHT_TARGET_SIGN;
 }
 
 void app_speedout_get_data(app_speedout_data_t *out_data)
@@ -247,7 +248,7 @@ static void app_speedout_tick(void)
     app_speedout_config.left.target_mps = app_speedout_limit_target(app_speedout_config.left.target_mps);
     app_speedout_config.right.target_mps = app_speedout_limit_target(app_speedout_config.right.target_mps);
     left_target = app_speedout_config.left.target_mps;
-    right_target = app_speedout_config.right.target_mps;
+    right_target = app_speedout_config.right.target_mps * APP_SPEEDOUT_RIGHT_TARGET_SIGN;
 
     enabled = (app_speedout_data.enabled >= APP_SPEEDOUT_ENABLE_THRESHOLD) ? 1U : 0U;
     if(0U == enabled)

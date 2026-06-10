@@ -1,3 +1,16 @@
+[2026-06-11] [working] [uncommitted]
+- 统一两轮速度环正值为车体前进方向：右轮目标不再内部取反，直线速度正值同时下发左右轮正目标
+- 撤回上一条速度环正值统一修改：左轮直线符号恢复-1，右轮速度环目标内部取反恢复
+- 修正直线速度驱动方向：后处理直线分量整体翻向，linear_mps正值对应车体前进
+
+[2026-06-10] [working] [uncommitted]
+- 进入两轮速度环调试模式：main仅保留无线包、电机、速度采样和app_speedout
+- 恢复app_speedout_set_target左右同号目标，正速度目标对应车体前进方向
+- 撤回左轮电机方向宏修改，SERVICE_MOTOR_LEFT_FORWARD_LEVEL恢复GPIO_LOW
+- 右轮速度环目标内部取反，speed_right_target给正值时右轮反向闭环转动，PID方向不变
+- 进入角速度环调试模式：motion_post_target_yaw_rate直接作为目标角速度，main恢复IMU、调度器和motion_postprocess
+- 恢复全量模块：main恢复电池、蜂鸣器、负压、电感、前处理、前馈、载荷分配、元素识别，角速度目标恢复电感导航链路
+
 [2026-06-07] [develop] [5f047ed]
 - 交换左右编码器引脚（物理接线交换适配）
 - 进入速度环调试模式，精简main.c模块
