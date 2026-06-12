@@ -14,12 +14,14 @@
 typedef struct
 {
     float kff;
+    float kd;
     float denominator_bias;
 } app_feedforward_config_t;
 
 typedef struct
 {
     float curvature;
+    float curvature_rate;
     float feedforward;
 } app_feedforward_data_t;
 

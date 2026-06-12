@@ -8,15 +8,20 @@
 #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
 #define APP_FEEDFORWARD_TASK_PRIORITY            (5U)        // 前馈计算任务优先级
 #define APP_FEEDFORWARD_DEFAULT_KFF              (18.407f)   // 默认前馈增益
+#define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
 #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
+#define APP_FEEDFORWARD_DT_SECOND                (APP_FEEDFORWARD_PERIOD_MS * 0.001f)
 
 app_feedforward_config_t app_feedforward_config =
 {
     APP_FEEDFORWARD_DEFAULT_KFF,
+    APP_FEEDFORWARD_DEFAULT_KD,
     APP_FEEDFORWARD_DEFAULT_DENOM_BIAS
 };
 
-static volatile app_feedforward_data_t feedforward_data = {0.0f, 0.0f};
+static volatile app_feedforward_data_t feedforward_data = {0.0f, 0.0f, 0.0f};
+static float feedforward_last_curvature = 0.0f;
+static uint8 feedforward_rate_ready = 0U;
 
 static void app_feedforward_task(void);
 
@@ -24,6 +29,8 @@ static void app_feedforward_register_packet(void)
 {
     (void)service_packet_add_variable("feedforward_kff",
             &app_feedforward_config.kff, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("feedforward_kd",
+            &app_feedforward_config.kd, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -36,9 +43,13 @@ static void app_feedforward_register_packet(void)
 void app_feedforward_init(void)
 {
     app_feedforward_config.kff = APP_FEEDFORWARD_DEFAULT_KFF;
+    app_feedforward_config.kd = APP_FEEDFORWARD_DEFAULT_KD;
     app_feedforward_config.denominator_bias = APP_FEEDFORWARD_DEFAULT_DENOM_BIAS;
     feedforward_data.curvature = 0.0f;
+    feedforward_data.curvature_rate = 0.0f;
     feedforward_data.feedforward = 0.0f;
+    feedforward_last_curvature = 0.0f;
+    feedforward_rate_ready = 0U;
 
     app_feedforward_register_packet();
     app_feedforward_task();
@@ -68,6 +79,9 @@ static void app_feedforward_task(void)
     float numerator;
     float denominator;
     float curvature;
+    float curvature_rate;
+    float feedforward_p;
+    float feedforward_d;
 
     app_inductor_preprocess_get_data(&inductor_data);
 
@@ -76,6 +90,22 @@ static void app_feedforward_task(void)
             app_feedforward_config.denominator_bias);
     curvature = tfpu_div(numerator, denominator);
 
+    if(0U == feedforward_rate_ready)
+    {
+        curvature_rate = 0.0f;
+        feedforward_rate_ready = 1U;
+    }
+    else
+    {
+        curvature_rate = tfpu_div(tfpu_sub(curvature, feedforward_last_curvature),
+                APP_FEEDFORWARD_DT_SECOND);
+    }
+    feedforward_last_curvature = curvature;
+
+    feedforward_p = tfpu_mul(app_feedforward_config.kff, curvature);
+    feedforward_d = tfpu_mul(app_feedforward_config.kd, curvature_rate);
+
     feedforward_data.curvature = curvature;
-    feedforward_data.feedforward = tfpu_mul(app_feedforward_config.kff, curvature);
+    feedforward_data.curvature_rate = curvature_rate;
+    feedforward_data.feedforward = tfpu_add(feedforward_p, feedforward_d);
 }

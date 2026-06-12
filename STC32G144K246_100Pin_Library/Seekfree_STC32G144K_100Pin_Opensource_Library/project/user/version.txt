@@ -1,4 +1,5 @@
 [2026-06-13] [working] [uncommitted]
+- app_feedforward新增曲率变化率前馈：输出为kff*curvature + kd*curvature_rate，新增feedforward_kd无线变量，默认kd=0保持原行为
 - 重构前馈/反馈链路：巡线误差仅进入陀螺姿态稳定PID，前瞻曲率按v*kappa*轮距直接生成过弯差速，并接入速度规划提前降速
 - 右轮速度环PID极性取反：右轮speedout PID方向改为REVERSE，目标速度符号和电机方向不变
 
