@@ -5,7 +5,7 @@
 #include "app_motion_preprocess.h"
 
 #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
-#define APP_MOTION_PREPROCESS_X_WEIGHT_MAX             (0.6f)      // x轴差比融合最大权重
+#define APP_MOTION_PREPROCESS_X_WEIGHT_MAX             (0.0f)      // x轴差比融合最大权重
 #define APP_MOTION_PREPROCESS_X_SUM_NORM_MAX           (200.0f)    // x轴信号和归一化最大值
 #define APP_MOTION_PREPROCESS_X_DEADBAND               (7.0f)      // x轴误差死区
 #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.0f)      // y轴差比融合权重

@@ -19,6 +19,8 @@
 #define APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT  (0.0f)
 #define APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT    ((float)PWM_DUTY_MAX)
 #define APP_SPEEDOUT_RIGHT_TARGET_SIGN       (-1.0f)
+#define APP_SPEEDOUT_LEFT_PID_DIRECTION      SHARED_POS_PID_DIRECTION_DIRECT
+#define APP_SPEEDOUT_RIGHT_PID_DIRECTION     SHARED_POS_PID_DIRECTION_REVERSE
 
 app_speedout_config_t app_speedout_config =
 {
@@ -68,7 +70,8 @@ static float app_speedout_limit_target(float target)
     return target;
 }
 
-static void app_speedout_sync_pid(shared_pos_pid_t *pid, app_speedout_pid_config_t *config)
+static void app_speedout_sync_pid(shared_pos_pid_t *pid, app_speedout_pid_config_t *config,
+        shared_pos_pid_direction_enum direction)
 {
     float output_limit;
 
@@ -90,14 +93,14 @@ static void app_speedout_sync_pid(shared_pos_pid_t *pid, app_speedout_pid_config
     pid->setpoint_rate = 0.0f;
     pid->integral_separation = 0.0f;
     pid->conditional_integral_enable = ZF_ENABLE;
-    pid->direction = SHARED_POS_PID_DIRECTION_DIRECT;
+    pid->direction = direction;
     pid->derivative_mode = SHARED_POS_PID_DERIVATIVE_ON_ERROR;
 }
 
 static void app_speedout_clear_pid(void)
 {
-    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
-    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
+    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION);
+    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTION);
     shared_pos_pid_reset(&speedout_left_pid, 0.0f);
     shared_pos_pid_reset(&speedout_right_pid, 0.0f);
 }
@@ -108,7 +111,7 @@ static void app_speedout_restart_left_pid(void)
 
     ea_backup = EA;
     EA = 0;
-    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
+    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION);
     shared_pos_pid_restart(&speedout_left_pid);
     EA = ea_backup;
 }
@@ -119,7 +122,7 @@ static void app_speedout_restart_right_pid(void)
 
     ea_backup = EA;
     EA = 0;
-    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
+    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTION);
     shared_pos_pid_restart(&speedout_right_pid);
     EA = ea_backup;
 }
@@ -149,8 +152,8 @@ void app_speedout_init(void)
     app_speedout_config.right.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
     app_speedout_config.left.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
     app_speedout_config.right.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
-    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left);
-    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right);
+    app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION);
+    app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTION);
     shared_pos_pid_init(&speedout_left_pid);
     shared_pos_pid_init(&speedout_right_pid);
 
