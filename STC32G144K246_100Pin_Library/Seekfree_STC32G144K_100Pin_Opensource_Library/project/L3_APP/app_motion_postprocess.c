@@ -7,6 +7,7 @@
 #include "app_feedforward.h"
 #include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
+#include "app_speed_plan.h"
 #include "app_speedout.h"
 #include "app_scheduler.h"
 #include "app_motion_postprocess.h"
@@ -24,6 +25,7 @@
 #define APP_MOTION_POSTPROCESS_DEG_TO_RAD              (0.0174532925f)
 #define APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN      (1.0f)
 #define APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN     (1.0f)
+#define APP_MOTION_POSTPROCESS_KINEMATIC_DIFF_SIGN     (-1.0f)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_ID            (1U)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY      (10U)
 #define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (1U)
@@ -219,8 +221,12 @@ static void app_motion_postprocess_task(void)
 {
     uint8 enabled;
     float raw_error;
-    float feedforward_value;
     float processed_error;
+    float preview_curvature;
+    float feedback_yaw_rate_radps;
+    float kinematic_yaw_rate_radps;
+    float feedforward_differential_speed;
+    float feedback_differential_speed;
     float linear_mps;
     float target_yaw_rate_radps;
     float actual_yaw_rate_radps;
@@ -236,10 +242,14 @@ static void app_motion_postprocess_task(void)
     gyro_z = motion_postprocess_gyro_z_filtered;
 
     raw_error = motion_preprocess.line_error;
-    feedforward_value = feedforward.feedforward;
-    processed_error = tfpu_add(raw_error, feedforward_value);
-    linear_mps = motion_preprocess.linear_mps;
-    target_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, processed_error);
+    processed_error = raw_error;
+    preview_curvature = feedforward.feedforward;
+    linear_mps = app_speed_plan_get_linear_mps();
+    feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
+    kinematic_yaw_rate_radps = tfpu_mul(linear_mps, preview_curvature);
+    feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_KINEMATIC_DIFF_SIGN,
+            tfpu_mul(APP_LOAD_DISTRIBUTION_CAR_WIDTH_M, kinematic_yaw_rate_radps));
+    target_yaw_rate_radps = tfpu_add(feedback_yaw_rate_radps, kinematic_yaw_rate_radps);
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
@@ -249,14 +259,16 @@ static void app_motion_postprocess_task(void)
         {
             app_motion_postprocess_clear_pid();
         }
+        feedback_differential_speed = 0.0f;
         target_differential_speed = 0.0f;
         motion_postprocess_last_enabled = 0U;
     }
     else
     {
         app_motion_postprocess_sync_pid();
-        target_differential_speed = shared_pos_pid_update(&motion_postprocess_yaw_pid,
-                target_yaw_rate_radps, actual_yaw_rate_radps, APP_MOTION_POSTPROCESS_DT_SECOND);
+        feedback_differential_speed = shared_pos_pid_update(&motion_postprocess_yaw_pid,
+                feedback_yaw_rate_radps, actual_yaw_rate_radps, APP_MOTION_POSTPROCESS_DT_SECOND);
+        target_differential_speed = tfpu_add(feedback_differential_speed, feedforward_differential_speed);
         motion_postprocess_last_enabled = 1U;
     }
 
@@ -271,7 +283,7 @@ static void app_motion_postprocess_task(void)
     app_load_distribution_process(&load_distribution);
 
     output.raw_error = raw_error;
-    output.feedforward = feedforward_value;
+    output.feedforward = feedforward_differential_speed;
     output.processed_error = processed_error;
     output.linear_mps = linear_mps;
     output.target_yaw_rate_radps = target_yaw_rate_radps;

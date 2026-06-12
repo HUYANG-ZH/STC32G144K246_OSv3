@@ -1,6 +1,11 @@
 #ifndef APP_LOAD_DISTRIBUTION_H
 #define APP_LOAD_DISTRIBUTION_H
 #include "zf_common_typedef.h"
+
+#ifndef APP_LOAD_DISTRIBUTION_CAR_WIDTH_M
+#define APP_LOAD_DISTRIBUTION_CAR_WIDTH_M            (0.15f)       // 车辆宽度，单位 m
+#endif
+
 typedef struct
 {
     // 输出数据

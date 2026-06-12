@@ -51,6 +51,7 @@
 #include "app_motion_preprocess.h"
 #include "app_motion_postprocess.h"
 #include "app_scheduler.h"
+#include "app_speed_plan.h"
 #include "app_speedout.h"
 
 void main(void)
@@ -72,6 +73,7 @@ void main(void)
     app_inductor_preprocess_init();
     app_motion_preprocess_init();
     app_feedforward_init();
+    app_speed_plan_init();
     app_load_distribution_init();
     app_element_init();
     app_speedout_init();

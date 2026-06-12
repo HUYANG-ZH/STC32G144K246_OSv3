@@ -4,7 +4,7 @@
 #include "zf_common_typedef.h"
 
 #ifndef APP_SPEED_PLAN_TASK_ID
-#define APP_SPEED_PLAN_TASK_ID             (1U)
+#define APP_SPEED_PLAN_TASK_ID             (2U)
 #endif
 
 #ifndef APP_SPEED_PLAN_PERIOD_MS

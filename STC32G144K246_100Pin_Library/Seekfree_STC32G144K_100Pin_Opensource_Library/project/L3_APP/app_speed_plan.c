@@ -1,6 +1,7 @@
 #include "zf_common_headfile.h"
 #include "sys_tfpu.h"
 #include "service_packet.h"
+#include "app_feedforward.h"
 #include "app_motion_preprocess.h"
 #include "app_scheduler.h"
 #include "app_speed_plan.h"
@@ -11,6 +12,7 @@
 #define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (19.6f)
 #define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (40.0f)
 #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
+#define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
 
 static float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
 static volatile float speed_plan_linear_mps = 0.0f;
@@ -35,6 +37,26 @@ static float app_speed_plan_limit(float value, float min, float max)
     }
 
     return value;
+}
+
+static float app_speed_plan_max(float a, float b)
+{
+    return (a > b) ? a : b;
+}
+
+static float app_speed_plan_norm_abs(float value, float max_value)
+{
+    float abs_value;
+
+    if(0.0f >= max_value)
+    {
+        return 0.0f;
+    }
+
+    abs_value = app_speed_plan_abs(value);
+    abs_value = app_speed_plan_limit(abs_value, 0.0f, max_value);
+
+    return tfpu_div(abs_value, max_value);
 }
 
 static float app_speed_plan_ramp(float current, float target)
@@ -86,18 +108,23 @@ float app_speed_plan_get_linear_mps(void)
 
 static void app_speed_plan_task(void)
 {
-    float error;
+    float line_error_rate;
+    float curvature_rate;
+    float brake_rate;
     float ratio;
     float target_raw_mps;
     app_motion_preprocess_data_t motion_preprocess;
+    app_feedforward_data_t feedforward;
 
     app_motion_preprocess_get_data(&motion_preprocess);
+    app_feedforward_get_data(&feedforward);
 
-    error = app_speed_plan_abs(motion_preprocess.line_error);
-    error = app_speed_plan_limit(error, 0.0f, APP_SPEED_PLAN_ERROR_MAX);
+    line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
+    curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
+    brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
     ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
     target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
-            tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), error)));
+            tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
 
     speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
 }

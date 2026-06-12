@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              08/06/26  23:33:27  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              13/06/26  03:56:16  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_preprocess
@@ -18,7 +18,7 @@ stmt  level    source
     5          #include "app_motion_preprocess.h"
     6          
     7          #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
-    8          #define APP_MOTION_PREPROCESS_X_WEIGHT_MAX             (0.6f)      // x轴差比融合最大权重
+    8          #define APP_MOTION_PREPROCESS_X_WEIGHT_MAX             (0.0f)      // x轴差比融合最大权重
     9          #define APP_MOTION_PREPROCESS_X_SUM_NORM_MAX           (200.0f)    // x轴信号和归一化最大值
    10          #define APP_MOTION_PREPROCESS_X_DEADBAND               (7.0f)      // x轴误差死区
    11          #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.0f)      // y轴差比融合权重
@@ -66,7 +66,7 @@ stmt  level    source
    51          // 使用示例     app_motion_preprocess_init();
    52          // 备注信息     使用 APP_MOTION_PREPROCESS_PIT 每 APP_MOTION_PREPROCESS_PERIOD_MS ms 更新一次
    53          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              08/06/26  23:33:27  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              13/06/26  03:56:16  PAGE 2   
 
              -------------
    54          void app_motion_preprocess_init(void)
@@ -134,7 +134,7 @@ stmt  level    source
   112   1          output.line_error = tfpu_add(tfpu_mul(output.y_error, APP_MOTION_PREPROCESS_Y_WEIGHT),
   113   1                  tfpu_mul(output.x_error, x_weight));
   114   1          output.linear_mps = app_motion_preprocess_config.linear_mps;
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              08/06/26  23:33:27  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              13/06/26  03:56:16  PAGE 3   
 
   115   1          output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
   116   1      
@@ -149,7 +149,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       897     ------
+  ecode size           =       891     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

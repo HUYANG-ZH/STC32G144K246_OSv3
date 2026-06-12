@@ -2,7 +2,6 @@
 #include "sys_tfpu.h"
 #include "app_load_distribution.h"
 
-#define APP_LOAD_DISTRIBUTION_CAR_WIDTH_M            (0.15f)       // 车辆宽度，单位 m
 #define APP_LOAD_DISTRIBUTION_CAR_HEIGHT_M           (0.05f)       // 车辆重心高度，单位 m
 #define APP_LOAD_DISTRIBUTION_GRAVITY_MPS2           (29.43f)      // 实际重力加速度，单位 m/s^2
 #define APP_LOAD_DISTRIBUTION_LTC_LIMIT              (0.5f)        // 荷载转移比例限幅
