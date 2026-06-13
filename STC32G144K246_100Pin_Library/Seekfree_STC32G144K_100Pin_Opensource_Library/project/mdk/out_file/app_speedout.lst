@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  03:56:16  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  23:48:33  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -32,7 +32,7 @@ stmt  level    source
    19          #define APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT  (0.0f)
    20          #define APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT    ((float)PWM_DUTY_MAX)
    21          #define APP_SPEEDOUT_RIGHT_TARGET_SIGN       (-1.0f)
-   22          #define APP_SPEEDOUT_LEFT_PID_DIRECTION      SHARED_POS_PID_DIRECTION_DIRECT
+   22          #define APP_SPEEDOUT_LEFT_PID_DIRECTION      SHARED_POS_PID_DIRECTION_REVERSE
    23          #define APP_SPEEDOUT_RIGHT_PID_DIRECTION     SHARED_POS_PID_DIRECTION_REVERSE
    24          
    25          app_speedout_config_t app_speedout_config =
@@ -66,7 +66,7 @@ stmt  level    source
    51   1          {
    52   2              real_limit = (float)PWM_DUTY_MAX;
    53   2          }
-C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  03:56:16  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  23:48:33  PAGE 2   
 
    54   1      
    55   1          return real_limit;
@@ -134,7 +134,7 @@ stmt  level    source
              -;
   115   1          shared_pos_pid_restart(&speedout_left_pid);
   116   1          EA = ea_backup;
-C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  03:56:16  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  23:48:33  PAGE 3   
 
   117   1      }
   118          
@@ -202,7 +202,7 @@ stmt  level    source
   175          void app_speedout_debug(void)
   176          {
   177   1          app_speedout_data_t datas;
-C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  03:56:16  PAGE 4   
+C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  23:48:33  PAGE 4   
 
   178   1      
   179   1          app_speedout_get_data(&datas);
@@ -270,7 +270,7 @@ stmt  level    source
   241          static void app_speedout_tick(void)
   242          {
   243   1          uint8 enabled;
-C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  03:56:16  PAGE 5   
+C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  23:48:33  PAGE 5   
 
   244   1          int32 left_pwm;
   245   1          int32 right_pwm;
@@ -326,7 +326,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2760     ------
+  ecode size           =      2766     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -339,7 +339,7 @@ Module Information          Static   Overlayable
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
-C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  03:56:16  PAGE 6   
+C251 COMPILER V5.60.0,  app_speedout                                                       13/06/26  23:48:33  PAGE 6   
 
   const size           =    ------     ------
   hconst size          =       258     ------

@@ -1,4 +1,12 @@
+[2026-06-14] [working] [uncommitted]
+- 关闭载荷分配：motion_postprocess不再调用app_load_distribution_process，差速改为左右固定半分，main移除app_load_distribution_init
+- 前馈改为静态差速：motion_postprocess中feedforward_differential_speed直接由feedforward输出生成，不再乘车速和轮距
+- 当前参数实车跑起来过弯会断电，记录本次参数状态供后续回退和重新调参
+
 [2026-06-13] [working] [uncommitted]
+- 退出两轮速度环调试模式：main恢复全量模块初始化和主循环任务，开机负压恢复25%
+- 左轮速度环PID极性取反：左轮speedout PID方向改为REVERSE，目标速度符号和电机方向不变
+- 进入两轮速度环调试模式：main仅保留无线包、电机、速度采样和app_speedout，关闭运动链路、负压、IMU、电感等模块
 - 关闭默认降速：APP_SPEED_PLAN_DEFAULT_MIN_RATIO由0.8调整为1.0，保留speed_plan_min_ratio无线变量便于后续重新启用
 - app_feedforward新增曲率变化率前馈：输出为kff*curvature + kd*curvature_rate，新增feedforward_kd无线变量，默认kd=0保持原行为
 - 重构前馈/反馈链路：巡线误差仅进入陀螺姿态稳定PID，前瞻曲率按v*kappa*轮距直接生成过弯差速，并接入速度规划提前降速

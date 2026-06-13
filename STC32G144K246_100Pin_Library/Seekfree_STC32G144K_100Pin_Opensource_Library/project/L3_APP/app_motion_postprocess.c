@@ -5,7 +5,6 @@
 #include "service_imu.h"
 #include "service_packet.h"
 #include "app_feedforward.h"
-#include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
 #include "app_speed_plan.h"
 #include "app_speedout.h"
@@ -25,7 +24,8 @@
 #define APP_MOTION_POSTPROCESS_DEG_TO_RAD              (0.0174532925f)
 #define APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN      (1.0f)
 #define APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN     (1.0f)
-#define APP_MOTION_POSTPROCESS_KINEMATIC_DIFF_SIGN     (-1.0f)
+#define APP_MOTION_POSTPROCESS_DIFF_HALF               (0.5f)
+#define APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN        (-1.0f)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_ID            (1U)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY      (10U)
 #define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (1U)
@@ -222,9 +222,8 @@ static void app_motion_postprocess_task(void)
     uint8 enabled;
     float raw_error;
     float processed_error;
-    float preview_curvature;
+    float static_feedforward_speed;
     float feedback_yaw_rate_radps;
-    float kinematic_yaw_rate_radps;
     float feedforward_differential_speed;
     float feedback_differential_speed;
     float linear_mps;
@@ -232,9 +231,9 @@ static void app_motion_postprocess_task(void)
     float actual_yaw_rate_radps;
     float gyro_z;
     float target_differential_speed;
+    float half_differential_speed;
     app_motion_preprocess_data_t motion_preprocess;
     app_feedforward_data_t feedforward;
-    app_load_distribution_data_t load_distribution;
     app_motion_postprocess_data_t output;
 
     app_motion_preprocess_get_data(&motion_preprocess);
@@ -243,13 +242,12 @@ static void app_motion_postprocess_task(void)
 
     raw_error = motion_preprocess.line_error;
     processed_error = raw_error;
-    preview_curvature = feedforward.feedforward;
+    static_feedforward_speed = feedforward.feedforward;
     linear_mps = app_speed_plan_get_linear_mps();
     feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
-    kinematic_yaw_rate_radps = tfpu_mul(linear_mps, preview_curvature);
-    feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_KINEMATIC_DIFF_SIGN,
-            tfpu_mul(APP_LOAD_DISTRIBUTION_CAR_WIDTH_M, kinematic_yaw_rate_radps));
-    target_yaw_rate_radps = tfpu_add(feedback_yaw_rate_radps, kinematic_yaw_rate_radps);
+    feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
+            static_feedforward_speed);
+    target_yaw_rate_radps = feedback_yaw_rate_radps;
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
@@ -272,15 +270,7 @@ static void app_motion_postprocess_task(void)
         motion_postprocess_last_enabled = 1U;
     }
 
-    load_distribution.load_left = 0.0f;
-    load_distribution.load_right = 0.0f;
-    load_distribution.straight_current = linear_mps;
-    load_distribution.turn_current = actual_yaw_rate_radps;
-    load_distribution.Target_differential_speed = target_differential_speed;
-    load_distribution.Target_Anglespeed = target_yaw_rate_radps;
-    load_distribution.ay = 0.0f;
-    load_distribution.LTC = 0.0f;
-    app_load_distribution_process(&load_distribution);
+    half_differential_speed = tfpu_mul(target_differential_speed, APP_MOTION_POSTPROCESS_DIFF_HALF);
 
     output.raw_error = raw_error;
     output.feedforward = feedforward_differential_speed;
@@ -289,8 +279,8 @@ static void app_motion_postprocess_task(void)
     output.target_yaw_rate_radps = target_yaw_rate_radps;
     output.actual_yaw_rate_radps = actual_yaw_rate_radps;
     output.target_differential_speed = target_differential_speed;
-    output.load_left = load_distribution.load_left;
-    output.load_right = -load_distribution.load_right;
+    output.load_left = half_differential_speed;
+    output.load_right = tfpu_sub(0.0f, half_differential_speed);
     output.left_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN, linear_mps),
             output.load_left);
     output.right_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN, linear_mps),
