@@ -47,6 +47,7 @@
 #include "app_element.h"
 #include "app_feedforward.h"
 #include "app_inductor_preprocess.h"
+#include "app_log.h"
 #include "app_motion_preprocess.h"
 #include "app_motion_postprocess.h"
 #include "app_scheduler.h"
@@ -62,6 +63,7 @@ void main(void)
     app_scheduler_init();
     service_wireless_uart_init();
     service_packet_init();
+    app_log_init();
     service_batterycheck_init();
     service_buzzer_init();
     service_buzzer_stop();

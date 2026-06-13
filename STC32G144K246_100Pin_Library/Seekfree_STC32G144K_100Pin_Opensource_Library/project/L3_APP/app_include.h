@@ -6,6 +6,7 @@
 #include "app_feedforward.h"
 #include "app_fuzzy_pid.h"
 #include "app_inductor_preprocess.h"
+#include "app_log.h"
 #include "app_load_distribution.h"
 #include "app_motion_preprocess.h"
 #include "app_motion_postprocess.h"

@@ -1,4 +1,7 @@
 [2026-06-14] [working] [uncommitted]
+- 新增APP EEPROM日志层：使用0xFC2800-0xFC47FF中的8K起点区间，提供Wlog/Rlog/Clog，日志功能仅编译通过，未实车测试
+
+[2026-06-14] [develop] [c3840ff]
 - 关闭载荷分配：motion_postprocess不再调用app_load_distribution_process，差速改为左右固定半分，main移除app_load_distribution_init
 - 前馈改为静态差速：motion_postprocess中feedforward_differential_speed直接由feedforward输出生成，不再乘车速和轮距
 - 当前参数实车跑起来过弯会断电，记录本次参数状态供后续回退和重新调参
