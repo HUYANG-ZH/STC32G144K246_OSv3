@@ -1,4 +1,8 @@
 [2026-06-14] [working] [uncommitted]
+- 退出负压调试模式：main恢复全量模块初始化和主循环任务，开机负压恢复25%
+- 进入负压调试模式：main仅保留时基、函数队列、无线包和负压模块，开机负压设置为40%
+- 退出日志功能测试模式：main恢复全量模块初始化和主循环任务，保留app_log_init，不再开机写入log_test_boot
+- 进入日志功能测试模式：main仅保留时基、函数队列、无线包和app_log，开机写入log_test_boot用于Rlog/Clog验证
 - 新增APP EEPROM日志层：使用0xFC2800-0xFC47FF中的8K起点区间，提供Wlog/Rlog/Clog，日志功能仅编译通过，未实车测试
 
 [2026-06-14] [develop] [c3840ff]
