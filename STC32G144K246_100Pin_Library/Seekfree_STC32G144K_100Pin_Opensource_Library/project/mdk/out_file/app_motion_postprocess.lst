@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  19:15:11  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  20:50:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    52          static uint8 motion_postprocess_last_enabled = 0U;
    53          static float motion_post_target_yaw_rate_override = 0.0f;
    54          
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  19:15:11  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  20:50:29  PAGE 2   
 
    55          static void app_motion_postprocess_task(void);
    56          static void app_motion_postprocess_restart_pid(void);
@@ -134,7 +134,7 @@ stmt  level    source
   118   1                  app_motion_postprocess_restart_pid);
   119   1          (void)service_packet_add_variable_with_callback("motion_post_ki",
   120   1                  &app_motion_postprocess_config.ki, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  19:15:11  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  20:50:29  PAGE 3   
 
   121   1                  app_motion_postprocess_restart_pid);
   122   1          (void)service_packet_add_variable_with_callback("motion_post_kd",
@@ -202,7 +202,7 @@ stmt  level    source
   184   1          output.target_yaw_rate_radps = 0.0f;
   185   1          output.actual_yaw_rate_radps = 0.0f;
   186   1          output.target_differential_speed = 0.0f;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  19:15:11  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  20:50:29  PAGE 4   
 
   187   1          output.load_left = 0.0f;
   188   1          output.load_right = 0.0f;
@@ -270,7 +270,7 @@ stmt  level    source
   250   1          target_yaw_rate_radps = feedback_yaw_rate_radps;
   251   1          actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
   252   1          enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  19:15:11  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  20:50:29  PAGE 5   
 
              -;
   253   1      
