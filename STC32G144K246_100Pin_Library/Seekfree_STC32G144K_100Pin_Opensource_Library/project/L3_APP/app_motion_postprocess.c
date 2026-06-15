@@ -18,6 +18,7 @@
 #define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (5.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
+#define APP_MOTION_POSTPROCESS_DEFAULT_RATE_LIMIT      (45.5f)     // 角速度目标变化率限幅 rad/s²
 #define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (0.5f)
 #define APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD        (0.5f)
 #define APP_MOTION_POSTPROCESS_DT_SECOND               ((float)APP_MOTION_POSTPROCESS_PERIOD_MS / 1000.0f)
@@ -37,7 +38,8 @@ app_motion_postprocess_config_t app_motion_postprocess_config =
     APP_MOTION_POSTPROCESS_DEFAULT_KD,
     APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT,
     APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT,
-    APP_MOTION_POSTPROCESS_DEFAULT_ENABLE
+    APP_MOTION_POSTPROCESS_DEFAULT_ENABLE,
+    APP_MOTION_POSTPROCESS_DEFAULT_RATE_LIMIT
 };
 
 static volatile app_motion_postprocess_data_t motion_postprocess_data =
@@ -51,6 +53,8 @@ static shared_lpf_t motion_postprocess_gyro_z_lpf;
 static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
 static uint8 motion_postprocess_last_enabled = 0U;
 static float motion_post_target_yaw_rate_override = 0.0f;
+static float motion_postprocess_rate_limited_yaw_rate = 0.0f;
+static uint8 motion_postprocess_rate_limit_ready = 0U;
 
 static void app_motion_postprocess_task(void);
 static void app_motion_postprocess_restart_pid(void);
@@ -132,6 +136,8 @@ static void app_motion_postprocess_register_packet(void)
             &app_motion_postprocess_config.enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("motion_post_target_yaw_rate",
             &motion_post_target_yaw_rate_override, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("motion_post_rate_limit",
+            &app_motion_postprocess_config.rate_limit, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
 }
 
 static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output)
@@ -245,6 +251,28 @@ static void app_motion_postprocess_task(void)
     static_feedforward_speed = feedforward.feedforward;
     linear_mps = app_speed_plan_get_linear_mps();
     feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
+
+    /* 角速度目标变化率限幅 */
+    if((app_motion_postprocess_config.rate_limit > 0.0f) && (0U != motion_postprocess_rate_limit_ready))
+    {
+        float max_delta = tfpu_mul(app_motion_postprocess_config.rate_limit,
+                APP_MOTION_POSTPROCESS_DT_SECOND);
+        float delta = tfpu_sub(feedback_yaw_rate_radps, motion_postprocess_rate_limited_yaw_rate);
+
+        if(delta > max_delta)
+        {
+            delta = max_delta;
+        }
+        else if(delta < -max_delta)
+        {
+            delta = -max_delta;
+        }
+
+        feedback_yaw_rate_radps = tfpu_add(motion_postprocess_rate_limited_yaw_rate, delta);
+    }
+    motion_postprocess_rate_limited_yaw_rate = feedback_yaw_rate_radps;
+    motion_postprocess_rate_limit_ready = 1U;
+
     feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
             static_feedforward_speed);
     target_yaw_rate_radps = feedback_yaw_rate_radps;
@@ -260,6 +288,7 @@ static void app_motion_postprocess_task(void)
         feedback_differential_speed = 0.0f;
         target_differential_speed = 0.0f;
         motion_postprocess_last_enabled = 0U;
+        motion_postprocess_rate_limit_ready = 0U;
     }
     else
     {

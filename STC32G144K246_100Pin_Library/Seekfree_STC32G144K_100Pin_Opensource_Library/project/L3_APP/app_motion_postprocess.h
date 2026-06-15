@@ -19,6 +19,7 @@ typedef struct
     float integral_limit;
     float output_limit;
     float enable;
+    float rate_limit;
 } app_motion_postprocess_config_t;
 
 typedef struct
