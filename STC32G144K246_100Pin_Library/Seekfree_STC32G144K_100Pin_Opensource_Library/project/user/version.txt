@@ -1,4 +1,9 @@
+[2026-06-15] [working] [uncommitted]
+- 关闭电池调试和日志功能：main注释app_log_init和app_battery_guard_init
+- Clog指令增加回包：执行完成后回报Clog,OK
+
 [2026-06-14] [working] [uncommitted]
+- 新增100Hz欠压调试监控：电池电压低于11V时写入时间戳、角速度环、速度环PWM和前馈信息到EEPROM日志，并停车停机
 - 退出负压调试模式：main恢复全量模块初始化和主循环任务，开机负压恢复25%
 - 进入负压调试模式：main仅保留时基、函数队列、无线包和负压模块，开机负压设置为40%
 - 退出日志功能测试模式：main恢复全量模块初始化和主循环任务，保留app_log_init，不再开机写入log_test_boot

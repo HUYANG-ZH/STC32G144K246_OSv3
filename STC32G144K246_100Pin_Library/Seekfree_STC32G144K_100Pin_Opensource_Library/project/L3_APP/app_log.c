@@ -327,6 +327,7 @@ static uint16 app_log_format(char *buffer, const char *format, va_list args)
 {
     char specifier;
     uint8 precision;
+    uint8 long_modifier;
     uint16 index = 0U;
 
     while('\0' != *format)
@@ -345,6 +346,7 @@ static uint16 app_log_format(char *buffer, const char *format, va_list args)
             break;
         }
 
+        long_modifier = 0U;
         precision = APP_LOG_FLOAT_DEFAULT_PRECISION;
 
         if('%' == *format)
@@ -374,6 +376,12 @@ static uint16 app_log_format(char *buffer, const char *format, va_list args)
             }
         }
 
+        if('l' == *format)
+        {
+            long_modifier = 1U;
+            format++;
+        }
+
         if('\0' == *format)
         {
             app_log_put_char(buffer, &index, '%');
@@ -394,19 +402,47 @@ static uint16 app_log_format(char *buffer, const char *format, va_list args)
 
             case 'd':
             case 'i':
-                app_log_put_signed(buffer, &index, (int32)va_arg(args, int));
+                if(0U != long_modifier)
+                {
+                    app_log_put_signed(buffer, &index, va_arg(args, int32));
+                }
+                else
+                {
+                    app_log_put_signed(buffer, &index, (int32)va_arg(args, int));
+                }
                 break;
 
             case 'u':
-                app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 10U, 0U);
+                if(0U != long_modifier)
+                {
+                    app_log_put_unsigned(buffer, &index, va_arg(args, uint32), 10U, 0U);
+                }
+                else
+                {
+                    app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 10U, 0U);
+                }
                 break;
 
             case 'x':
-                app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 0U);
+                if(0U != long_modifier)
+                {
+                    app_log_put_unsigned(buffer, &index, va_arg(args, uint32), 16U, 0U);
+                }
+                else
+                {
+                    app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 0U);
+                }
                 break;
 
             case 'X':
-                app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 1U);
+                if(0U != long_modifier)
+                {
+                    app_log_put_unsigned(buffer, &index, va_arg(args, uint32), 16U, 1U);
+                }
+                else
+                {
+                    app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 1U);
+                }
                 break;
 
             case 'f':
@@ -529,4 +565,5 @@ void Clog(void)
     }
 
     app_log_reset_state();
+    (void)service_wireless_uart_send_buffer((const uint8 *)"Clog,OK\r\n", 9U);
 }

@@ -44,10 +44,11 @@
 #include "service_motor.h"
 #include "service_negative_pressure.h"
 #include "service_speed.h"
+// #include "app_battery_guard.h"
 #include "app_element.h"
 #include "app_feedforward.h"
 #include "app_inductor_preprocess.h"
-#include "app_log.h"
+// #include "app_log.h"
 #include "app_motion_preprocess.h"
 #include "app_motion_postprocess.h"
 #include "app_scheduler.h"
@@ -63,7 +64,7 @@ void main(void)
     app_scheduler_init();
     service_wireless_uart_init();
     service_packet_init();
-    app_log_init();
+    // app_log_init();
     service_batterycheck_init();
     service_buzzer_init();
     service_buzzer_stop();
@@ -78,6 +79,7 @@ void main(void)
     app_element_init();
     app_speedout_init();
     app_motion_postprocess_init();
+    // app_battery_guard_init();
     service_negative_pressure_set_percent(25U);
 
     while(1)

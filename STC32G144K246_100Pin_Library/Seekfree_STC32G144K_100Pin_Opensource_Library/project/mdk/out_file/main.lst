@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               14/06/26  21:18:02  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               15/06/26  20:03:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -63,58 +63,60 @@ stmt  level    source
    44          #include "service_motor.h"
    45          #include "service_negative_pressure.h"
    46          #include "service_speed.h"
-   47          #include "app_element.h"
-   48          #include "app_feedforward.h"
-   49          #include "app_inductor_preprocess.h"
-C251 COMPILER V5.60.0,  main                                                               14/06/26  21:18:02  PAGE 2   
+   47          // #include "app_battery_guard.h"
+   48          #include "app_element.h"
+   49          #include "app_feedforward.h"
+C251 COMPILER V5.60.0,  main                                                               15/06/26  20:03:29  PAGE 2   
 
-   50          #include "app_log.h"
-   51          #include "app_motion_preprocess.h"
-   52          #include "app_motion_postprocess.h"
-   53          #include "app_scheduler.h"
-   54          #include "app_speed_plan.h"
-   55          #include "app_speedout.h"
-   56          
-   57          void main(void)
-   58          {
-   59   1          SystemStart();
-   60   1      
-   61   1          service_timetick_init();
-   62   1          service_function_queue_init();
-   63   1          app_scheduler_init();
-   64   1          service_wireless_uart_init();
-   65   1          service_packet_init();
-   66   1          app_log_init();
-   67   1          service_batterycheck_init();
-   68   1          service_buzzer_init();
-   69   1          service_buzzer_stop();
-   70   1          service_imu_init();
-   71   1          service_motor_init();
-   72   1          service_negative_pressure_init();
-   73   1          service_speed_init();
-   74   1          app_inductor_preprocess_init();
-   75   1          app_motion_preprocess_init();
-   76   1          app_feedforward_init();
-   77   1          app_speed_plan_init();
-   78   1          app_element_init();
-   79   1          app_speedout_init();
-   80   1          app_motion_postprocess_init();
-   81   1          service_negative_pressure_set_percent(25U);
-   82   1      
-   83   1          while(1)
-   84   1          {
-   85   2              service_function_queue_update();
-   86   2              service_packet_update();
-   87   2              app_scheduler_run();
-   88   2              service_negative_pressure_task();
-   89   2          }
-   90   1      }
+   50          #include "app_inductor_preprocess.h"
+   51          // #include "app_log.h"
+   52          #include "app_motion_preprocess.h"
+   53          #include "app_motion_postprocess.h"
+   54          #include "app_scheduler.h"
+   55          #include "app_speed_plan.h"
+   56          #include "app_speedout.h"
+   57          
+   58          void main(void)
+   59          {
+   60   1          SystemStart();
+   61   1      
+   62   1          service_timetick_init();
+   63   1          service_function_queue_init();
+   64   1          app_scheduler_init();
+   65   1          service_wireless_uart_init();
+   66   1          service_packet_init();
+   67   1          // app_log_init();
+   68   1          service_batterycheck_init();
+   69   1          service_buzzer_init();
+   70   1          service_buzzer_stop();
+   71   1          service_imu_init();
+   72   1          service_motor_init();
+   73   1          service_negative_pressure_init();
+   74   1          service_speed_init();
+   75   1          app_inductor_preprocess_init();
+   76   1          app_motion_preprocess_init();
+   77   1          app_feedforward_init();
+   78   1          app_speed_plan_init();
+   79   1          app_element_init();
+   80   1          app_speedout_init();
+   81   1          app_motion_postprocess_init();
+   82   1          // app_battery_guard_init();
+   83   1          service_negative_pressure_set_percent(25U);
+   84   1      
+   85   1          while(1)
+   86   1          {
+   87   2              service_function_queue_update();
+   88   2              service_packet_update();
+   89   2              app_scheduler_run();
+   90   2              service_negative_pressure_task();
+   91   2          }
+   92   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       155     ------
+  ecode size           =       151     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

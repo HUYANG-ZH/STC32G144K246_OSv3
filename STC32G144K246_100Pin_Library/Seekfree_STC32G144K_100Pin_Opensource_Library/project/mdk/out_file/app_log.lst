@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 1   
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_log
@@ -66,7 +66,7 @@ stmt  level    source
    52          
    53          static uint32 app_log_read_u32(uint32 addr)
    54          {
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 2   
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 2   
 
    55   1          uint32 value;
    56   1      
@@ -134,7 +134,7 @@ stmt  level    source
   118   1          sequence = app_log_read_u16(APP_LOG_HEADER_ADDR + APP_LOG_HEADER_SEQUENCE_OFFSET);
   119   1          checksum = app_log_read_u16(APP_LOG_HEADER_ADDR + APP_LOG_HEADER_CHECKSUM_OFFSET);
   120   1          real_checksum = app_log_calc_checksum(magic, version, write_offset, used_size, sequence);
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 3   
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 3   
 
   121   1      
   122   1          if((APP_LOG_MAGIC != magic) || (APP_LOG_VERSION != version)
@@ -202,7 +202,7 @@ stmt  level    source
   184   1          iap_write_byte(app_log_data_addr(app_log_write_offset), value);
   185   1      
   186   1          app_log_write_offset++;
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 4   
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 4   
 
   187   1          if(app_log_write_offset >= APP_LOG_DATA_SIZE)
   188   1          {
@@ -270,7 +270,7 @@ stmt  level    source
   250   1      
   251   1          if(0 > value)
   252   1          {
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 5   
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 5   
 
   253   2              app_log_put_char(buffer, index, '-');
   254   2              abs_value = (uint32)(0 - value);
@@ -338,7 +338,7 @@ stmt  level    source
   316   1          divisor = scale / 10UL;
   317   1      
   318   1          for(i = 0U; i < precision; i++)
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 6   
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 6   
 
   319   1          {
   320   2              app_log_put_char(buffer, index, (char)('0' + (fraction_part / divisor)));
@@ -351,236 +351,275 @@ stmt  level    source
   327          {
   328   1          char specifier;
   329   1          uint8 precision;
-  330   1          uint16 index = 0U;
-  331   1      
-  332   1          while('\0' != *format)
-  333   1          {
-  334   2              if('%' != *format)
-  335   2              {
-  336   3                  app_log_put_char(buffer, &index, *format);
-  337   3                  format++;
-  338   3                  continue;
-  339   3              }
-  340   2      
-  341   2              format++;
-  342   2              if('\0' == *format)
-  343   2              {
-  344   3                  app_log_put_char(buffer, &index, '%');
-  345   3                  break;
-  346   3              }
-  347   2      
-  348   2              precision = APP_LOG_FLOAT_DEFAULT_PRECISION;
-  349   2      
-  350   2              if('%' == *format)
-  351   2              {
-  352   3                  app_log_put_char(buffer, &index, '%');
-  353   3                  format++;
-  354   3                  continue;
-  355   3              }
-  356   2      
-  357   2              if('.' == *format)
-  358   2              {
-  359   3                  format++;
-  360   3                  if(('0' <= *format) && ('9' >= *format))
-  361   3                  {
-  362   4                      precision = (uint8)(*format - '0');
-  363   4                      if(precision > APP_LOG_FLOAT_MAX_PRECISION)
-  364   4                      {
-  365   5                          precision = APP_LOG_FLOAT_MAX_PRECISION;
-  366   5                      }
-  367   4                      format++;
-  368   4                  }
-  369   3                  else
-  370   3                  {
-  371   4                      app_log_put_char(buffer, &index, '%');
-  372   4                      app_log_put_char(buffer, &index, '.');
-  373   4                      continue;
-  374   4                  }
-  375   3              }
-  376   2      
-  377   2              if('\0' == *format)
-  378   2              {
-  379   3                  app_log_put_char(buffer, &index, '%');
-  380   3                  break;
-  381   3              }
-  382   2      
-  383   2              specifier = *format;
+  330   1          uint8 long_modifier;
+  331   1          uint16 index = 0U;
+  332   1      
+  333   1          while('\0' != *format)
+  334   1          {
+  335   2              if('%' != *format)
+  336   2              {
+  337   3                  app_log_put_char(buffer, &index, *format);
+  338   3                  format++;
+  339   3                  continue;
+  340   3              }
+  341   2      
+  342   2              format++;
+  343   2              if('\0' == *format)
+  344   2              {
+  345   3                  app_log_put_char(buffer, &index, '%');
+  346   3                  break;
+  347   3              }
+  348   2      
+  349   2              long_modifier = 0U;
+  350   2              precision = APP_LOG_FLOAT_DEFAULT_PRECISION;
+  351   2      
+  352   2              if('%' == *format)
+  353   2              {
+  354   3                  app_log_put_char(buffer, &index, '%');
+  355   3                  format++;
+  356   3                  continue;
+  357   3              }
+  358   2      
+  359   2              if('.' == *format)
+  360   2              {
+  361   3                  format++;
+  362   3                  if(('0' <= *format) && ('9' >= *format))
+  363   3                  {
+  364   4                      precision = (uint8)(*format - '0');
+  365   4                      if(precision > APP_LOG_FLOAT_MAX_PRECISION)
+  366   4                      {
+  367   5                          precision = APP_LOG_FLOAT_MAX_PRECISION;
+  368   5                      }
+  369   4                      format++;
+  370   4                  }
+  371   3                  else
+  372   3                  {
+  373   4                      app_log_put_char(buffer, &index, '%');
+  374   4                      app_log_put_char(buffer, &index, '.');
+  375   4                      continue;
+  376   4                  }
+  377   3              }
+  378   2      
+  379   2              if('l' == *format)
+  380   2              {
+  381   3                  long_modifier = 1U;
+  382   3                  format++;
+  383   3              }
   384   2      
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 7   
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 7   
 
-  385   2              switch(specifier)
+  385   2              if('\0' == *format)
   386   2              {
-  387   3                  case 'c':
-  388   3                      app_log_put_char(buffer, &index, (char)va_arg(args, int));
-  389   3                      break;
-  390   3      
-  391   3                  case 's':
-  392   3                      app_log_put_string(buffer, &index, va_arg(args, char *));
-  393   3                      break;
-  394   3      
-  395   3                  case 'd':
-  396   3                  case 'i':
-  397   3                      app_log_put_signed(buffer, &index, (int32)va_arg(args, int));
-  398   3                      break;
-  399   3      
-  400   3                  case 'u':
-  401   3                      app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 10U, 0U);
-  402   3                      break;
-  403   3      
-  404   3                  case 'x':
-  405   3                      app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 0U);
-  406   3                      break;
-  407   3      
-  408   3                  case 'X':
-  409   3                      app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 1U);
-  410   3                      break;
-  411   3      
-  412   3                  case 'f':
-  413   3                      app_log_put_float(buffer, &index, va_arg(args, double), precision);
-  414   3                      break;
-  415   3      
-  416   3                  default:
-  417   3                      app_log_put_char(buffer, &index, '%');
-  418   3                      app_log_put_char(buffer, &index, specifier);
-  419   3                      break;
-  420   3              }
-  421   2      
-  422   2              if('\0' != *format)
-  423   2              {
-  424   3                  format++;
-  425   3              }
-  426   2          }
-  427   1      
-  428   1          buffer[index] = '\0';
-  429   1          return index;
-  430   1      }
-  431          
-  432          void app_log_init(void)
-  433          {
-  434   1          iap_init();
-  435   1          app_log_load_header();
-  436   1          app_log_ready = 1U;
-  437   1      
-  438   1          (void)service_packet_add_action("Rlog", Rlog, 0UL);
-  439   1          (void)service_packet_add_action("Clog", Clog, 0UL);
-  440   1      }
-  441          
-  442          uint32 Wlog(const char *format, ...)
-  443          {
-  444   1          uint16 length;
-  445   1          uint16 i;
-  446   1          va_list args;
-  447   1      
-  448   1          if((NULL == format) || (0U == app_log_ready))
-  449   1          {
-  450   2              return 0UL;
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 8   
+  387   3                  app_log_put_char(buffer, &index, '%');
+  388   3                  break;
+  389   3              }
+  390   2      
+  391   2              specifier = *format;
+  392   2      
+  393   2              switch(specifier)
+  394   2              {
+  395   3                  case 'c':
+  396   3                      app_log_put_char(buffer, &index, (char)va_arg(args, int));
+  397   3                      break;
+  398   3      
+  399   3                  case 's':
+  400   3                      app_log_put_string(buffer, &index, va_arg(args, char *));
+  401   3                      break;
+  402   3      
+  403   3                  case 'd':
+  404   3                  case 'i':
+  405   3                      if(0U != long_modifier)
+  406   3                      {
+  407   4                          app_log_put_signed(buffer, &index, va_arg(args, int32));
+  408   4                      }
+  409   3                      else
+  410   3                      {
+  411   4                          app_log_put_signed(buffer, &index, (int32)va_arg(args, int));
+  412   4                      }
+  413   3                      break;
+  414   3      
+  415   3                  case 'u':
+  416   3                      if(0U != long_modifier)
+  417   3                      {
+  418   4                          app_log_put_unsigned(buffer, &index, va_arg(args, uint32), 10U, 0U);
+  419   4                      }
+  420   3                      else
+  421   3                      {
+  422   4                          app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 10U, 0U);
+  423   4                      }
+  424   3                      break;
+  425   3      
+  426   3                  case 'x':
+  427   3                      if(0U != long_modifier)
+  428   3                      {
+  429   4                          app_log_put_unsigned(buffer, &index, va_arg(args, uint32), 16U, 0U);
+  430   4                      }
+  431   3                      else
+  432   3                      {
+  433   4                          app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 0U);
+  434   4                      }
+  435   3                      break;
+  436   3      
+  437   3                  case 'X':
+  438   3                      if(0U != long_modifier)
+  439   3                      {
+  440   4                          app_log_put_unsigned(buffer, &index, va_arg(args, uint32), 16U, 1U);
+  441   4                      }
+  442   3                      else
+  443   3                      {
+  444   4                          app_log_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 1U);
+  445   4                      }
+  446   3                      break;
+  447   3      
+  448   3                  case 'f':
+  449   3                      app_log_put_float(buffer, &index, va_arg(args, double), precision);
+  450   3                      break;
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 8   
 
-  451   2          }
-  452   1      
-  453   1          va_start(args, format);
-  454   1          length = app_log_format(app_log_buffer, format, args);
-  455   1          va_end(args);
-  456   1      
-  457   1          for(i = 0U; i < length; i++)
-  458   1          {
-  459   2              app_log_write_data_byte((uint8)app_log_buffer[i]);
-  460   2          }
-  461   1      
-  462   1          if(0U != length)
-  463   1          {
-  464   2              app_log_save_header();
-  465   2          }
-  466   1      
-  467   1          return (uint32)length;
-  468   1      }
-  469          
-  470          void Rlog(void)
-  471          {
-  472   1          uint16 remaining;
-  473   1          uint16 read_offset;
-  474   1          uint16 chunk_len;
-  475   1          uint16 linear_left;
-  476   1          uint16 i;
-  477   1      
-  478   1          if((0U == app_log_ready) || (0U == app_log_used_size))
-  479   1          {
-  480   2              return;
-  481   2          }
-  482   1      
-  483   1          remaining = app_log_used_size;
-  484   1          read_offset = (uint16)((app_log_write_offset + APP_LOG_DATA_SIZE - app_log_used_size) % APP_LOG_DATA_
+  451   3      
+  452   3                  default:
+  453   3                      app_log_put_char(buffer, &index, '%');
+  454   3                      app_log_put_char(buffer, &index, specifier);
+  455   3                      break;
+  456   3              }
+  457   2      
+  458   2              if('\0' != *format)
+  459   2              {
+  460   3                  format++;
+  461   3              }
+  462   2          }
+  463   1      
+  464   1          buffer[index] = '\0';
+  465   1          return index;
+  466   1      }
+  467          
+  468          void app_log_init(void)
+  469          {
+  470   1          iap_init();
+  471   1          app_log_load_header();
+  472   1          app_log_ready = 1U;
+  473   1      
+  474   1          (void)service_packet_add_action("Rlog", Rlog, 0UL);
+  475   1          (void)service_packet_add_action("Clog", Clog, 0UL);
+  476   1      }
+  477          
+  478          uint32 Wlog(const char *format, ...)
+  479          {
+  480   1          uint16 length;
+  481   1          uint16 i;
+  482   1          va_list args;
+  483   1      
+  484   1          if((NULL == format) || (0U == app_log_ready))
+  485   1          {
+  486   2              return 0UL;
+  487   2          }
+  488   1      
+  489   1          va_start(args, format);
+  490   1          length = app_log_format(app_log_buffer, format, args);
+  491   1          va_end(args);
+  492   1      
+  493   1          for(i = 0U; i < length; i++)
+  494   1          {
+  495   2              app_log_write_data_byte((uint8)app_log_buffer[i]);
+  496   2          }
+  497   1      
+  498   1          if(0U != length)
+  499   1          {
+  500   2              app_log_save_header();
+  501   2          }
+  502   1      
+  503   1          return (uint32)length;
+  504   1      }
+  505          
+  506          void Rlog(void)
+  507          {
+  508   1          uint16 remaining;
+  509   1          uint16 read_offset;
+  510   1          uint16 chunk_len;
+  511   1          uint16 linear_left;
+  512   1          uint16 i;
+  513   1      
+  514   1          if((0U == app_log_ready) || (0U == app_log_used_size))
+  515   1          {
+  516   2              return;
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 9   
+
+  517   2          }
+  518   1      
+  519   1          remaining = app_log_used_size;
+  520   1          read_offset = (uint16)((app_log_write_offset + APP_LOG_DATA_SIZE - app_log_used_size) % APP_LOG_DATA_
              -SIZE);
-  485   1      
-  486   1          while(0U != remaining)
-  487   1          {
-  488   2              chunk_len = APP_LOG_READ_BUFFER_SIZE;
-  489   2              if(chunk_len > remaining)
-  490   2              {
-  491   3                  chunk_len = remaining;
-  492   3              }
-  493   2      
-  494   2              linear_left = (uint16)(APP_LOG_DATA_SIZE - read_offset);
-  495   2              if(chunk_len > linear_left)
-  496   2              {
-  497   3                  chunk_len = linear_left;
-  498   3              }
-  499   2      
-  500   2              for(i = 0U; i < chunk_len; i++)
-  501   2              {
-  502   3                  app_log_read_buffer[i] = iap_read_byte(app_log_data_addr(read_offset));
-  503   3                  read_offset++;
-  504   3              }
-  505   2      
-  506   2              if(read_offset >= APP_LOG_DATA_SIZE)
-  507   2              {
-  508   3                  read_offset = 0U;
-  509   3              }
-  510   2      
-  511   2              (void)service_wireless_uart_send_buffer(app_log_read_buffer, (uint32)chunk_len);
-  512   2              remaining = (uint16)(remaining - chunk_len);
-  513   2          }
-  514   1      }
-  515          
-C251 COMPILER V5.60.0,  app_log                                                            14/06/26  20:55:35  PAGE 9   
-
-  516          void Clog(void)
-  517          {
-  518   1          uint32 addr;
-  519   1      
-  520   1          if(0U == app_log_ready)
-  521   1          {
-  522   2              iap_init();
-  523   2              app_log_ready = 1U;
-  524   2          }
-  525   1      
-  526   1          for(addr = APP_LOG_REGION_START_ADDR; addr < APP_LOG_REGION_LIMIT_ADDR; addr += APP_LOG_PAGE_SIZE)
-  527   1          {
-  528   2              iap_erase_page(addr);
-  529   2          }
-  530   1      
-  531   1          app_log_reset_state();
-  532   1      }
+  521   1      
+  522   1          while(0U != remaining)
+  523   1          {
+  524   2              chunk_len = APP_LOG_READ_BUFFER_SIZE;
+  525   2              if(chunk_len > remaining)
+  526   2              {
+  527   3                  chunk_len = remaining;
+  528   3              }
+  529   2      
+  530   2              linear_left = (uint16)(APP_LOG_DATA_SIZE - read_offset);
+  531   2              if(chunk_len > linear_left)
+  532   2              {
+  533   3                  chunk_len = linear_left;
+  534   3              }
+  535   2      
+  536   2              for(i = 0U; i < chunk_len; i++)
+  537   2              {
+  538   3                  app_log_read_buffer[i] = iap_read_byte(app_log_data_addr(read_offset));
+  539   3                  read_offset++;
+  540   3              }
+  541   2      
+  542   2              if(read_offset >= APP_LOG_DATA_SIZE)
+  543   2              {
+  544   3                  read_offset = 0U;
+  545   3              }
+  546   2      
+  547   2              (void)service_wireless_uart_send_buffer(app_log_read_buffer, (uint32)chunk_len);
+  548   2              remaining = (uint16)(remaining - chunk_len);
+  549   2          }
+  550   1      }
+  551          
+  552          void Clog(void)
+  553          {
+  554   1          uint32 addr;
+  555   1      
+  556   1          if(0U == app_log_ready)
+  557   1          {
+  558   2              iap_init();
+  559   2              app_log_ready = 1U;
+  560   2          }
+  561   1      
+  562   1          for(addr = APP_LOG_REGION_START_ADDR; addr < APP_LOG_REGION_LIMIT_ADDR; addr += APP_LOG_PAGE_SIZE)
+  563   1          {
+  564   2              iap_erase_page(addr);
+  565   2          }
+  566   1      
+  567   1          app_log_reset_state();
+  568   1          (void)service_wireless_uart_send_buffer((const uint8 *)"Clog,OK\r\n", 9U);
+  569   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      4749     ------
+  ecode size           =      5151     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       454     ------
+  xdata size           =       455     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
+C251 COMPILER V5.60.0,  app_log                                                            15/06/26  19:50:13  PAGE 10  
+
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        78     ------
+  hconst size          =        88     ------
 End of Module Information.
 
 

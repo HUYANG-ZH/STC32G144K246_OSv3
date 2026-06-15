@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               08/06/26  23:33:25  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               15/06/26  19:15:10  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -64,9 +64,9 @@ stmt  level    source
    51          
    52          void service_batterycheck_get_voltage(float *voltage)
    53          {
-   54   1          service_batterycheck_task();
+   54   1          service_batterycheck_update_now();
    55   1          if(NULL != voltage)
-C251 COMPILER V5.60.0,  service_batterycheck                                               08/06/26  23:33:25  PAGE 2   
+C251 COMPILER V5.60.0,  service_batterycheck                                               15/06/26  19:15:10  PAGE 2   
 
    56   1          {
    57   2              *voltage = batterycheck_voltage;
@@ -77,7 +77,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       238     ------
+  ecode size           =       237     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

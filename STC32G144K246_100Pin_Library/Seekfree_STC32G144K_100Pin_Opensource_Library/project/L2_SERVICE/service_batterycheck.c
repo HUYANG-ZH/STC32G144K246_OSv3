@@ -51,7 +51,7 @@ void service_batterycheck_task(void)
 
 void service_batterycheck_get_voltage(float *voltage)
 {
-    service_batterycheck_task();
+    service_batterycheck_update_now();
     if(NULL != voltage)
     {
         *voltage = batterycheck_voltage;

@@ -1,0 +1,115 @@
+C251 COMPILER V5.60.0,  app_battery_guard                                                  15/06/26  19:15:11  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_battery_guard
+OBJECT MODULE PLACED IN .\out_file\app_battery_guard.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_battery_guard.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMI
+                    -ZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
+                    -ies\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compone
+                    -nts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_battery_guard.lst) TABS(
+                    -2) OBJECT(.\out_file\app_battery_guard.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_batterycheck.h"
+    3          #include "service_negative_pressure.h"
+    4          #include "service_timetick.h"
+    5          #include "app_feedforward.h"
+    6          #include "app_log.h"
+    7          #include "app_motion_postprocess.h"
+    8          #include "app_scheduler.h"
+    9          #include "app_speedout.h"
+   10          #include "app_battery_guard.h"
+   11          
+   12          #define APP_BATTERY_GUARD_TASK_ID              (3U)
+   13          #define APP_BATTERY_GUARD_TASK_PRIORITY        (9U)
+   14          #define APP_BATTERY_GUARD_PERIOD_MS            (10U)
+   15          #define APP_BATTERY_GUARD_LOW_VOLTAGE          (11.0f)
+   16          
+   17          static uint8 battery_guard_triggered = 0U;
+   18          
+   19          static void app_battery_guard_task(void)
+   20          {
+   21   1          float voltage;
+   22   1          uint32 timestamp;
+   23   1          app_motion_postprocess_data_t motion_post;
+   24   1          app_speedout_data_t speedout;
+   25   1          app_feedforward_data_t feedforward;
+   26   1      
+   27   1          if(0U != battery_guard_triggered)
+   28   1          {
+   29   2              return;
+   30   2          }
+   31   1      
+   32   1          service_batterycheck_get_voltage(&voltage);
+   33   1          if(voltage >= APP_BATTERY_GUARD_LOW_VOLTAGE)
+   34   1          {
+   35   2              return;
+   36   2          }
+   37   1      
+   38   1          battery_guard_triggered = 1U;
+   39   1          timestamp = service_timetick_what();
+   40   1          app_motion_postprocess_get_data(&motion_post);
+   41   1          app_speedout_get_data(&speedout);
+   42   1          app_feedforward_get_data(&feedforward);
+   43   1      
+   44   1          Wlog("UV,tick_0p1ms=%lu,v=%.3f\r\n", timestamp, voltage);
+   45   1          Wlog("MP,raw=%.3f,tar_y=%.3f,act_y=%.3f,diff=%.3f\r\n",
+   46   1                  motion_post.raw_error,
+   47   1                  motion_post.target_yaw_rate_radps,
+   48   1                  motion_post.actual_yaw_rate_radps,
+   49   1                  motion_post.target_differential_speed);
+   50   1          Wlog("SO,lt=%.3f,la=%.3f,lp=%.3f,rt=%.3f,ra=%.3f,rp=%.3f\r\n",
+   51   1                  speedout.left_target_mps,
+   52   1                  speedout.left_actual_mps,
+   53   1                  speedout.left_pwm,
+   54   1                  speedout.right_target_mps,
+   55   1                  speedout.right_actual_mps,
+C251 COMPILER V5.60.0,  app_battery_guard                                                  15/06/26  19:15:11  PAGE 2   
+
+   56   1                  speedout.right_pwm);
+   57   1          Wlog("FF,kff=%.3f,kd=%.3f,cur=%.3f,rate=%.3f,out=%.3f,post=%.3f\r\n",
+   58   1                  app_feedforward_config.kff,
+   59   1                  app_feedforward_config.kd,
+   60   1                  feedforward.curvature,
+   61   1                  feedforward.curvature_rate,
+   62   1                  feedforward.feedforward,
+   63   1                  motion_post.feedforward);
+   64   1      
+   65   1          app_speedout_stop();
+   66   1          service_negative_pressure_set_percent(0U);
+   67   1      }
+   68          
+   69          void app_battery_guard_init(void)
+   70          {
+   71   1          battery_guard_triggered = 0U;
+   72   1          (void)app_scheduler_add(APP_BATTERY_GUARD_TASK_ID,
+   73   1                  app_battery_guard_task,
+   74   1                  APP_BATTERY_GUARD_TASK_PRIORITY,
+   75   1                  APP_BATTERY_GUARD_PERIOD_MS);
+   76   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       550     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        97     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       192     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
