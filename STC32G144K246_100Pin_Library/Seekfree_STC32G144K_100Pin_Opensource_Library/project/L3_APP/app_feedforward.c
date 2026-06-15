@@ -10,6 +10,7 @@
 #define APP_FEEDFORWARD_DEFAULT_KFF              (18.407f)   // 默认前馈增益
 #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
 #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
+#define APP_FEEDFORWARD_OUTPUT_LIMIT             (3.0f)      // 前馈输出限幅 m/s
 #define APP_FEEDFORWARD_DT_SECOND                (APP_FEEDFORWARD_PERIOD_MS * 0.001f)
 
 app_feedforward_config_t app_feedforward_config =
@@ -108,4 +109,13 @@ static void app_feedforward_task(void)
     feedforward_data.curvature = curvature;
     feedforward_data.curvature_rate = curvature_rate;
     feedforward_data.feedforward = tfpu_add(feedforward_p, feedforward_d);
+
+    if(feedforward_data.feedforward > APP_FEEDFORWARD_OUTPUT_LIMIT)
+    {
+        feedforward_data.feedforward = APP_FEEDFORWARD_OUTPUT_LIMIT;
+    }
+    else if(feedforward_data.feedforward < -APP_FEEDFORWARD_OUTPUT_LIMIT)
+    {
+        feedforward_data.feedforward = -APP_FEEDFORWARD_OUTPUT_LIMIT;
+    }
 }
