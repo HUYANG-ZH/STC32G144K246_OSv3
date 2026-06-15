@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  21:58:07  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          static shared_pos_pid_t motion_postprocess_yaw_pid;
    52          static shared_lpf_t motion_postprocess_gyro_z_lpf;
    53          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  21:58:07  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 2   
 
    54          static uint8 motion_postprocess_last_enabled = 0U;
    55          static float motion_post_target_yaw_rate_override = 0.0f;
@@ -112,7 +112,7 @@ stmt  level    source
    95   1          motion_postprocess_yaw_pid.integral_separation = 0.0f;
    96   1          motion_postprocess_yaw_pid.conditional_integral_enable = ZF_ENABLE;
    97   1          motion_postprocess_yaw_pid.direction = SHARED_POS_PID_DIRECTION_REVERSE;
-   98   1          motion_postprocess_yaw_pid.derivative_mode = SHARED_POS_PID_DERIVATIVE_ON_ERROR;
+   98   1          motion_postprocess_yaw_pid.derivative_mode = SHARED_POS_PID_DERIVATIVE_ON_FEEDBACK;
    99   1      }
   100          
   101          static void app_motion_postprocess_clear_pid(void)
@@ -134,7 +134,7 @@ stmt  level    source
   117          
   118          static void app_motion_postprocess_register_packet(void)
   119          {
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  21:58:07  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 3   
 
   120   1          (void)service_packet_add_variable_with_callback("motion_post_kp",
   121   1                  &app_motion_postprocess_config.kp, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          motion_postprocess_last_enabled =
   184   1                  (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
   185   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  21:58:07  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 4   
 
   186   1          output.raw_error = 0.0f;
   187   1          output.feedforward = 0.0f;
@@ -270,7 +270,7 @@ stmt  level    source
   249   1          raw_error = motion_preprocess.line_error;
   250   1          processed_error = raw_error;
   251   1          static_feedforward_speed = feedforward.feedforward;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  21:58:07  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 5   
 
   252   1          linear_mps = app_speed_plan_get_linear_mps();
   253   1          feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
@@ -338,7 +338,7 @@ stmt  level    source
   313   1          output.left_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN, linear_mps),
   314   1                  output.load_left);
   315   1          output.right_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN, linear_mps),
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  21:58:07  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 6   
 
   316   1                  output.load_right);
   317   1          output.enabled = (0U != enabled) ? 1.0f : 0.0f;
@@ -351,7 +351,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2313     ------
+  ecode size           =      2311     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
