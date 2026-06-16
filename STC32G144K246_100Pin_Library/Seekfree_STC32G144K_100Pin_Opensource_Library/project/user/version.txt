@@ -1,4 +1,6 @@
 [2026-06-15] [working] [uncommitted]
+- 恢复X轴提前量：motion_preprocess中x_error固定按0.35系数融合进line_error
+- 关闭角速度目标变化率限幅：motion_post_rate_limit默认改为0，连续直角弯不再限制目标角速度爬升
 - PID D项改为D-on-measurement：derivative_mode改为SHARED_POS_PID_DERIVATIVE_ON_FEEDBACK，避免setpoint跳变引起微分尖刺（未测试）
 - 角速度目标变化率限幅：feedback_yaw_rate每周期增量clamp到±rate_limit×dt，默认45.5rad/s²，无线变量motion_post_rate_limit
 - 撤回前馈移至角速度环：前馈保持在PID输出后叠加，恢复原链路

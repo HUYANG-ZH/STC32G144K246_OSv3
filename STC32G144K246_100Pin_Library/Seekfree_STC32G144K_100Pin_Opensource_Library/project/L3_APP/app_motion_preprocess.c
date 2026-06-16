@@ -5,9 +5,7 @@
 #include "app_motion_preprocess.h"
 
 #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
-#define APP_MOTION_PREPROCESS_X_WEIGHT_MAX             (0.0f)      // x轴差比融合最大权重
-#define APP_MOTION_PREPROCESS_X_SUM_NORM_MAX           (200.0f)    // x轴信号和归一化最大值
-#define APP_MOTION_PREPROCESS_X_DEADBAND               (7.0f)      // x轴误差死区
+#define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.35f)     // x轴差比融合权重
 #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.0f)      // y轴差比融合权重
 #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
 #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
@@ -87,30 +85,14 @@ static void app_motion_preprocess_tick(void)
 {
     app_inductor_preprocess_data_t inductor_data;
     app_motion_preprocess_data_t output;
-    float x_sum;
-    float x_weight;
 
     app_inductor_preprocess_get_data(&inductor_data);
 
     output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normalized[3]);
     output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normalized[2]);
 
-    if((output.x_error < APP_MOTION_PREPROCESS_X_DEADBAND) &&
-            (output.x_error > -APP_MOTION_PREPROCESS_X_DEADBAND))
-    {
-        output.x_error = 0.0f;
-    }
-
-    x_sum = tfpu_add(inductor_data.normalized[1], inductor_data.normalized[2]);
-    if(x_sum > APP_MOTION_PREPROCESS_X_SUM_NORM_MAX)
-    {
-        x_sum = APP_MOTION_PREPROCESS_X_SUM_NORM_MAX;
-    }
-    x_weight = tfpu_mul(APP_MOTION_PREPROCESS_X_WEIGHT_MAX,
-            tfpu_div(x_sum, APP_MOTION_PREPROCESS_X_SUM_NORM_MAX));
-
     output.line_error = tfpu_add(tfpu_mul(output.y_error, APP_MOTION_PREPROCESS_Y_WEIGHT),
-            tfpu_mul(output.x_error, x_weight));
+            tfpu_mul(output.x_error, APP_MOTION_PREPROCESS_X_WEIGHT));
     output.linear_mps = app_motion_preprocess_config.linear_mps;
     output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
 
