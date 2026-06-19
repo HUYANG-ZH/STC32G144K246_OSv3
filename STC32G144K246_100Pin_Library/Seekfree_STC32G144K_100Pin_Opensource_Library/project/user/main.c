@@ -44,6 +44,7 @@
 #include "service_motor.h"
 #include "service_negative_pressure.h"
 #include "service_speed.h"
+#include "service_delay.h"
 // #include "app_battery_guard.h"
 #include "app_element.h"
 #include "app_feedforward.h"
@@ -69,7 +70,6 @@ void main(void)
     service_buzzer_init();
     service_buzzer_stop();
     service_imu_init();
-    service_imu_calibrate_gyro_z();
     service_motor_init();
     service_negative_pressure_init();
     service_speed_init();
