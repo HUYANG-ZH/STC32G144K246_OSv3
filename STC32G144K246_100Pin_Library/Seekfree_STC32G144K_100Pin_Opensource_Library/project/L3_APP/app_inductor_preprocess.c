@@ -2,6 +2,8 @@
 #include "sys_tfpu.h"
 #include "service_inductor.h"
 #include "service_timetick.h"
+#include "service_wireless_uart.h"
+#include "service_packet.h"
 #include "app_inductor_preprocess.h"
 
 #define APP_INDUCTOR_CHANNEL_COUNT             (4U)
@@ -9,8 +11,38 @@
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
 
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {90U, 20U, 50U, 140U};
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 10U, 100U, 150U};
 uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2400U, 2400U, 4095U};
+
+static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
+static float inductor_cal_max[APP_INDUCTOR_CHANNEL_COUNT];
+
+static void app_inductor_update_precomputed(void);
+
+static void app_inductor_preprocess_sync_calibration(void)
+{
+    uint8 i;
+
+    for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+    {
+        app_inductor_preprocess_min_value[i] = (uint16)inductor_cal_min[i];
+        app_inductor_preprocess_max_value[i] = (uint16)inductor_cal_max[i];
+    }
+    app_inductor_update_precomputed();
+}
+
+static void app_inductor_preprocess_print_calibration(void)
+{
+    wprint("min=%d,%d,%d,%d max=%d,%d,%d,%d\r\n",
+            app_inductor_preprocess_min_value[0],
+            app_inductor_preprocess_min_value[1],
+            app_inductor_preprocess_min_value[2],
+            app_inductor_preprocess_min_value[3],
+            app_inductor_preprocess_max_value[0],
+            app_inductor_preprocess_max_value[1],
+            app_inductor_preprocess_max_value[2],
+            app_inductor_preprocess_max_value[3]);
+}
 
 static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
 static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
@@ -213,6 +245,22 @@ void app_inductor_preprocess_init(void)
     app_inductor_update_precomputed();
     app_inductor_update_output();
 
+    /* 无线校准变量：float副本，修改后自动同步到uint16并重算 */
+    for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+    {
+        inductor_cal_min[i] = (float)app_inductor_preprocess_min_value[i];
+        inductor_cal_max[i] = (float)app_inductor_preprocess_max_value[i];
+    }
+    (void)service_packet_add_variable_with_callback("ind_min0", &inductor_cal_min[0], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_min1", &inductor_cal_min[1], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_min2", &inductor_cal_min[2], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_min3", &inductor_cal_min[3], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_max0", &inductor_cal_max[0], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_max1", &inductor_cal_max[1], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_max2", &inductor_cal_max[2], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_max3", &inductor_cal_max[3], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_action("ind_read", app_inductor_preprocess_print_calibration, 0UL);
+
     pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_tick);
 }
 
@@ -225,7 +273,7 @@ void app_inductor_preprocess_debug(void)
     {
         last_tick = service_timetick_what();
         service_inductor_get_data(&raw);
-        printf("%d,%d,%d,%d\r\n", raw.channel_1, raw.channel_2, raw.channel_3, raw.channel_4);
+        wprint("%d,%d,%d,%d\r\n", raw.channel_1, raw.channel_2, raw.channel_3, raw.channel_4);
     }
 }
 

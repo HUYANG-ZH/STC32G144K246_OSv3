@@ -19,7 +19,7 @@
 #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (5.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_RATE_LIMIT      (0.0f)      // 角速度目标变化率限幅 rad/s²，0表示关闭
-#define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (1.0f)
+#define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (0.5f)
 #define APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD        (0.5f)
 #define APP_MOTION_POSTPROCESS_DT_SECOND               ((float)APP_MOTION_POSTPROCESS_PERIOD_MS / 1000.0f)
 #define APP_MOTION_POSTPROCESS_DEG_TO_RAD              (0.0174532925f)
@@ -249,7 +249,7 @@ static void app_motion_postprocess_task(void)
     raw_error = motion_preprocess.line_error;
     processed_error = raw_error;
     static_feedforward_speed = feedforward.feedforward;
-    linear_mps = app_speed_plan_get_linear_mps();
+    linear_mps = app_motion_preprocess_config.linear_mps;
     feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
 
     /* 角速度目标变化率限幅 */
@@ -318,4 +318,16 @@ static void app_motion_postprocess_task(void)
 
     app_speedout_set_target(output.left_target_mps, output.right_target_mps);
     app_motion_postprocess_publish(&output);
+
+    {
+        static uint16 print_tick = 0U;
+        print_tick++;
+        if(print_tick >= 200U)
+        {
+            print_tick = 0U;
+            printf("%.3f,%.3f,%.3f,%.3f\r\n", raw_error,
+                    target_yaw_rate_radps, actual_yaw_rate_radps,
+                    feedforward_differential_speed);
+        }
+    }
 }

@@ -70,6 +70,8 @@ void main(void)
     service_buzzer_init();
     service_buzzer_stop();
     service_imu_init();
+    service_delay_ms(2000U);
+    service_imu_calibrate_gyro_z();
     service_motor_init();
     service_negative_pressure_init();
     service_speed_init();

@@ -1,5 +1,12 @@
+[2026-06-20] [working] [uncommitted]
+- 开启速度规划：main恢复app_speed_plan_init和include
+- 前馈差速限幅改为7m/s：APP_FEEDFORWARD_OUTPUT_LIMIT由3.0调整为7.0
+- 恢复正常模式：main恢复全量模块初始化和主循环任务，电感归一化校准完成
+- 进入电感调试模式：main仅保留时基、函数队列、无线包和电感预处理，主循环10Hz无线输出4路电感原始值
+- 电感调试输出改为无线：app_inductor_preprocess_debug从printf改为wprint
+
 [2026-06-16] [working] [uncommitted]
-- 复原正常模式：main恢复全量模块初始化和主循环任务，开机负压恢复25%
+- 无线串口切换为4线模式（无RTS流控）：WIRELESS_UART_TRANSFER_MODE改为4WIRE
 
 [2026-06-15] [working] [uncommitted]
 - 恢复X轴提前量：motion_preprocess中x_error固定按0.35系数融合进line_error
