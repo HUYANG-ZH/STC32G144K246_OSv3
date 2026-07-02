@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            01/06/26  21:41:04  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            20/06/26  03:10:47  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_wireless_uart
@@ -53,22 +53,22 @@ stmt  level    source
    39          uint32 wireless_uart_send_byte(const uint8 dat)
    40          {
    41   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
-   42   1          uint16 time_cnt = WIRELESS_UART_TIMEOUT_COUNT;
-   43   1      
-   44   1          while(time_cnt && gpio_get_level(WIRELESS_UART_RTS_PIN))
-   45   1          {
-   46   2              system_delay_ms(1);
-   47   2              time_cnt--;
-   48   2          }
-   49   1      
-   50   1          uart_write_byte(WIRELESS_UART_INDEX, dat);
-   51   1          return 0U;
-   52   1      #else
+                   uint16 time_cnt = WIRELESS_UART_TIMEOUT_COUNT;
+               
+                   while(time_cnt && gpio_get_level(WIRELESS_UART_RTS_PIN))
+                   {
+                       system_delay_ms(1);
+                       time_cnt--;
+                   }
+               
                    uart_write_byte(WIRELESS_UART_INDEX, dat);
                    return 0U;
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            01/06/26  21:41:04  PAGE 2   
+               #else
+   53   1          uart_write_byte(WIRELESS_UART_INDEX, dat);
+   54   1          return 0U;
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            20/06/26  03:10:47  PAGE 2   
 
-               #endif
+   55   1      #endif
    56   1      }
    57          
    58          uint32 wireless_uart_send_buffer(const uint8 *buff, uint32 len)
@@ -79,28 +79,30 @@ stmt  level    source
    63   1          zf_assert(NULL != buff);
    64   1      
    65   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
-   66   1          while((0U != len) && (time_cnt < WIRELESS_UART_TIMEOUT_COUNT))
-   67   1          {
-   68   2              if(!gpio_get_level(WIRELESS_UART_RTS_PIN))
-   69   2              {
-   70   3                  send_len = (len < WIRELESS_PACKET_SIZE) ? (uint16)len : (uint16)WIRELESS_PACKET_SIZE;
-   71   3                  uart_write_buffer(WIRELESS_UART_INDEX, buff, send_len);
-   72   3                  buff += send_len;
-   73   3                  len -= send_len;
-   74   3                  time_cnt = 0U;
-   75   3              }
-   76   2              else
-   77   2              {
-   78   3                  system_delay_ms(WIRELESS_SEND_DELAY_MS);
-   79   3                  time_cnt++;
-   80   3              }
-   81   2          }
-   82   1      
-   83   1          return wireless_uart_send_direct(buff, len);
-   84   1      #else
+                   while((0U != len) && (time_cnt < WIRELESS_UART_TIMEOUT_COUNT))
+                   {
+                       if(!gpio_get_level(WIRELESS_UART_RTS_PIN))
+                       {
+                           send_len = (len < WIRELESS_PACKET_SIZE) ? (uint16)len : (uint16)WIRELESS_PACKET_SIZE;
+                           uart_write_buffer(WIRELESS_UART_INDEX, buff, send_len);
+                           buff += send_len;
+                           len -= send_len;
+                           time_cnt = 0U;
+                       }
+                       else
+                       {
+                           system_delay_ms(WIRELESS_SEND_DELAY_MS);
+                           time_cnt++;
+                       }
+                   }
+               
                    return wireless_uart_send_direct(buff, len);
-               #endif
+               #else
+   85   1          return wireless_uart_send_direct(buff, len);
+   86   1      #endif
    87   1      }
+*** WARNING C47 IN LINE 60 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: 'send_len': unreferenced local variab
+             -le
    88          
    89          uint32 wireless_uart_send_string(const char *str)
    90          {
@@ -132,10 +134,10 @@ stmt  level    source
                    {
                        uint32 wireless_auto_baud_count = 3U;
                
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            20/06/26  03:10:47  PAGE 3   
+
                        wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_GET_ACK;
                        fifo_read_buffer(&wireless_uart_fifo, (uint8 *)wireless_auto_baud_data,
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            01/06/26  21:41:04  PAGE 3   
-
                                &wireless_auto_baud_count, FIFO_READ_AND_CLEAN);
                    }
                #endif
@@ -149,8 +151,8 @@ stmt  level    source
   131   1      
   132   1      #if ((1 == WIRELESS_UART_AUTO_BAUD_RATE) || (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_R
              -TS))
-  133   1          gpio_init(WIRELESS_UART_RTS_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
-  134   1      #endif
+                   gpio_init(WIRELESS_UART_RTS_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
+               #endif
   135   1      
   136   1      #if (0 == WIRELESS_UART_AUTO_BAUD_RATE)
   137   1          uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
@@ -200,10 +202,10 @@ stmt  level    source
                        }
                
                        wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_SUCCESS;
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            20/06/26  03:10:47  PAGE 4   
+
                        gpio_init(WIRELESS_UART_RTS_PIN, GPI, 0, GPI_PULL_UP);
                        system_delay_ms(10);
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            01/06/26  21:41:04  PAGE 4   
-
                    }
                    while(0);
                
@@ -217,11 +219,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       933     ------
+  ecode size           =       632     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       198     ------
+  xdata size           =       194     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -235,4 +237,4 @@ Module Information          Static   Overlayable
 End of Module Information.
 
 
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

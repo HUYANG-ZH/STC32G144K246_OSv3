@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             20/06/26  03:10:59  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -31,8 +31,8 @@ stmt  level    source
    18          #define APP_MOTION_POSTPROCESS_DEFAULT_INTEGRAL_LIMIT  (1.2f)
    19          #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (5.0f)
    20          #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
-   21          #define APP_MOTION_POSTPROCESS_DEFAULT_RATE_LIMIT      (45.5f)     // 角速度目标变化率限幅 rad/
-             -s²
+   21          #define APP_MOTION_POSTPROCESS_DEFAULT_RATE_LIMIT      (0.0f)      // 角速度目标变化率限幅 rad/
+             -s²，0表示关闭
    22          #define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (0.5f)
    23          #define APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD        (0.5f)
    24          #define APP_MOTION_POSTPROCESS_DT_SECOND               ((float)APP_MOTION_POSTPROCESS_PERIOD_MS / 1000.0f
@@ -66,7 +66,7 @@ stmt  level    source
    51          static shared_pos_pid_t motion_postprocess_yaw_pid;
    52          static shared_lpf_t motion_postprocess_gyro_z_lpf;
    53          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             20/06/26  03:10:59  PAGE 2   
 
    54          static uint8 motion_postprocess_last_enabled = 0U;
    55          static float motion_post_target_yaw_rate_override = 0.0f;
@@ -134,7 +134,7 @@ stmt  level    source
   117          
   118          static void app_motion_postprocess_register_packet(void)
   119          {
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             20/06/26  03:10:59  PAGE 3   
 
   120   1          (void)service_packet_add_variable_with_callback("motion_post_kp",
   121   1                  &app_motion_postprocess_config.kp, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT,
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          motion_postprocess_last_enabled =
   184   1                  (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
   185   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             20/06/26  03:10:59  PAGE 4   
 
   186   1          output.raw_error = 0.0f;
   187   1          output.feedforward = 0.0f;
@@ -270,9 +270,9 @@ stmt  level    source
   249   1          raw_error = motion_preprocess.line_error;
   250   1          processed_error = raw_error;
   251   1          static_feedforward_speed = feedforward.feedforward;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             20/06/26  03:10:59  PAGE 5   
 
-  252   1          linear_mps = app_speed_plan_get_linear_mps();
+  252   1          linear_mps = app_motion_preprocess_config.linear_mps;
   253   1          feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
   254   1      
   255   1          /* 角速度目标变化率限幅 */
@@ -338,24 +338,36 @@ stmt  level    source
   313   1          output.left_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN, linear_mps),
   314   1                  output.load_left);
   315   1          output.right_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN, linear_mps),
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             15/06/26  22:44:46  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             20/06/26  03:10:59  PAGE 6   
 
   316   1                  output.load_right);
   317   1          output.enabled = (0U != enabled) ? 1.0f : 0.0f;
   318   1      
   319   1          app_speedout_set_target(output.left_target_mps, output.right_target_mps);
   320   1          app_motion_postprocess_publish(&output);
-  321   1      }
+  321   1      
+  322   1          {
+  323   2              static uint16 print_tick = 0U;
+  324   2              print_tick++;
+  325   2              if(print_tick >= 200U)
+  326   2              {
+  327   3                  print_tick = 0U;
+  328   3                  printf("%.3f,%.3f,%.3f,%.3f\r\n", raw_error,
+  329   3                          target_yaw_rate_radps, actual_yaw_rate_radps,
+  330   3                          feedforward_differential_speed);
+  331   3              }
+  332   2          }
+  333   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2311     ------
+  ecode size           =      2446     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       390     ------
+  xdata size           =       392     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -365,7 +377,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       292     ------
+  hconst size          =       321     ------
 End of Module Information.
 
 

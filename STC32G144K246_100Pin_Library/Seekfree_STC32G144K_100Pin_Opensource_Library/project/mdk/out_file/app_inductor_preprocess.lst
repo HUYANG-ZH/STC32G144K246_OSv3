@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/06/26  23:33:27  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/06/26  03:10:58  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -15,274 +15,332 @@ stmt  level    source
     2          #include "sys_tfpu.h"
     3          #include "service_inductor.h"
     4          #include "service_timetick.h"
-    5          #include "app_inductor_preprocess.h"
-    6          
-    7          #define APP_INDUCTOR_CHANNEL_COUNT             (4U)
-    8          #define APP_INDUCTOR_MEDIAN_SAMPLE_COUNT       (3U)
-    9          #define APP_INDUCTOR_HISTORY_COUNT             (15U)
-   10          #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
-   11          
-   12          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {5U, 0U, 200U, 170U};
-   13          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2480U, 2530U, 4095U};
-   14          
-   15          static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
-   16          static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
-   17          static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
-   18          
-   19          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
-   20          static uint8 inductor_history_index = 0U;
-   21          static volatile app_inductor_preprocess_data_t inductor_data;
-   22          
-   23          static void app_inductor_preprocess_tick(void);
-   24          
-   25          static uint16 app_inductor_median3(uint16 a, uint16 b, uint16 c)
-   26          {
-   27   1          uint16 temp;
-   28   1      
-   29   1          if(a > b)
-   30   1          {
-   31   2              temp = a;
-   32   2              a = b;
-   33   2              b = temp;
-   34   2          }
-   35   1          if(b > c)
-   36   1          {
-   37   2              temp = b;
-   38   2              b = c;
-   39   2              c = temp;
-   40   2          }
-   41   1          if(a > b)
-   42   1          {
-   43   2              temp = a;
-   44   2              a = b;
-   45   2              b = temp;
-   46   2          }
-   47   1      
-   48   1          return b;
-   49   1      }
+    5          #include "service_wireless_uart.h"
+    6          #include "service_packet.h"
+    7          #include "app_inductor_preprocess.h"
+    8          
+    9          #define APP_INDUCTOR_CHANNEL_COUNT             (4U)
+   10          #define APP_INDUCTOR_MEDIAN_SAMPLE_COUNT       (3U)
+   11          #define APP_INDUCTOR_HISTORY_COUNT             (15U)
+   12          #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
+   13          
+   14          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 10U, 100U, 150U};
+   15          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2400U, 2400U, 4095U};
+   16          
+   17          static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
+   18          static float inductor_cal_max[APP_INDUCTOR_CHANNEL_COUNT];
+   19          
+   20          static void app_inductor_update_precomputed(void);
+   21          
+   22          static void app_inductor_preprocess_sync_calibration(void)
+   23          {
+   24   1          uint8 i;
+   25   1      
+   26   1          for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+   27   1          {
+   28   2              app_inductor_preprocess_min_value[i] = (uint16)inductor_cal_min[i];
+   29   2              app_inductor_preprocess_max_value[i] = (uint16)inductor_cal_max[i];
+   30   2          }
+   31   1          app_inductor_update_precomputed();
+   32   1      }
+   33          
+   34          static void app_inductor_preprocess_print_calibration(void)
+   35          {
+   36   1          wprint("min=%d,%d,%d,%d max=%d,%d,%d,%d\r\n",
+   37   1                  app_inductor_preprocess_min_value[0],
+   38   1                  app_inductor_preprocess_min_value[1],
+   39   1                  app_inductor_preprocess_min_value[2],
+   40   1                  app_inductor_preprocess_min_value[3],
+   41   1                  app_inductor_preprocess_max_value[0],
+   42   1                  app_inductor_preprocess_max_value[1],
+   43   1                  app_inductor_preprocess_max_value[2],
+   44   1                  app_inductor_preprocess_max_value[3]);
+   45   1      }
+   46          
+   47          static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
+   48          static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
+   49          static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
    50          
-   51          static void app_inductor_sort_ascending(uint16 *values)
-   52          {
-   53   1          uint8 i;
-   54   1          uint8 j;
-   55   1          uint16 temp;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/06/26  23:33:27  PAGE 2   
+   51          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
+   52          static uint8 inductor_history_index = 0U;
+   53          static volatile app_inductor_preprocess_data_t inductor_data;
+   54          
+   55          static void app_inductor_preprocess_tick(void);
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/06/26  03:10:58  PAGE 2   
 
-   56   1      
-   57   1          for(i = 0U; i < (APP_INDUCTOR_HISTORY_COUNT - 1U); i++)
-   58   1          {
-   59   2              for(j = (uint8)(i + 1U); j < APP_INDUCTOR_HISTORY_COUNT; j++)
-   60   2              {
-   61   3                  if(values[i] > values[j])
-   62   3                  {
-   63   4                      temp = values[i];
-   64   4                      values[i] = values[j];
-   65   4                      values[j] = temp;
-   66   4                  }
-   67   3              }
-   68   2          }
-   69   1      }
-   70          
-   71          static void app_inductor_sample_median(uint16 median[APP_INDUCTOR_CHANNEL_COUNT])
-   72          {
-   73   1          uint8 i;
-   74   1          service_inductor_data_t raw;
-   75   1          uint16 sample[APP_INDUCTOR_MEDIAN_SAMPLE_COUNT][APP_INDUCTOR_CHANNEL_COUNT];
-   76   1      
-   77   1          for(i = 0; i < APP_INDUCTOR_MEDIAN_SAMPLE_COUNT; i++)
-   78   1          {
-   79   2              service_inductor_get_data(&raw);
-   80   2              sample[i][0] = raw.channel_1;
-   81   2              sample[i][1] = raw.channel_2;
-   82   2              sample[i][2] = raw.channel_3;
-   83   2              sample[i][3] = raw.channel_4;
-   84   2          }
-   85   1      
-   86   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-   87   1          {
-   88   2              median[i] = app_inductor_median3(sample[0][i], sample[1][i], sample[2][i]);
-   89   2          }
-   90   1      }
-   91          
-   92          static void app_inductor_update_precomputed(void)
-   93          {
-   94   1          uint8 i;
-   95   1          uint16 range;
-   96   1      
-   97   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-   98   1          {
-   99   2              inductor_min_float[i] = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
-  100   2              inductor_max_float[i] = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
-  101   2              range = app_inductor_preprocess_max_value[i] - app_inductor_preprocess_min_value[i];
-  102   2              if(0U < range)
-  103   2              {
-  104   3                  inductor_range_inv[i] = tfpu_div(100.0f, tfpu_int2float((long)range));
-  105   3              }
-  106   2              else
-  107   2              {
-  108   3                  inductor_range_inv[i] = 0.0f;
-  109   3              }
-  110   2          }
-  111   1      }
-  112          
-  113          static void app_inductor_update_output(void)
-  114          {
-  115   1          uint8 i;
-  116   1          uint8 j;
-  117   1          uint8 ea_backup;
-  118   1          uint32 sum;
-  119   1          uint16 sorted[APP_INDUCTOR_HISTORY_COUNT];
-  120   1          float filtered[APP_INDUCTOR_CHANNEL_COUNT];
-  121   1          float normalized[APP_INDUCTOR_CHANNEL_COUNT];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/06/26  23:33:27  PAGE 3   
+   56          
+   57          static uint16 app_inductor_median3(uint16 a, uint16 b, uint16 c)
+   58          {
+   59   1          uint16 temp;
+   60   1      
+   61   1          if(a > b)
+   62   1          {
+   63   2              temp = a;
+   64   2              a = b;
+   65   2              b = temp;
+   66   2          }
+   67   1          if(b > c)
+   68   1          {
+   69   2              temp = b;
+   70   2              b = c;
+   71   2              c = temp;
+   72   2          }
+   73   1          if(a > b)
+   74   1          {
+   75   2              temp = a;
+   76   2              a = b;
+   77   2              b = temp;
+   78   2          }
+   79   1      
+   80   1          return b;
+   81   1      }
+   82          
+   83          static void app_inductor_sort_ascending(uint16 *values)
+   84          {
+   85   1          uint8 i;
+   86   1          uint8 j;
+   87   1          uint16 temp;
+   88   1      
+   89   1          for(i = 0U; i < (APP_INDUCTOR_HISTORY_COUNT - 1U); i++)
+   90   1          {
+   91   2              for(j = (uint8)(i + 1U); j < APP_INDUCTOR_HISTORY_COUNT; j++)
+   92   2              {
+   93   3                  if(values[i] > values[j])
+   94   3                  {
+   95   4                      temp = values[i];
+   96   4                      values[i] = values[j];
+   97   4                      values[j] = temp;
+   98   4                  }
+   99   3              }
+  100   2          }
+  101   1      }
+  102          
+  103          static void app_inductor_sample_median(uint16 median[APP_INDUCTOR_CHANNEL_COUNT])
+  104          {
+  105   1          uint8 i;
+  106   1          service_inductor_data_t raw;
+  107   1          uint16 sample[APP_INDUCTOR_MEDIAN_SAMPLE_COUNT][APP_INDUCTOR_CHANNEL_COUNT];
+  108   1      
+  109   1          for(i = 0; i < APP_INDUCTOR_MEDIAN_SAMPLE_COUNT; i++)
+  110   1          {
+  111   2              service_inductor_get_data(&raw);
+  112   2              sample[i][0] = raw.channel_1;
+  113   2              sample[i][1] = raw.channel_2;
+  114   2              sample[i][2] = raw.channel_3;
+  115   2              sample[i][3] = raw.channel_4;
+  116   2          }
+  117   1      
+  118   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  119   1          {
+  120   2              median[i] = app_inductor_median3(sample[0][i], sample[1][i], sample[2][i]);
+  121   2          }
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/06/26  03:10:58  PAGE 3   
 
-  122   1      
-  123   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  124   1          {
-  125   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
-  126   2              {
-  127   3                  sorted[j] = inductor_history[i][j];
-  128   3              }
-  129   2      
-  130   2              app_inductor_sort_ascending(sorted);
-  131   2      
-  132   2              sum = 0U;
-  133   2              for(j = 1U; j < (APP_INDUCTOR_HISTORY_COUNT - 1U); j++)
-  134   2              {
-  135   3                  sum += sorted[j];
-  136   3              }
-  137   2      
-  138   2              filtered[i] = tfpu_div(tfpu_int2float((long)sum), tfpu_int2float((long)APP_INDUCTOR_AVERAGE_COUNT
+  122   1      }
+  123          
+  124          static void app_inductor_update_precomputed(void)
+  125          {
+  126   1          uint8 i;
+  127   1          uint16 range;
+  128   1      
+  129   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  130   1          {
+  131   2              inductor_min_float[i] = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
+  132   2              inductor_max_float[i] = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
+  133   2              range = app_inductor_preprocess_max_value[i] - app_inductor_preprocess_min_value[i];
+  134   2              if(0U < range)
+  135   2              {
+  136   3                  inductor_range_inv[i] = tfpu_div(100.0f, tfpu_int2float((long)range));
+  137   3              }
+  138   2              else
+  139   2              {
+  140   3                  inductor_range_inv[i] = 0.0f;
+  141   3              }
+  142   2          }
+  143   1      }
+  144          
+  145          static void app_inductor_update_output(void)
+  146          {
+  147   1          uint8 i;
+  148   1          uint8 j;
+  149   1          uint8 ea_backup;
+  150   1          uint32 sum;
+  151   1          uint16 sorted[APP_INDUCTOR_HISTORY_COUNT];
+  152   1          float filtered[APP_INDUCTOR_CHANNEL_COUNT];
+  153   1          float normalized[APP_INDUCTOR_CHANNEL_COUNT];
+  154   1      
+  155   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  156   1          {
+  157   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
+  158   2              {
+  159   3                  sorted[j] = inductor_history[i][j];
+  160   3              }
+  161   2      
+  162   2              app_inductor_sort_ascending(sorted);
+  163   2      
+  164   2              sum = 0U;
+  165   2              for(j = 1U; j < (APP_INDUCTOR_HISTORY_COUNT - 1U); j++)
+  166   2              {
+  167   3                  sum += sorted[j];
+  168   3              }
+  169   2      
+  170   2              filtered[i] = tfpu_div(tfpu_int2float((long)sum), tfpu_int2float((long)APP_INDUCTOR_AVERAGE_COUNT
              -));
-  139   2      
-  140   2              if(0.0f >= inductor_range_inv[i])
-  141   2              {
-  142   3                  normalized[i] = 0.0f;
-  143   3              }
-  144   2              else
-  145   2              {
-  146   3                  normalized[i] = tfpu_mul(tfpu_sub(filtered[i], inductor_min_float[i]), inductor_range_inv[i])
+  171   2      
+  172   2              if(0.0f >= inductor_range_inv[i])
+  173   2              {
+  174   3                  normalized[i] = 0.0f;
+  175   3              }
+  176   2              else
+  177   2              {
+  178   3                  normalized[i] = tfpu_mul(tfpu_sub(filtered[i], inductor_min_float[i]), inductor_range_inv[i])
              -;
-  147   3                  if(0.0f > normalized[i])
-  148   3                  {
-  149   4                      normalized[i] = 0.0f;
-  150   4                  }
-  151   3                  else if(100.0f < normalized[i])
-  152   3                  {
-  153   4                      normalized[i] = 100.0f;
-  154   4                  }
-  155   3              }
-  156   2          }
-  157   1      
-  158   1          ea_backup = EA;
-  159   1          EA = 0;
-  160   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  161   1          {
-  162   2              inductor_data.filtered[i] = filtered[i];
-  163   2              inductor_data.normalized[i] = normalized[i];
-  164   2          }
-  165   1          EA = ea_backup;
-  166   1      }
-  167          
-  168          static void app_inductor_preprocess_tick(void)
-  169          {
-  170   1          uint8 i;
-  171   1          uint16 median[APP_INDUCTOR_CHANNEL_COUNT];
-  172   1      
-  173   1          app_inductor_sample_median(median);
-  174   1      
-  175   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  176   1          {
-  177   2              inductor_history[i][inductor_history_index] = median[i];
-  178   2          }
-  179   1      
-  180   1          inductor_history_index++;
-  181   1          if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
-  182   1          {
-  183   2              inductor_history_index = 0U;
-  184   2          }
-  185   1      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/06/26  23:33:27  PAGE 4   
+  179   3                  if(0.0f > normalized[i])
+  180   3                  {
+  181   4                      normalized[i] = 0.0f;
+  182   4                  }
+  183   3                  else if(100.0f < normalized[i])
+  184   3                  {
+  185   4                      normalized[i] = 100.0f;
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/06/26  03:10:58  PAGE 4   
 
-  186   1          app_inductor_update_output();
-  187   1      }
-  188          
-  189          void app_inductor_preprocess_update_calibration(void)
-  190          {
-  191   1          app_inductor_update_precomputed();
-  192   1      }
-  193          
-  194          void app_inductor_preprocess_init(void)
-  195          {
-  196   1          uint8 i;
-  197   1          uint8 j;
-  198   1          uint16 median[APP_INDUCTOR_CHANNEL_COUNT];
-  199   1      
-  200   1          service_inductor_init();
-  201   1      
-  202   1          app_inductor_sample_median(median);
-  203   1      
-  204   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  205   1          {
-  206   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
-  207   2              {
-  208   3                  inductor_history[i][j] = median[i];
-  209   3              }
+  186   4                  }
+  187   3              }
+  188   2          }
+  189   1      
+  190   1          ea_backup = EA;
+  191   1          EA = 0;
+  192   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  193   1          {
+  194   2              inductor_data.filtered[i] = filtered[i];
+  195   2              inductor_data.normalized[i] = normalized[i];
+  196   2          }
+  197   1          EA = ea_backup;
+  198   1      }
+  199          
+  200          static void app_inductor_preprocess_tick(void)
+  201          {
+  202   1          uint8 i;
+  203   1          uint16 median[APP_INDUCTOR_CHANNEL_COUNT];
+  204   1      
+  205   1          app_inductor_sample_median(median);
+  206   1      
+  207   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  208   1          {
+  209   2              inductor_history[i][inductor_history_index] = median[i];
   210   2          }
   211   1      
-  212   1          inductor_history_index = 0U;
-  213   1          app_inductor_update_precomputed();
-  214   1          app_inductor_update_output();
-  215   1      
-  216   1          pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_t
-             -ick);
-  217   1      }
-  218          
-  219          void app_inductor_preprocess_debug(void)
-  220          {
-  221   1          static uint32 last_tick = 0U;
-  222   1          service_inductor_data_t raw;
-  223   1      
-  224   1          if((service_timetick_what() - last_tick) >= 100U)  // 10Hz
-  225   1          {
-  226   2              last_tick = service_timetick_what();
-  227   2              service_inductor_get_data(&raw);
-  228   2              printf("%d,%d,%d,%d\r\n", raw.channel_1, raw.channel_2, raw.channel_3, raw.channel_4);
-  229   2          }
-  230   1      }
-  231          
-  232          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
-  233          {
-  234   1          uint8 i;
-  235   1          uint8 ea_backup;
-  236   1      
-  237   1          if(NULL == out_data)
-  238   1          {
-  239   2              return;
-  240   2          }
-  241   1      
-  242   1          ea_backup = EA;
-  243   1          EA = 0;
-  244   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  245   1          {
-  246   2              out_data->filtered[i] = inductor_data.filtered[i];
-  247   2              out_data->normalized[i] = inductor_data.normalized[i];
-  248   2          }
-  249   1          EA = ea_backup;
-  250   1      }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/06/26  23:33:27  PAGE 5   
+  212   1          inductor_history_index++;
+  213   1          if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
+  214   1          {
+  215   2              inductor_history_index = 0U;
+  216   2          }
+  217   1      
+  218   1          app_inductor_update_output();
+  219   1      }
+  220          
+  221          void app_inductor_preprocess_update_calibration(void)
+  222          {
+  223   1          app_inductor_update_precomputed();
+  224   1      }
+  225          
+  226          void app_inductor_preprocess_init(void)
+  227          {
+  228   1          uint8 i;
+  229   1          uint8 j;
+  230   1          uint16 median[APP_INDUCTOR_CHANNEL_COUNT];
+  231   1      
+  232   1          service_inductor_init();
+  233   1      
+  234   1          app_inductor_sample_median(median);
+  235   1      
+  236   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  237   1          {
+  238   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
+  239   2              {
+  240   3                  inductor_history[i][j] = median[i];
+  241   3              }
+  242   2          }
+  243   1      
+  244   1          inductor_history_index = 0U;
+  245   1          app_inductor_update_precomputed();
+  246   1          app_inductor_update_output();
+  247   1      
+  248   1          /* 无线校准变量：float副本，修改后自动同步到uint16并重算 */
+  249   1          for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  250   1          {
+  251   2              inductor_cal_min[i] = (float)app_inductor_preprocess_min_value[i];
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/06/26  03:10:58  PAGE 5   
 
+  252   2              inductor_cal_max[i] = (float)app_inductor_preprocess_max_value[i];
+  253   2          }
+  254   1          (void)service_packet_add_variable_with_callback("ind_min0", &inductor_cal_min[0], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  255   1          (void)service_packet_add_variable_with_callback("ind_min1", &inductor_cal_min[1], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  256   1          (void)service_packet_add_variable_with_callback("ind_min2", &inductor_cal_min[2], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  257   1          (void)service_packet_add_variable_with_callback("ind_min3", &inductor_cal_min[3], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  258   1          (void)service_packet_add_variable_with_callback("ind_max0", &inductor_cal_max[0], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  259   1          (void)service_packet_add_variable_with_callback("ind_max1", &inductor_cal_max[1], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  260   1          (void)service_packet_add_variable_with_callback("ind_max2", &inductor_cal_max[2], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  261   1          (void)service_packet_add_variable_with_callback("ind_max3", &inductor_cal_max[3], 1U, app_inductor_pr
+             -eprocess_sync_calibration);
+  262   1          (void)service_packet_add_action("ind_read", app_inductor_preprocess_print_calibration, 0UL);
+  263   1      
+  264   1          pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_t
+             -ick);
+  265   1      }
+  266          
+  267          void app_inductor_preprocess_debug(void)
+  268          {
+  269   1          static uint32 last_tick = 0U;
+  270   1          service_inductor_data_t raw;
+  271   1      
+  272   1          if((service_timetick_what() - last_tick) >= 100U)  // 10Hz
+  273   1          {
+  274   2              last_tick = service_timetick_what();
+  275   2              service_inductor_get_data(&raw);
+  276   2              wprint("%d,%d,%d,%d\r\n", raw.channel_1, raw.channel_2, raw.channel_3, raw.channel_4);
+  277   2          }
+  278   1      }
+  279          
+  280          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
+  281          {
+  282   1          uint8 i;
+  283   1          uint8 ea_backup;
+  284   1      
+  285   1          if(NULL == out_data)
+  286   1          {
+  287   2              return;
+  288   2          }
+  289   1      
+  290   1          ea_backup = EA;
+  291   1          EA = 0;
+  292   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  293   1          {
+  294   2              out_data->filtered[i] = inductor_data.filtered[i];
+  295   2              out_data->normalized[i] = inductor_data.normalized[i];
+  296   2          }
+  297   1          EA = ea_backup;
+  298   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2530     ------
+  ecode size           =      3305     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       379     ------
+  xdata size           =       412     ------
   xdata-const size     =    ------     ------
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            20/06/26  03:10:58  PAGE 6   
+
   edata size           =    ------     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------
@@ -291,7 +349,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        55     ------
+  hconst size          =       170     ------
 End of Module Information.
 
 
