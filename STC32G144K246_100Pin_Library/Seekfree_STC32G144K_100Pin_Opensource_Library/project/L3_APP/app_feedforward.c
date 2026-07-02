@@ -11,6 +11,7 @@
 #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
 #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
 #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
+#define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (50.0f)     // CH1/CH2归一化强度达到该值时给满前馈
 #define APP_FEEDFORWARD_DT_SECOND                (APP_FEEDFORWARD_PERIOD_MS * 0.001f)
 
 app_feedforward_config_t app_feedforward_config =
@@ -81,6 +82,9 @@ static void app_feedforward_task(void)
     float denominator;
     float curvature;
     float curvature_rate;
+    float strength;
+    float strength_ratio;
+    float dynamic_kff;
     float feedforward_p;
     float feedforward_d;
 
@@ -103,7 +107,20 @@ static void app_feedforward_task(void)
     }
     feedforward_last_curvature = curvature;
 
-    feedforward_p = tfpu_mul(app_feedforward_config.kff, curvature);
+    strength = (inductor_data.normalized[1] > inductor_data.normalized[2]) ?
+            inductor_data.normalized[1] : inductor_data.normalized[2];
+    strength_ratio = tfpu_div(strength, APP_FEEDFORWARD_DYNAMIC_FULL_NORM);
+    if(0.0f > strength_ratio)
+    {
+        strength_ratio = 0.0f;
+    }
+    else if(1.0f < strength_ratio)
+    {
+        strength_ratio = 1.0f;
+    }
+
+    dynamic_kff = tfpu_mul(app_feedforward_config.kff, strength_ratio);
+    feedforward_p = tfpu_mul(dynamic_kff, curvature);
     feedforward_d = tfpu_mul(app_feedforward_config.kd, curvature_rate);
 
     feedforward_data.curvature = curvature;
