@@ -249,7 +249,7 @@ static void app_motion_postprocess_task(void)
     raw_error = motion_preprocess.line_error;
     processed_error = raw_error;
     static_feedforward_speed = feedforward.feedforward;
-    linear_mps = app_motion_preprocess_config.linear_mps;
+    linear_mps = app_speed_plan_get_linear_mps();
     feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
 
     /* 角速度目标变化率限幅 */

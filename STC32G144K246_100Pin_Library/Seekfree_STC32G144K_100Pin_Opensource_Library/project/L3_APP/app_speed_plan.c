@@ -9,8 +9,8 @@
 #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
 #define APP_SPEED_PLAN_TASK_PRIORITY            (6U)
 #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (1.0f)
-#define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (19.6f)
-#define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (40.0f)
+#define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (80.0f)
+#define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (80.0f)
 #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
 #define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
 

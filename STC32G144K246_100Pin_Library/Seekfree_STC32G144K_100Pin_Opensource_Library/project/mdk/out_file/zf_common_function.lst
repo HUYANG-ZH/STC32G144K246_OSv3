@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_function
@@ -66,7 +66,7 @@ stmt  level    source
    46          // 使用示例     return func_get_greatest_common_divisor(144, 36);               // 获取 144 与 36 
              -的最大公约数
    47          // 备注信息     
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 2   
 
    48          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -134,7 +134,7 @@ stmt  level    source
   103   3                  str ++;
   104   3              }
   105   2      
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 3   
 
   106   2              while(('0' <= *str) && ('9' >= *str))                                   // 确定这是个数字
   107   2              {
@@ -202,7 +202,7 @@ stmt  level    source
   162   3              }
   163   2          }while(0);
   164   1      }
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 4   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 4   
 
   165          
   166          //-------------------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ stmt  level    source
              -��
   224   2              {
   225   3                  data_temp[temp_bit ++] = (number % 10);                                  // 倒序将数值�
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 5   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 5   
 
              -�取出来
   226   3                  number /= 10;                                                       // 削减被提取的个�
@@ -338,7 +338,7 @@ stmt  level    source
              -并且精度控制还没到六位
   279   3                  {
   280   4                      temp_point = temp_point * 10 + ((uint8)(*str) - 0x30);          // 提取小数部分数�
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 6   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 6   
 
              -��
   281   4                      point_bit *= 10;                                                // 计算这部分小数�
@@ -406,7 +406,7 @@ stmt  level    source
   336   2              // 提取小数部分
   337   2              number = number - data_int;                                             // 减去整数部分即�
              -��
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 7   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 7   
 
   338   2              while(temp_bit --)
   339   2              {
@@ -474,7 +474,7 @@ stmt  level    source
              -1-负数
   394   1          double temp = 0.0;                                                          // 临时计算变量 整
              -数部分
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 8   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 8   
 
   395   1          double temp_point = 0.0;                                                    // 临时计算变量 小
              -数部分
@@ -542,7 +542,7 @@ stmt  level    source
              -buffer = "3.14"
   452          // 备注信息     
   453          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 9   
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 9   
 
              -------------
   454          void func_double_to_str (char *str, double number, uint8 point_bit)
@@ -610,7 +610,7 @@ stmt  level    source
   509   3                  temp_bit = 0;
   510   3                  *str ++ = '.';
   511   3                  if(0 == data_float)
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 10  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 10  
 
   512   3                      *str = '0';
   513   3                  else
@@ -678,7 +678,7 @@ stmt  level    source
   571   4                  }
   572   3                  result_data = ((result_data << 4) | (temp & 0x0F));
   573   3              }
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 11  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 11  
 
   574   2              else
   575   2              {
@@ -746,7 +746,7 @@ stmt  level    source
   630   2              {
   631   3                  *str ++ = hex_index[data_temp[temp_bit - 1]];                            // 将数字从倒�
              -�数组中倒序取出 变成正序放入字符串
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 12  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 12  
 
   632   3                  temp_bit --;
   633   3              }
@@ -814,7 +814,7 @@ stmt  level    source
   693   3      
   694   3                  if(!pos_dat)
   695   3                  {
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 13  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 13  
 
   696   4                      break;
   697   4                  }
@@ -882,7 +882,7 @@ stmt  level    source
   755   2              return 0;
   756   2          }
   757   1          
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 14  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 14  
 
   758   1          while (*format != '\0' && i < siz - 1) 
   759   1        {
@@ -950,7 +950,7 @@ stmt  level    source
   821   4                      }
   822   3                      break;
   823   3      
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 15  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 15  
 
   824   3                  case 'c':
   825   3                      *ptr++ = (char)va_arg(args, int);
@@ -1018,7 +1018,7 @@ stmt  level    source
   885   2              {
   886   3                  switch (*++ format)
   887   3                  {
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 16  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 16  
 
   888   4                      case 'a':// 十六进制p计数法输出浮点数 暂未实现
   889   4                          {
@@ -1086,7 +1086,7 @@ stmt  level    source
   951   6                              vstr[vlen] = '0';
   952   6                              vlen ++;
   953   6                          }
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 17  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 17  
 
   954   5      
   955   5                          vstr[vlen] = '.';
@@ -1154,7 +1154,7 @@ stmt  level    source
  1017   4                          break;
  1018   4      
  1019   4                      case 'p':// 以16进制形式输出指针
-C251 COMPILER V5.60.0,  zf_common_function                                                 20/06/26  03:10:42  PAGE 18  
+C251 COMPILER V5.60.0,  zf_common_function                                                 03/07/26  20:22:50  PAGE 18  
 
  1020   4                          {
  1021   5                              int8 vstr[33];
