@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_inductor                                                       03/07/26  20:22:58  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_inductor                                                       04/07/26  17:56:32  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_inductor
@@ -16,34 +16,37 @@ stmt  level    source
     3          
     4          #define ADC_CHANNEL_1 ADC2_CH3_P03
     5          #define ADC_CHANNEL_2 ADC2_CH4_P04
-    6          #define ADC_CHANNEL_3 ADC2_CH6_P06
-    7          #define ADC_CHANNEL_4 ADC2_CH7_P07
-    8          
-    9          void bsp_inductor_init(void)
-   10          {
-   11   1          adc_init(ADC_CHANNEL_1, ADC_12BIT);
-   12   1          adc_init(ADC_CHANNEL_2, ADC_12BIT);
-   13   1          adc_init(ADC_CHANNEL_3, ADC_12BIT);
-   14   1          adc_init(ADC_CHANNEL_4, ADC_12BIT);
-   15   1      }
-   16          
-   17          void bsp_inductor_debug(void)
-   18          {
-   19   1      }
-   20          
-   21          void bsp_inductor_get(inductor_rawdata_t* out_data)
-   22          {
-   23   1          out_data->Channel_1 = adc_convert(ADC_CHANNEL_1);
-   24   1          out_data->Channel_2 = adc_convert(ADC_CHANNEL_2);
-   25   1          out_data->Channel_3 = adc_convert(ADC_CHANNEL_3);
-   26   1          out_data->Channel_4 = adc_convert(ADC_CHANNEL_4);
-   27   1      }
+    6          #define ADC_CHANNEL_M ADC2_CH5_P05
+    7          #define ADC_CHANNEL_3 ADC2_CH6_P06
+    8          #define ADC_CHANNEL_4 ADC2_CH7_P07
+    9          
+   10          void bsp_inductor_init(void)
+   11          {
+   12   1          adc_init(ADC_CHANNEL_1, ADC_12BIT);
+   13   1          adc_init(ADC_CHANNEL_2, ADC_12BIT);
+   14   1          adc_init(ADC_CHANNEL_M, ADC_12BIT);
+   15   1          adc_init(ADC_CHANNEL_3, ADC_12BIT);
+   16   1          adc_init(ADC_CHANNEL_4, ADC_12BIT);
+   17   1      }
+   18          
+   19          void bsp_inductor_debug(void)
+   20          {
+   21   1      }
+   22          
+   23          void bsp_inductor_get(inductor_rawdata_t* out_data)
+   24          {
+   25   1          out_data->Channel_1 = adc_convert(ADC_CHANNEL_1);
+   26   1          out_data->Channel_2 = adc_convert(ADC_CHANNEL_2);
+   27   1          out_data->Channel_M = adc_convert(ADC_CHANNEL_M);
+   28   1          out_data->Channel_3 = adc_convert(ADC_CHANNEL_3);
+   29   1          out_data->Channel_4 = adc_convert(ADC_CHANNEL_4);
+   30   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       153     ------
+  ecode size           =       190     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

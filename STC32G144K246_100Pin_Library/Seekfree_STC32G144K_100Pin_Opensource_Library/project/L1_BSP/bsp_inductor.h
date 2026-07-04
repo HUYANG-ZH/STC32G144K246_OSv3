@@ -4,6 +4,7 @@
 typedef struct {
     uint16 Channel_1;
     uint16 Channel_2;
+    uint16 Channel_M;
     uint16 Channel_3;
     uint16 Channel_4;
 } inductor_rawdata_t;

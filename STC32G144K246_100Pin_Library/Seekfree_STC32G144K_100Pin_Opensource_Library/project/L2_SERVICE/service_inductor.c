@@ -24,6 +24,7 @@ void service_inductor_get_data(service_inductor_data_t *out_data)
 
     out_data->channel_1 = raw_data.Channel_1;
     out_data->channel_2 = raw_data.Channel_2;
+    out_data->channel_m = raw_data.Channel_M;
     out_data->channel_3 = raw_data.Channel_3;
     out_data->channel_4 = raw_data.Channel_4;
 }

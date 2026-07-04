@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -66,7 +66,7 @@ stmt  level    source
    42          
    43          typedef struct
    44          {
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 2   
 
    45              app_element_state_t state;
    46              uint16 state_ms;
@@ -134,7 +134,7 @@ stmt  level    source
                #endif
   107          
   108          static uint16 app_element_add_period(uint16 value)
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 3   
 
   109          {
   110   1          if((uint16)(0xFFFFU - APP_ELEMENT_PERIOD_MS) <= value)
@@ -202,7 +202,7 @@ stmt  level    source
                    }
                
                    *out_dir = (0.0f < motion_data->line_error) ? APP_ELEMENT_DIR_LEFT : APP_ELEMENT_DIR_RIGHT;
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 4   
 
                    return 1U;
                }
@@ -270,7 +270,7 @@ stmt  level    source
   235          void app_element_init(void)
   236          {
   237   1          element_lost_line_confirm_ms = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 5   
 
   238   1          app_element_tick();
   239   1          pit_ms_init(APP_ELEMENT_PIT, APP_ELEMENT_PERIOD_MS, app_element_tick);
@@ -338,7 +338,7 @@ stmt  level    source
   299   1      }
   300          
   301          #if 0
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 6   
 
                static void app_element_roundabout_update(app_element_candidate_t *candidate,
                        const app_inductor_preprocess_data_t *inductor_data, const app_motion_preprocess_data_t *motion_d
@@ -406,7 +406,7 @@ stmt  level    source
                        }
                
                        case APP_ELEMENT_STATE_EXIT:
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 7   
 
                        {
                            app_element_roundabout_set_state(APP_ELEMENT_STATE_DONE, element_roundabout.dir);
@@ -474,7 +474,7 @@ stmt  level    source
                
                        case APP_ELEMENT_STATE_ENTER:
                        {
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 8   
 
                            if(element_crossroad.state_ms >= app_element_config.crossroad_inside_ms)
                            {
@@ -542,7 +542,7 @@ stmt  level    source
                        element_data.active = 1.0f;
                    }
                    else if(0.0f < crossroad_candidate->active)
-C251 COMPILER V5.60.0,  app_element                                                        03/07/26  20:23:03  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        03/07/26  22:36:27  PAGE 9   
 
                    {
                        element_data.type = crossroad_candidate->type;
