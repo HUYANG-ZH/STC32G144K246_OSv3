@@ -10,9 +10,9 @@
 #define APP_INDUCTOR_MEDIAN_SAMPLE_COUNT       (3U)
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
-
+//正常情况下，CH1和CH4应该都在2600左右。
 uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 10U, 100U, 150U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2400U, 2400U, 4095U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2600U, 2600U, 4095U};
 
 static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
 static float inductor_cal_max[APP_INDUCTOR_CHANNEL_COUNT];

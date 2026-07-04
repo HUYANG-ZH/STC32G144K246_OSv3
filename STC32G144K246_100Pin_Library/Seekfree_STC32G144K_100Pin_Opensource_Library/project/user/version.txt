@@ -1,4 +1,16 @@
 [2026-07-04] [working] [uncommitted]
+- 退出电感调试模式：main恢复全量模块初始化和主循环任务，保留开机负压25%
+
+[2026-07-04] [working] [uncommitted]
+- 进入电感调试模式：main仅保留时基、函数队列、无线包和电感预处理，主循环10Hz输出CH1-CH4原始值
+
+[2026-07-04] [working] [uncommitted]
+- 退出负压调试模式：main恢复全量模块初始化和主循环任务，开机负压恢复25%
+
+[2026-07-04] [working] [uncommitted]
+- 进入负压调试模式：main仅保留时基、函数队列、无线包、负压控制和电池读取，关闭运动链路、IMU、电机、电感等无关模块
+
+[2026-07-04] [working] [uncommitted]
 - Service电感新增中间通道channel_m：从BSP的Channel_M透传
 - BSP电感新增中间通道ADC_CHANNEL_M：使用P05(ADC2_CH5_P05)，初始化并读取到Channel_M
 
