@@ -6,13 +6,13 @@
 #include "service_packet.h"
 #include "app_inductor_preprocess.h"
 
-#define APP_INDUCTOR_CHANNEL_COUNT             (4U)
+#define APP_INDUCTOR_CHANNEL_COUNT             APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT
 #define APP_INDUCTOR_MEDIAN_SAMPLE_COUNT       (3U)
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
-//正常情况下，CH1和CH4应该都在2600左右。
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 10U, 100U, 150U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2600U, 2600U, 4095U};
+
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 10U, 100U, 150U, 100U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2600U, 2600U, 4095U, 2600U};
 
 static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
 static float inductor_cal_max[APP_INDUCTOR_CHANNEL_COUNT];
@@ -33,15 +33,17 @@ static void app_inductor_preprocess_sync_calibration(void)
 
 static void app_inductor_preprocess_print_calibration(void)
 {
-    wprint("min=%d,%d,%d,%d max=%d,%d,%d,%d\r\n",
+    wprint("min=%d,%d,%d,%d,%d max=%d,%d,%d,%d,%d\r\n",
             app_inductor_preprocess_min_value[0],
             app_inductor_preprocess_min_value[1],
             app_inductor_preprocess_min_value[2],
             app_inductor_preprocess_min_value[3],
+            app_inductor_preprocess_min_value[4],
             app_inductor_preprocess_max_value[0],
             app_inductor_preprocess_max_value[1],
             app_inductor_preprocess_max_value[2],
-            app_inductor_preprocess_max_value[3]);
+            app_inductor_preprocess_max_value[3],
+            app_inductor_preprocess_max_value[4]);
 }
 
 static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
@@ -109,10 +111,11 @@ static void app_inductor_sample_median(uint16 median[APP_INDUCTOR_CHANNEL_COUNT]
     for(i = 0; i < APP_INDUCTOR_MEDIAN_SAMPLE_COUNT; i++)
     {
         service_inductor_get_data(&raw);
-        sample[i][0] = raw.channel_1;
-        sample[i][1] = raw.channel_2;
-        sample[i][2] = raw.channel_3;
-        sample[i][3] = raw.channel_4;
+        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH1] = raw.channel_1;
+        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH2] = raw.channel_2;
+        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH3] = raw.channel_3;
+        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH4] = raw.channel_4;
+        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_M] = raw.channel_m;
     }
 
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
@@ -255,10 +258,12 @@ void app_inductor_preprocess_init(void)
     (void)service_packet_add_variable_with_callback("ind_min1", &inductor_cal_min[1], 1U, app_inductor_preprocess_sync_calibration);
     (void)service_packet_add_variable_with_callback("ind_min2", &inductor_cal_min[2], 1U, app_inductor_preprocess_sync_calibration);
     (void)service_packet_add_variable_with_callback("ind_min3", &inductor_cal_min[3], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_minm", &inductor_cal_min[4], 1U, app_inductor_preprocess_sync_calibration);
     (void)service_packet_add_variable_with_callback("ind_max0", &inductor_cal_max[0], 1U, app_inductor_preprocess_sync_calibration);
     (void)service_packet_add_variable_with_callback("ind_max1", &inductor_cal_max[1], 1U, app_inductor_preprocess_sync_calibration);
     (void)service_packet_add_variable_with_callback("ind_max2", &inductor_cal_max[2], 1U, app_inductor_preprocess_sync_calibration);
     (void)service_packet_add_variable_with_callback("ind_max3", &inductor_cal_max[3], 1U, app_inductor_preprocess_sync_calibration);
+    (void)service_packet_add_variable_with_callback("ind_maxm", &inductor_cal_max[4], 1U, app_inductor_preprocess_sync_calibration);
     (void)service_packet_add_action("ind_read", app_inductor_preprocess_print_calibration, 0UL);
 
     pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_tick);
@@ -273,7 +278,7 @@ void app_inductor_preprocess_debug(void)
     {
         last_tick = service_timetick_what();
         service_inductor_get_data(&raw);
-        wprint("%d,%d,%d,%d\r\n", raw.channel_1, raw.channel_2, raw.channel_3, raw.channel_4);
+        wprint("%d,%d,%d,%d,%d\r\n", raw.channel_1, raw.channel_2, raw.channel_3, raw.channel_4, raw.channel_m);
     }
 }
 
