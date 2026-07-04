@@ -59,6 +59,7 @@ static uint8 motion_postprocess_rate_limit_ready = 0U;
 static void app_motion_postprocess_task(void);
 static void app_motion_postprocess_restart_pid(void);
 static void app_motion_postprocess_gyro_task(void);
+extern void app_element_imu_task(const service_imu_gyro_t *gyro);
 
 static float app_motion_postprocess_output_limit(void)
 {
@@ -157,27 +158,29 @@ static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output
 
 static void app_motion_postprocess_gyro_task(void)
 {
-    float raw_gyro;
+    service_imu_gyro_t gyro;
     uint8 ea_backup;
 
-    raw_gyro = service_imu_read_gyro_z();
+    service_imu_read_gyro(&gyro);
 
     ea_backup = EA;
     EA = 0;
-    motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, raw_gyro);
+    motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, gyro.gyro_z);
     EA = ea_backup;
+    app_element_imu_task(&gyro);
 }
 
 void app_motion_postprocess_init(void)
 {
-    float gyro_z;
+    service_imu_gyro_t gyro;
     app_motion_postprocess_data_t output;
 
-    gyro_z = service_imu_read_gyro_z();
+    service_imu_read_gyro(&gyro);
     shared_lpf_init(&motion_postprocess_gyro_z_lpf,
             APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT,
-            gyro_z);
-    motion_postprocess_gyro_z_filtered = gyro_z;
+            gyro.gyro_z);
+    motion_postprocess_gyro_z_filtered = gyro.gyro_z;
+    app_element_imu_task(&gyro);
     app_motion_postprocess_sync_pid();
     shared_pos_pid_init(&motion_postprocess_yaw_pid);
     motion_postprocess_last_enabled =

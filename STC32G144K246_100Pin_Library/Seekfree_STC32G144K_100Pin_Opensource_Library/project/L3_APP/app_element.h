@@ -17,6 +17,8 @@ typedef enum
     APP_ELEMENT_TYPE_ROUNDABOUT,
     APP_ELEMENT_TYPE_CROSSROAD,
     APP_ELEMENT_TYPE_LOST_LINE,
+    APP_ELEMENT_TYPE_CYLINDER,
+    APP_ELEMENT_TYPE_UPHILL,
 } app_element_type_t;
 
 typedef enum
@@ -63,6 +65,9 @@ typedef struct
     app_element_state_t state;
     app_element_dir_t dir;
     float active;
+    float gyro_x;
+    float gyro_y;
+    float gyro_z;
 } app_element_data_t;
 
 extern app_element_config_t app_element_config;

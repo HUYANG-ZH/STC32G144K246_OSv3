@@ -1,4 +1,28 @@
 [2026-07-05] [working] [uncommitted]
+- IMU运行期采样合并到motion_postprocess的1ms gyro任务：1000Hz一次读取gx/gy/gz，同一帧采样同时更新运动后处理gz滤波和元素识别IMU缓存，元素识别不再注册独立5ms IMU SPI读取任务
+
+[2026-07-05] [working] [uncommitted]
+- 元素识别新增上坡识别：scheduler中对gx做低通滤波，滤波gx连续2帧大于10.0时发布UPHILL结果，不做运动处理
+
+[2026-07-05] [working] [uncommitted]
+- 丢线识别四路归一化总和阈值从30.0调整为45.0
+
+[2026-07-05] [working] [uncommitted]
+- 恢复IMU三轴陀螺仪读取：BSP新增一次6字节读取gx/gy/gz，Service新增三轴读取接口且保留gz零偏；元素识别通过scheduler缓存三轴IMU，PIT中只读缓存保持轻量
+
+[2026-07-05] [working] [uncommitted]
+- 圆筒入口识别增加3帧连续确认：确认前不发布CYLINDER结果，候选中断时重新计数
+
+[2026-07-05] [working] [uncommitted]
+- 元素识别新增圆筒入口识别：基于Ly/Lx/Rx/Ry/M计算Ysum、Xsum、AllSum、MY、LRsum、Xbias、MEdge，丢线后优先于环岛发布CYLINDER结果，不做运动处理
+
+[2026-07-05] [working] [uncommitted]
+- 环岛识别增加3帧同方向连续确认：候选中断或方向变化时重新计数，确认前不发布ROUNDABOUT结果
+
+[2026-07-05] [working] [uncommitted]
+- 启用元素识别中的环岛识别：基于Ly/Lx/Rx/Ry/M归一化值计算Xsum、Ysum、Mx、Xbias、Ybias、LRsum、MY等组合量，只更新element_data识别结果，不做运动处理
+
+[2026-07-05] [working] [uncommitted]
 - 退出电感调试模式：main恢复全量模块初始化和主循环任务，保留开机负压25%
 
 [2026-07-04] [working] [uncommitted]

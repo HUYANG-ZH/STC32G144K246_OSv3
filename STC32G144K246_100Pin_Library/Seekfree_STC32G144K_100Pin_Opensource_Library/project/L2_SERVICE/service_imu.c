@@ -30,6 +30,21 @@ void service_imu_calibrate_gyro_z(void)
     wprint("gz offset=%.3f\r\n", gyro_z_offset);
 }
 
+void service_imu_read_gyro(service_imu_gyro_t *out_data)
+{
+    bsp_imu_gyro_t raw;
+
+    if(NULL == out_data)
+    {
+        return;
+    }
+
+    bsp_imu_read_gyro(&raw);
+    out_data->gyro_x = raw.gyro_x;
+    out_data->gyro_y = raw.gyro_y;
+    out_data->gyro_z = raw.gyro_z - gyro_z_offset;
+}
+
 float service_imu_read_gyro_z(void)
 {
     return bsp_imu_read_gyro_z() - gyro_z_offset;
