@@ -11,8 +11,8 @@
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
 // [4]is middle inductor
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 50U, 150U, 150U, 100U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2600U, 2600U, 4095U, 3100U};
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {50U, 50U, 50U, 150U, 100U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 3200U, 3200U, 4095U, 4095U};
 
 static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
 static float inductor_cal_max[APP_INDUCTOR_CHANNEL_COUNT];
