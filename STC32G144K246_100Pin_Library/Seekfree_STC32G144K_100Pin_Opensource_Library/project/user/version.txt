@@ -1,3 +1,21 @@
+[2026-07-06] [working] [uncommitted]
+- 清空APP元素处理实现准备重做：app_element.c保留兼容空壳API，元素结果固定为NONE/IDLE，仅缓存IMU三轴数据，不再执行环岛、圆筒、丢线、上坡识别
+
+[2026-07-06] [working] [uncommitted]
+- 关闭元素识别无线调试输出：移除element,type,dir上报任务和待上报状态，元素识别结果仍保留但不再主动无线输出
+
+[2026-07-05] [working] [uncommitted]
+- 退出电感原始值调试模式：main恢复全量模块初始化和主循环任务，保留开机负压25%，不再周期输出电感原始值
+
+[2026-07-05] [working] [uncommitted]
+- 进入电感原始值调试模式：main仅保留时基、函数队列、无线包和电感前处理，主循环10Hz无线输出CH1/CH2/CH3/CH4/M原始ADC值
+
+[2026-07-05] [working] [uncommitted]
+- 元素识别无线调试输出过滤UPHILL：上坡识别结果仍保留，但不再通过element,type,dir输出
+
+[2026-07-05] [working] [uncommitted]
+- 元素识别增加无线调试输出：识别到元素且类型/方向变化时输出一次element,type,dir，输出放在scheduler任务中执行，PIT识别中断内只置待上报标志
+
 [2026-07-05] [working] [uncommitted]
 - IMU运行期采样合并到motion_postprocess的1ms gyro任务：1000Hz一次读取gx/gy/gz，同一帧采样同时更新运动后处理gz滤波和元素识别IMU缓存，元素识别不再注册独立5ms IMU SPI读取任务
 

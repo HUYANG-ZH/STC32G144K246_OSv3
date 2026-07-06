@@ -11,7 +11,7 @@
 #define APP_INDUCTOR_HISTORY_COUNT             (15U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
 // [4]is middle inductor
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 10U, 100U, 150U, 100U};
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {150U, 50U, 150U, 150U, 100U};
 uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 2600U, 2600U, 4095U, 3100U};
 
 static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
@@ -272,18 +272,18 @@ void app_inductor_preprocess_init(void)
 void app_inductor_preprocess_debug(void)
 {
     static uint32 last_tick = 0U;
-    app_inductor_preprocess_data_t debug_output;
+    service_inductor_data_t raw;
 
     if((service_timetick_what() - last_tick) >= 100U)  // 10Hz
     {
         last_tick = service_timetick_what();
-        app_inductor_preprocess_get_data(&debug_output);
-        wprint("%.3f,%.3f,%.3f,%.3f,%.3f\r\n",
-                debug_output.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
-                debug_output.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
-                debug_output.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-                debug_output.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
-                debug_output.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
+        service_inductor_get_data(&raw);
+        wprint("%u,%u,%u,%u,%u\r\n",
+                raw.channel_1,
+                raw.channel_2,
+                raw.channel_3,
+                raw.channel_4,
+                raw.channel_m);
     }
 }
 
