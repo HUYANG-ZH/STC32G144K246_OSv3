@@ -1,3 +1,39 @@
+[2026-07-07] [car2] [uncommitted]
+- 扩大无线变量表容量：SERVICE_PACKET_VARIABLE_MAX由24提升到32，保证全量正常模式下motion_post_kd及后续motion_post变量可注册并回包
+
+[2026-07-06] [car2] [uncommitted]
+- 恢复正常模式并保留电感归一化参数：car2 main恢复全量模块初始化和主循环任务，保留开机负压25%，电感min={200,120,220,200,100} max={4095,3100,3100,4095,3000}
+
+[2026-07-06] [car2] [uncommitted]
+- 进入电感无线调试模式：car2 main关闭IMU、电机、速度、速度环、负压、运动链路、元素等无关模块，仅保留时基、函数队列、无线包和电感前处理，主循环10Hz无线输出CH1/CH2/CH3/CH4/M原始ADC值
+
+[2026-07-06] [car2] [uncommitted]
+- 进入负压调试模式：car2 main关闭IMU、电机、速度、速度环、电感、运动链路、元素等无关模块，仅保留时基、函数队列、无线包和负压控制任务，通过negative_pressure无线变量控制
+
+[2026-07-06] [car2] [uncommitted]
+- 退出电机速度环调试并进入IMU调试模式：car2 main关闭电机、速度、速度环、负压、电感、运动链路、元素等无关模块，仅保留时基、函数队列、无线包和IMU；开机延时后校准gz，主循环10Hz通过printf输出imu_gz
+
+[2026-07-06] [car2] [uncommitted]
+- 恢复car2左右电机极性：左右轮SERVICE_MOTOR_FORWARD_LEVEL由GPIO_HIGH调回GPIO_LOW，保持编码器引脚交换、编码器符号、速度环目标符号和PID方向不变
+
+[2026-07-06] [car2] [uncommitted]
+- 进入电机速度环调试模式：car2 main关闭IMU、负压、电感、运动链路、元素等无关模块，仅保留时基、函数队列、无线包、电机、编码器测速和app_speedout速度闭环，移除编码器调试的周期输出与累计计数
+
+[2026-07-06] [car2] [uncommitted]
+- 交换car2左右编码器引脚映射：左编码器改用PWME PA0/PA2，右编码器改用PWMF PA1/PA3，左右编码器符号暂保持不变，继续按前进方向均为正验证
+
+[2026-07-06] [car2] [uncommitted]
+- 重新进入编码器调试模式：car2 main关闭电机、速度环、IMU、负压、电感、运动链路、元素等无关模块，仅保留时基、函数队列、无线包和编码器测速，主循环10Hz输出左右编码器100ms累计增量与速度，前进方向要求左右增量均为正
+
+[2026-07-06] [car2] [uncommitted]
+- 调整car2左右轮电机极性：左右轮SERVICE_MOTOR_FORWARD_LEVEL由GPIO_LOW改为GPIO_HIGH，保持编码器符号、速度环目标符号和PID方向不变
+
+[2026-07-06] [car2] [uncommitted]
+- 进入电机速度环调试模式：car2 main关闭IMU、负压、电感、运动链路、元素等无关模块，仅保留时基、函数队列、无线包、电机、编码器测速和app_speedout速度闭环，通过现有speed_left/right目标与PID无线变量调试
+
+[2026-07-06] [car2] [uncommitted]
+- 进入编码器调试模式：car2 main关闭IMU、电机、负压、电感、运动链路、元素等无关模块，仅保留时基、函数队列、无线包和编码器测速服务，主循环10Hz输出左右编码器1ms增量与换算速度
+
 [2026-07-06] [working] [uncommitted]
 - 退出电感调试模式：main恢复全量模块初始化和主循环任务，保留开机负压25%，不再周期输出电感原始值
 
