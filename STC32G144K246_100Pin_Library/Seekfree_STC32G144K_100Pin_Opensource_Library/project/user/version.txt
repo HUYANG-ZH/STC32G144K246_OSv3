@@ -1,4 +1,6 @@
 [2026-07-08] [main] [uncommitted]
+- 交换左右编码器引脚：左→PWME(PA0/PA2)，右→PWMF(PA1/PA3)
+- 左右电机极性均取反：SERVICE_MOTOR_LEFT/RIGHT_FORWARD_LEVEL GPIO_LOW→GPIO_HIGH
 - 无线变量槽位扩容：SERVICE_PACKET_VARIABLE_MAX 24→32，修复6个PID调参变量注册失败
 - 关闭motion_postprocess debug printf：移除1Hz周期串口输出，减少实时性影响
 
