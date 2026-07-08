@@ -1,3 +1,7 @@
+[2026-07-08] [car2] [uncommitted]
+- 开机默认不启动电机：app_speedout init enabled=0，仅启动负压25%，收到start无线指令后再启用电机闭环
+- 圆筒识别关闭gyro_x死区：APP_ELEMENT_CYLINDER_GYRO_DEADBAND 10.0→0.0
+
 [2026-07-08] [car2] [7415aed]
 - 圆筒元素识别IMU输入轴由gyro_y切换为gyro_x，保留现有cylinder_state/cylinder_event无线接口和滑动窗口积分逻辑
 - 扩大无线变量表容量：SERVICE_PACKET_VARIABLE_MAX由24提升到32，保证全量正常模式下motion_post_kd及后续motion_post变量可注册并回包

@@ -165,8 +165,8 @@ void app_speedout_init(void)
     app_speedout_data.right_actual_mps = 0.0f;
     app_speedout_data.left_pwm = 0.0f;
     app_speedout_data.right_pwm = 0.0f;
-    app_speedout_data.enabled = 1.0f;
-    speedout_last_enabled = 1U;
+    app_speedout_data.enabled = 0.0f;
+    speedout_last_enabled = 0U;
 
     app_speedout_register_packet();
     pit_ms_init(APP_SPEEDOUT_PIT, APP_SPEEDOUT_PERIOD_MS, app_speedout_tick);
