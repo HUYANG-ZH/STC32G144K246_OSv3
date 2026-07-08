@@ -5,10 +5,11 @@
 #include "service_packet.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
+#include "service_buzzer.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
-#define APP_ELEMENT_CYLINDER_DEAD_MS            (500UL)
+#define APP_ELEMENT_CYLINDER_DEAD_MS            (1000UL)
 #define APP_ELEMENT_CYLINDER_DEAD_TICK          (APP_ELEMENT_CYLINDER_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_CYLINDER_WINDOW_MS          (2000UL)
 #define APP_ELEMENT_CYLINDER_WINDOW_TICK        (APP_ELEMENT_CYLINDER_WINDOW_MS * APP_ELEMENT_TICK_PER_MS)
@@ -243,6 +244,7 @@ static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
     app_element_cylinder_clear();
 
     wprint("cylinder,1.000\r\n");
+    service_buzzer_beep_ms(300U);
 }
 
 static void app_element_cylinder_update(float gyro_x, uint32 delta_tick, uint32 now)

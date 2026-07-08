@@ -91,5 +91,6 @@ void main(void)
         service_packet_update();
         app_scheduler_run();
         service_negative_pressure_task();
+        service_buzzer_task();
     }
 }
