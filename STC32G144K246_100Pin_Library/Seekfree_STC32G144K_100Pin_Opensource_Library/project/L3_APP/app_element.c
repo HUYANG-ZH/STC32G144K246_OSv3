@@ -11,6 +11,8 @@
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
 #define APP_ELEMENT_CYLINDER_DEAD_MS            (1000UL)
 #define APP_ELEMENT_CYLINDER_DEAD_TICK          (APP_ELEMENT_CYLINDER_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT_MS       (500UL)        // 圆筒触发后转向限幅持续时间
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT_TICK     (APP_ELEMENT_CYLINDER_YAW_LIMIT_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_CYLINDER_WINDOW_MS          (2000UL)
 #define APP_ELEMENT_CYLINDER_WINDOW_TICK        (APP_ELEMENT_CYLINDER_WINDOW_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_CYLINDER_BUCKET_MS          (10UL)
@@ -64,6 +66,8 @@ static float element_cylinder_bucket_angle_neg[APP_ELEMENT_CYLINDER_BUCKET_COUNT
 static uint32 element_cylinder_bucket_tick[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
 static uint32 element_last_tick = 0U;
 static uint32 element_cylinder_dead_start_tick = 0U;
+static uint32 element_cylinder_yaw_limit_start_tick = 0U;
+static uint8 element_cylinder_yaw_limit_active = 0U;
 static float element_cylinder_angle_pos_deg = 0.0f;
 static float element_cylinder_angle_neg_deg = 0.0f;
 static float element_cylinder_gyro_x = 0.0f;
@@ -240,6 +244,8 @@ static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
 
     element_cylinder_dead = 1U;
     element_cylinder_dead_start_tick = now;
+    element_cylinder_yaw_limit_active = 1U;
+    element_cylinder_yaw_limit_start_tick = now;
     element_cylinder_event = (0 < dir) ? 1.0f : -1.0f;
     app_element_cylinder_clear();
 
@@ -368,5 +374,19 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
     else if(0U != delta_tick)
     {
         app_element_cylinder_update(gyro_x, delta_tick, now);
+    }
+
+    /* 圆筒转向限幅持续时间到期后清除元素状态 */
+    if((0U != element_cylinder_yaw_limit_active) &&
+            ((uint32)(now - element_cylinder_yaw_limit_start_tick) >= APP_ELEMENT_CYLINDER_YAW_LIMIT_TICK))
+    {
+        element_cylinder_yaw_limit_active = 0U;
+        ea_backup = EA;
+        EA = 0;
+        element_data.type = APP_ELEMENT_TYPE_NONE;
+        element_data.state = APP_ELEMENT_STATE_IDLE;
+        element_data.dir = APP_ELEMENT_DIR_NONE;
+        element_data.active = 0.0f;
+        EA = ea_backup;
     }
 }

@@ -279,6 +279,25 @@ static void app_motion_postprocess_task(void)
     feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
             static_feedforward_speed);
     target_yaw_rate_radps = feedback_yaw_rate_radps;
+
+    /* 圆筒元素：限制转向角速度 */
+    {
+        app_element_data_t element;
+        app_element_get_data(&element);
+        if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
+        {
+            float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
+            if(target_yaw_rate_radps > limit)
+            {
+                target_yaw_rate_radps = limit;
+            }
+            else if(target_yaw_rate_radps < -limit)
+            {
+                target_yaw_rate_radps = -limit;
+            }
+        }
+    }
+
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 

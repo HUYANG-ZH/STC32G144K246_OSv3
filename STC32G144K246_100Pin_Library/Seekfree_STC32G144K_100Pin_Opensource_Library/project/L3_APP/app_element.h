@@ -4,6 +4,10 @@
 #include "zf_common_typedef.h"
 #include "service_imu.h"
 
+#ifndef APP_ELEMENT_CYLINDER_YAW_LIMIT
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT          (0.5236f)   // 圆筒元素触发后车体转向角速度限制，单位 rad/s，默认 30deg/s
+#endif
+
 #ifndef APP_ELEMENT_PIT
 #define APP_ELEMENT_PIT                         TIM7_PIT
 #endif
