@@ -4,6 +4,7 @@
 #include "shared_pos_pid.h"
 #include "service_imu.h"
 #include "service_packet.h"
+#include "app_element.h"
 #include "app_feedforward.h"
 #include "app_motion_preprocess.h"
 #include "app_speed_plan.h"
@@ -59,7 +60,6 @@ static uint8 motion_postprocess_rate_limit_ready = 0U;
 static void app_motion_postprocess_task(void);
 static void app_motion_postprocess_restart_pid(void);
 static void app_motion_postprocess_gyro_task(void);
-extern void app_element_imu_task(const service_imu_gyro_t *gyro);
 
 static float app_motion_postprocess_output_limit(void)
 {

@@ -2,6 +2,7 @@
 #define APP_ELEMENT_H
 
 #include "zf_common_typedef.h"
+#include "service_imu.h"
 
 #ifndef APP_ELEMENT_PIT
 #define APP_ELEMENT_PIT                         TIM7_PIT
@@ -74,5 +75,6 @@ extern app_element_config_t app_element_config;
 
 void app_element_init(void);
 void app_element_get_data(app_element_data_t *out_data);
+void app_element_imu_task(const service_imu_gyro_t *gyro);
 
 #endif

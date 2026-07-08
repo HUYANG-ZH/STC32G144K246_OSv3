@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_imu                                                        04/07/26  17:56:33  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        05/07/26  01:44:33  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
@@ -43,20 +43,37 @@ stmt  level    source
    30   1          wprint("gz offset=%.3f\r\n", gyro_z_offset);
    31   1      }
    32          
-   33          float service_imu_read_gyro_z(void)
+   33          void service_imu_read_gyro(service_imu_gyro_t *out_data)
    34          {
-   35   1          return bsp_imu_read_gyro_z() - gyro_z_offset;
-   36   1      }
+   35   1          bsp_imu_gyro_t raw;
+   36   1      
+   37   1          if(NULL == out_data)
+   38   1          {
+   39   2              return;
+   40   2          }
+   41   1      
+   42   1          bsp_imu_read_gyro(&raw);
+   43   1          out_data->gyro_x = raw.gyro_x;
+   44   1          out_data->gyro_y = raw.gyro_y;
+   45   1          out_data->gyro_z = raw.gyro_z - gyro_z_offset;
+   46   1      }
+   47          
+   48          float service_imu_read_gyro_z(void)
+   49          {
+   50   1          return bsp_imu_read_gyro_z() - gyro_z_offset;
+   51   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       185     ------
+C251 COMPILER V5.60.0,  service_imu                                                        05/07/26  01:44:33  PAGE 2   
+
+  ecode size           =       325     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        10     ------
+  xdata size           =        26     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -67,8 +84,6 @@ Module Information          Static   Overlayable
   huge data size       =    ------     ------
   const size           =    ------     ------
   hconst size          =        46     ------
-C251 COMPILER V5.60.0,  service_imu                                                        04/07/26  17:56:33  PAGE 2   
-
 End of Module Information.
 
 
