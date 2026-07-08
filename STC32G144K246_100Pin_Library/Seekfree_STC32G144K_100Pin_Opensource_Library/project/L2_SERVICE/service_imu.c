@@ -7,6 +7,7 @@
 #define SERVICE_IMU_CALIBRATE_COUNT     (500U)
 #define SERVICE_IMU_CALIBRATE_INTERVAL  (10U)
 
+static float gyro_x_offset = 0.0f;
 static float gyro_z_offset = 0.0f;
 
 void service_imu_init(void)
@@ -30,6 +31,24 @@ void service_imu_calibrate_gyro_z(void)
     wprint("gz offset=%.3f\r\n", gyro_z_offset);
 }
 
+void service_imu_calibrate_gyro_x(void)
+{
+    uint16 i;
+    float sum = 0.0f;
+    bsp_imu_gyro_t raw;
+
+    wprint("gx calibrating...\r\n");
+    for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
+    {
+        bsp_imu_read_gyro(&raw);
+        sum += raw.gyro_x;
+        service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
+    }
+
+    gyro_x_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
+    wprint("gx offset=%.3f\r\n", gyro_x_offset);
+}
+
 void service_imu_read_gyro(service_imu_gyro_t *out_data)
 {
     bsp_imu_gyro_t raw;
@@ -40,7 +59,7 @@ void service_imu_read_gyro(service_imu_gyro_t *out_data)
     }
 
     bsp_imu_read_gyro(&raw);
-    out_data->gyro_x = raw.gyro_x;
+    out_data->gyro_x = raw.gyro_x - gyro_x_offset;
     out_data->gyro_y = raw.gyro_y;
     out_data->gyro_z = raw.gyro_z - gyro_z_offset;
 }
