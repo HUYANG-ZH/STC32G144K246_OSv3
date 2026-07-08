@@ -321,16 +321,4 @@ static void app_motion_postprocess_task(void)
 
     app_speedout_set_target(output.left_target_mps, output.right_target_mps);
     app_motion_postprocess_publish(&output);
-
-    {
-        static uint16 print_tick = 0U;
-        print_tick++;
-        if(print_tick >= 200U)
-        {
-            print_tick = 0U;
-            printf("%.3f,%.3f,%.3f,%.3f\r\n", raw_error,
-                    target_yaw_rate_radps, actual_yaw_rate_radps,
-                    feedforward_differential_speed);
-        }
-    }
 }
