@@ -31,11 +31,12 @@
 
 /* 环岛元素检测参数 */
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (5U)          // 连续确认帧数
+#define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (1000UL)      // 触发后死区时间
 #define APP_ELEMENT_ROUNDABOUT_MID_MIN          (70.0f)       // 中电感归一化下限
 #define APP_ELEMENT_ROUNDABOUT_MID_MAX          (90.0f)       // 中电感归一化上限
 #define APP_ELEMENT_ROUNDABOUT_Y_SUM_MIN        (190.0f)      // y1+y2下限(外侧电感)
 #define APP_ELEMENT_ROUNDABOUT_X_SUM_MAX        (150.0f)      // x1+x2上限(内侧电感)
-#define APP_ELEMENT_ROUNDABOUT_TASK_ID          (2U)          // scheduler任务ID
+#define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)          // scheduler任务ID
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)          // 任务优先级
 #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (2U)          // 检测周期2ms
 
@@ -89,6 +90,8 @@ static uint8 element_gyro_x_lpf_ready = 0U;
 static uint8 element_cylinder_bucket_head = 0U;
 static uint8 element_cylinder_bucket_count = 0U;
 static uint8 element_roundabout_confirm_count = 0U;
+static uint32 element_roundabout_dead_start_tick = 0U;
+static uint8 element_roundabout_dead = 0U;
 
 static void app_element_cylinder_state_reply(void);
 
@@ -316,7 +319,24 @@ static void app_element_cylinder_state_reply(void)
 static void app_element_roundabout_task(void)
 {
     app_inductor_preprocess_data_t inductor;
+    uint32 now;
     uint8 ea_backup;
+
+    now = service_timetick_what();
+
+    /* 死区到期自动清除 */
+    if((0U != element_roundabout_dead) &&
+            ((uint32)(now - element_roundabout_dead_start_tick) >=
+             (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)))
+    {
+        element_roundabout_dead = 0U;
+    }
+
+    /* 死区内跳过检测 */
+    if(0U != element_roundabout_dead)
+    {
+        return;
+    }
 
     app_inductor_preprocess_get_data(&inductor);
 
@@ -332,6 +352,8 @@ static void app_element_roundabout_task(void)
             /* 圆筒优先：圆筒活跃时不发布环岛 */
             if((0U == element_cylinder_dead) && (0U == element_cylinder_yaw_limit_active))
             {
+                element_roundabout_dead = 1U;
+                element_roundabout_dead_start_tick = now;
                 ea_backup = EA;
                 EA = 0;
                 element_data.type = APP_ELEMENT_TYPE_ROUNDABOUT;
