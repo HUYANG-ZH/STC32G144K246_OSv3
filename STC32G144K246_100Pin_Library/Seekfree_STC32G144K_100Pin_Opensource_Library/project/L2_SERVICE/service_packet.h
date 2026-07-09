@@ -8,7 +8,7 @@
 #endif
 
 #ifndef SERVICE_PACKET_ACTION_MAX
-#define SERVICE_PACKET_ACTION_MAX          (8U)
+#define SERVICE_PACKET_ACTION_MAX          (10U)
 #endif
 
 #ifndef SERVICE_PACKET_VALUE_MAX

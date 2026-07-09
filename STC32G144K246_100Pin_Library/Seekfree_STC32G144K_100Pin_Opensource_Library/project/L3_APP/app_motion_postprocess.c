@@ -4,6 +4,7 @@
 #include "shared_pos_pid.h"
 #include "service_imu.h"
 #include "service_packet.h"
+#include "app_element.h"
 #include "app_feedforward.h"
 #include "app_motion_preprocess.h"
 #include "app_speed_plan.h"
@@ -59,7 +60,6 @@ static uint8 motion_postprocess_rate_limit_ready = 0U;
 static void app_motion_postprocess_task(void);
 static void app_motion_postprocess_restart_pid(void);
 static void app_motion_postprocess_gyro_task(void);
-extern void app_element_imu_task(const service_imu_gyro_t *gyro);
 
 static float app_motion_postprocess_output_limit(void)
 {
@@ -279,6 +279,25 @@ static void app_motion_postprocess_task(void)
     feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
             static_feedforward_speed);
     target_yaw_rate_radps = feedback_yaw_rate_radps;
+
+    /* 圆筒元素：限制转向角速度 */
+    {
+        app_element_data_t element;
+        app_element_get_data(&element);
+        if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
+        {
+            float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
+            if(target_yaw_rate_radps > limit)
+            {
+                target_yaw_rate_radps = limit;
+            }
+            else if(target_yaw_rate_radps < -limit)
+            {
+                target_yaw_rate_radps = -limit;
+            }
+        }
+    }
+
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
@@ -321,4 +340,16 @@ static void app_motion_postprocess_task(void)
 
     app_speedout_set_target(output.left_target_mps, output.right_target_mps);
     app_motion_postprocess_publish(&output);
+
+    {
+        static uint16 print_tick = 0U;
+        print_tick++;
+        if(print_tick >= 200U)
+        {
+            print_tick = 0U;
+            printf("%.3f,%.3f,%.3f,%.3f\r\n", raw_error,
+                    target_yaw_rate_radps, actual_yaw_rate_radps,
+                    feedforward_differential_speed);
+        }
+    }
 }

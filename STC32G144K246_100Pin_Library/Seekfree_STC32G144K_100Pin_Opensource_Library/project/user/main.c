@@ -72,6 +72,7 @@ void main(void)
     service_imu_init();
     service_delay_ms(2000U);
     service_imu_calibrate_gyro_z();
+    service_imu_calibrate_gyro_x();
     service_motor_init();
     service_negative_pressure_init();
     service_speed_init();
@@ -91,5 +92,6 @@ void main(void)
         service_packet_update();
         app_scheduler_run();
         service_negative_pressure_task();
+        service_buzzer_task();
     }
 }

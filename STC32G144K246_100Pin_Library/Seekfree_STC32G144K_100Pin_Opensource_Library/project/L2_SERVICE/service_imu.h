@@ -9,6 +9,7 @@ typedef struct
 } service_imu_gyro_t;
 
 void service_imu_init(void);
+void service_imu_calibrate_gyro_x(void);
 void service_imu_calibrate_gyro_z(void);
 void service_imu_read_gyro(service_imu_gyro_t *out_data);
 float service_imu_read_gyro_z(void);
