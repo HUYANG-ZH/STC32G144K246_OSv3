@@ -6,6 +6,8 @@
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 #include "service_buzzer.h"
+#include "app_inductor_preprocess.h"
+#include "app_scheduler.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
@@ -26,6 +28,16 @@
 #define APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA     (0.1f)
 #define APP_ELEMENT_TICK_TO_SECOND              (0.0001f)
 #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
+
+/* 环岛元素检测参数 */
+#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (5U)          // 连续确认帧数
+#define APP_ELEMENT_ROUNDABOUT_MID_MIN          (70.0f)       // 中电感归一化下限
+#define APP_ELEMENT_ROUNDABOUT_MID_MAX          (90.0f)       // 中电感归一化上限
+#define APP_ELEMENT_ROUNDABOUT_Y_SUM_MIN        (190.0f)      // y1+y2下限(外侧电感)
+#define APP_ELEMENT_ROUNDABOUT_X_SUM_MAX        (150.0f)      // x1+x2上限(内侧电感)
+#define APP_ELEMENT_ROUNDABOUT_TASK_ID          (2U)          // scheduler任务ID
+#define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)          // 任务优先级
+#define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (2U)          // 检测周期2ms
 
 app_element_config_t app_element_config =
 {
@@ -76,6 +88,7 @@ static uint8 element_cylinder_dead = 0U;
 static uint8 element_gyro_x_lpf_ready = 0U;
 static uint8 element_cylinder_bucket_head = 0U;
 static uint8 element_cylinder_bucket_count = 0U;
+static uint8 element_roundabout_confirm_count = 0U;
 
 static void app_element_cylinder_state_reply(void);
 
@@ -295,11 +308,54 @@ static void app_element_cylinder_state_reply(void)
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+// 函数简介     环岛元素检测任务，2ms周期
+// 参数说明     void
+// 返回参数     void
+// 备注信息     中电感70~90、y1+y2>190、x1+x2<150连续5帧确认
+//-------------------------------------------------------------------------------------------------------------------
+static void app_element_roundabout_task(void)
+{
+    app_inductor_preprocess_data_t inductor;
+    uint8 ea_backup;
+
+    app_inductor_preprocess_get_data(&inductor);
+
+    if((inductor.normalized[4] >= APP_ELEMENT_ROUNDABOUT_MID_MIN) &&
+            (inductor.normalized[4] <= APP_ELEMENT_ROUNDABOUT_MID_MAX) &&
+            ((inductor.normalized[0] + inductor.normalized[3]) > APP_ELEMENT_ROUNDABOUT_Y_SUM_MIN) &&
+            ((inductor.normalized[1] + inductor.normalized[2]) < APP_ELEMENT_ROUNDABOUT_X_SUM_MAX))
+    {
+        element_roundabout_confirm_count++;
+        if(element_roundabout_confirm_count >= APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT)
+        {
+            element_roundabout_confirm_count = 0U;
+            /* 圆筒优先：圆筒活跃时不发布环岛 */
+            if((0U == element_cylinder_dead) && (0U == element_cylinder_yaw_limit_active))
+            {
+                ea_backup = EA;
+                EA = 0;
+                element_data.type = APP_ELEMENT_TYPE_ROUNDABOUT;
+                element_data.state = APP_ELEMENT_STATE_DONE;
+                element_data.dir = APP_ELEMENT_DIR_NONE;
+                element_data.active = 1.0f;
+                EA = ea_backup;
+                wprint("roundabout,1.000\r\n");
+                service_buzzer_beep_ms(300U);
+            }
+        }
+    }
+    else
+    {
+        element_roundabout_confirm_count = 0U;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
 // 函数简介     元素识别初始化
 // 参数说明     void
 // 返回参数     void
 // 使用示例     app_element_init();
-// 备注信息     当前仅启用圆筒识别，初始化后默认无元素
+// 备注信息     启用圆筒识别+环岛识别，初始化后默认无元素
 //-------------------------------------------------------------------------------------------------------------------
 void app_element_init(void)
 {
@@ -307,6 +363,8 @@ void app_element_init(void)
     (void)service_packet_add_action("cylinder_state", app_element_cylinder_state_reply, 0UL);
     (void)service_packet_add_variable("cylinder_event",
             &element_cylinder_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)app_scheduler_add(APP_ELEMENT_ROUNDABOUT_TASK_ID, app_element_roundabout_task,
+            APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY, APP_ELEMENT_ROUNDABOUT_PERIOD_MS);
 }
 
 //-------------------------------------------------------------------------------------------------------------------

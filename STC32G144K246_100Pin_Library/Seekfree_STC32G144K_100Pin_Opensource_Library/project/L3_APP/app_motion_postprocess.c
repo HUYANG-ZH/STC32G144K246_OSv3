@@ -160,6 +160,7 @@ static void app_motion_postprocess_gyro_task(void)
 {
     service_imu_gyro_t gyro;
     uint8 ea_backup;
+    static uint8 element_divider = 0U;
 
     service_imu_read_gyro(&gyro);
 
@@ -167,7 +168,13 @@ static void app_motion_postprocess_gyro_task(void)
     EA = 0;
     motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, gyro.gyro_z);
     EA = ea_backup;
-    app_element_imu_task(&gyro);
+
+    element_divider++;
+    if(element_divider >= 5U)
+    {
+        element_divider = 0U;
+        app_element_imu_task(&gyro);
+    }
 }
 
 void app_motion_postprocess_init(void)
