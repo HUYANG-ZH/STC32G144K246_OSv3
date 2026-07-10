@@ -1,9 +1,8 @@
 #include "zf_common_headfile.h"
 #include "sys_tfpu.h"
 #include "service_inductor.h"
-#include "service_timetick.h"
-#include "service_wireless_uart.h"
 #include "service_packet.h"
+#include "service_wireless_uart.h"
 #include "app_inductor_preprocess.h"
 
 #define APP_INDUCTOR_CHANNEL_COUNT             APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT
@@ -267,24 +266,6 @@ void app_inductor_preprocess_init(void)
     (void)service_packet_add_action("ind_read", app_inductor_preprocess_print_calibration, 0UL);
 
     pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_tick);
-}
-
-void app_inductor_preprocess_debug(void)
-{
-    static uint32 last_tick = 0U;
-    service_inductor_data_t raw;
-
-    if((service_timetick_what() - last_tick) >= 100U)  // 10Hz
-    {
-        last_tick = service_timetick_what();
-        service_inductor_get_data(&raw);
-        wprint("%u,%u,%u,%u,%u\r\n",
-                raw.channel_1,
-                raw.channel_2,
-                raw.channel_3,
-                raw.channel_4,
-                raw.channel_m);
-    }
 }
 
 void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)

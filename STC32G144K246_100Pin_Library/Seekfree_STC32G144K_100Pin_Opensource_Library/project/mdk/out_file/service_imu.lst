@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_imu                                                        04/07/26  17:56:33  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        11/07/26  00:21:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
@@ -20,43 +20,79 @@ stmt  level    source
     7          #define SERVICE_IMU_CALIBRATE_COUNT     (500U)
     8          #define SERVICE_IMU_CALIBRATE_INTERVAL  (10U)
     9          
-   10          static float gyro_z_offset = 0.0f;
-   11          
-   12          void service_imu_init(void)
-   13          {
-   14   1          bsp_imu_init();
-   15   1      }
-   16          
-   17          void service_imu_calibrate_gyro_z(void)
-   18          {
-   19   1          uint16 i;
-   20   1          float sum = 0.0f;
-   21   1      
-   22   1          wprint("gz calibrating...\r\n");
-   23   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
-   24   1          {
-   25   2              sum += bsp_imu_read_gyro_z();
-   26   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
-   27   2          }
-   28   1      
-   29   1          gyro_z_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
-   30   1          wprint("gz offset=%.3f\r\n", gyro_z_offset);
-   31   1      }
-   32          
-   33          float service_imu_read_gyro_z(void)
-   34          {
-   35   1          return bsp_imu_read_gyro_z() - gyro_z_offset;
-   36   1      }
+   10          static float gyro_x_offset = 0.0f;
+   11          static float gyro_z_offset = 0.0f;
+   12          
+   13          void service_imu_init(void)
+   14          {
+   15   1          bsp_imu_init();
+   16   1      }
+   17          
+   18          void service_imu_calibrate_gyro_z(void)
+   19          {
+   20   1          uint16 i;
+   21   1          float sum = 0.0f;
+   22   1      
+   23   1          wprint("gz calibrating...\r\n");
+   24   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
+   25   1          {
+   26   2              sum += bsp_imu_read_gyro_z();
+   27   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
+   28   2          }
+   29   1      
+   30   1          gyro_z_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
+   31   1          wprint("gz offset=%.3f\r\n", gyro_z_offset);
+   32   1      }
+   33          
+   34          void service_imu_calibrate_gyro_x(void)
+   35          {
+   36   1          uint16 i;
+   37   1          float sum = 0.0f;
+   38   1          bsp_imu_gyro_t raw;
+   39   1      
+   40   1          wprint("gx calibrating...\r\n");
+   41   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
+   42   1          {
+   43   2              bsp_imu_read_gyro(&raw);
+   44   2              sum += raw.gyro_x;
+   45   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
+   46   2          }
+   47   1      
+   48   1          gyro_x_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
+   49   1          wprint("gx offset=%.3f\r\n", gyro_x_offset);
+   50   1      }
+   51          
+   52          void service_imu_read_gyro(service_imu_gyro_t *out_data)
+   53          {
+   54   1          bsp_imu_gyro_t raw;
+   55   1      
+C251 COMPILER V5.60.0,  service_imu                                                        11/07/26  00:21:27  PAGE 2   
+
+   56   1          if(NULL == out_data)
+   57   1          {
+   58   2              return;
+   59   2          }
+   60   1      
+   61   1          bsp_imu_read_gyro(&raw);
+   62   1          out_data->gyro_x = raw.gyro_x - gyro_x_offset;
+   63   1          out_data->gyro_y = raw.gyro_y;
+   64   1          out_data->gyro_z = raw.gyro_z - gyro_z_offset;
+   65   1      }
+   66          
+   67          float service_imu_read_gyro_z(void)
+   68          {
+   69   1          return bsp_imu_read_gyro_z() - gyro_z_offset;
+   70   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       185     ------
+  ecode size           =       521     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        10     ------
+  xdata size           =        48     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -66,9 +102,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        46     ------
-C251 COMPILER V5.60.0,  service_imu                                                        04/07/26  17:56:33  PAGE 2   
-
+  hconst size          =        92     ------
 End of Module Information.
 
 

@@ -30,7 +30,6 @@ extern uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_PREPROCESS_CHANNEL_
 extern uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT];
 
 void app_inductor_preprocess_init(void);
-void app_inductor_preprocess_debug(void);
 void app_inductor_preprocess_update_calibration(void);
 void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data);
 

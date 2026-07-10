@@ -30,9 +30,8 @@
 #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
 
 /* 环岛元素检测参数 */
-/* 得分公式: S = 31*y1 + 2*x1 + 2*x2 + 22*y2 - 23*M */
-#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (3367.0f)     // 单帧S阈值
-#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (3U)          // 连续确认帧数
+/* 整数得分公式: S = 10*y1 + x1 - 2*x2 + 15*y2 - 23*M */
+#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (114)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (1000UL)      // 触发后死区时间
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)          // scheduler任务ID
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)          // 任务优先级
@@ -87,7 +86,6 @@ static uint8 element_cylinder_dead = 0U;
 static uint8 element_gyro_x_lpf_ready = 0U;
 static uint8 element_cylinder_bucket_head = 0U;
 static uint8 element_cylinder_bucket_count = 0U;
-static uint8 element_roundabout_confirm_count = 0U;
 static uint32 element_roundabout_dead_start_tick = 0U;
 static uint8 element_roundabout_dead = 0U;
 static uint8 element_roundabout_count = 0U;
@@ -100,6 +98,23 @@ static uint32 element_roundabout_bias_start_tick = 0U;
 static uint32 element_roundabout_bias_duration_tick = 0U;
 
 static void app_element_cylinder_state_reply(void);
+
+static int16 app_element_roundabout_score(const app_inductor_preprocess_data_t *inductor)
+{
+    int16 y1;
+    int16 x1;
+    int16 x2;
+    int16 y2;
+    int16 middle;
+
+    y1 = (int16)inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1];
+    x1 = (int16)inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2];
+    x2 = (int16)inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3];
+    y2 = (int16)inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4];
+    middle = (int16)inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
+
+    return (int16)(10 * y1 + x1 - 2 * x2 + 15 * y2 - 23 * middle);
+}
 
 static void app_element_reset(void)
 {
@@ -382,20 +397,13 @@ static void app_element_roundabout_task(void)
 
     app_inductor_preprocess_get_data(&inductor);
 
-    /* 环岛得分: S = 31*y1 + 2*x1 + 2*x2 + 22*y2 - 23*M */
+    /* 环岛整数得分: S = 10*y1 + x1 - 2*x2 + 15*y2 - 23*M */
     {
-        float score;
-        score  = tfpu_mul(31.0f, inductor.normalized[0]);
-        score  = tfpu_add(score, tfpu_mul(2.0f, inductor.normalized[1]));
-        score  = tfpu_add(score, tfpu_mul(2.0f, inductor.normalized[2]));
-        score  = tfpu_add(score, tfpu_mul(22.0f, inductor.normalized[3]));
-        score  = tfpu_sub(score, tfpu_mul(23.0f, inductor.normalized[4]));
+        int16 score;
+        score = app_element_roundabout_score(&inductor);
 
-        if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD) {
-        element_roundabout_confirm_count++;
-        if(element_roundabout_confirm_count >= APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT)
+        if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD)
         {
-            element_roundabout_confirm_count = 0U;
             /* 圆筒优先：圆筒活跃时不发布环岛 */
             if((0U == element_cylinder_dead) && (0U == element_cylinder_yaw_limit_active))
             {
@@ -424,11 +432,6 @@ static void app_element_roundabout_task(void)
             }
         }
     }
-    else
-    {
-        element_roundabout_confirm_count = 0U;
-    }
-}
 
 }
 //-------------------------------------------------------------------------------------------------------------------
