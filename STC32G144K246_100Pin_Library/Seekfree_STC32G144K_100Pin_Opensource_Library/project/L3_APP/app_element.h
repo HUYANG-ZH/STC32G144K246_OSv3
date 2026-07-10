@@ -77,6 +77,9 @@ typedef struct
 
 extern app_element_config_t app_element_config;
 
+extern float app_element_roundabout_bias_yaw_radps;
+extern uint8 app_element_roundabout_bias_active;
+
 void app_element_init(void);
 void app_element_get_data(app_element_data_t *out_data);
 void app_element_imu_task(const service_imu_gyro_t *gyro);

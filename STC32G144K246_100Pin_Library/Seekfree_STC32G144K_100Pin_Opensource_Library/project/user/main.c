@@ -45,6 +45,7 @@
 #include "service_negative_pressure.h"
 #include "service_speed.h"
 #include "service_delay.h"
+#include "shared_lpf.h"
 // #include "app_battery_guard.h"
 #include "app_element.h"
 #include "app_feedforward.h"

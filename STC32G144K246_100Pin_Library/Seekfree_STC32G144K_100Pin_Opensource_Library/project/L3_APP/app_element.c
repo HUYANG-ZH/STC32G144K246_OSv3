@@ -92,6 +92,14 @@ static uint8 element_cylinder_bucket_count = 0U;
 static uint8 element_roundabout_confirm_count = 0U;
 static uint32 element_roundabout_dead_start_tick = 0U;
 static uint8 element_roundabout_dead = 0U;
+static uint8 element_roundabout_count = 0U;
+static float element_roundabout_count_float = 0.0f;
+
+/* 环岛偏置变量（被 motion_postprocess 读取） */
+float app_element_roundabout_bias_yaw_radps = 0.0f;
+uint8 app_element_roundabout_bias_active = 0U;
+static uint32 element_roundabout_bias_start_tick = 0U;
+static uint32 element_roundabout_bias_duration_tick = 0U;
 
 static void app_element_cylinder_state_reply(void);
 
@@ -310,6 +318,42 @@ static void app_element_cylinder_state_reply(void)
             element_cylinder_event);
 }
 
+/* 环岛处理函数：根据触发序号施加角速度偏置 */
+static void app_element_roundabout_apply_handler(uint8 index, uint32 now)
+{
+    switch(index)
+    {
+        case 0U: /* 第1个环岛：向左，持续600ms */
+            app_element_roundabout_bias_yaw_radps = 15.0f;
+            app_element_roundabout_bias_active = 1U;
+            element_roundabout_bias_start_tick = now;
+            element_roundabout_bias_duration_tick = 700UL * APP_ELEMENT_TICK_PER_MS;
+            break;
+        case 1U: /* 第2个环岛：向右200deg/s，持续200ms */
+            app_element_roundabout_bias_yaw_radps = -20.0f;
+            app_element_roundabout_bias_active = 1U;
+            element_roundabout_bias_start_tick = now;
+            element_roundabout_bias_duration_tick = 500UL * APP_ELEMENT_TICK_PER_MS;
+            break;
+        case 2U: /* 第3个：预留 */
+        case 3U: /* 第4个：预留 */
+        case 4U: /* 第5个：预留 */
+        case 5U: /* 第6个：预留 */
+        case 6U: /* 第7个：预留 */
+        case 7U: /* 第8个：预留 */
+        default:
+            break;
+    }
+}
+
+/* 无线reset_round指令：清除环岛计数 */
+static void app_element_roundabout_clear_count(void)
+{
+    element_roundabout_count = 0U;
+    element_roundabout_count_float = 0.0f;
+    wprint("roundabout_count,0.000\r\n");
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     环岛元素检测任务，2ms周期
 // 参数说明     void
@@ -361,8 +405,19 @@ static void app_element_roundabout_task(void)
                 element_data.dir = APP_ELEMENT_DIR_NONE;
                 element_data.active = 1.0f;
                 EA = ea_backup;
-                wprint("roundabout,1.000\r\n");
+                wprint("roundabout,1.000,%u\r\n", (uint16)element_roundabout_count);
                 service_buzzer_beep_ms(300U);
+                /* 前4个环岛应用处理函数 */
+                if(element_roundabout_count < 4U)
+                {
+                    app_element_roundabout_apply_handler(element_roundabout_count, now);
+                }
+                element_roundabout_count++;
+                if(element_roundabout_count >= 8U)
+                {
+                    element_roundabout_count = 8U;
+                }
+                element_roundabout_count_float = (float)element_roundabout_count;
             }
         }
     }
@@ -387,6 +442,9 @@ void app_element_init(void)
             &element_cylinder_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
     (void)app_scheduler_add(APP_ELEMENT_ROUNDABOUT_TASK_ID, app_element_roundabout_task,
             APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY, APP_ELEMENT_ROUNDABOUT_PERIOD_MS);
+    (void)service_packet_add_action("reset_round", app_element_roundabout_clear_count, 0UL);
+    (void)service_packet_add_variable("roundabout_count",
+            &element_roundabout_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -468,5 +526,13 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         element_data.dir = APP_ELEMENT_DIR_NONE;
         element_data.active = 0.0f;
         EA = ea_backup;
+    }
+
+    /* 环岛角速度偏置到期清除 */
+    if((0U != app_element_roundabout_bias_active) &&
+            ((uint32)(now - element_roundabout_bias_start_tick) >= element_roundabout_bias_duration_tick))
+    {
+        app_element_roundabout_bias_active = 0U;
+        app_element_roundabout_bias_yaw_radps = 0.0f;
     }
 }
