@@ -305,11 +305,12 @@ static void app_motion_postprocess_task(void)
         }
     }
 
-    /* 环岛元素：应用角速度偏置（同时覆盖PID setpoint） */
+    /* 环岛元素：角速度偏置融合 */
     if(0U != app_element_roundabout_bias_active)
     {
-        target_yaw_rate_radps = app_element_roundabout_bias_yaw_radps;
-        feedback_yaw_rate_radps = app_element_roundabout_bias_yaw_radps;
+        target_yaw_rate_radps = tfpu_add(target_yaw_rate_radps,
+                tfpu_mul(APP_ELEMENT_ROUNDABOUT_BIAS_BLEND, app_element_roundabout_bias_yaw_radps));
+        feedback_yaw_rate_radps = target_yaw_rate_radps;
     }
 
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);

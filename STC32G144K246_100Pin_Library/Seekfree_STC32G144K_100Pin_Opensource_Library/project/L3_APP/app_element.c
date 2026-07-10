@@ -30,12 +30,10 @@
 #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
 
 /* 环岛元素检测参数 */
-#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (5U)          // 连续确认帧数
+/* 得分公式: S = 31*y1 + 2*x1 + 2*x2 + 22*y2 - 23*M */
+#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (3367.0f)     // 单帧S阈值
+#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (3U)          // 连续确认帧数
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (1000UL)      // 触发后死区时间
-#define APP_ELEMENT_ROUNDABOUT_MID_MIN          (70.0f)       // 中电感归一化下限
-#define APP_ELEMENT_ROUNDABOUT_MID_MAX          (90.0f)       // 中电感归一化上限
-#define APP_ELEMENT_ROUNDABOUT_Y_SUM_MIN        (190.0f)      // y1+y2下限(外侧电感)
-#define APP_ELEMENT_ROUNDABOUT_X_SUM_MAX        (150.0f)      // x1+x2上限(内侧电感)
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)          // scheduler任务ID
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)          // 任务优先级
 #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (2U)          // 检测周期2ms
@@ -324,13 +322,13 @@ static void app_element_roundabout_apply_handler(uint8 index, uint32 now)
     switch(index)
     {
         case 0U: /* 第1个环岛：向左，持续600ms */
-            app_element_roundabout_bias_yaw_radps = 15.0f;
+            app_element_roundabout_bias_yaw_radps = 7.0f;
             app_element_roundabout_bias_active = 1U;
             element_roundabout_bias_start_tick = now;
-            element_roundabout_bias_duration_tick = 700UL * APP_ELEMENT_TICK_PER_MS;
+            element_roundabout_bias_duration_tick = 750UL * APP_ELEMENT_TICK_PER_MS;
             break;
         case 1U: /* 第2个环岛：向右200deg/s，持续200ms */
-            app_element_roundabout_bias_yaw_radps = -20.0f;
+            app_element_roundabout_bias_yaw_radps = -10.0f;
             app_element_roundabout_bias_active = 1U;
             element_roundabout_bias_start_tick = now;
             element_roundabout_bias_duration_tick = 500UL * APP_ELEMENT_TICK_PER_MS;
@@ -384,11 +382,16 @@ static void app_element_roundabout_task(void)
 
     app_inductor_preprocess_get_data(&inductor);
 
-    if((inductor.normalized[4] >= APP_ELEMENT_ROUNDABOUT_MID_MIN) &&
-            (inductor.normalized[4] <= APP_ELEMENT_ROUNDABOUT_MID_MAX) &&
-            ((inductor.normalized[0] + inductor.normalized[3]) > APP_ELEMENT_ROUNDABOUT_Y_SUM_MIN) &&
-            ((inductor.normalized[1] + inductor.normalized[2]) < APP_ELEMENT_ROUNDABOUT_X_SUM_MAX))
+    /* 环岛得分: S = 31*y1 + 2*x1 + 2*x2 + 22*y2 - 23*M */
     {
+        float score;
+        score  = tfpu_mul(31.0f, inductor.normalized[0]);
+        score  = tfpu_add(score, tfpu_mul(2.0f, inductor.normalized[1]));
+        score  = tfpu_add(score, tfpu_mul(2.0f, inductor.normalized[2]));
+        score  = tfpu_add(score, tfpu_mul(22.0f, inductor.normalized[3]));
+        score  = tfpu_sub(score, tfpu_mul(23.0f, inductor.normalized[4]));
+
+        if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD) {
         element_roundabout_confirm_count++;
         if(element_roundabout_confirm_count >= APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT)
         {
@@ -427,6 +430,7 @@ static void app_element_roundabout_task(void)
     }
 }
 
+}
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     元素识别初始化
 // 参数说明     void
