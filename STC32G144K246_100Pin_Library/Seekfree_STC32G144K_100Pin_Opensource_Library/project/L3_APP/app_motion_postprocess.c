@@ -280,7 +280,7 @@ static void app_motion_postprocess_task(void)
             static_feedforward_speed);
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
 
-    /* 圆筒元素：限制PID设定点（反馈角速度），进而限制差速输出 */
+    /* 圆筒元素：限制PID设定点并关闭前馈 */
     {
         app_element_data_t element;
         app_element_get_data(&element);
@@ -295,6 +295,8 @@ static void app_motion_postprocess_task(void)
             {
                 feedback_yaw_rate_radps = -limit;
             }
+
+            static_feedforward_speed = 0.0f;
         }
     }
 

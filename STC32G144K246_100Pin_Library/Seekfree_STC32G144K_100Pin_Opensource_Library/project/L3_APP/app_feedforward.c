@@ -4,6 +4,7 @@
 #include "app_inductor_preprocess.h"
 #include "app_scheduler.h"
 #include "app_feedforward.h"
+#include "app_element.h"
 
 #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
 #define APP_FEEDFORWARD_TASK_PRIORITY            (5U)        // 前馈计算任务优先级
@@ -13,6 +14,9 @@
 #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
 #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (50.0f)     // CH1/CH2归一化强度达到该值时给满前馈
 #define APP_FEEDFORWARD_DT_SECOND                (APP_FEEDFORWARD_PERIOD_MS * 0.001f)
+#define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
+#define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
+    (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
 
 app_feedforward_config_t app_feedforward_config =
 {
@@ -24,6 +28,7 @@ app_feedforward_config_t app_feedforward_config =
 static volatile app_feedforward_data_t feedforward_data = {0.0f, 0.0f, 0.0f};
 static float feedforward_last_curvature = 0.0f;
 static uint8 feedforward_rate_ready = 0U;
+static float feedforward_scale = 1.0f;
 
 static void app_feedforward_task(void);
 
@@ -52,6 +57,7 @@ void app_feedforward_init(void)
     feedforward_data.feedforward = 0.0f;
     feedforward_last_curvature = 0.0f;
     feedforward_rate_ready = 0U;
+    feedforward_scale = 1.0f;
 
     app_feedforward_register_packet();
     app_feedforward_task();
@@ -123,9 +129,37 @@ static void app_feedforward_task(void)
     feedforward_p = tfpu_mul(dynamic_kff, curvature);
     feedforward_d = tfpu_mul(app_feedforward_config.kd, curvature_rate);
 
+    {
+        app_element_data_t element;
+        app_element_get_data(&element);
+
+        if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
+        {
+            feedforward_scale = 0.0f;
+        }
+        else if((APP_ELEMENT_TYPE_ROUNDABOUT == element.type) &&
+                (APP_ELEMENT_STATE_IDLE != element.state) &&
+                (APP_ELEMENT_STATE_DONE != element.state))
+        {
+            feedforward_scale -= APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
+            if(feedforward_scale < 0.0f)
+            {
+                feedforward_scale = 0.0f;
+            }
+        }
+        else
+        {
+            feedforward_scale += APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
+            if(feedforward_scale > 1.0f)
+            {
+                feedforward_scale = 1.0f;
+            }
+        }
+    }
+
     feedforward_data.curvature = curvature;
     feedforward_data.curvature_rate = curvature_rate;
-    feedforward_data.feedforward = tfpu_add(feedforward_p, feedforward_d);
+    feedforward_data.feedforward = tfpu_mul(tfpu_add(feedforward_p, feedforward_d), feedforward_scale);
 
     if(feedforward_data.feedforward > APP_FEEDFORWARD_OUTPUT_LIMIT)
     {
