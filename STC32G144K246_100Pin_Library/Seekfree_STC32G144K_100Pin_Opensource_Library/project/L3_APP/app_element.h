@@ -5,7 +5,7 @@
 #include "service_imu.h"
 
 #ifndef APP_ELEMENT_CYLINDER_YAW_LIMIT
-#define APP_ELEMENT_CYLINDER_YAW_LIMIT          (0.5236f)   // 圆筒元素触发后车体转向角速度限制，单位 rad/s，默认 30deg/s
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT          (3.4907f)   // 圆筒元素触发后车体转向角速度限制，单位 rad/s，默认 200deg/s
 #endif
 
 #ifndef APP_ELEMENT_PIT
