@@ -8,7 +8,7 @@
 
 #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
 #define APP_FEEDFORWARD_TASK_PRIORITY            (5U)        // 前馈计算任务优先级
-#define APP_FEEDFORWARD_DEFAULT_KFF              (18.407f)   // 默认前馈增益
+#define APP_FEEDFORWARD_DEFAULT_KFF              (1.15f)   // 默认前馈增益
 #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
 #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
 #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
