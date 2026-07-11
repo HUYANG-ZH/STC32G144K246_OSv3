@@ -160,7 +160,6 @@ static void app_motion_postprocess_gyro_task(void)
 {
     service_imu_gyro_t gyro;
     uint8 ea_backup;
-    static uint8 element_divider = 0U;
 
     service_imu_read_gyro(&gyro);
 
@@ -168,13 +167,7 @@ static void app_motion_postprocess_gyro_task(void)
     EA = 0;
     motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, gyro.gyro_z);
     EA = ea_backup;
-
-    element_divider++;
-    if(element_divider >= 5U)
-    {
-        element_divider = 0U;
-        app_element_imu_task(&gyro);
-    }
+    app_element_imu_task(&gyro);
 }
 
 void app_motion_postprocess_init(void)
@@ -285,25 +278,27 @@ static void app_motion_postprocess_task(void)
 
     feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
             static_feedforward_speed);
-    target_yaw_rate_radps = feedback_yaw_rate_radps;
+    actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
 
-    /* 圆筒元素：限制转向角速度 */
+    /* 圆筒元素：限制PID设定点（反馈角速度），进而限制差速输出 */
     {
         app_element_data_t element;
         app_element_get_data(&element);
         if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
         {
             float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
-            if(target_yaw_rate_radps > limit)
+            if(feedback_yaw_rate_radps > limit)
             {
-                target_yaw_rate_radps = limit;
+                feedback_yaw_rate_radps = limit;
             }
-            else if(target_yaw_rate_radps < -limit)
+            else if(feedback_yaw_rate_radps < -limit)
             {
-                target_yaw_rate_radps = -limit;
+                feedback_yaw_rate_radps = -limit;
             }
         }
     }
+
+    target_yaw_rate_radps = feedback_yaw_rate_radps;
 
     /* 环岛元素：角速度偏置融合 */
     if(0U != app_element_roundabout_bias_active)
@@ -312,8 +307,6 @@ static void app_motion_postprocess_task(void)
                 tfpu_mul(APP_ELEMENT_ROUNDABOUT_BIAS_BLEND, app_element_roundabout_bias_yaw_radps));
         feedback_yaw_rate_radps = target_yaw_rate_radps;
     }
-
-    actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
     if(0U == enabled)
