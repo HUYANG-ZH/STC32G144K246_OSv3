@@ -31,8 +31,10 @@
 
 /* 环岛元素检测参数 */
 /* 整数得分公式: S = 10*y1 + x1 - 2*x2 + 15*y2 - 23*M */
-#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (114)
-#define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (1000UL)      // 触发后死区时间
+#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (118)
+#define APP_ELEMENT_ROUNDABOUT_MIDDLE_MIN       (55U)
+#define APP_ELEMENT_ROUNDABOUT_X_SUM_MIN        (73U)
+#define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)       // 触发后死区时间
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)          // scheduler任务ID
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)          // 任务优先级
 #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (2U)          // 检测周期2ms
@@ -337,19 +339,29 @@ static void app_element_roundabout_apply_handler(uint8 index, uint32 now)
     switch(index)
     {
         case 0U: /* 第1个环岛：向左，持续600ms */
-            app_element_roundabout_bias_yaw_radps = 7.0f;
+            app_element_roundabout_bias_yaw_radps = 15.0f;
             app_element_roundabout_bias_active = 1U;
             element_roundabout_bias_start_tick = now;
-            element_roundabout_bias_duration_tick = 750UL * APP_ELEMENT_TICK_PER_MS;
+            element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
             break;
         case 1U: /* 第2个环岛：向右200deg/s，持续200ms */
-            app_element_roundabout_bias_yaw_radps = -10.0f;
+            app_element_roundabout_bias_yaw_radps = -20.0f;
             app_element_roundabout_bias_active = 1U;
             element_roundabout_bias_start_tick = now;
-            element_roundabout_bias_duration_tick = 500UL * APP_ELEMENT_TICK_PER_MS;
+            element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
             break;
-        case 2U: /* 第3个：预留 */
-        case 3U: /* 第4个：预留 */
+        case 2U:
+            app_element_roundabout_bias_yaw_radps = -25.0f;
+            app_element_roundabout_bias_active = 1U;
+            element_roundabout_bias_start_tick = now;
+            element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
+            break;
+        case 3U:
+            app_element_roundabout_bias_yaw_radps = 25.0f;
+            app_element_roundabout_bias_active = 1U;
+            element_roundabout_bias_start_tick = now;
+            element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
+            break;
         case 4U: /* 第5个：预留 */
         case 5U: /* 第6个：预留 */
         case 6U: /* 第7个：预留 */
@@ -400,9 +412,17 @@ static void app_element_roundabout_task(void)
     /* 环岛整数得分: S = 10*y1 + x1 - 2*x2 + 15*y2 - 23*M */
     {
         int16 score;
-        score = app_element_roundabout_score(&inductor);
+        uint16 middle;
+        uint16 x_sum;
 
-        if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD)
+        score = app_element_roundabout_score(&inductor);
+        middle = (uint16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
+        x_sum = (uint16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2] +
+                (uint16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3];
+
+        if((score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD) &&
+                (middle >= APP_ELEMENT_ROUNDABOUT_MIDDLE_MIN) &&
+                (x_sum >= APP_ELEMENT_ROUNDABOUT_X_SUM_MIN))
         {
             /* 圆筒优先：圆筒活跃时不发布环岛 */
             if((0U == element_cylinder_dead) && (0U == element_cylinder_yaw_limit_active))
