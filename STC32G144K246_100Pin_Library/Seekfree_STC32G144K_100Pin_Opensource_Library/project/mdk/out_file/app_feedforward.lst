@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_feedforward                                                    07/07/26  20:35:08  PAGE 1   
+C251 COMPILER V5.60.0,  app_feedforward                                                    11/07/26  21:18:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_feedforward
@@ -17,158 +17,194 @@ stmt  level    source
     4          #include "app_inductor_preprocess.h"
     5          #include "app_scheduler.h"
     6          #include "app_feedforward.h"
-    7          
-    8          #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
-    9          #define APP_FEEDFORWARD_TASK_PRIORITY            (5U)        // 前馈计算任务优先级
-   10          #define APP_FEEDFORWARD_DEFAULT_KFF              (18.407f)   // 默认前馈增益
-   11          #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
-   12          #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
-   13          #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
-   14          #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (50.0f)     // CH1/CH2归一化强度达到该值时给�
+    7          #include "app_element.h"
+    8          
+    9          #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
+   10          #define APP_FEEDFORWARD_TASK_PRIORITY            (5U)        // 前馈计算任务优先级
+   11          #define APP_FEEDFORWARD_DEFAULT_KFF              (18.407f)   // 默认前馈增益
+   12          #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
+   13          #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
+   14          #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
+   15          #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (50.0f)     // CH1/CH2归一化强度达到该值时给�
              -��前馈
-   15          #define APP_FEEDFORWARD_DT_SECOND                (APP_FEEDFORWARD_PERIOD_MS * 0.001f)
-   16          
-   17          app_feedforward_config_t app_feedforward_config =
-   18          {
-   19              APP_FEEDFORWARD_DEFAULT_KFF,
-   20              APP_FEEDFORWARD_DEFAULT_KD,
-   21              APP_FEEDFORWARD_DEFAULT_DENOM_BIAS
-   22          };
-   23          
-   24          static volatile app_feedforward_data_t feedforward_data = {0.0f, 0.0f, 0.0f};
-   25          static float feedforward_last_curvature = 0.0f;
-   26          static uint8 feedforward_rate_ready = 0U;
+   16          #define APP_FEEDFORWARD_DT_SECOND                (APP_FEEDFORWARD_PERIOD_MS * 0.001f)
+   17          #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
+   18          #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
+   19              (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
+   20          
+   21          app_feedforward_config_t app_feedforward_config =
+   22          {
+   23              APP_FEEDFORWARD_DEFAULT_KFF,
+   24              APP_FEEDFORWARD_DEFAULT_KD,
+   25              APP_FEEDFORWARD_DEFAULT_DENOM_BIAS
+   26          };
    27          
-   28          static void app_feedforward_task(void);
-   29          
-   30          static void app_feedforward_register_packet(void)
-   31          {
-   32   1          (void)service_packet_add_variable("feedforward_kff",
-   33   1                  &app_feedforward_config.kff, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
-   34   1          (void)service_packet_add_variable("feedforward_kd",
-   35   1                  &app_feedforward_config.kd, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
-   36   1      }
-   37          
-   38          //-------------------------------------------------------------------------------------------------------
+   28          static volatile app_feedforward_data_t feedforward_data = {0.0f, 0.0f, 0.0f};
+   29          static float feedforward_last_curvature = 0.0f;
+   30          static uint8 feedforward_rate_ready = 0U;
+   31          static float feedforward_scale = 1.0f;
+   32          
+   33          static void app_feedforward_task(void);
+   34          
+   35          static void app_feedforward_register_packet(void)
+   36          {
+   37   1          (void)service_packet_add_variable("feedforward_kff",
+   38   1                  &app_feedforward_config.kff, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
+   39   1          (void)service_packet_add_variable("feedforward_kd",
+   40   1                  &app_feedforward_config.kd, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
+   41   1      }
+   42          
+   43          //-------------------------------------------------------------------------------------------------------
              -------------
-   39          // 函数简介     前馈模块初始化
-   40          // 参数说明     void
-   41          // 返回参数     void
-   42          // 使用示例     app_feedforward_init();
-   43          // 备注信息     使用 APP_FEEDFORWARD_PERIOD_MS ms 周期任务更新一次
-   44          //-------------------------------------------------------------------------------------------------------
+   44          // 函数简介     前馈模块初始化
+   45          // 参数说明     void
+   46          // 返回参数     void
+   47          // 使用示例     app_feedforward_init();
+   48          // 备注信息     使用 APP_FEEDFORWARD_PERIOD_MS ms 周期任务更新一次
+   49          //-------------------------------------------------------------------------------------------------------
              -------------
-   45          void app_feedforward_init(void)
-   46          {
-   47   1          app_feedforward_config.kff = APP_FEEDFORWARD_DEFAULT_KFF;
-   48   1          app_feedforward_config.kd = APP_FEEDFORWARD_DEFAULT_KD;
-   49   1          app_feedforward_config.denominator_bias = APP_FEEDFORWARD_DEFAULT_DENOM_BIAS;
-   50   1          feedforward_data.curvature = 0.0f;
-   51   1          feedforward_data.curvature_rate = 0.0f;
-   52   1          feedforward_data.feedforward = 0.0f;
-C251 COMPILER V5.60.0,  app_feedforward                                                    07/07/26  20:35:08  PAGE 2   
+   50          void app_feedforward_init(void)
+   51          {
+   52   1          app_feedforward_config.kff = APP_FEEDFORWARD_DEFAULT_KFF;
+C251 COMPILER V5.60.0,  app_feedforward                                                    11/07/26  21:18:25  PAGE 2   
 
-   53   1          feedforward_last_curvature = 0.0f;
-   54   1          feedforward_rate_ready = 0U;
-   55   1      
-   56   1          app_feedforward_register_packet();
-   57   1          app_feedforward_task();
-   58   1          (void)app_scheduler_add(APP_FEEDFORWARD_TASK_ID, app_feedforward_task,
-   59   1                  APP_FEEDFORWARD_TASK_PRIORITY, APP_FEEDFORWARD_PERIOD_MS);
-   60   1      }
-   61          
-   62          //-------------------------------------------------------------------------------------------------------
+   53   1          app_feedforward_config.kd = APP_FEEDFORWARD_DEFAULT_KD;
+   54   1          app_feedforward_config.denominator_bias = APP_FEEDFORWARD_DEFAULT_DENOM_BIAS;
+   55   1          feedforward_data.curvature = 0.0f;
+   56   1          feedforward_data.curvature_rate = 0.0f;
+   57   1          feedforward_data.feedforward = 0.0f;
+   58   1          feedforward_last_curvature = 0.0f;
+   59   1          feedforward_rate_ready = 0U;
+   60   1          feedforward_scale = 1.0f;
+   61   1      
+   62   1          app_feedforward_register_packet();
+   63   1          app_feedforward_task();
+   64   1          (void)app_scheduler_add(APP_FEEDFORWARD_TASK_ID, app_feedforward_task,
+   65   1                  APP_FEEDFORWARD_TASK_PRIORITY, APP_FEEDFORWARD_PERIOD_MS);
+   66   1      }
+   67          
+   68          //-------------------------------------------------------------------------------------------------------
              -------------
-   63          // 函数简介     获取前馈数据
-   64          // 参数说明     out_data        数据输出地址
-   65          // 返回参数     void
-   66          // 使用示例     app_feedforward_get_data(&feedforward_data);
-   67          //-------------------------------------------------------------------------------------------------------
+   69          // 函数简介     获取前馈数据
+   70          // 参数说明     out_data        数据输出地址
+   71          // 返回参数     void
+   72          // 使用示例     app_feedforward_get_data(&feedforward_data);
+   73          //-------------------------------------------------------------------------------------------------------
              -------------
-   68          void app_feedforward_get_data(app_feedforward_data_t *out_data)
-   69          {
-   70   1          if(NULL == out_data)
-   71   1          {
-   72   2              return;
-   73   2          }
-   74   1      
-   75   1          *out_data = feedforward_data;
-   76   1      }
-   77          
-   78          static void app_feedforward_task(void)
-   79          {
-   80   1          app_inductor_preprocess_data_t inductor_data;
-   81   1          float numerator;
-   82   1          float denominator;
-   83   1          float curvature;
-   84   1          float curvature_rate;
-   85   1          float strength;
-   86   1          float strength_ratio;
-   87   1          float dynamic_kff;
-   88   1          float feedforward_p;
-   89   1          float feedforward_d;
-   90   1      
-   91   1          app_inductor_preprocess_get_data(&inductor_data);
-   92   1      
-   93   1          numerator = tfpu_sub(inductor_data.normalized[1], inductor_data.normalized[2]);
-   94   1          denominator = tfpu_add(tfpu_add(inductor_data.normalized[0], inductor_data.normalized[3]),
-   95   1                  app_feedforward_config.denominator_bias);
-   96   1          curvature = tfpu_div(numerator, denominator);
-   97   1      
-   98   1          if(0U == feedforward_rate_ready)
-   99   1          {
-  100   2              curvature_rate = 0.0f;
-  101   2              feedforward_rate_ready = 1U;
-  102   2          }
-  103   1          else
-  104   1          {
-  105   2              curvature_rate = tfpu_div(tfpu_sub(curvature, feedforward_last_curvature),
-  106   2                      APP_FEEDFORWARD_DT_SECOND);
-  107   2          }
-  108   1          feedforward_last_curvature = curvature;
-  109   1      
-  110   1          strength = (inductor_data.normalized[1] > inductor_data.normalized[2]) ?
-  111   1                  inductor_data.normalized[1] : inductor_data.normalized[2];
-  112   1          strength_ratio = tfpu_div(strength, APP_FEEDFORWARD_DYNAMIC_FULL_NORM);
-  113   1          if(0.0f > strength_ratio)
-  114   1          {
-  115   2              strength_ratio = 0.0f;
-  116   2          }
-C251 COMPILER V5.60.0,  app_feedforward                                                    07/07/26  20:35:08  PAGE 3   
+   74          void app_feedforward_get_data(app_feedforward_data_t *out_data)
+   75          {
+   76   1          if(NULL == out_data)
+   77   1          {
+   78   2              return;
+   79   2          }
+   80   1      
+   81   1          *out_data = feedforward_data;
+   82   1      }
+   83          
+   84          static void app_feedforward_task(void)
+   85          {
+   86   1          app_inductor_preprocess_data_t inductor_data;
+   87   1          float numerator;
+   88   1          float denominator;
+   89   1          float curvature;
+   90   1          float curvature_rate;
+   91   1          float strength;
+   92   1          float strength_ratio;
+   93   1          float dynamic_kff;
+   94   1          float feedforward_p;
+   95   1          float feedforward_d;
+   96   1      
+   97   1          app_inductor_preprocess_get_data(&inductor_data);
+   98   1      
+   99   1          numerator = tfpu_sub(inductor_data.normalized[1], inductor_data.normalized[2]);
+  100   1          denominator = tfpu_add(tfpu_add(inductor_data.normalized[0], inductor_data.normalized[3]),
+  101   1                  app_feedforward_config.denominator_bias);
+  102   1          curvature = tfpu_div(numerator, denominator);
+  103   1      
+  104   1          if(0U == feedforward_rate_ready)
+  105   1          {
+  106   2              curvature_rate = 0.0f;
+  107   2              feedforward_rate_ready = 1U;
+  108   2          }
+  109   1          else
+  110   1          {
+  111   2              curvature_rate = tfpu_div(tfpu_sub(curvature, feedforward_last_curvature),
+  112   2                      APP_FEEDFORWARD_DT_SECOND);
+  113   2          }
+  114   1          feedforward_last_curvature = curvature;
+  115   1      
+  116   1          strength = (inductor_data.normalized[1] > inductor_data.normalized[2]) ?
+C251 COMPILER V5.60.0,  app_feedforward                                                    11/07/26  21:18:25  PAGE 3   
 
-  117   1          else if(1.0f < strength_ratio)
-  118   1          {
-  119   2              strength_ratio = 1.0f;
-  120   2          }
-  121   1      
-  122   1          dynamic_kff = tfpu_mul(app_feedforward_config.kff, strength_ratio);
-  123   1          feedforward_p = tfpu_mul(dynamic_kff, curvature);
-  124   1          feedforward_d = tfpu_mul(app_feedforward_config.kd, curvature_rate);
-  125   1      
-  126   1          feedforward_data.curvature = curvature;
-  127   1          feedforward_data.curvature_rate = curvature_rate;
-  128   1          feedforward_data.feedforward = tfpu_add(feedforward_p, feedforward_d);
-  129   1      
-  130   1          if(feedforward_data.feedforward > APP_FEEDFORWARD_OUTPUT_LIMIT)
-  131   1          {
-  132   2              feedforward_data.feedforward = APP_FEEDFORWARD_OUTPUT_LIMIT;
-  133   2          }
-  134   1          else if(feedforward_data.feedforward < -APP_FEEDFORWARD_OUTPUT_LIMIT)
-  135   1          {
-  136   2              feedforward_data.feedforward = -APP_FEEDFORWARD_OUTPUT_LIMIT;
-  137   2          }
-  138   1      }
+  117   1                  inductor_data.normalized[1] : inductor_data.normalized[2];
+  118   1          strength_ratio = tfpu_div(strength, APP_FEEDFORWARD_DYNAMIC_FULL_NORM);
+  119   1          if(0.0f > strength_ratio)
+  120   1          {
+  121   2              strength_ratio = 0.0f;
+  122   2          }
+  123   1          else if(1.0f < strength_ratio)
+  124   1          {
+  125   2              strength_ratio = 1.0f;
+  126   2          }
+  127   1      
+  128   1          dynamic_kff = tfpu_mul(app_feedforward_config.kff, strength_ratio);
+  129   1          feedforward_p = tfpu_mul(dynamic_kff, curvature);
+  130   1          feedforward_d = tfpu_mul(app_feedforward_config.kd, curvature_rate);
+  131   1      
+  132   1          {
+  133   2              app_element_data_t element;
+  134   2              app_element_get_data(&element);
+  135   2      
+  136   2              if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
+  137   2              {
+  138   3                  feedforward_scale = 0.0f;
+  139   3              }
+  140   2              else if((APP_ELEMENT_TYPE_ROUNDABOUT == element.type) &&
+  141   2                      (APP_ELEMENT_STATE_IDLE != element.state) &&
+  142   2                      (APP_ELEMENT_STATE_DONE != element.state))
+  143   2              {
+  144   3                  feedforward_scale -= APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
+  145   3                  if(feedforward_scale < 0.0f)
+  146   3                  {
+  147   4                      feedforward_scale = 0.0f;
+  148   4                  }
+  149   3              }
+  150   2              else
+  151   2              {
+  152   3                  feedforward_scale += APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
+  153   3                  if(feedforward_scale > 1.0f)
+  154   3                  {
+  155   4                      feedforward_scale = 1.0f;
+  156   4                  }
+  157   3              }
+  158   2          }
+  159   1      
+  160   1          feedforward_data.curvature = curvature;
+  161   1          feedforward_data.curvature_rate = curvature_rate;
+  162   1          feedforward_data.feedforward = tfpu_mul(tfpu_add(feedforward_p, feedforward_d), feedforward_scale);
+  163   1      
+  164   1          if(feedforward_data.feedforward > APP_FEEDFORWARD_OUTPUT_LIMIT)
+  165   1          {
+  166   2              feedforward_data.feedforward = APP_FEEDFORWARD_OUTPUT_LIMIT;
+  167   2          }
+  168   1          else if(feedforward_data.feedforward < -APP_FEEDFORWARD_OUTPUT_LIMIT)
+  169   1          {
+  170   2              feedforward_data.feedforward = -APP_FEEDFORWARD_OUTPUT_LIMIT;
+  171   2          }
+  172   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       859     ------
+  ecode size           =      1120     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       109     ------
+  xdata size           =       135     ------
   xdata-const size     =    ------     ------
+C251 COMPILER V5.60.0,  app_feedforward                                                    11/07/26  21:18:25  PAGE 4   
+
   edata size           =    ------     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------
@@ -177,7 +213,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        80     ------
+  hconst size          =        89     ------
 End of Module Information.
 
 

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            07/07/26  20:35:09  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/07/26  18:36:44  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -24,8 +24,8 @@ stmt  level    source
    11          #define APP_INDUCTOR_HISTORY_COUNT             (15U)
    12          #define APP_INDUCTOR_AVERAGE_COUNT             (13U)
    13          // [4]is middle inductor
-   14          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {200U, 120U, 220U, 200U, 100U};
-   15          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 3100U, 3100U, 4095U, 3000U
+   14          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {850U, 1000U, 1000U, 750U, 100U};
+   15          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 3000U, 3100U, 4095U, 4095U
              -};
    16          
    17          static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
@@ -66,7 +66,7 @@ stmt  level    source
    52          
    53          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
    54          static uint8 inductor_history_index = 0U;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            07/07/26  20:35:09  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/07/26  18:36:44  PAGE 2   
 
    55          static volatile app_inductor_preprocess_data_t inductor_data;
    56          
@@ -134,7 +134,7 @@ stmt  level    source
   118   2              sample[i][APP_INDUCTOR_PREPROCESS_INDEX_M] = raw.channel_m;
   119   2          }
   120   1      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            07/07/26  20:35:09  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/07/26  18:36:44  PAGE 3   
 
   121   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
   122   1          {
@@ -202,7 +202,7 @@ stmt  level    source
   182   3                  if(0.0f > normalized[i])
   183   3                  {
   184   4                      normalized[i] = 0.0f;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            07/07/26  20:35:09  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/07/26  18:36:44  PAGE 4   
 
   185   4                  }
   186   3                  else if(100.0f < normalized[i])
@@ -270,7 +270,7 @@ stmt  level    source
   248   1          app_inductor_update_precomputed();
   249   1          app_inductor_update_output();
   250   1      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            07/07/26  20:35:09  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/07/26  18:36:44  PAGE 5   
 
   251   1          /* 无线校准变量：float副本，修改后自动同步到uint16并重算 */
   252   1          for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
@@ -338,7 +338,7 @@ stmt  level    source
   303   1          {
   304   2              out_data->filtered[i] = inductor_data.filtered[i];
   305   2              out_data->normalized[i] = inductor_data.normalized[i];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            07/07/26  20:35:09  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/07/26  18:36:44  PAGE 6   
 
   306   2          }
   307   1          EA = ea_backup;

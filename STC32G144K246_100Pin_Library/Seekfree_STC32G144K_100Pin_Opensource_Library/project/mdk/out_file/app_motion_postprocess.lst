@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             07/07/26  20:35:09  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             11/07/26  21:18:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          
    52          static shared_pos_pid_t motion_postprocess_yaw_pid;
    53          static shared_lpf_t motion_postprocess_gyro_z_lpf;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             07/07/26  20:35:09  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             11/07/26  21:18:25  PAGE 2   
 
    54          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
    55          static uint8 motion_postprocess_last_enabled = 0U;
@@ -134,7 +134,7 @@ stmt  level    source
   117   1      }
   118          
   119          static void app_motion_postprocess_register_packet(void)
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             07/07/26  20:35:09  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             11/07/26  21:18:25  PAGE 3   
 
   120          {
   121   1          (void)service_packet_add_variable_with_callback("motion_post_kp",
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          app_element_imu_task(&gyro);
   184   1          app_motion_postprocess_sync_pid();
   185   1          shared_pos_pid_init(&motion_postprocess_yaw_pid);
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             07/07/26  20:35:09  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             11/07/26  21:18:25  PAGE 4   
 
   186   1          motion_postprocess_last_enabled =
   187   1                  (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
@@ -270,7 +270,7 @@ stmt  level    source
   249   1          app_feedforward_get_data(&feedforward);
   250   1          gyro_z = motion_postprocess_gyro_z_filtered;
   251   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             07/07/26  20:35:09  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             11/07/26  21:18:25  PAGE 5   
 
   252   1          raw_error = motion_preprocess.line_error;
   253   1          processed_error = raw_error;
@@ -301,76 +301,97 @@ stmt  level    source
   278   1      
   279   1          feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
   280   1                  static_feedforward_speed);
-  281   1          target_yaw_rate_radps = feedback_yaw_rate_radps;
-  282   1          actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
-  283   1          enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U
-             -;
-  284   1      
-  285   1          if(0U == enabled)
-  286   1          {
-  287   2              if(0U != motion_postprocess_last_enabled)
+  281   1          actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
+  282   1      
+  283   1          /* 圆筒元素：限制PID设定点并关闭前馈 */
+  284   1          {
+  285   2              app_element_data_t element;
+  286   2              app_element_get_data(&element);
+  287   2              if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
   288   2              {
-  289   3                  app_motion_postprocess_clear_pid();
-  290   3              }
-  291   2              feedback_differential_speed = 0.0f;
-  292   2              target_differential_speed = 0.0f;
-  293   2              motion_postprocess_last_enabled = 0U;
-  294   2              motion_postprocess_rate_limit_ready = 0U;
-  295   2          }
-  296   1          else
-  297   1          {
-  298   2              app_motion_postprocess_sync_pid();
-  299   2              feedback_differential_speed = shared_pos_pid_update(&motion_postprocess_yaw_pid,
-  300   2                      feedback_yaw_rate_radps, actual_yaw_rate_radps, APP_MOTION_POSTPROCESS_DT_SECOND);
-  301   2              target_differential_speed = tfpu_add(feedback_differential_speed, feedforward_differential_speed)
+  289   3                  float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
+  290   3                  if(feedback_yaw_rate_radps > limit)
+  291   3                  {
+  292   4                      feedback_yaw_rate_radps = limit;
+  293   4                  }
+  294   3                  else if(feedback_yaw_rate_radps < -limit)
+  295   3                  {
+  296   4                      feedback_yaw_rate_radps = -limit;
+  297   4                  }
+  298   3      
+  299   3                  static_feedforward_speed = 0.0f;
+  300   3              }
+  301   2          }
+  302   1      
+  303   1          target_yaw_rate_radps = feedback_yaw_rate_radps;
+  304   1          enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U
              -;
-  302   2              motion_postprocess_last_enabled = 1U;
-  303   2          }
-  304   1      
-  305   1          half_differential_speed = tfpu_mul(target_differential_speed, APP_MOTION_POSTPROCESS_DIFF_HALF);
-  306   1      
-  307   1          output.raw_error = raw_error;
-  308   1          output.feedforward = feedforward_differential_speed;
-  309   1          output.processed_error = processed_error;
-  310   1          output.linear_mps = linear_mps;
-  311   1          output.target_yaw_rate_radps = target_yaw_rate_radps;
-  312   1          output.actual_yaw_rate_radps = actual_yaw_rate_radps;
-  313   1          output.target_differential_speed = target_differential_speed;
-  314   1          output.load_left = half_differential_speed;
-  315   1          output.load_right = tfpu_sub(0.0f, half_differential_speed);
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             07/07/26  20:35:09  PAGE 6   
+  305   1      
+  306   1          if(0U == enabled)
+  307   1          {
+  308   2              if(0U != motion_postprocess_last_enabled)
+  309   2              {
+  310   3                  app_motion_postprocess_clear_pid();
+  311   3              }
+  312   2              feedback_differential_speed = 0.0f;
+  313   2              target_differential_speed = 0.0f;
+  314   2              motion_postprocess_last_enabled = 0U;
+  315   2              motion_postprocess_rate_limit_ready = 0U;
+  316   2          }
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             11/07/26  21:18:25  PAGE 6   
 
-  316   1          output.left_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN, linear_mps),
-  317   1                  output.load_left);
-  318   1          output.right_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN, linear_mps),
-  319   1                  output.load_right);
-  320   1          output.enabled = (0U != enabled) ? 1.0f : 0.0f;
-  321   1      
-  322   1          app_speedout_set_target(output.left_target_mps, output.right_target_mps);
-  323   1          app_motion_postprocess_publish(&output);
-  324   1      
-  325   1          {
-  326   2              static uint16 print_tick = 0U;
-  327   2              print_tick++;
-  328   2              if(print_tick >= 200U)
-  329   2              {
-  330   3                  print_tick = 0U;
-  331   3                  printf("%.3f,%.3f,%.3f,%.3f\r\n", raw_error,
-  332   3                          target_yaw_rate_radps, actual_yaw_rate_radps,
-  333   3                          feedforward_differential_speed);
-  334   3              }
-  335   2          }
-  336   1      }
+  317   1          else
+  318   1          {
+  319   2              app_motion_postprocess_sync_pid();
+  320   2              feedback_differential_speed = shared_pos_pid_update(&motion_postprocess_yaw_pid,
+  321   2                      feedback_yaw_rate_radps, actual_yaw_rate_radps, APP_MOTION_POSTPROCESS_DT_SECOND);
+  322   2              target_differential_speed = tfpu_add(feedback_differential_speed, feedforward_differential_speed)
+             -;
+  323   2              motion_postprocess_last_enabled = 1U;
+  324   2          }
+  325   1      
+  326   1          half_differential_speed = tfpu_mul(target_differential_speed, APP_MOTION_POSTPROCESS_DIFF_HALF);
+  327   1      
+  328   1          output.raw_error = raw_error;
+  329   1          output.feedforward = feedforward_differential_speed;
+  330   1          output.processed_error = processed_error;
+  331   1          output.linear_mps = linear_mps;
+  332   1          output.target_yaw_rate_radps = target_yaw_rate_radps;
+  333   1          output.actual_yaw_rate_radps = actual_yaw_rate_radps;
+  334   1          output.target_differential_speed = target_differential_speed;
+  335   1          output.load_left = half_differential_speed;
+  336   1          output.load_right = tfpu_sub(0.0f, half_differential_speed);
+  337   1          output.left_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_LEFT_STRAIGHT_SIGN, linear_mps),
+  338   1                  output.load_left);
+  339   1          output.right_target_mps = tfpu_add(tfpu_mul(APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN, linear_mps),
+  340   1                  output.load_right);
+  341   1          output.enabled = (0U != enabled) ? 1.0f : 0.0f;
+  342   1      
+  343   1          app_speedout_set_target(output.left_target_mps, output.right_target_mps);
+  344   1          app_motion_postprocess_publish(&output);
+  345   1      
+  346   1          {
+  347   2              static uint16 print_tick = 0U;
+  348   2              print_tick++;
+  349   2              if(print_tick >= 200U)
+  350   2              {
+  351   3                  print_tick = 0U;
+  352   3                  printf("%.3f,%.3f,%.3f,%.3f\r\n", raw_error,
+  353   3                          target_yaw_rate_radps, actual_yaw_rate_radps,
+  354   3                          feedforward_differential_speed);
+  355   3              }
+  356   2          }
+  357   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2460     ------
+  ecode size           =      2648     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       408     ------
+  xdata size           =       426     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
