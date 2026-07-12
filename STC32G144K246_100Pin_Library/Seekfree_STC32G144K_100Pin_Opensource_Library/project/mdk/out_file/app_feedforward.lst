@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  16:58:01  PAGE 1   
+C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  17:30:10  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_feedforward
@@ -66,7 +66,7 @@ stmt  level    source
    50          void app_feedforward_init(void)
    51          {
    52   1          app_feedforward_config.kff = APP_FEEDFORWARD_DEFAULT_KFF;
-C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  16:58:01  PAGE 2   
+C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  17:30:10  PAGE 2   
 
    53   1          app_feedforward_config.kd = APP_FEEDFORWARD_DEFAULT_KD;
    54   1          app_feedforward_config.denominator_bias = APP_FEEDFORWARD_DEFAULT_DENOM_BIAS;
@@ -134,7 +134,7 @@ stmt  level    source
   114   1          feedforward_last_curvature = curvature;
   115   1      
   116   1          strength = (inductor_data.normalized[1] > inductor_data.normalized[2]) ?
-C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  16:58:01  PAGE 3   
+C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  17:30:10  PAGE 3   
 
   117   1                  inductor_data.normalized[1] : inductor_data.normalized[2];
   118   1          strength_ratio = tfpu_div(strength, APP_FEEDFORWARD_DYNAMIC_FULL_NORM);
@@ -163,48 +163,36 @@ stmt  level    source
   141   2              {
   142   3                  feedforward_scale = 0.0f;
   143   3              }
-  144   2              else if((APP_ELEMENT_TYPE_ROUNDABOUT == element.type) &&
-  145   2                      (APP_ELEMENT_STATE_IDLE != element.state) &&
-  146   2                      (APP_ELEMENT_STATE_DONE != element.state))
-  147   2              {
-  148   3                  feedforward_scale -= APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
-  149   3                  if(feedforward_scale < 0.0f)
-  150   3                  {
-  151   4                      feedforward_scale = 0.0f;
-  152   4                  }
-  153   3              }
-  154   2              else
-  155   2              {
-  156   3                  feedforward_scale += APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
-  157   3                  if(feedforward_scale > 1.0f)
-  158   3                  {
-  159   4                      feedforward_scale = 1.0f;
-  160   4                  }
-  161   3              }
-  162   2          }
-  163   1      
-  164   1          feedforward_data.curvature = curvature;
-  165   1          feedforward_data.curvature_rate = curvature_rate;
-  166   1          feedforward_data.feedforward = tfpu_mul(tfpu_add(feedforward_p, feedforward_d), feedforward_scale);
-  167   1      
-  168   1          if(feedforward_data.feedforward > APP_FEEDFORWARD_OUTPUT_LIMIT)
-  169   1          {
-  170   2              feedforward_data.feedforward = APP_FEEDFORWARD_OUTPUT_LIMIT;
-  171   2          }
-  172   1          else if(feedforward_data.feedforward < -APP_FEEDFORWARD_OUTPUT_LIMIT)
-  173   1          {
-  174   2              feedforward_data.feedforward = -APP_FEEDFORWARD_OUTPUT_LIMIT;
-  175   2          }
-  176   1      }
+  144   2              else
+  145   2              {
+  146   3                  feedforward_scale += APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
+  147   3                  if(feedforward_scale > 1.0f)
+  148   3                  {
+  149   4                      feedforward_scale = 1.0f;
+  150   4                  }
+  151   3              }
+  152   2          }
+  153   1      
+  154   1          feedforward_data.curvature = curvature;
+  155   1          feedforward_data.curvature_rate = curvature_rate;
+  156   1          feedforward_data.feedforward = tfpu_mul(tfpu_add(feedforward_p, feedforward_d), feedforward_scale);
+  157   1      
+  158   1          if(feedforward_data.feedforward > APP_FEEDFORWARD_OUTPUT_LIMIT)
+  159   1          {
+  160   2              feedforward_data.feedforward = APP_FEEDFORWARD_OUTPUT_LIMIT;
+  161   2          }
+  162   1          else if(feedforward_data.feedforward < -APP_FEEDFORWARD_OUTPUT_LIMIT)
+  163   1          {
+  164   2              feedforward_data.feedforward = -APP_FEEDFORWARD_OUTPUT_LIMIT;
+  165   2          }
+  166   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1171     ------
+  ecode size           =      1068     ------
   data size            =    ------     ------
-C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  16:58:01  PAGE 4   
-
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =       135     ------
@@ -215,6 +203,8 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
+C251 COMPILER V5.60.0,  app_feedforward                                                    12/07/26  17:30:10  PAGE 4   
+
   huge data size       =    ------     ------
   const size           =    ------     ------
   hconst size          =        89     ------

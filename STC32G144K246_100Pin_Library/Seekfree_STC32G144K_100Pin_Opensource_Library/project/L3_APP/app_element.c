@@ -39,7 +39,7 @@
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (3U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
-#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (66900.0f)
+#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (52440.0f)
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)
 #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (2U)
@@ -353,31 +353,31 @@ static float app_element_roundabout_score(const app_inductor_preprocess_data_t *
     float sr;
     float t;
 
-    sr = tfpu_add(tfpu_mul(386.660f, y1), tfpu_mul(90.386f, x1));
-    sr = tfpu_add(sr, tfpu_mul(967.305f, m));
+    sr = tfpu_add(tfpu_mul(140.0f, y1), tfpu_mul(86.0f, x1));
+    sr = tfpu_add(sr, tfpu_mul(1079.0f, m));
 
-    t = tfpu_mul(0.3665f, tfpu_mul(y1, y1));
+    t = tfpu_mul(0.455f, tfpu_mul(y1, y1));
     sr = tfpu_sub(sr, t);
 
-    t = tfpu_mul(0.1112f, tfpu_mul(x1, x1));
+    t = tfpu_mul(0.130f, tfpu_mul(x1, x1));
+    sr = tfpu_sub(sr, t);
+
+    t = tfpu_mul(0.248f, tfpu_mul(x1, x2));
+    sr = tfpu_sub(sr, t);
+
+    t = tfpu_mul(2.018f, tfpu_mul(x2, x2));
     sr = tfpu_add(sr, t);
 
-    t = tfpu_mul(0.1075f, tfpu_mul(x1, x2));
+    t = tfpu_mul(2.197f, tfpu_mul(x2, y2));
     sr = tfpu_sub(sr, t);
 
-    t = tfpu_mul(1.5183f, tfpu_mul(x2, x2));
+    t = tfpu_mul(2.113f, tfpu_mul(x2, m));
+    sr = tfpu_sub(sr, t);
+
+    t = tfpu_mul(2.100f, tfpu_mul(y2, y2));
     sr = tfpu_add(sr, t);
 
-    t = tfpu_mul(0.9722f, tfpu_mul(x2, y2));
-    sr = tfpu_sub(sr, t);
-
-    t = tfpu_mul(2.9729f, tfpu_mul(x2, m));
-    sr = tfpu_sub(sr, t);
-
-    t = tfpu_mul(3.5408f, tfpu_mul(y2, y2));
-    sr = tfpu_add(sr, t);
-
-    t = tfpu_mul(8.4279f, tfpu_mul(m, m));
+    t = tfpu_mul(7.074f, tfpu_mul(m, m));
     sr = tfpu_sub(sr, t);
 
     return sr;

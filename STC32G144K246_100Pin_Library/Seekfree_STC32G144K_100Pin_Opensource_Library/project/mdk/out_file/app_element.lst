@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -57,7 +57,7 @@ stmt  level    source
    40          #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
    41          #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS
              -)
-   42          #define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (66900.0f)
+   42          #define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (52440.0f)
    43          #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
    44          #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)
    45          #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (2U)
@@ -66,7 +66,7 @@ stmt  level    source
    48          {
    49              0.0f,
    50              0.0f,
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 2   
 
    51              0.0f,
    52              0.0f,
@@ -134,7 +134,7 @@ stmt  level    source
   114          
   115          static void app_element_reset(void)
   116          {
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 3   
 
   117   1          uint8 i;
   118   1      
@@ -202,7 +202,7 @@ stmt  level    source
   180   1          {
   181   2              index -= APP_ELEMENT_CYLINDER_BUCKET_COUNT;
   182   2          }
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 4   
 
   183   1      
   184   1          return (uint8)index;
@@ -270,7 +270,7 @@ stmt  level    source
   246   1          if(delta_deg >= 0.0f)
   247   1          {
   248   2              element_cylinder_bucket_angle_pos[tail] = tfpu_add(element_cylinder_bucket_angle_pos[tail], delta
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 5   
 
              -_deg);
   249   2              element_cylinder_angle_pos_deg = tfpu_add(element_cylinder_angle_pos_deg, delta_deg);
@@ -338,7 +338,7 @@ stmt  level    source
   310   1          {
   311   2              app_element_cylinder_clear();
   312   2              return;
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 6   
 
   313   2          }
   314   1          app_element_cylinder_drop_old(now);
@@ -383,33 +383,33 @@ stmt  level    source
   353   1          float sr;
   354   1          float t;
   355   1      
-  356   1          sr = tfpu_add(tfpu_mul(386.660f, y1), tfpu_mul(90.386f, x1));
-  357   1          sr = tfpu_add(sr, tfpu_mul(967.305f, m));
+  356   1          sr = tfpu_add(tfpu_mul(140.0f, y1), tfpu_mul(86.0f, x1));
+  357   1          sr = tfpu_add(sr, tfpu_mul(1079.0f, m));
   358   1      
-  359   1          t = tfpu_mul(0.3665f, tfpu_mul(y1, y1));
+  359   1          t = tfpu_mul(0.455f, tfpu_mul(y1, y1));
   360   1          sr = tfpu_sub(sr, t);
   361   1      
-  362   1          t = tfpu_mul(0.1112f, tfpu_mul(x1, x1));
-  363   1          sr = tfpu_add(sr, t);
+  362   1          t = tfpu_mul(0.130f, tfpu_mul(x1, x1));
+  363   1          sr = tfpu_sub(sr, t);
   364   1      
-  365   1          t = tfpu_mul(0.1075f, tfpu_mul(x1, x2));
+  365   1          t = tfpu_mul(0.248f, tfpu_mul(x1, x2));
   366   1          sr = tfpu_sub(sr, t);
   367   1      
-  368   1          t = tfpu_mul(1.5183f, tfpu_mul(x2, x2));
+  368   1          t = tfpu_mul(2.018f, tfpu_mul(x2, x2));
   369   1          sr = tfpu_add(sr, t);
   370   1      
-  371   1          t = tfpu_mul(0.9722f, tfpu_mul(x2, y2));
+  371   1          t = tfpu_mul(2.197f, tfpu_mul(x2, y2));
   372   1          sr = tfpu_sub(sr, t);
   373   1      
-  374   1          t = tfpu_mul(2.9729f, tfpu_mul(x2, m));
+  374   1          t = tfpu_mul(2.113f, tfpu_mul(x2, m));
   375   1          sr = tfpu_sub(sr, t);
   376   1      
-  377   1          t = tfpu_mul(3.5408f, tfpu_mul(y2, y2));
+  377   1          t = tfpu_mul(2.100f, tfpu_mul(y2, y2));
   378   1          sr = tfpu_add(sr, t);
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 7   
 
   379   1      
-  380   1          t = tfpu_mul(8.4279f, tfpu_mul(m, m));
+  380   1          t = tfpu_mul(7.074f, tfpu_mul(m, m));
   381   1          sr = tfpu_sub(sr, t);
   382   1      
   383   1          return sr;
@@ -438,16 +438,16 @@ stmt  level    source
   406   2              switch(element_roundabout_count)
   407   2              {
   408   3                  case 0U:
-  409   3                      app_element_roundabout_bias_yaw_radps = 15.0f;
+  409   3                      app_element_roundabout_bias_yaw_radps = 20.0f;
   410   3                      app_element_roundabout_bias_active = 1U;
   411   3                      element_roundabout_bias_start_tick = now;
   412   3                      element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
   413   3                      break;
   414   3                  case 1U:
-  415   3                      app_element_roundabout_bias_yaw_radps = -20.0f;
+  415   3                      app_element_roundabout_bias_yaw_radps = -25.0f;
   416   3                      app_element_roundabout_bias_active = 1U;
   417   3                      element_roundabout_bias_start_tick = now;
-  418   3                      element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
+  418   3                      element_roundabout_bias_duration_tick = 150UL * APP_ELEMENT_TICK_PER_MS;
   419   3                      break;
   420   3                  case 2U:
   421   3                      app_element_roundabout_bias_yaw_radps = -25.0f;
@@ -474,7 +474,7 @@ stmt  level    source
   442   1      }
   443          
   444          static void app_element_roundabout_task(void)
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 8   
 
   445          {
   446   1          app_inductor_preprocess_data_t inductor;
@@ -542,7 +542,7 @@ stmt  level    source
   508   1          element_data.type = APP_ELEMENT_TYPE_SEESAW;
   509   1          element_data.state = APP_ELEMENT_STATE_DONE;
   510   1          element_data.dir = APP_ELEMENT_DIR_NONE;
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 9   
 
   511   1          element_data.active = 1.0f;
   512   1          EA = ea_backup;
@@ -610,7 +610,7 @@ stmt  level    source
   572          void app_element_init(void)
   573          {
   574   1          app_element_reset();
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 10  
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 10  
 
   575   1          (void)service_packet_add_action("cylinder_state", app_element_cylinder_state_reply, 0UL);
   576   1          (void)service_packet_add_variable("cylinder_event",
@@ -678,7 +678,7 @@ stmt  level    source
   634   2              element_gyro_x_lpf_ready = 1U;
   635   2          }
   636   1          gyro_x = shared_lpf_update(&element_gyro_x_lpf, gyro->gyro_x);
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 11  
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 11  
 
   637   1      
   638   1          ea_backup = EA;
@@ -746,8 +746,8 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      5103     ------
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  16:58:01  PAGE 12  
+  ecode size           =      5099     ------
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  17:30:10  PAGE 12  
 
   data size            =    ------     ------
   idata size           =    ------     ------

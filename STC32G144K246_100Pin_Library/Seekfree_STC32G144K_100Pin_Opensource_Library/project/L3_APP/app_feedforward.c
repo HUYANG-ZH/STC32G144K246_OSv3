@@ -141,16 +141,6 @@ static void app_feedforward_task(void)
         {
             feedforward_scale = 0.0f;
         }
-        else if((APP_ELEMENT_TYPE_ROUNDABOUT == element.type) &&
-                (APP_ELEMENT_STATE_IDLE != element.state) &&
-                (APP_ELEMENT_STATE_DONE != element.state))
-        {
-            feedforward_scale -= APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
-            if(feedforward_scale < 0.0f)
-            {
-                feedforward_scale = 0.0f;
-            }
-        }
         else
         {
             feedforward_scale += APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP;
