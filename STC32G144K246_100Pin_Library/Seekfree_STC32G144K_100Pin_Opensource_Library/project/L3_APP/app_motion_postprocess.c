@@ -31,7 +31,6 @@
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_ID            (1U)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY      (10U)
 #define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (1U)
-#define APP_MOTION_POSTPROCESS_SEESAW_MPS              (1.6f)
 
 app_motion_postprocess_config_t app_motion_postprocess_config =
 {
@@ -299,13 +298,7 @@ static void app_motion_postprocess_task(void)
 
             static_feedforward_speed = 0.0f;
         }
-        /* 跷跷板元素：锁定差速 + 降速 */
-        if((APP_ELEMENT_TYPE_SEESAW == element.type) && (element.active >= 0.5f))
-        {
-            feedback_yaw_rate_radps = 0.0f;
-            static_feedforward_speed = 0.0f;
-            linear_mps = APP_MOTION_POSTPROCESS_SEESAW_MPS;
-        }
+
     }
 
     target_yaw_rate_radps = feedback_yaw_rate_radps;

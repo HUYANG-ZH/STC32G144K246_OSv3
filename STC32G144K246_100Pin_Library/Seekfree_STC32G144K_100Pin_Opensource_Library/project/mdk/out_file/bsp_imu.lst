@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_imu                                                            05/07/26  01:44:32  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_imu                                                            12/07/26  19:35:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_imu
@@ -12,64 +12,65 @@ COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_imu.c LARGE RO
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_imu.h"
-    3          
-    4          #ifndef BSP_IMU_QUARTERNION_RATE
-    5          #define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_DISABLE)
-    6          #endif
-    7          
-    8          static volatile uint8 s_bsp_imu_ready = 0U;
-    9          
-   10          void bsp_imu_init(void)
-   11          {
-   12   1          (void)imu660rc_init(BSP_IMU_QUARTERNION_RATE);
-   13   1          s_bsp_imu_ready = 1U;
-   14   1      }
-   15          
-   16          void bsp_imu_read_gyro(bsp_imu_gyro_t *out_data)
-   17          {
-   18   1          uint8 datas[6];
-   19   1          int16 gyro_x;
-   20   1          int16 gyro_y;
-   21   1          int16 gyro_z;
-   22   1      
-   23   1          if(NULL == out_data)
-   24   1          {
-   25   2              return;
-   26   2          }
-   27   1      
-   28   1          IMU660RC_CS(0);
-   29   1          spi_read_8bit_registers(IMU660RC_SPI, IMU660RC_OUTX_L_G | IMU660RC_SPI_R, datas, 6U);
-   30   1          IMU660RC_CS(1);
-   31   1      
-   32   1          gyro_x = (int16)(((uint16)datas[1] << 8) | datas[0]);
-   33   1          gyro_y = (int16)(((uint16)datas[3] << 8) | datas[2]);
-   34   1          gyro_z = (int16)(((uint16)datas[5] << 8) | datas[4]);
-   35   1      
-   36   1          out_data->gyro_x = imu660rc_gyro_transition(gyro_x);
-   37   1          out_data->gyro_y = imu660rc_gyro_transition(gyro_y);
-   38   1          out_data->gyro_z = imu660rc_gyro_transition(gyro_z);
-   39   1      }
-   40          
-   41          float bsp_imu_read_gyro_z(void)
-   42          {
-   43   1          uint8 datas[2];
-   44   1          int16 gyro_z;
-   45   1      
-   46   1          IMU660RC_CS(0);
-   47   1          spi_read_8bit_registers(IMU660RC_SPI, IMU660RC_OUTZ_L_G | IMU660RC_SPI_R, datas, 2U);
-   48   1          IMU660RC_CS(1);
-   49   1      
-   50   1          gyro_z = (int16)(((uint16)datas[1] << 8) | datas[0]);
-   51   1          return imu660rc_gyro_transition(gyro_z);
-   52   1      }
-   53          
-   54          uint8 bsp_imu_is_ready(void)
-   55          {
-C251 COMPILER V5.60.0,  bsp_imu                                                            05/07/26  01:44:32  PAGE 2   
+    2          #include "sys_tfpu.h"
+    3          #include "bsp_imu.h"
+    4          
+    5          #ifndef BSP_IMU_QUARTERNION_RATE
+    6          #define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_DISABLE)
+    7          #endif
+    8          
+    9          static volatile uint8 s_bsp_imu_ready = 0U;
+   10          
+   11          void bsp_imu_init(void)
+   12          {
+   13   1          (void)imu660rc_init(BSP_IMU_QUARTERNION_RATE);
+   14   1          s_bsp_imu_ready = 1U;
+   15   1      }
+   16          
+   17          void bsp_imu_read_gyro(bsp_imu_gyro_t *out_data)
+   18          {
+   19   1          uint8 datas[6];
+   20   1          int16 gyro_x;
+   21   1          int16 gyro_y;
+   22   1          int16 gyro_z;
+   23   1      
+   24   1          if(NULL == out_data)
+   25   1          {
+   26   2              return;
+   27   2          }
+   28   1      
+   29   1          IMU660RC_CS(0);
+   30   1          spi_read_8bit_registers(IMU660RC_SPI, IMU660RC_OUTX_L_G | IMU660RC_SPI_R, datas, 6U);
+   31   1          IMU660RC_CS(1);
+   32   1      
+   33   1          gyro_x = (int16)(((uint16)datas[1] << 8) | datas[0]);
+   34   1          gyro_y = (int16)(((uint16)datas[3] << 8) | datas[2]);
+   35   1          gyro_z = (int16)(((uint16)datas[5] << 8) | datas[4]);
+   36   1      
+   37   1          out_data->gyro_x = imu660rc_gyro_transition(gyro_x);
+   38   1          out_data->gyro_y = imu660rc_gyro_transition(gyro_y);
+   39   1          out_data->gyro_z = imu660rc_gyro_transition(gyro_z);
+   40   1      }
+   41          
+   42          float bsp_imu_read_gyro_z(void)
+   43          {
+   44   1          uint8 datas[2];
+   45   1          int16 gyro_z;
+   46   1      
+   47   1          IMU660RC_CS(0);
+   48   1          spi_read_8bit_registers(IMU660RC_SPI, IMU660RC_OUTZ_L_G | IMU660RC_SPI_R, datas, 2U);
+   49   1          IMU660RC_CS(1);
+   50   1      
+   51   1          gyro_z = (int16)(((uint16)datas[1] << 8) | datas[0]);
+   52   1          return imu660rc_gyro_transition(gyro_z);
+   53   1      }
+   54          
+   55          uint8 bsp_imu_is_ready(void)
+C251 COMPILER V5.60.0,  bsp_imu                                                            12/07/26  19:35:29  PAGE 2   
 
-   56   1          return s_bsp_imu_ready;
-   57   1      }
+   56          {
+   57   1          return s_bsp_imu_ready;
+   58   1      }
 
 
 Module Information          Static   Overlayable

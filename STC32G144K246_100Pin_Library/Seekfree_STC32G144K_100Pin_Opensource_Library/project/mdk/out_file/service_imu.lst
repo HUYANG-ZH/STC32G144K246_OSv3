@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_imu                                                        11/07/26  18:36:43  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        12/07/26  19:34:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
@@ -12,77 +12,78 @@ COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_imu.c 
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_include.h"
-    3          #include "service_delay.h"
-    4          #include "service_wireless_uart.h"
-    5          #include "service_imu.h"
-    6          
-    7          #define SERVICE_IMU_CALIBRATE_COUNT     (500U)
-    8          #define SERVICE_IMU_CALIBRATE_INTERVAL  (10U)
-    9          
-   10          static float gyro_x_offset = 0.0f;
-   11          static float gyro_z_offset = 0.0f;
-   12          
-   13          void service_imu_init(void)
-   14          {
-   15   1          bsp_imu_init();
-   16   1      }
-   17          
-   18          void service_imu_calibrate_gyro_z(void)
-   19          {
-   20   1          uint16 i;
-   21   1          float sum = 0.0f;
-   22   1      
-   23   1          wprint("gz calibrating...\r\n");
-   24   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
-   25   1          {
-   26   2              sum += bsp_imu_read_gyro_z();
-   27   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
-   28   2          }
-   29   1      
-   30   1          gyro_z_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
-   31   1          wprint("gz offset=%.3f\r\n", gyro_z_offset);
-   32   1      }
-   33          
-   34          void service_imu_calibrate_gyro_x(void)
-   35          {
-   36   1          uint16 i;
-   37   1          float sum = 0.0f;
-   38   1          bsp_imu_gyro_t raw;
-   39   1      
-   40   1          wprint("gx calibrating...\r\n");
-   41   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
-   42   1          {
-   43   2              bsp_imu_read_gyro(&raw);
-   44   2              sum += raw.gyro_x;
-   45   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
-   46   2          }
-   47   1      
-   48   1          gyro_x_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
-   49   1          wprint("gx offset=%.3f\r\n", gyro_x_offset);
-   50   1      }
-   51          
-   52          void service_imu_read_gyro(service_imu_gyro_t *out_data)
-   53          {
-   54   1          bsp_imu_gyro_t raw;
-   55   1      
-C251 COMPILER V5.60.0,  service_imu                                                        11/07/26  18:36:43  PAGE 2   
+    2          #include "sys_tfpu.h"
+    3          #include "bsp_include.h"
+    4          #include "service_delay.h"
+    5          #include "service_wireless_uart.h"
+    6          #include "service_imu.h"
+    7          
+    8          #define SERVICE_IMU_CALIBRATE_COUNT     (500U)
+    9          #define SERVICE_IMU_CALIBRATE_INTERVAL  (10U)
+   10          
+   11          static float gyro_x_offset = 0.0f;
+   12          static float gyro_z_offset = 0.0f;
+   13          
+   14          void service_imu_init(void)
+   15          {
+   16   1          bsp_imu_init();
+   17   1      }
+   18          
+   19          void service_imu_calibrate_gyro_z(void)
+   20          {
+   21   1          uint16 i;
+   22   1          float sum = 0.0f;
+   23   1      
+   24   1          wprint("gz calibrating...\r\n");
+   25   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
+   26   1          {
+   27   2              sum += bsp_imu_read_gyro_z();
+   28   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
+   29   2          }
+   30   1      
+   31   1          gyro_z_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
+   32   1          wprint("gz offset=%.3f\r\n", gyro_z_offset);
+   33   1      }
+   34          
+   35          void service_imu_calibrate_gyro_x(void)
+   36          {
+   37   1          uint16 i;
+   38   1          float sum = 0.0f;
+   39   1          bsp_imu_gyro_t raw;
+   40   1      
+   41   1          wprint("gx calibrating...\r\n");
+   42   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
+   43   1          {
+   44   2              bsp_imu_read_gyro(&raw);
+   45   2              sum += raw.gyro_x;
+   46   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
+   47   2          }
+   48   1      
+   49   1          gyro_x_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
+   50   1          wprint("gx offset=%.3f\r\n", gyro_x_offset);
+   51   1      }
+   52          
+   53          void service_imu_read_gyro(service_imu_gyro_t *out_data)
+   54          {
+   55   1          bsp_imu_gyro_t raw;
+C251 COMPILER V5.60.0,  service_imu                                                        12/07/26  19:34:29  PAGE 2   
 
-   56   1          if(NULL == out_data)
-   57   1          {
-   58   2              return;
-   59   2          }
-   60   1      
-   61   1          bsp_imu_read_gyro(&raw);
-   62   1          out_data->gyro_x = raw.gyro_x - gyro_x_offset;
-   63   1          out_data->gyro_y = raw.gyro_y;
-   64   1          out_data->gyro_z = raw.gyro_z - gyro_z_offset;
-   65   1      }
-   66          
-   67          float service_imu_read_gyro_z(void)
-   68          {
-   69   1          return bsp_imu_read_gyro_z() - gyro_z_offset;
-   70   1      }
+   56   1      
+   57   1          if(NULL == out_data)
+   58   1          {
+   59   2              return;
+   60   2          }
+   61   1      
+   62   1          bsp_imu_read_gyro(&raw);
+   63   1          out_data->gyro_x = tfpu_sub(raw.gyro_x, gyro_x_offset);
+   64   1          out_data->gyro_y = raw.gyro_y;
+   65   1          out_data->gyro_z = tfpu_sub(raw.gyro_z, gyro_z_offset);
+   66   1      }
+   67          
+   68          float service_imu_read_gyro_z(void)
+   69          {
+   70   1          return tfpu_sub(bsp_imu_read_gyro_z(), gyro_z_offset);
+   71   1      }
 
 
 Module Information          Static   Overlayable

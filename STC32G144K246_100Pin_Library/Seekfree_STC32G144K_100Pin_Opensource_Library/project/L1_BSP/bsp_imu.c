@@ -1,4 +1,5 @@
 #include "zf_common_headfile.h"
+#include "sys_tfpu.h"
 #include "bsp_imu.h"
 
 #ifndef BSP_IMU_QUARTERNION_RATE
