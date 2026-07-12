@@ -27,6 +27,7 @@
 #define APP_ELEMENT_CYLINDER_GYRO_DEADBAND      (15.0f)
 #define APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA     (0.20f)
 #define APP_ELEMENT_TICK_TO_SECOND              (0.0001f)
+#define APP_ELEMENT_DEG_TO_RAD                  (0.0174532925f)
 #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
 
 #define APP_ELEMENT_SEESAW_CONFIRM_COUNT        (3U)
@@ -36,7 +37,7 @@
 #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
 
-#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (3U)
+#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (2U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (52440.0f)
@@ -109,6 +110,7 @@ static float element_roundabout_count_float = 0.0f;
 
 float app_element_roundabout_bias_yaw_radps = 0.0f;
 uint8 app_element_roundabout_bias_active = 0U;
+float app_element_roundabout_feedforward_scale = 1.0f;
 static uint32 element_roundabout_bias_start_tick = 0U;
 static uint32 element_roundabout_bias_duration_tick = 0U;
 
@@ -146,6 +148,7 @@ static void app_element_reset(void)
     element_roundabout_count_float = 0.0f;
     app_element_roundabout_bias_yaw_radps = 0.0f;
     app_element_roundabout_bias_active = 0U;
+    app_element_roundabout_feedforward_scale = 1.0f;
     for(i = 0U; i < APP_ELEMENT_CYLINDER_BUCKET_COUNT; i++)
     {
         element_cylinder_bucket_angle_pos[i] = 0.0f;
@@ -409,52 +412,52 @@ static void app_element_roundabout_found(uint32 now)
         switch(element_roundabout_count)
         {
             case 0U:
-                app_element_roundabout_bias_yaw_radps = 25.0f;
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 300UL * APP_ELEMENT_TICK_PER_MS;
+                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+                app_element_roundabout_feedforward_scale = 3.00f;
                 break;
             case 1U:
-                // app_element_roundabout_bias_yaw_radps = -35.0f;
-                // app_element_roundabout_bias_active = 1U;
-                // element_roundabout_bias_start_tick = now;
-                // element_roundabout_bias_duration_tick = 150UL * APP_ELEMENT_TICK_PER_MS;
+                app_element_roundabout_bias_active = 0U;
+                app_element_roundabout_bias_yaw_radps = 0.0f;
+                app_element_roundabout_feedforward_scale = 1.0f;
                 break;
             case 2U:
-                app_element_roundabout_bias_yaw_radps = -40.0f;
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 330UL * APP_ELEMENT_TICK_PER_MS;
+                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+                app_element_roundabout_feedforward_scale = 2.80f;
                 break;
             case 3U:
-                // app_element_roundabout_bias_yaw_radps = 25.0f;
-                // app_element_roundabout_bias_active = 1U;
-                // element_roundabout_bias_start_tick = now;
-                // element_roundabout_bias_duration_tick = 150UL * APP_ELEMENT_TICK_PER_MS;
+                app_element_roundabout_bias_active = 0U;
+                app_element_roundabout_bias_yaw_radps = 0.0f;
+                app_element_roundabout_feedforward_scale = 1.0f;
                 break;
             case 4U:
-                app_element_roundabout_bias_yaw_radps = 25.0f;
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 300UL * APP_ELEMENT_TICK_PER_MS;
+                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+                app_element_roundabout_feedforward_scale = 3.00f;
                 break;
             case 5U:
-                // app_element_roundabout_bias_yaw_radps = -35.0f;
-                // app_element_roundabout_bias_active = 1U;
-                // element_roundabout_bias_start_tick = now;
-                // element_roundabout_bias_duration_tick = 150UL * APP_ELEMENT_TICK_PER_MS;
+                app_element_roundabout_bias_active = 0U;
+                app_element_roundabout_bias_yaw_radps = 0.0f;
+                app_element_roundabout_feedforward_scale = 1.0f;
                 break;
             case 6U:
-                app_element_roundabout_bias_yaw_radps = -40.0f;
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 330UL * APP_ELEMENT_TICK_PER_MS;
+                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+                app_element_roundabout_feedforward_scale = 2.80f;
                 break;
             case 7U:
-                // app_element_roundabout_bias_yaw_radps = 25.0f;
-                // app_element_roundabout_bias_active = 1U;
-                // element_roundabout_bias_start_tick = now;
-                // element_roundabout_bias_duration_tick = 150UL * APP_ELEMENT_TICK_PER_MS;
+                app_element_roundabout_bias_active = 0U;
+                app_element_roundabout_bias_yaw_radps = 0.0f;
+                app_element_roundabout_feedforward_scale = 1.0f;
                 break;
             default:
                 break;
@@ -519,6 +522,9 @@ static void app_element_roundabout_clear_count(void)
 {
     element_roundabout_count = 0U;
     element_roundabout_count_float = 0.0f;
+    app_element_roundabout_bias_active = 0U;
+    app_element_roundabout_bias_yaw_radps = 0.0f;
+    app_element_roundabout_feedforward_scale = 1.0f;
     wprint("roundabout_count,0.000\r\n");
 }
 

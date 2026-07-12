@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speed_plan                                                     12/07/26  21:30:57  PAGE 1   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     12/07/26  22:50:50  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speed_plan
@@ -18,143 +18,151 @@ stmt  level    source
     5          #include "app_motion_preprocess.h"
     6          #include "app_scheduler.h"
     7          #include "app_speed_plan.h"
-    8          
-    9          #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
-   10          #define APP_SPEED_PLAN_TASK_PRIORITY            (6U)
-   11          #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (1.0f)
-   12          #define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (80.0f)
-   13          #define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (80.0f)
-   14          #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
-   15          #define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
-   16          
-   17          static float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
-   18          static volatile float speed_plan_linear_mps = 0.0f;
-   19          
-   20          static void app_speed_plan_task(void);
-   21          
-   22          static float app_speed_plan_abs(float value)
-   23          {
-   24   1          return (0.0f > value) ? tfpu_sub(0.0f, value) : value;
-   25   1      }
-   26          
-   27          static float app_speed_plan_limit(float value, float min, float max)
-   28          {
-   29   1          if(value < min)
-   30   1          {
-   31   2              return min;
-   32   2          }
-   33   1      
-   34   1          if(value > max)
-   35   1          {
-   36   2              return max;
-   37   2          }
-   38   1      
-   39   1          return value;
-   40   1      }
-   41          
-   42          static float app_speed_plan_max(float a, float b)
-   43          {
-   44   1          return (a > b) ? a : b;
-   45   1      }
-   46          
-   47          static float app_speed_plan_norm_abs(float value, float max_value)
-   48          {
-   49   1          float abs_value;
-   50   1      
-   51   1          if(0.0f >= max_value)
-   52   1          {
-   53   2              return 0.0f;
-   54   2          }
-   55   1      
-C251 COMPILER V5.60.0,  app_speed_plan                                                     12/07/26  21:30:57  PAGE 2   
+    8          #include "app_element.h"
+    9          
+   10          #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
+   11          #define APP_SPEED_PLAN_TASK_PRIORITY            (6U)
+   12          #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (1.0f)
+   13          #define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (80.0f)
+   14          #define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (80.0f)
+   15          #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
+   16          #define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
+   17          
+   18          static float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
+   19          static volatile float speed_plan_linear_mps = 0.0f;
+   20          
+   21          static void app_speed_plan_task(void);
+   22          
+   23          static float app_speed_plan_abs(float value)
+   24          {
+   25   1          return (0.0f > value) ? tfpu_sub(0.0f, value) : value;
+   26   1      }
+   27          
+   28          static float app_speed_plan_limit(float value, float min, float max)
+   29          {
+   30   1          if(value < min)
+   31   1          {
+   32   2              return min;
+   33   2          }
+   34   1      
+   35   1          if(value > max)
+   36   1          {
+   37   2              return max;
+   38   2          }
+   39   1      
+   40   1          return value;
+   41   1      }
+   42          
+   43          static float app_speed_plan_max(float a, float b)
+   44          {
+   45   1          return (a > b) ? a : b;
+   46   1      }
+   47          
+   48          static float app_speed_plan_norm_abs(float value, float max_value)
+   49          {
+   50   1          float abs_value;
+   51   1      
+   52   1          if(0.0f >= max_value)
+   53   1          {
+   54   2              return 0.0f;
+   55   2          }
+C251 COMPILER V5.60.0,  app_speed_plan                                                     12/07/26  22:50:50  PAGE 2   
 
-   56   1          abs_value = app_speed_plan_abs(value);
-   57   1          abs_value = app_speed_plan_limit(abs_value, 0.0f, max_value);
-   58   1      
-   59   1          return tfpu_div(abs_value, max_value);
-   60   1      }
-   61          
-   62          static float app_speed_plan_ramp(float current, float target)
-   63          {
-   64   1          float delta;
-   65   1          float limit;
-   66   1      
-   67   1          delta = tfpu_sub(target, current);
-   68   1          limit = (0.0f < delta) ?
-   69   1                  tfpu_mul(APP_SPEED_PLAN_ACCEL_LIMIT_MPS2, (float)APP_SPEED_PLAN_PERIOD_MS / 1000.0f) :
-   70   1                  tfpu_mul(APP_SPEED_PLAN_DECEL_LIMIT_MPS2, (float)APP_SPEED_PLAN_PERIOD_MS / 1000.0f);
-   71   1      
-   72   1          if(delta > limit)
-   73   1          {
-   74   2              delta = limit;
-   75   2          }
-   76   1          else if(delta < tfpu_sub(0.0f, limit))
-   77   1          {
-   78   2              delta = tfpu_sub(0.0f, limit);
-   79   2          }
-   80   1      
-   81   1          return tfpu_add(current, delta);
-   82   1      }
-   83          
-   84          static void app_speed_plan_register_packet(void)
-   85          {
-   86   1          (void)service_packet_add_variable("speed_plan_min_ratio",
-   87   1                  &speed_plan_min_ratio, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
-   88   1      }
-   89          
-   90          void app_speed_plan_init(void)
-   91          {
-   92   1          app_motion_preprocess_data_t motion_preprocess;
-   93   1      
-   94   1          app_motion_preprocess_get_data(&motion_preprocess);
-   95   1          speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
-   96   1          speed_plan_linear_mps = motion_preprocess.linear_mps;
-   97   1      
-   98   1          app_speed_plan_register_packet();
-   99   1          app_speed_plan_task();
-  100   1          (void)app_scheduler_add(APP_SPEED_PLAN_TASK_ID, app_speed_plan_task,
-  101   1                  APP_SPEED_PLAN_TASK_PRIORITY, APP_SPEED_PLAN_PERIOD_MS);
-  102   1      }
-  103          
-  104          float app_speed_plan_get_linear_mps(void)
-  105          {
-  106   1          return speed_plan_linear_mps;
-  107   1      }
-  108          
-  109          static void app_speed_plan_task(void)
-  110          {
-  111   1          float line_error_rate;
-  112   1          float curvature_rate;
-  113   1          float brake_rate;
-  114   1          float ratio;
-  115   1          float target_raw_mps;
-  116   1          app_motion_preprocess_data_t motion_preprocess;
-  117   1          app_feedforward_data_t feedforward;
-  118   1      
-  119   1          app_motion_preprocess_get_data(&motion_preprocess);
-  120   1          app_feedforward_get_data(&feedforward);
-  121   1      
-C251 COMPILER V5.60.0,  app_speed_plan                                                     12/07/26  21:30:57  PAGE 3   
+   56   1      
+   57   1          abs_value = app_speed_plan_abs(value);
+   58   1          abs_value = app_speed_plan_limit(abs_value, 0.0f, max_value);
+   59   1      
+   60   1          return tfpu_div(abs_value, max_value);
+   61   1      }
+   62          
+   63          static float app_speed_plan_ramp(float current, float target)
+   64          {
+   65   1          float delta;
+   66   1          float limit;
+   67   1      
+   68   1          delta = tfpu_sub(target, current);
+   69   1          limit = (0.0f < delta) ?
+   70   1                  tfpu_mul(APP_SPEED_PLAN_ACCEL_LIMIT_MPS2, (float)APP_SPEED_PLAN_PERIOD_MS / 1000.0f) :
+   71   1                  tfpu_mul(APP_SPEED_PLAN_DECEL_LIMIT_MPS2, (float)APP_SPEED_PLAN_PERIOD_MS / 1000.0f);
+   72   1      
+   73   1          if(delta > limit)
+   74   1          {
+   75   2              delta = limit;
+   76   2          }
+   77   1          else if(delta < tfpu_sub(0.0f, limit))
+   78   1          {
+   79   2              delta = tfpu_sub(0.0f, limit);
+   80   2          }
+   81   1      
+   82   1          return tfpu_add(current, delta);
+   83   1      }
+   84          
+   85          static void app_speed_plan_register_packet(void)
+   86          {
+   87   1          (void)service_packet_add_variable("speed_plan_min_ratio",
+   88   1                  &speed_plan_min_ratio, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
+   89   1      }
+   90          
+   91          void app_speed_plan_init(void)
+   92          {
+   93   1          app_motion_preprocess_data_t motion_preprocess;
+   94   1      
+   95   1          app_motion_preprocess_get_data(&motion_preprocess);
+   96   1          speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
+   97   1          speed_plan_linear_mps = motion_preprocess.linear_mps;
+   98   1      
+   99   1          app_speed_plan_register_packet();
+  100   1          app_speed_plan_task();
+  101   1          (void)app_scheduler_add(APP_SPEED_PLAN_TASK_ID, app_speed_plan_task,
+  102   1                  APP_SPEED_PLAN_TASK_PRIORITY, APP_SPEED_PLAN_PERIOD_MS);
+  103   1      }
+  104          
+  105          float app_speed_plan_get_linear_mps(void)
+  106          {
+  107   1          return speed_plan_linear_mps;
+  108   1      }
+  109          
+  110          static void app_speed_plan_task(void)
+  111          {
+  112   1          float line_error_rate;
+  113   1          float curvature_rate;
+  114   1          float brake_rate;
+  115   1          float ratio;
+  116   1          float target_raw_mps;
+  117   1          app_motion_preprocess_data_t motion_preprocess;
+  118   1          app_feedforward_data_t feedforward;
+  119   1          app_element_data_t element;
+  120   1      
+  121   1          app_motion_preprocess_get_data(&motion_preprocess);
+C251 COMPILER V5.60.0,  app_speed_plan                                                     12/07/26  22:50:50  PAGE 3   
 
-  122   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
-  123   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
-  124   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
-  125   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
-  126   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
-  127   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
-  128   1      
-  129   1          speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
-  130   1      }
+  122   1          app_feedforward_get_data(&feedforward);
+  123   1          app_element_get_data(&element);
+  124   1      
+  125   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
+  126   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
+  127   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
+  128   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
+  129   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
+  130   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
+  131   1      
+  132   1          if((APP_ELEMENT_TYPE_SEESAW == element.type) && (element.active >= 0.5f))
+  133   1          {
+  134   2              target_raw_mps = 1.8f;
+  135   2          }
+  136   1      
+  137   1          speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
+  138   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       994     ------
+  ecode size           =      1060     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       132     ------
+  xdata size           =       154     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

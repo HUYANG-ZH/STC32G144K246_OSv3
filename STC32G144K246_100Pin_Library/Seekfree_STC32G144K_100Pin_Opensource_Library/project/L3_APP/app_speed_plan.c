@@ -5,6 +5,7 @@
 #include "app_motion_preprocess.h"
 #include "app_scheduler.h"
 #include "app_speed_plan.h"
+#include "app_element.h"
 
 #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
 #define APP_SPEED_PLAN_TASK_PRIORITY            (6U)
@@ -115,9 +116,11 @@ static void app_speed_plan_task(void)
     float target_raw_mps;
     app_motion_preprocess_data_t motion_preprocess;
     app_feedforward_data_t feedforward;
+    app_element_data_t element;
 
     app_motion_preprocess_get_data(&motion_preprocess);
     app_feedforward_get_data(&feedforward);
+    app_element_get_data(&element);
 
     line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
     curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
@@ -125,6 +128,11 @@ static void app_speed_plan_task(void)
     ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
     target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
             tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
+
+    if((APP_ELEMENT_TYPE_SEESAW == element.type) && (element.active >= 0.5f))
+    {
+        target_raw_mps = 1.8f;
+    }
 
     speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
 }
