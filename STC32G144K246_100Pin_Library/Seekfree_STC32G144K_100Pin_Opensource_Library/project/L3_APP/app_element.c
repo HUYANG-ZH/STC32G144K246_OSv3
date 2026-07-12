@@ -6,6 +6,7 @@
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 #include "service_buzzer.h"
+#include "app_inductor_preprocess.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
@@ -26,6 +27,12 @@
 #define APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA     (0.20f)
 #define APP_ELEMENT_TICK_TO_SECOND              (0.0001f)
 #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
+
+#define APP_ELEMENT_SEESAW_CONFIRM_COUNT        (3U)
+#define APP_ELEMENT_SEESAW_DEAD_MS              (500UL)
+#define APP_ELEMENT_SEESAW_DEAD_TICK            (APP_ELEMENT_SEESAW_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
+#define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
+#define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
 
 app_element_config_t app_element_config =
 {
@@ -76,6 +83,12 @@ static uint8 element_cylinder_dead = 0U;
 static uint8 element_gyro_x_lpf_ready = 0U;
 static uint8 element_cylinder_bucket_head = 0U;
 static uint8 element_cylinder_bucket_count = 0U;
+static uint8 element_seesaw_confirm = 0U;
+static uint8 element_seesaw_dead = 0U;
+static uint32 element_seesaw_dead_start_tick = 0U;
+static uint8 element_seesaw_active = 0U;
+static uint32 element_seesaw_active_start_tick = 0U;
+static float element_seesaw_event = 0.0f;
 
 static void app_element_cylinder_state_reply(void);
 
@@ -100,6 +113,10 @@ static void app_element_reset(void)
     element_gyro_x_lpf_ready = 0U;
     element_cylinder_bucket_head = 0U;
     element_cylinder_bucket_count = 0U;
+    element_seesaw_confirm = 0U;
+    element_seesaw_dead = 0U;
+    element_seesaw_active = 0U;
+    element_seesaw_event = 0.0f;
     for(i = 0U; i < APP_ELEMENT_CYLINDER_BUCKET_COUNT; i++)
     {
         element_cylinder_bucket_angle_pos[i] = 0.0f;
@@ -215,6 +232,12 @@ static void app_element_cylinder_push(float delta_deg, uint32 now)
 
 static uint8 app_element_cylinder_in_dead(uint32 now)
 {
+    /* 跷跷板死区内也阻挡圆筒 */
+    if(0U != element_seesaw_dead)
+    {
+        return 1U;
+    }
+
     if(0U == element_cylinder_dead)
     {
         return 0U;
@@ -294,6 +317,59 @@ static void app_element_cylinder_state_reply(void)
             element_cylinder_event);
 }
 
+static void app_element_seesaw_found(uint32 now)
+{
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
+    element_data.type = APP_ELEMENT_TYPE_SEESAW;
+    element_data.state = APP_ELEMENT_STATE_DONE;
+    element_data.dir = APP_ELEMENT_DIR_NONE;
+    element_data.active = 1.0f;
+    EA = ea_backup;
+
+    element_seesaw_dead = 1U;
+    element_seesaw_dead_start_tick = now;
+    element_seesaw_confirm = 0U;
+    element_cylinder_dead = 1U;
+    element_cylinder_dead_start_tick = now;
+    element_seesaw_active = 1U;
+    element_seesaw_active_start_tick = now;
+    element_seesaw_event = 1.0f;
+
+    wprint("seesaw,1.000\r\n");
+    service_buzzer_beep_ms(300U);
+}
+
+static void app_element_seesaw_update(uint32 now)
+{
+    /* 死区检查 */
+    if(0U != element_seesaw_dead)
+    {
+        if((uint32)(now - element_seesaw_dead_start_tick) >= APP_ELEMENT_SEESAW_DEAD_TICK)
+        {
+            element_seesaw_dead = 0U;
+            element_seesaw_confirm = 0U;
+        }
+        return;
+    }
+
+    /* TODO: 跷跷板检测条件，后续根据五路电感归一化值补充 */
+    if(0)
+    {
+        element_seesaw_confirm++;
+        if(element_seesaw_confirm >= APP_ELEMENT_SEESAW_CONFIRM_COUNT)
+        {
+            app_element_seesaw_found(now);
+        }
+    }
+    else
+    {
+        element_seesaw_confirm = 0U;
+    }
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     元素识别初始化
 // 参数说明     void
@@ -307,6 +383,8 @@ void app_element_init(void)
     (void)service_packet_add_action("cylinder_state", app_element_cylinder_state_reply, 0UL);
     (void)service_packet_add_variable("cylinder_event",
             &element_cylinder_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("seesaw_event",
+            &element_seesaw_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -376,8 +454,28 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         app_element_cylinder_update(gyro_x, delta_tick, now);
     }
 
-    /* 圆筒转向限幅持续时间到期后清除元素状态 */
+    /* 跷跷板检测 */
+    app_element_seesaw_update(now);
+
+    /* 跷跷板动作到期清除（100ms后释放控制，死区保留到500ms自动到期） */
+    if((0U != element_seesaw_active) &&
+            ((uint32)(now - element_seesaw_active_start_tick) >= APP_ELEMENT_SEESAW_ACTIVE_TICK))
+    {
+        element_seesaw_active = 0U;
+        element_seesaw_event = 0.0f;
+        ea_backup = EA;
+        EA = 0;
+        element_data.type = APP_ELEMENT_TYPE_NONE;
+        element_data.state = APP_ELEMENT_STATE_IDLE;
+        element_data.dir = APP_ELEMENT_DIR_NONE;
+        element_data.active = 0.0f;
+        EA = ea_backup;
+    }
+
+    /* 圆筒转向限幅持续时间到期后清除元素状态（跷跷板活跃时跳过） */
     if((0U != element_cylinder_yaw_limit_active) &&
+            (0U == element_seesaw_active) &&
+            (0U == element_seesaw_dead) &&
             ((uint32)(now - element_cylinder_yaw_limit_start_tick) >= APP_ELEMENT_CYLINDER_YAW_LIMIT_TICK))
     {
         element_cylinder_yaw_limit_active = 0U;
