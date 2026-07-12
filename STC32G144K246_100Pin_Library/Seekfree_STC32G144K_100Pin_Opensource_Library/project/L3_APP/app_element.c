@@ -2,12 +2,12 @@
 #include "sys_tfpu.h"
 #include "shared_lpf.h"
 #include "service_imu.h"
+#include "service_speed.h"
 #include "service_packet.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 #include "service_buzzer.h"
 #include "app_inductor_preprocess.h"
-#include "app_scheduler.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
@@ -37,13 +37,17 @@
 #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
 
-#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (2U)
+#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
-#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (52440.0f)
+#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (0.0f)
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)
-#define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (2U)
+#define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (1U)
+#define APP_ELEMENT_ROUNDABOUT_FSM_IDLE          (0U)
+#define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
+#define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
+#define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
 
 app_element_config_t app_element_config =
 {
@@ -109,6 +113,10 @@ static uint8 element_roundabout_count = 0U;
 static float element_roundabout_count_float = 0.0f;
 static uint8 element_roundabout_gz_high = 0U;
 static uint32 element_roundabout_gz_high_tick = 0U;
+static uint8 element_roundabout_gz_integrate = 0U;
+static float element_roundabout_gz_angle_deg = 0.0f;
+static uint8 element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
+static float element_roundabout_distance_m = 0.0f;
 
 float app_element_roundabout_bias_yaw_radps = 0.0f;
 uint8 app_element_roundabout_bias_active = 0U;
@@ -149,6 +157,10 @@ static void app_element_reset(void)
     element_roundabout_count = 0U;
     element_roundabout_count_float = 0.0f;
     element_roundabout_gz_high = 0U;
+    element_roundabout_gz_integrate = 0U;
+    element_roundabout_gz_angle_deg = 0.0f;
+    element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
+    element_roundabout_distance_m = 0.0f;
     app_element_roundabout_bias_yaw_radps = 0.0f;
     app_element_roundabout_bias_active = 0U;
     app_element_roundabout_feedforward_scale = 1.0f;
@@ -359,35 +371,105 @@ static float app_element_roundabout_score(const app_inductor_preprocess_data_t *
     float x2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3];
     float y2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4];
     float m  = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
+    float score_a;
+    float score_b;
+    float score_c;
     float sr;
     float t;
 
-    sr = tfpu_add(tfpu_mul(140.0f, y1), tfpu_mul(86.0f, x1));
-    sr = tfpu_add(sr, tfpu_mul(1079.0f, m));
+    /* 分支 A：原有环岛特征 */
+    score_a = tfpu_add(tfpu_mul(103.613f, y1), tfpu_mul(23.045f, x1));
+    score_a = tfpu_add(score_a, tfpu_mul(373.933f, m));
 
-    t = tfpu_mul(0.455f, tfpu_mul(y1, y1));
-    sr = tfpu_sub(sr, t);
+    t = tfpu_mul(0.135f, tfpu_mul(y1, y1));
+    score_a = tfpu_sub(score_a, t);
 
-    t = tfpu_mul(0.130f, tfpu_mul(x1, x1));
-    sr = tfpu_sub(sr, t);
+    t = tfpu_mul(0.689f, tfpu_mul(x2, x2));
+    score_a = tfpu_add(score_a, t);
 
-    t = tfpu_mul(0.248f, tfpu_mul(x1, x2));
-    sr = tfpu_sub(sr, t);
+    t = tfpu_mul(0.703f, tfpu_mul(x2, y2));
+    score_a = tfpu_sub(score_a, t);
 
-    t = tfpu_mul(2.018f, tfpu_mul(x2, x2));
-    sr = tfpu_add(sr, t);
+    t = tfpu_mul(0.937f, tfpu_mul(x2, m));
+    score_a = tfpu_sub(score_a, t);
 
-    t = tfpu_mul(2.197f, tfpu_mul(x2, y2));
-    sr = tfpu_sub(sr, t);
+    t = tfpu_mul(1.116f, tfpu_mul(y2, y2));
+    score_a = tfpu_add(score_a, t);
 
-    t = tfpu_mul(2.113f, tfpu_mul(x2, m));
-    sr = tfpu_sub(sr, t);
+    t = tfpu_mul(2.881f, tfpu_mul(m, m));
+    score_a = tfpu_sub(score_a, t);
 
-    t = tfpu_mul(2.100f, tfpu_mul(y2, y2));
-    sr = tfpu_add(sr, t);
+    /* 分支 B：新环岛 5 特征 */
+    score_b = tfpu_sub(tfpu_mul(-12.226f, y1), tfpu_mul(17.723f, x1));
+    score_b = tfpu_sub(score_b, tfpu_mul(119.330f, x2));
+    score_b = tfpu_add(score_b, tfpu_mul(328.974f, y2));
 
-    t = tfpu_mul(7.074f, tfpu_mul(m, m));
-    sr = tfpu_sub(sr, t);
+    t = tfpu_mul(0.954f, tfpu_mul(y1, y1));
+    score_b = tfpu_sub(score_b, t);
+
+    t = tfpu_mul(0.871f, tfpu_mul(y1, x1));
+    score_b = tfpu_add(score_b, t);
+
+    t = tfpu_mul(2.299f, tfpu_mul(y1, y2));
+    score_b = tfpu_add(score_b, t);
+
+    t = tfpu_mul(0.363f, tfpu_mul(x1, x1));
+    score_b = tfpu_add(score_b, t);
+
+    t = tfpu_mul(0.835f, tfpu_mul(x1, x2));
+    score_b = tfpu_sub(score_b, t);
+
+    t = tfpu_mul(0.216f, tfpu_mul(x1, m));
+    score_b = tfpu_add(score_b, t);
+
+    t = tfpu_mul(0.819f, tfpu_mul(x2, x2));
+    score_b = tfpu_add(score_b, t);
+
+    t = tfpu_mul(1.978f, tfpu_mul(y2, y2));
+    score_b = tfpu_sub(score_b, t);
+
+    t = tfpu_mul(1.837f, tfpu_mul(m, m));
+    score_b = tfpu_sub(score_b, t);
+
+    /* 分支 C：新环岛 6、7 特征 */
+    score_c = tfpu_add(tfpu_mul(138.507f, y1), tfpu_mul(262.993f, m));
+
+    t = tfpu_mul(0.204f, tfpu_mul(y1, y1));
+    score_c = tfpu_sub(score_c, t);
+
+    t = tfpu_mul(0.547f, tfpu_mul(y1, x2));
+    score_c = tfpu_sub(score_c, t);
+
+    t = tfpu_mul(0.055f, tfpu_mul(x1, x1));
+    score_c = tfpu_sub(score_c, t);
+
+    t = tfpu_mul(0.281f, tfpu_mul(x1, x2));
+    score_c = tfpu_sub(score_c, t);
+
+    t = tfpu_mul(0.750f, tfpu_mul(x1, y2));
+    score_c = tfpu_add(score_c, t);
+
+    t = tfpu_mul(0.541f, tfpu_mul(x2, x2));
+    score_c = tfpu_add(score_c, t);
+
+    t = tfpu_mul(0.261f, tfpu_mul(y2, m));
+    score_c = tfpu_sub(score_c, t);
+
+    t = tfpu_mul(2.282f, tfpu_mul(m, m));
+    score_c = tfpu_sub(score_c, t);
+
+    sr = tfpu_sub(score_a, 21736.0f);
+    t = tfpu_sub(score_b, 8425.0f);
+    if(t > sr)
+    {
+        sr = t;
+    }
+
+    t = tfpu_sub(score_c, 17502.0f);
+    if(t > sr)
+    {
+        sr = t;
+    }
 
     return sr;
 }
@@ -422,50 +504,57 @@ static void app_element_roundabout_found(uint32 now)
                 app_element_roundabout_feedforward_scale = 3.00f;
                 break;
             case 1U:
-                app_element_roundabout_bias_active = 0U;
-                app_element_roundabout_bias_yaw_radps = 0.0f;
-                app_element_roundabout_feedforward_scale = 1.0f;
-                break;
-            case 2U:
                 app_element_roundabout_bias_yaw_radps = tfpu_mul(-3000.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                app_element_roundabout_feedforward_scale = 3.80f;
+                app_element_roundabout_feedforward_scale = 3.00f;
                 break;
-            case 3U:
-                app_element_roundabout_bias_active = 0U;
-                app_element_roundabout_bias_yaw_radps = 0.0f;
-                app_element_roundabout_feedforward_scale = 1.0f;
-                break;
-            case 4U:
+            case 2U:
                 app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
                 app_element_roundabout_feedforward_scale = 3.00f;
                 break;
-            case 5U:
-                app_element_roundabout_bias_active = 0U;
-                app_element_roundabout_bias_yaw_radps = 0.0f;
-                app_element_roundabout_feedforward_scale = 1.0f;
-                break;
-            case 6U:
+            case 3U:
                 app_element_roundabout_bias_yaw_radps = tfpu_mul(-3000.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                app_element_roundabout_feedforward_scale = 2.80f;
+                app_element_roundabout_feedforward_scale = 3.00f;
                 break;
-            case 7U:
-                app_element_roundabout_bias_active = 0U;
-                app_element_roundabout_bias_yaw_radps = 0.0f;
-                app_element_roundabout_feedforward_scale = 1.0f;
-                break;
+            // case 4U:
+            //     app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
+            //     app_element_roundabout_bias_active = 1U;
+            //     element_roundabout_bias_start_tick = now;
+            //     element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+            //     app_element_roundabout_feedforward_scale = 3.00f;
+            //     break;
+            // case 5U:
+            //     app_element_roundabout_bias_active = 0U;
+            //     app_element_roundabout_bias_yaw_radps = 0.0f;
+            //     app_element_roundabout_feedforward_scale = 1.0f;
+            //     break;
+            // case 6U:
+            //     app_element_roundabout_bias_yaw_radps = tfpu_mul(-3000.0f, APP_ELEMENT_DEG_TO_RAD);
+            //     app_element_roundabout_bias_active = 1U;
+            //     element_roundabout_bias_start_tick = now;
+            //     element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+            //     app_element_roundabout_feedforward_scale = 2.80f;
+            //     break;
+            // case 7U:
+            //     app_element_roundabout_bias_active = 0U;
+            //     app_element_roundabout_bias_yaw_radps = 0.0f;
+            //     app_element_roundabout_feedforward_scale = 1.0f;
+            //     break;
             default:
                 break;
         }
     }
+    element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
+    element_roundabout_gz_integrate = 1U;
+    element_roundabout_gz_angle_deg = 0.0f;
     element_roundabout_count++;
     element_roundabout_count_float = (float)element_roundabout_count;
 }
@@ -484,19 +573,15 @@ static void app_element_roundabout_task(void)
     {
         element_roundabout_dead = 0U;
         element_roundabout_confirm = 0U;
-        if(APP_ELEMENT_TYPE_ROUNDABOUT == element_data.type)
-        {
-            ea_backup = EA;
-            EA = 0;
-            element_data.type = APP_ELEMENT_TYPE_NONE;
-            element_data.state = APP_ELEMENT_STATE_IDLE;
-            element_data.dir = APP_ELEMENT_DIR_NONE;
-            element_data.active = 0.0f;
-            EA = ea_backup;
-        }
     }
 
     if(0U != element_roundabout_dead)
+    {
+        return;
+    }
+
+    /* FSM非空闲态不检测 */
+    if(APP_ELEMENT_ROUNDABOUT_FSM_IDLE != element_roundabout_fsm)
     {
         return;
     }
@@ -610,8 +695,7 @@ void app_element_init(void)
             &element_cylinder_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("seesaw_event",
             &element_seesaw_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
-    (void)app_scheduler_add(APP_ELEMENT_ROUNDABOUT_TASK_ID, app_element_roundabout_task,
-            APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY, APP_ELEMENT_ROUNDABOUT_PERIOD_MS);
+    pit_ms_init(APP_ELEMENT_ROUNDABOUT_PIT, APP_ELEMENT_ROUNDABOUT_PERIOD_MS, app_element_roundabout_task);
     (void)service_packet_add_action("reset_round", app_element_roundabout_clear_count, 0UL);
     (void)service_packet_add_variable("roundabout_count",
             &element_roundabout_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
@@ -687,16 +771,66 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         element_seesaw_gz_high = 0U;
     }
 
-    /* 追踪gz是否在50ms内超过100°/s（环岛检测阻挡条件） */
-    if((gyro->gyro_z > 100.0f) || (gyro->gyro_z < -100.0f))
+    /* 追踪gz是否在20ms内超过200°/s（环岛检测阻挡条件） */
+    if((gyro->gyro_z > 200.0f) || (gyro->gyro_z < -200.0f))
     {
         element_roundabout_gz_high = 1U;
         element_roundabout_gz_high_tick = now;
     }
     else if((0U != element_roundabout_gz_high) &&
-            ((uint32)(now - element_roundabout_gz_high_tick) > 50U * APP_ELEMENT_TICK_PER_MS))
+            ((uint32)(now - element_roundabout_gz_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
     {
         element_roundabout_gz_high = 0U;
+    }
+
+    /* 环岛gz积分：累计达到300°退出环岛处理 */
+    if(0U != element_roundabout_gz_integrate)
+    {
+        float delta_angle = tfpu_mul(gyro->gyro_z,
+                tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
+        if(delta_angle < 0.0f)
+        {
+            delta_angle = tfpu_sub(0.0f, delta_angle);
+        }
+        element_roundabout_gz_angle_deg = tfpu_add(element_roundabout_gz_angle_deg, delta_angle);
+        if(element_roundabout_gz_angle_deg >= 340.0f)
+        {
+            element_roundabout_gz_integrate = 0U;
+            element_roundabout_gz_angle_deg = 0.0f;
+            app_element_roundabout_bias_active = 0U;
+            app_element_roundabout_bias_yaw_radps = 0.0f;
+            app_element_roundabout_feedforward_scale = 1.0f;
+            element_roundabout_dead = 0U;
+            element_roundabout_confirm = 0U;
+            element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
+            element_roundabout_distance_m = 0.0f;
+            wprint("roundabout_exit,1.000\r\n");
+            ea_backup = EA;
+            EA = 0;
+            element_data.type = APP_ELEMENT_TYPE_NONE;
+            element_data.state = APP_ELEMENT_STATE_IDLE;
+            element_data.dir = APP_ELEMENT_DIR_NONE;
+            element_data.active = 0.0f;
+            EA = ea_backup;
+        }
+    }
+
+    /* 环岛退出距离积分：累计前进1m后恢复空闲态 */
+    if(APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT == element_roundabout_fsm)
+    {
+        service_speed_data_t speed;
+        float avg_mps;
+
+        service_speed_get(&speed);
+        avg_mps = tfpu_mul(tfpu_sub(speed.left_mps, speed.right_mps), 0.5f);
+        element_roundabout_distance_m = tfpu_add(element_roundabout_distance_m,
+                tfpu_mul(avg_mps, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND)));
+        if(element_roundabout_distance_m >= APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M)
+        {
+            element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
+            element_roundabout_distance_m = 0.0f;
+            wprint("roundabout_ready,1.000\r\n");
+        }
     }
 
     if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)

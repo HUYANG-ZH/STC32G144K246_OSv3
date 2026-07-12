@@ -8,8 +8,8 @@
 
 #define APP_INDUCTOR_CHANNEL_COUNT             APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT
 #define APP_INDUCTOR_MEDIAN_SAMPLE_COUNT       (3U)
-#define APP_INDUCTOR_HISTORY_COUNT             (15U)
-#define APP_INDUCTOR_AVERAGE_COUNT             (13U)
+#define APP_INDUCTOR_HISTORY_COUNT             (7U)
+#define APP_INDUCTOR_AVERAGE_COUNT             (5U)
 // [4]is middle inductor
 uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {850U, 1000U, 1000U, 750U, 100U};
 uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 3000U, 3100U, 4095U, 4095U};

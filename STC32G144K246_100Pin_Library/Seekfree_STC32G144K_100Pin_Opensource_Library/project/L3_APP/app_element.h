@@ -20,6 +20,10 @@
 #define APP_ELEMENT_PERIOD_MS                   (5U)
 #endif
 
+#ifndef APP_ELEMENT_ROUNDABOUT_PIT
+#define APP_ELEMENT_ROUNDABOUT_PIT              TIM7_PIT
+#endif
+
 typedef enum
 {
     APP_ELEMENT_TYPE_NONE = 0,
