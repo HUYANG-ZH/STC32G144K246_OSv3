@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -40,8 +40,8 @@ stmt  level    source
    23          #define APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_MS  (50UL)
    24          #define APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK \
    25              (APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_MS * APP_ELEMENT_TICK_PER_MS)
-   26          #define APP_ELEMENT_CYLINDER_TRIGGER_DEG        (130.0f)
-   27          #define APP_ELEMENT_CYLINDER_GYRO_DEADBAND      (10.0f)
+   26          #define APP_ELEMENT_CYLINDER_TRIGGER_DEG        (150.0f)
+   27          #define APP_ELEMENT_CYLINDER_GYRO_DEADBAND      (15.0f)
    28          #define APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA     (0.20f)
    29          #define APP_ELEMENT_TICK_TO_SECOND              (0.0001f)
    30          #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
@@ -66,7 +66,7 @@ stmt  level    source
    48          {
    49              0.0f,
    50              0.0f,
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 2   
 
    51              0.0f,
    52              0.0f,
@@ -134,7 +134,7 @@ stmt  level    source
   114          
   115          static void app_element_cylinder_state_reply(void);
   116          
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 3   
 
   117          static void app_element_reset(void)
   118          {
@@ -202,7 +202,7 @@ stmt  level    source
   180   1      
   181   1          index = (uint16)element_cylinder_bucket_head + (uint16)element_cylinder_bucket_count - 1U;
   182   1          while(index >= APP_ELEMENT_CYLINDER_BUCKET_COUNT)
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 4   
 
   183   1          {
   184   2              index -= APP_ELEMENT_CYLINDER_BUCKET_COUNT;
@@ -270,7 +270,7 @@ stmt  level    source
   246   2              element_cylinder_bucket_count++;
   247   2          }
   248   1      
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 5   
 
   249   1          if(delta_deg >= 0.0f)
   250   1          {
@@ -338,7 +338,7 @@ stmt  level    source
   310   1          float delta_deg;
   311   1      
   312   1          if(0U != app_element_cylinder_in_dead(now))
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 6   
 
   313   1          {
   314   2              app_element_cylinder_clear();
@@ -406,7 +406,7 @@ stmt  level    source
   376   1      
   377   1          t = tfpu_mul(2.113f, tfpu_mul(x2, m));
   378   1          sr = tfpu_sub(sr, t);
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 7   
 
   379   1      
   380   1          t = tfpu_mul(2.100f, tfpu_mul(y2, y2));
@@ -474,7 +474,7 @@ stmt  level    source
   442   3                      // app_element_roundabout_bias_yaw_radps = -35.0f;
   443   3                      // app_element_roundabout_bias_active = 1U;
   444   3                      // element_roundabout_bias_start_tick = now;
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 8   
 
   445   3                      // element_roundabout_bias_duration_tick = 150UL * APP_ELEMENT_TICK_PER_MS;
   446   3                      break;
@@ -542,7 +542,7 @@ stmt  level    source
   508   4                      app_element_roundabout_found(now);
   509   4                  }
   510   3              }
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 9   
 
   511   2          }
   512   1          else
@@ -610,7 +610,7 @@ stmt  level    source
              -d[APP_INDUCTOR_PREPROCESS_INDEX_M];
   574   1      
   575   1          if((score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD) && (0U != element_seesaw_gz_high))
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 10  
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 10  
 
   576   1          {
   577   2              element_seesaw_confirm++;
@@ -678,7 +678,7 @@ stmt  level    source
   634          // 参数说明     gyro             IMU三轴陀螺仪数据，单位 deg/s
   635          // 返回参数     void
   636          // 使用示例     app_element_imu_task(&gyro);
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 11  
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 11  
 
   637          // 备注信息     当前只识别gyro_x滑动窗口内单方向累计转动超过180度的圆筒元素
   638          //-------------------------------------------------------------------------------------------------------
@@ -746,7 +746,7 @@ stmt  level    source
   699   2              ea_backup = EA;
   700   2              EA = 0;
   701   2              element_data.type = APP_ELEMENT_TYPE_NONE;
-C251 COMPILER V5.60.0,  app_element                                                        12/07/26  20:50:26  PAGE 12  
+C251 COMPILER V5.60.0,  app_element                                                        12/07/26  21:30:55  PAGE 12  
 
   702   2              element_data.state = APP_ELEMENT_STATE_IDLE;
   703   2              element_data.dir = APP_ELEMENT_DIR_NONE;
