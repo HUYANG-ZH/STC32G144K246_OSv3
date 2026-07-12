@@ -82,26 +82,6 @@ static uint16 app_inductor_median3(uint16 a, uint16 b, uint16 c)
     return b;
 }
 
-static void app_inductor_sort_ascending(uint16 *values)
-{
-    uint8 i;
-    uint8 j;
-    uint16 temp;
-
-    for(i = 0U; i < (APP_INDUCTOR_HISTORY_COUNT - 1U); i++)
-    {
-        for(j = (uint8)(i + 1U); j < APP_INDUCTOR_HISTORY_COUNT; j++)
-        {
-            if(values[i] > values[j])
-            {
-                temp = values[i];
-                values[i] = values[j];
-                values[j] = temp;
-            }
-        }
-    }
-}
-
 static void app_inductor_sample_median(uint16 median[APP_INDUCTOR_CHANNEL_COUNT])
 {
     uint8 i;
@@ -151,7 +131,9 @@ static void app_inductor_update_output(void)
     uint8 j;
     uint8 ea_backup;
     uint32 sum;
-    uint16 sorted[APP_INDUCTOR_HISTORY_COUNT];
+    uint16 min_val;
+    uint16 max_val;
+    uint16 values[APP_INDUCTOR_HISTORY_COUNT];
     float filtered[APP_INDUCTOR_CHANNEL_COUNT];
     float normalized[APP_INDUCTOR_CHANNEL_COUNT];
 
@@ -159,18 +141,26 @@ static void app_inductor_update_output(void)
     {
         for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
         {
-            sorted[j] = inductor_history[i][j];
+            values[j] = inductor_history[i][j];
         }
 
-        app_inductor_sort_ascending(sorted);
-
-        sum = 0U;
-        for(j = 1U; j < (APP_INDUCTOR_HISTORY_COUNT - 1U); j++)
+        min_val = values[0];
+        max_val = values[0];
+        sum = values[0];
+        for(j = 1U; j < APP_INDUCTOR_HISTORY_COUNT; j++)
         {
-            sum += sorted[j];
+            sum += values[j];
+            if(values[j] < min_val)
+            {
+                min_val = values[j];
+            }
+            if(values[j] > max_val)
+            {
+                max_val = values[j];
+            }
         }
 
-        filtered[i] = tfpu_div(tfpu_int2float((long)sum), tfpu_int2float((long)APP_INDUCTOR_AVERAGE_COUNT));
+        filtered[i] = tfpu_div(tfpu_int2float((long)(sum - min_val - max_val)), tfpu_int2float((long)APP_INDUCTOR_AVERAGE_COUNT));
 
         if(0.0f >= inductor_range_inv[i])
         {

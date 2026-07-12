@@ -365,9 +365,6 @@ static void app_motion_postprocess_task(void)
         if(print_tick >= 200U)
         {
             print_tick = 0U;
-            printf("%.3f,%.3f,%.3f,%.3f\r\n", raw_error,
-                    target_yaw_rate_radps, actual_yaw_rate_radps,
-                    feedforward_differential_speed);
         }
     }
 }

@@ -34,7 +34,7 @@
 #define APP_ELEMENT_SEESAW_DEAD_TICK            (APP_ELEMENT_SEESAW_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
 #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
-#define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (262)
+#define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
 
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (3U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
@@ -96,6 +96,8 @@ static uint8 element_cylinder_bucket_count = 0U;
 static uint8 element_seesaw_confirm = 0U;
 static uint8 element_seesaw_dead = 0U;
 static uint32 element_seesaw_dead_start_tick = 0U;
+static uint8 element_seesaw_gz_high = 0U;
+static uint32 element_seesaw_gz_high_tick = 0U;
 static uint8 element_seesaw_active = 0U;
 static uint32 element_seesaw_active_start_tick = 0U;
 static float element_seesaw_event = 0.0f;
@@ -135,6 +137,7 @@ static void app_element_reset(void)
     element_cylinder_bucket_count = 0U;
     element_seesaw_confirm = 0U;
     element_seesaw_dead = 0U;
+    element_seesaw_gz_high = 0U;
     element_seesaw_active = 0U;
     element_seesaw_event = 0.0f;
     element_roundabout_confirm = 0U;
@@ -421,13 +424,13 @@ static void app_element_roundabout_found(uint32 now)
                 app_element_roundabout_bias_yaw_radps = -25.0f;
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
+                element_roundabout_bias_duration_tick = 330UL * APP_ELEMENT_TICK_PER_MS;
                 break;
             case 3U:
                 app_element_roundabout_bias_yaw_radps = 25.0f;
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 200UL * APP_ELEMENT_TICK_PER_MS;
+                element_roundabout_bias_duration_tick = 150UL * APP_ELEMENT_TICK_PER_MS;
                 break;
             default:
                 break;
@@ -527,7 +530,7 @@ static void app_element_seesaw_found(uint32 now)
 static void app_element_seesaw_update(uint32 now)
 {
     app_inductor_preprocess_data_t inductor;
-    int16 score;
+    int32 score;
 
     /* 死区检查 */
     if(0U != element_seesaw_dead)
@@ -542,13 +545,14 @@ static void app_element_seesaw_update(uint32 now)
 
     app_inductor_preprocess_get_data(&inductor);
 
-    score = (int16)(-81 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1]
+    score = (int32)(-81 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1]
                     -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2]
                     -204 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3]
                     -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]
-                    +79 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
+                    +159 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M])
+            - 2 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M] * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
 
-    if(score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD)
+    if((score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD) && (0U != element_seesaw_gz_high))
     {
         element_seesaw_confirm++;
         if(element_seesaw_confirm >= APP_ELEMENT_SEESAW_CONFIRM_COUNT)
@@ -641,6 +645,18 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
     element_data.gyro_y = gyro->gyro_y;
     element_data.gyro_z = gyro->gyro_z;
     EA = ea_backup;
+
+    /* 追踪gz是否在50ms内出现过>50°/s（供跷跷板检测） */
+    if((gyro->gyro_z > 50.0f) || (gyro->gyro_z < -50.0f))
+    {
+        element_seesaw_gz_high = 1U;
+        element_seesaw_gz_high_tick = now;
+    }
+    else if((0U != element_seesaw_gz_high) &&
+            ((uint32)(now - element_seesaw_gz_high_tick) > 50U * APP_ELEMENT_TICK_PER_MS))
+    {
+        element_seesaw_gz_high = 0U;
+    }
 
     if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)
     {
