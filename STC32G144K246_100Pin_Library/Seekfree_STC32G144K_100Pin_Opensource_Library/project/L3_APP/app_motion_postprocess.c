@@ -280,13 +280,15 @@ static void app_motion_postprocess_task(void)
             static_feedforward_speed);
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
 
-    /* 圆筒元素：限制PID设定点并关闭前馈 */
+    /* 圆筒元素：降角速度增益+限幅+关前馈 */
     {
         app_element_data_t element;
         app_element_get_data(&element);
         if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
         {
             float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
+
+            feedback_yaw_rate_radps = tfpu_mul(10.0f, raw_error);
             if(feedback_yaw_rate_radps > limit)
             {
                 feedback_yaw_rate_radps = limit;
