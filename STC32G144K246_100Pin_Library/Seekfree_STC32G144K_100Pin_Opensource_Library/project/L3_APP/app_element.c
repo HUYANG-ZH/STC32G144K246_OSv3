@@ -107,6 +107,8 @@ static uint32 element_roundabout_dead_start_tick = 0U;
 static uint8 element_roundabout_dead = 0U;
 static uint8 element_roundabout_count = 0U;
 static float element_roundabout_count_float = 0.0f;
+static uint8 element_roundabout_gz_high = 0U;
+static uint32 element_roundabout_gz_high_tick = 0U;
 
 float app_element_roundabout_bias_yaw_radps = 0.0f;
 uint8 app_element_roundabout_bias_active = 0U;
@@ -146,6 +148,7 @@ static void app_element_reset(void)
     element_roundabout_dead = 0U;
     element_roundabout_count = 0U;
     element_roundabout_count_float = 0.0f;
+    element_roundabout_gz_high = 0U;
     app_element_roundabout_bias_yaw_radps = 0.0f;
     app_element_roundabout_bias_active = 0U;
     app_element_roundabout_feedforward_scale = 1.0f;
@@ -503,7 +506,7 @@ static void app_element_roundabout_task(void)
     score = app_element_roundabout_score(&inductor);
     if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD)
     {
-        if(0U == element_seesaw_active)
+        if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
         {
             element_roundabout_confirm++;
             if(element_roundabout_confirm >= APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT)
@@ -682,6 +685,18 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
             ((uint32)(now - element_seesaw_gz_high_tick) > 50U * APP_ELEMENT_TICK_PER_MS))
     {
         element_seesaw_gz_high = 0U;
+    }
+
+    /* 追踪gz是否在50ms内超过100°/s（环岛检测阻挡条件） */
+    if((gyro->gyro_z > 100.0f) || (gyro->gyro_z < -100.0f))
+    {
+        element_roundabout_gz_high = 1U;
+        element_roundabout_gz_high_tick = now;
+    }
+    else if((0U != element_roundabout_gz_high) &&
+            ((uint32)(now - element_roundabout_gz_high_tick) > 50U * APP_ELEMENT_TICK_PER_MS))
+    {
+        element_roundabout_gz_high = 0U;
     }
 
     if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)
