@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:30:00  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:47:04  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    52          
    53          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
    54          static uint8 inductor_history_index = 0U;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:30:00  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:47:04  PAGE 2   
 
    55          static volatile app_inductor_preprocess_data_t inductor_data;
    56          
@@ -134,7 +134,7 @@ stmt  level    source
   118   2              sample[i][APP_INDUCTOR_PREPROCESS_INDEX_M] = raw.channel_m;
   119   2          }
   120   1      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:30:00  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:47:04  PAGE 3   
 
   121   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
   122   1          {
@@ -202,7 +202,7 @@ stmt  level    source
   182   3                  if(0.0f > normalized[i])
   183   3                  {
   184   4                      normalized[i] = 0.0f;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:30:00  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:47:04  PAGE 4   
 
   185   4                  }
   186   3                  else if(100.0f < normalized[i])
@@ -270,7 +270,7 @@ stmt  level    source
   248   1          app_inductor_update_precomputed();
   249   1          app_inductor_update_output();
   250   1      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:30:00  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:47:04  PAGE 5   
 
   251   1          /* 无线校准变量：float副本，修改后自动同步到uint16并重算 */
   252   1          for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
@@ -307,18 +307,18 @@ stmt  level    source
   272          void app_inductor_preprocess_debug(void)
   273          {
   274   1          static uint32 last_tick = 0U;
-  275   1          service_inductor_data_t raw;
+  275   1          app_inductor_preprocess_data_t inductor;
   276   1      
-  277   1          if((service_timetick_what() - last_tick) >= 100U)  // 10Hz
+  277   1          if((service_timetick_what() - last_tick) >= 33U)  // 30Hz
   278   1          {
   279   2              last_tick = service_timetick_what();
-  280   2              service_inductor_get_data(&raw);
-  281   2              wprint("%u,%u,%u,%u,%u\r\n",
-  282   2                      raw.channel_1,
-  283   2                      raw.channel_2,
-  284   2                      raw.channel_3,
-  285   2                      raw.channel_4,
-  286   2                      raw.channel_m);
+  280   2              app_inductor_preprocess_get_data(&inductor);
+  281   2              wprint("%.1f,%.1f,%.1f,%.1f,%.1f\r\n",
+  282   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+  283   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+  284   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+  285   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+  286   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
   287   2          }
   288   1      }
   289          
@@ -338,7 +338,7 @@ stmt  level    source
   303   1          {
   304   2              out_data->filtered[i] = inductor_data.filtered[i];
   305   2              out_data->normalized[i] = inductor_data.normalized[i];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:30:00  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            12/07/26  14:47:04  PAGE 6   
 
   306   2          }
   307   1          EA = ea_backup;
@@ -348,11 +348,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      3452     ------
+  ecode size           =      3495     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       496     ------
+  xdata size           =       526     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -362,7 +362,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       201     ------
+  hconst size          =       211     ------
 End of Module Information.
 
 

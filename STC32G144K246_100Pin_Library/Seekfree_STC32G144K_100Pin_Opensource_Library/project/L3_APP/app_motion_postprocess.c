@@ -31,6 +31,7 @@
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_ID            (1U)
 #define APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY      (10U)
 #define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (1U)
+#define APP_MOTION_POSTPROCESS_SEESAW_MPS              (1.6f)
 
 app_motion_postprocess_config_t app_motion_postprocess_config =
 {
@@ -303,11 +304,19 @@ static void app_motion_postprocess_task(void)
         {
             feedback_yaw_rate_radps = 0.0f;
             static_feedforward_speed = 0.0f;
-            linear_mps = tfpu_mul(app_motion_preprocess_config.linear_mps, 0.6f);
+            linear_mps = APP_MOTION_POSTPROCESS_SEESAW_MPS;
         }
     }
 
     target_yaw_rate_radps = feedback_yaw_rate_radps;
+
+    /* 环岛元素：角速度偏置融合 */
+    if(0U != app_element_roundabout_bias_active)
+    {
+        target_yaw_rate_radps = tfpu_add(target_yaw_rate_radps,
+                tfpu_mul(APP_ELEMENT_ROUNDABOUT_BIAS_BLEND, app_element_roundabout_bias_yaw_radps));
+        feedback_yaw_rate_radps = target_yaw_rate_radps;
+    }
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
     if(0U == enabled)

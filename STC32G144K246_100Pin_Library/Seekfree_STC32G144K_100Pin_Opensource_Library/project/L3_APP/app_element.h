@@ -8,6 +8,10 @@
 #define APP_ELEMENT_CYLINDER_YAW_LIMIT          (3.4907f)   // 圆筒元素触发后车体转向角速度限制，单位 rad/s，默认 200deg/s
 #endif
 
+#ifndef APP_ELEMENT_ROUNDABOUT_BIAS_BLEND
+#define APP_ELEMENT_ROUNDABOUT_BIAS_BLEND       (0.5f)      // 环岛偏置融合系数，0=仅巡线 1=仅偏置
+#endif
+
 #ifndef APP_ELEMENT_PIT
 #define APP_ELEMENT_PIT                         TIM7_PIT
 #endif
@@ -77,6 +81,9 @@ typedef struct
 } app_element_data_t;
 
 extern app_element_config_t app_element_config;
+
+extern float app_element_roundabout_bias_yaw_radps;
+extern uint8 app_element_roundabout_bias_active;
 
 void app_element_init(void);
 void app_element_get_data(app_element_data_t *out_data);

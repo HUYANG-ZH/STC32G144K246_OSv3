@@ -272,18 +272,18 @@ void app_inductor_preprocess_init(void)
 void app_inductor_preprocess_debug(void)
 {
     static uint32 last_tick = 0U;
-    service_inductor_data_t raw;
+    app_inductor_preprocess_data_t inductor;
 
-    if((service_timetick_what() - last_tick) >= 100U)  // 10Hz
+    if((service_timetick_what() - last_tick) >= 33U)  // 30Hz
     {
         last_tick = service_timetick_what();
-        service_inductor_get_data(&raw);
-        wprint("%u,%u,%u,%u,%u\r\n",
-                raw.channel_1,
-                raw.channel_2,
-                raw.channel_3,
-                raw.channel_4,
-                raw.channel_m);
+        app_inductor_preprocess_get_data(&inductor);
+        wprint("%.1f,%.1f,%.1f,%.1f,%.1f\r\n",
+                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
     }
 }
 
