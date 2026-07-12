@@ -424,11 +424,11 @@ static void app_element_roundabout_found(uint32 now)
                 app_element_roundabout_feedforward_scale = 1.0f;
                 break;
             case 2U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(-3000.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                app_element_roundabout_feedforward_scale = 2.80f;
+                app_element_roundabout_feedforward_scale = 3.80f;
                 break;
             case 3U:
                 app_element_roundabout_bias_active = 0U;
@@ -448,7 +448,7 @@ static void app_element_roundabout_found(uint32 now)
                 app_element_roundabout_feedforward_scale = 1.0f;
                 break;
             case 6U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(-3000.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
