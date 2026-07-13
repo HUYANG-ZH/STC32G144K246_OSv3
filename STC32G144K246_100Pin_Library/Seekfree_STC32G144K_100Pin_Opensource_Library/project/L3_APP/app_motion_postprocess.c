@@ -288,7 +288,7 @@ static void app_motion_postprocess_task(void)
         {
             float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
 
-            feedback_yaw_rate_radps = tfpu_mul(10.0f, raw_error);
+            feedback_yaw_rate_radps = tfpu_mul(12.0f, raw_error);
             if(feedback_yaw_rate_radps > limit)
             {
                 feedback_yaw_rate_radps = limit;
