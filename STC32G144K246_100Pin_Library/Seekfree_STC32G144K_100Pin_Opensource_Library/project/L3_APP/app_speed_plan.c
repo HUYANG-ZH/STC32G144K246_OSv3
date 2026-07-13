@@ -131,7 +131,7 @@ static void app_speed_plan_task(void)
 
     if((APP_ELEMENT_TYPE_SEESAW == element.type) && (element.active >= 0.5f))
     {
-        target_raw_mps = 1.8f;
+        target_raw_mps = 1.0f;
     }
 
     speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
