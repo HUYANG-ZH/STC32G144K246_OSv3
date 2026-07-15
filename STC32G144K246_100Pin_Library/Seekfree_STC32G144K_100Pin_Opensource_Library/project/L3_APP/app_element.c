@@ -497,32 +497,32 @@ static void app_element_roundabout_found(uint32 now)
         switch(element_roundabout_count)
         {
             case 0U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
                 app_element_roundabout_feedforward_scale = 3.00f;
                 break;
             case 1U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
                 app_element_roundabout_feedforward_scale = 3.00f;
                 break;
             case 2U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
-                app_element_roundabout_bias_active = 1U;
-                element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                app_element_roundabout_feedforward_scale = 3.00f;
+                // app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
+                // app_element_roundabout_bias_active = 1U;
+                // element_roundabout_bias_start_tick = now;
+                // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+                // app_element_roundabout_feedforward_scale = 3.00f;
                 break;
             case 3U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
-                app_element_roundabout_bias_active = 1U;
-                element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                app_element_roundabout_feedforward_scale = 3.00f;
+                // app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
+                // app_element_roundabout_bias_active = 1U;
+                // element_roundabout_bias_start_tick = now;
+                // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+                // app_element_roundabout_feedforward_scale = 3.00f;
                 break;
             // case 4U:
             //     app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
@@ -793,7 +793,7 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
             delta_angle = tfpu_sub(0.0f, delta_angle);
         }
         element_roundabout_gz_angle_deg = tfpu_add(element_roundabout_gz_angle_deg, delta_angle);
-        if(element_roundabout_gz_angle_deg >= 340.0f)
+        if(element_roundabout_gz_angle_deg >= 330.0f)
         {
             element_roundabout_gz_integrate = 0U;
             element_roundabout_gz_angle_deg = 0.0f;

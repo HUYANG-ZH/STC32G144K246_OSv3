@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -66,7 +66,7 @@ stmt  level    source
    48          #define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
    49          #define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
    50          #define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 2   
 
    51          
    52          app_element_config_t app_element_config =
@@ -134,7 +134,7 @@ stmt  level    source
   114          static uint8 element_roundabout_gz_high = 0U;
   115          static uint32 element_roundabout_gz_high_tick = 0U;
   116          static uint8 element_roundabout_gz_integrate = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 3   
 
   117          static float element_roundabout_gz_angle_deg = 0.0f;
   118          static uint8 element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
@@ -202,7 +202,7 @@ stmt  level    source
   180   1          element_cylinder_bucket_head = 0U;
   181   1          element_cylinder_bucket_count = 0U;
   182   1      }
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 4   
 
   183          
   184          static uint8 app_element_cylinder_next_bucket(uint8 index)
@@ -270,7 +270,7 @@ stmt  level    source
   246   2              element_cylinder_bucket_count = 1U;
   247   2              element_cylinder_bucket_angle_pos[0] = 0.0f;
   248   2              element_cylinder_bucket_angle_neg[0] = 0.0f;
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 5   
 
   249   2              element_cylinder_bucket_tick[0] = now;
   250   2          }
@@ -338,7 +338,7 @@ stmt  level    source
   310   1          element_data.dir = (0 < dir) ? APP_ELEMENT_DIR_LEFT : APP_ELEMENT_DIR_RIGHT;
   311   1          element_data.active = 1.0f;
   312   1          element_data.gyro_x = gyro_x;
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 6   
 
   313   1          EA = ea_backup;
   314   1      
@@ -406,7 +406,7 @@ stmt  level    source
   376   1          float score_c;
   377   1          float sr;
   378   1          float t;
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 7   
 
   379   1      
   380   1          /* 分支 A：原有环岛特征 */
@@ -474,7 +474,7 @@ stmt  level    source
   442   1      
   443   1          t = tfpu_mul(0.055f, tfpu_mul(x1, x1));
   444   1          score_c = tfpu_sub(score_c, t);
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 8   
 
   445   1      
   446   1          t = tfpu_mul(0.281f, tfpu_mul(x1, x2));
@@ -531,34 +531,34 @@ stmt  level    source
   497   2              switch(element_roundabout_count)
   498   2              {
   499   3                  case 0U:
-  500   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
+  500   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
   501   3                      app_element_roundabout_bias_active = 1U;
   502   3                      element_roundabout_bias_start_tick = now;
   503   3                      element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
   504   3                      app_element_roundabout_feedforward_scale = 3.00f;
   505   3                      break;
   506   3                  case 1U:
-  507   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
+  507   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
   508   3                      app_element_roundabout_bias_active = 1U;
   509   3                      element_roundabout_bias_start_tick = now;
   510   3                      element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 9   
 
   511   3                      app_element_roundabout_feedforward_scale = 3.00f;
   512   3                      break;
   513   3                  case 2U:
-  514   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
-  515   3                      app_element_roundabout_bias_active = 1U;
-  516   3                      element_roundabout_bias_start_tick = now;
-  517   3                      element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-  518   3                      app_element_roundabout_feedforward_scale = 3.00f;
+  514   3                      // app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
+  515   3                      // app_element_roundabout_bias_active = 1U;
+  516   3                      // element_roundabout_bias_start_tick = now;
+  517   3                      // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+  518   3                      // app_element_roundabout_feedforward_scale = 3.00f;
   519   3                      break;
   520   3                  case 3U:
-  521   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
-  522   3                      app_element_roundabout_bias_active = 1U;
-  523   3                      element_roundabout_bias_start_tick = now;
-  524   3                      element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-  525   3                      app_element_roundabout_feedforward_scale = 3.00f;
+  521   3                      // app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
+  522   3                      // app_element_roundabout_bias_active = 1U;
+  523   3                      // element_roundabout_bias_start_tick = now;
+  524   3                      // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+  525   3                      // app_element_roundabout_feedforward_scale = 3.00f;
   526   3                      break;
   527   3                  // case 4U:
   528   3                  //     app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
@@ -610,7 +610,7 @@ stmt  level    source
   574   2              element_roundabout_dead = 0U;
   575   2              element_roundabout_confirm = 0U;
   576   2          }
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 10  
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 10  
 
   577   1      
   578   1          if(0U != element_roundabout_dead)
@@ -678,7 +678,7 @@ stmt  level    source
   639   1      
   640   1          wprint("seesaw,1.000\r\n");
   641   1          service_buzzer_beep_ms(300U);
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 11  
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 11  
 
   642   1      }
   643          
@@ -746,7 +746,7 @@ stmt  level    source
   701   1                  &element_roundabout_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
   702   1      }
   703          
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 12  
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 12  
 
   704          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -814,7 +814,7 @@ stmt  level    source
   763   1          if((gyro->gyro_z > 120.0f) || (gyro->gyro_z < -120.0f))
   764   1          {
   765   2              element_seesaw_gz_high = 1U;
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 13  
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 13  
 
   766   2              element_seesaw_gz_high_tick = now;
   767   2          }
@@ -882,7 +882,7 @@ stmt  level    source
   828   2              if(element_roundabout_distance_m >= APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M)
   829   2              {
   830   3                  element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 14  
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 14  
 
   831   3                  element_roundabout_distance_m = 0.0f;
   832   3                  wprint("roundabout_ready,1.000\r\n");
@@ -947,11 +947,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      7792     ------
+  ecode size           =      7605     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_element                                                        13/07/26  15:34:44  PAGE 15  
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 15  
 
   xdata size           =      1639     ------
   xdata-const size     =    ------     ------
