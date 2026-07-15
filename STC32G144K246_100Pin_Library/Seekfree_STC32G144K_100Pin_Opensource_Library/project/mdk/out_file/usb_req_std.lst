@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 1   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE usb_req_std
@@ -66,7 +66,7 @@ stmt  level    source
    53   2          case SYNCH_FRAME:
    54   2              usb_synch_frame();
    55   2              break;
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 2   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 2   
 
    56   2          default:
    57   2              usb_setup_stall();
@@ -134,7 +134,7 @@ stmt  level    source
   119   4      #ifdef EN_EP2IN
   120   4                  case EP2_IN:
   121   4      #endif
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 3   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 3   
 
   122   4      #ifdef EN_EP3IN
                            case EP3_IN:
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          usb_setup_in();
   184   1      }
   185          
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 4   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 4   
 
   186          void usb_clear_feature()
   187          {
@@ -270,7 +270,7 @@ stmt  level    source
   247   2      #endif
   248   2          default:
   249   2              usb_setup_stall();
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 5   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 5   
 
   250   2              return;
   251   2          }
@@ -338,7 +338,7 @@ stmt  level    source
              -P5OUT))
   312   2              OutEpState |= (1 << ep);
   313   2              usb_write_reg(INDEX, ep);
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 6   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 6   
 
   314   2              usb_write_reg(OUTCSR1, OUTSDSTL);
   315   2              usb_write_reg(INDEX, 0);
@@ -406,7 +406,7 @@ stmt  level    source
   377   3                  Ep0State.pData = LANGIDDESC;
   378   3                  Ep0State.wSize = sizeof(LANGIDDESC);
   379   3                  break;
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 7   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 7   
 
   380   3              case 1:
   381   3                  Ep0State.pData = MANUFACTDESC;
@@ -474,7 +474,7 @@ stmt  level    source
   443   1              (Setup.wIndexH != 0) ||
   444   1              (Setup.wIndexL != 0) ||
   445   1              (Setup.wLength != 0))
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 8   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 8   
 
   446   1          {
   447   2              usb_setup_stall();
@@ -542,7 +542,7 @@ stmt  level    source
   509   1          {
   510   2              DeviceState = DEVSTATE_ADDRESS;
   511   2              InEpState = 0xff;
-C251 COMPILER V5.60.0,  usb_req_std                                                        13/07/26  01:05:34  PAGE 9   
+C251 COMPILER V5.60.0,  usb_req_std                                                        15/07/26  22:53:50  PAGE 9   
 
   512   2              OutEpState = 0xff;
   513   2          }

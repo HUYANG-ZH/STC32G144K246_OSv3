@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speed_plan                                                     15/07/26  20:56:12  PAGE 1   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     16/07/26  02:04:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speed_plan
@@ -22,7 +22,7 @@ stmt  level    source
     9          
    10          #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
    11          #define APP_SPEED_PLAN_TASK_PRIORITY            (6U)
-   12          #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (1.0f)
+   12          #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (0.9f)
    13          #define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (80.0f)
    14          #define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (80.0f)
    15          #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          {
    54   2              return 0.0f;
    55   2          }
-C251 COMPILER V5.60.0,  app_speed_plan                                                     15/07/26  20:56:12  PAGE 2   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     16/07/26  02:04:26  PAGE 2   
 
    56   1      
    57   1          abs_value = app_speed_plan_abs(value);
@@ -134,7 +134,7 @@ stmt  level    source
   119   1          app_element_data_t element;
   120   1      
   121   1          app_motion_preprocess_get_data(&motion_preprocess);
-C251 COMPILER V5.60.0,  app_speed_plan                                                     15/07/26  20:56:12  PAGE 3   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     16/07/26  02:04:26  PAGE 3   
 
   122   1          app_feedforward_get_data(&feedforward);
   123   1          app_element_get_data(&element);
@@ -158,7 +158,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1058     ------
+  ecode size           =      1060     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

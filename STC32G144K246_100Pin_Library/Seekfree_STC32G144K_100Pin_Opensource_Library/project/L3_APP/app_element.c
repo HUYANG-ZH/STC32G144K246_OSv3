@@ -9,6 +9,7 @@
 #include "service_buzzer.h"
 #include "app_inductor_preprocess.h"
 #include "app_speedout.h"
+#include "service_negative_pressure.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
@@ -49,15 +50,18 @@
 #define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
 #define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
 #define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (2.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (2.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (0.6f)
+#define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (0.6f)
 #define APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT (1.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-2250.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-2250.0f)
-#define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (0.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (330.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (330.0f)
-#define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (180.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-1700.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-1700.0f)
+#define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (-1800.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (290.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (290.0f)
+#define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (170.0f)
+#define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS           (40UL)
+#define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK         (APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS * APP_ELEMENT_TICK_PER_MS)
+#define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT  (1800.0f)
 
 app_element_config_t app_element_config =
 {
@@ -843,9 +847,16 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
             if(3U == element_roundabout_count)
             {
                 app_speedout_stop();
+                service_negative_pressure_set_percent(0U);
             }
             else
             {
+                /* 出环反向偏置：持续100ms，由到期机制自动清除 */
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT, APP_ELEMENT_DEG_TO_RAD);
+                app_element_roundabout_bias_active = 1U;
+                element_roundabout_bias_start_tick = now;
+                element_roundabout_bias_duration_tick = APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK;
+
                 element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
                 element_roundabout_distance_m = 0.0f;
                 wprint("roundabout_exit,1.000\r\n");
