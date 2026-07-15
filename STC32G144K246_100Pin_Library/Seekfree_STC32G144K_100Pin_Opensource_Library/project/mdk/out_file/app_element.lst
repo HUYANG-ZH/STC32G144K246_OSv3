@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -21,939 +21,983 @@ stmt  level    source
     8          #include "service_wireless_uart.h"
     9          #include "service_buzzer.h"
    10          #include "app_inductor_preprocess.h"
-   11          #include "app_element.h"
-   12          
-   13          #define APP_ELEMENT_TICK_PER_MS                 (10UL)
-   14          #define APP_ELEMENT_CYLINDER_DEAD_MS            (1000UL)
-   15          #define APP_ELEMENT_CYLINDER_DEAD_TICK          (APP_ELEMENT_CYLINDER_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
-   16          #define APP_ELEMENT_CYLINDER_YAW_LIMIT_MS       (350UL)        // 圆筒触发后转向限幅持续时间
-   17          #define APP_ELEMENT_CYLINDER_YAW_LIMIT_TICK     (APP_ELEMENT_CYLINDER_YAW_LIMIT_MS * APP_ELEMENT_TICK_PER
+   11          #include "app_speedout.h"
+   12          #include "app_element.h"
+   13          
+   14          #define APP_ELEMENT_TICK_PER_MS                 (10UL)
+   15          #define APP_ELEMENT_CYLINDER_DEAD_MS            (1000UL)
+   16          #define APP_ELEMENT_CYLINDER_DEAD_TICK          (APP_ELEMENT_CYLINDER_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
+   17          #define APP_ELEMENT_CYLINDER_YAW_LIMIT_MS       (350UL)        // 圆筒触发后转向限幅持续时间
+   18          #define APP_ELEMENT_CYLINDER_YAW_LIMIT_TICK     (APP_ELEMENT_CYLINDER_YAW_LIMIT_MS * APP_ELEMENT_TICK_PER
              -_MS)
-   18          #define APP_ELEMENT_CYLINDER_WINDOW_MS          (1000UL)
-   19          #define APP_ELEMENT_CYLINDER_WINDOW_TICK        (APP_ELEMENT_CYLINDER_WINDOW_MS * APP_ELEMENT_TICK_PER_MS
+   19          #define APP_ELEMENT_CYLINDER_WINDOW_MS          (1000UL)
+   20          #define APP_ELEMENT_CYLINDER_WINDOW_TICK        (APP_ELEMENT_CYLINDER_WINDOW_MS * APP_ELEMENT_TICK_PER_MS
              -)
-   20          #define APP_ELEMENT_CYLINDER_BUCKET_MS          (10UL)
-   21          #define APP_ELEMENT_CYLINDER_BUCKET_TICK        (APP_ELEMENT_CYLINDER_BUCKET_MS * APP_ELEMENT_TICK_PER_MS
+   21          #define APP_ELEMENT_CYLINDER_BUCKET_MS          (10UL)
+   22          #define APP_ELEMENT_CYLINDER_BUCKET_TICK        (APP_ELEMENT_CYLINDER_BUCKET_MS * APP_ELEMENT_TICK_PER_MS
              -)
-   22          #define APP_ELEMENT_CYLINDER_BUCKET_COUNT       ((APP_ELEMENT_CYLINDER_WINDOW_MS / APP_ELEMENT_CYLINDER_B
+   23          #define APP_ELEMENT_CYLINDER_BUCKET_COUNT       ((APP_ELEMENT_CYLINDER_WINDOW_MS / APP_ELEMENT_CYLINDER_B
              -UCKET_MS) + 2U)
-   23          #define APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_MS  (50UL)
-   24          #define APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK \
-   25              (APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_MS * APP_ELEMENT_TICK_PER_MS)
-   26          #define APP_ELEMENT_CYLINDER_TRIGGER_DEG        (220.0f)
-   27          #define APP_ELEMENT_CYLINDER_GYRO_DEADBAND      (15.0f)
-   28          #define APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA     (0.20f)
-   29          #define APP_ELEMENT_TICK_TO_SECOND              (0.0001f)
-   30          #define APP_ELEMENT_DEG_TO_RAD                  (0.0174532925f)
-   31          #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
-   32          
-   33          #define APP_ELEMENT_SEESAW_CONFIRM_COUNT        (3U)
-   34          #define APP_ELEMENT_SEESAW_DEAD_MS              (500UL)
-   35          #define APP_ELEMENT_SEESAW_DEAD_TICK            (APP_ELEMENT_SEESAW_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
-   36          #define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
-   37          #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
-   38          #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
-   39          
-   40          #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
-   41          #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
-   42          #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS
+   24          #define APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_MS  (50UL)
+   25          #define APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK \
+   26              (APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_MS * APP_ELEMENT_TICK_PER_MS)
+   27          #define APP_ELEMENT_CYLINDER_TRIGGER_DEG        (220.0f)
+   28          #define APP_ELEMENT_CYLINDER_GYRO_DEADBAND      (15.0f)
+   29          #define APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA     (0.20f)
+   30          #define APP_ELEMENT_TICK_TO_SECOND              (0.0001f)
+   31          #define APP_ELEMENT_DEG_TO_RAD                  (0.0174532925f)
+   32          #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
+   33          
+   34          #define APP_ELEMENT_SEESAW_CONFIRM_COUNT        (3U)
+   35          #define APP_ELEMENT_SEESAW_DEAD_MS              (500UL)
+   36          #define APP_ELEMENT_SEESAW_DEAD_TICK            (APP_ELEMENT_SEESAW_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
+   37          #define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
+   38          #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
+   39          #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
+   40          
+   41          #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
+   42          #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
+   43          #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS
              -)
-   43          #define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (0.0f)
-   44          #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
-   45          #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)
-   46          #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (1U)
-   47          #define APP_ELEMENT_ROUNDABOUT_FSM_IDLE          (0U)
-   48          #define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
-   49          #define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
-   50          #define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 2   
+   44          #define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (0.0f)
+   45          #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
+   46          #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)
+   47          #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (1U)
+   48          #define APP_ELEMENT_ROUNDABOUT_FSM_IDLE          (0U)
+   49          #define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
+   50          #define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 2   
 
-   51          
-   52          app_element_config_t app_element_config =
-   53          {
-   54              0.0f,
-   55              0.0f,
-   56              0.0f,
-   57              0.0f,
-   58              0U,
-   59              0U,
-   60              0U,
-   61              0U,
-   62              0.0f,
-   63              0.0f,
+   51          #define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
+   52          #define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (2.0f)
+   53          #define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (2.0f)
+   54          #define APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT (1.0f)
+   55          #define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-2250.0f)
+   56          #define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-2250.0f)
+   57          #define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (0.0f)
+   58          #define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (330.0f)
+   59          #define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (330.0f)
+   60          #define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (180.0f)
+   61          
+   62          app_element_config_t app_element_config =
+   63          {
    64              0.0f,
    65              0.0f,
-   66              0U,
-   67              0U,
+   66              0.0f,
+   67              0.0f,
    68              0U,
    69              0U,
-   70              0.0f,
-   71              0U
-   72          };
-   73          
-   74          static volatile app_element_data_t element_data =
-   75          {
-   76              APP_ELEMENT_TYPE_NONE,
-   77              APP_ELEMENT_STATE_IDLE,
-   78              APP_ELEMENT_DIR_NONE,
-   79              0.0f,
+   70              0U,
+   71              0U,
+   72              0.0f,
+   73              0.0f,
+   74              0.0f,
+   75              0.0f,
+   76              0U,
+   77              0U,
+   78              0U,
+   79              0U,
    80              0.0f,
-   81              0.0f,
-   82              0.0f
-   83          };
-   84          
-   85          static shared_lpf_t element_gyro_x_lpf;
-   86          static float element_cylinder_bucket_angle_pos[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
-   87          static float element_cylinder_bucket_angle_neg[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
-   88          static uint32 element_cylinder_bucket_tick[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
-   89          static uint32 element_last_tick = 0U;
-   90          static uint32 element_cylinder_dead_start_tick = 0U;
-   91          static uint32 element_cylinder_yaw_limit_start_tick = 0U;
-   92          static uint8 element_cylinder_yaw_limit_active = 0U;
-   93          static float element_cylinder_angle_pos_deg = 0.0f;
-   94          static float element_cylinder_angle_neg_deg = 0.0f;
-   95          static float element_cylinder_gyro_x = 0.0f;
-   96          static float element_cylinder_event = 0.0f;
-   97          static uint8 element_cylinder_dead = 0U;
-   98          static uint8 element_gyro_x_lpf_ready = 0U;
-   99          static uint8 element_cylinder_bucket_head = 0U;
-  100          static uint8 element_cylinder_bucket_count = 0U;
-  101          static uint8 element_seesaw_confirm = 0U;
-  102          static uint8 element_seesaw_dead = 0U;
-  103          static uint32 element_seesaw_dead_start_tick = 0U;
-  104          static uint8 element_seesaw_gz_high = 0U;
-  105          static uint32 element_seesaw_gz_high_tick = 0U;
-  106          static uint8 element_seesaw_active = 0U;
-  107          static uint32 element_seesaw_active_start_tick = 0U;
-  108          static float element_seesaw_event = 0.0f;
-  109          static uint8 element_roundabout_confirm = 0U;
-  110          static uint32 element_roundabout_dead_start_tick = 0U;
-  111          static uint8 element_roundabout_dead = 0U;
-  112          static uint8 element_roundabout_count = 0U;
-  113          static float element_roundabout_count_float = 0.0f;
-  114          static uint8 element_roundabout_gz_high = 0U;
-  115          static uint32 element_roundabout_gz_high_tick = 0U;
-  116          static uint8 element_roundabout_gz_integrate = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 3   
+   81              0U
+   82          };
+   83          
+   84          static volatile app_element_data_t element_data =
+   85          {
+   86              APP_ELEMENT_TYPE_NONE,
+   87              APP_ELEMENT_STATE_IDLE,
+   88              APP_ELEMENT_DIR_NONE,
+   89              0.0f,
+   90              0.0f,
+   91              0.0f,
+   92              0.0f
+   93          };
+   94          
+   95          static shared_lpf_t element_gyro_x_lpf;
+   96          static float element_cylinder_bucket_angle_pos[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
+   97          static float element_cylinder_bucket_angle_neg[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
+   98          static uint32 element_cylinder_bucket_tick[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
+   99          static uint32 element_last_tick = 0U;
+  100          static uint32 element_cylinder_dead_start_tick = 0U;
+  101          static uint32 element_cylinder_yaw_limit_start_tick = 0U;
+  102          static uint8 element_cylinder_yaw_limit_active = 0U;
+  103          static float element_cylinder_angle_pos_deg = 0.0f;
+  104          static float element_cylinder_angle_neg_deg = 0.0f;
+  105          static float element_cylinder_gyro_x = 0.0f;
+  106          static float element_cylinder_event = 0.0f;
+  107          static uint8 element_cylinder_dead = 0U;
+  108          static uint8 element_gyro_x_lpf_ready = 0U;
+  109          static uint8 element_cylinder_bucket_head = 0U;
+  110          static uint8 element_cylinder_bucket_count = 0U;
+  111          static uint8 element_seesaw_confirm = 0U;
+  112          static uint8 element_seesaw_dead = 0U;
+  113          static uint32 element_seesaw_dead_start_tick = 0U;
+  114          static uint8 element_seesaw_gz_high = 0U;
+  115          static uint32 element_seesaw_gz_high_tick = 0U;
+  116          static uint8 element_seesaw_active = 0U;
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 3   
 
-  117          static float element_roundabout_gz_angle_deg = 0.0f;
-  118          static uint8 element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
-  119          static float element_roundabout_distance_m = 0.0f;
-  120          
-  121          float app_element_roundabout_bias_yaw_radps = 0.0f;
-  122          uint8 app_element_roundabout_bias_active = 0U;
-  123          float app_element_roundabout_feedforward_scale = 1.0f;
-  124          static uint32 element_roundabout_bias_start_tick = 0U;
-  125          static uint32 element_roundabout_bias_duration_tick = 0U;
-  126          
-  127          static void app_element_cylinder_state_reply(void);
-  128          
-  129          static void app_element_reset(void)
-  130          {
-  131   1          uint8 i;
-  132   1      
-  133   1          element_data.type = APP_ELEMENT_TYPE_NONE;
-  134   1          element_data.state = APP_ELEMENT_STATE_IDLE;
-  135   1          element_data.dir = APP_ELEMENT_DIR_NONE;
-  136   1          element_data.active = 0.0f;
-  137   1          element_data.gyro_x = 0.0f;
-  138   1          element_data.gyro_y = 0.0f;
-  139   1          element_data.gyro_z = 0.0f;
-  140   1          element_last_tick = service_timetick_what();
-  141   1          element_cylinder_dead_start_tick = 0U;
-  142   1          element_cylinder_angle_pos_deg = 0.0f;
-  143   1          element_cylinder_angle_neg_deg = 0.0f;
-  144   1          element_cylinder_gyro_x = 0.0f;
-  145   1          element_cylinder_event = 0.0f;
-  146   1          element_cylinder_dead = 0U;
-  147   1          element_gyro_x_lpf_ready = 0U;
-  148   1          element_cylinder_bucket_head = 0U;
-  149   1          element_cylinder_bucket_count = 0U;
-  150   1          element_seesaw_confirm = 0U;
-  151   1          element_seesaw_dead = 0U;
-  152   1          element_seesaw_gz_high = 0U;
-  153   1          element_seesaw_active = 0U;
-  154   1          element_seesaw_event = 0.0f;
-  155   1          element_roundabout_confirm = 0U;
-  156   1          element_roundabout_dead = 0U;
-  157   1          element_roundabout_count = 0U;
-  158   1          element_roundabout_count_float = 0.0f;
-  159   1          element_roundabout_gz_high = 0U;
-  160   1          element_roundabout_gz_integrate = 0U;
-  161   1          element_roundabout_gz_angle_deg = 0.0f;
-  162   1          element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
-  163   1          element_roundabout_distance_m = 0.0f;
-  164   1          app_element_roundabout_bias_yaw_radps = 0.0f;
-  165   1          app_element_roundabout_bias_active = 0U;
-  166   1          app_element_roundabout_feedforward_scale = 1.0f;
-  167   1          for(i = 0U; i < APP_ELEMENT_CYLINDER_BUCKET_COUNT; i++)
-  168   1          {
-  169   2              element_cylinder_bucket_angle_pos[i] = 0.0f;
-  170   2              element_cylinder_bucket_angle_neg[i] = 0.0f;
-  171   2              element_cylinder_bucket_tick[i] = 0U;
-  172   2          }
-  173   1          shared_lpf_init(&element_gyro_x_lpf, APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA, 0.0f);
-  174   1      }
-  175          
-  176          static void app_element_cylinder_clear(void)
-  177          {
-  178   1          element_cylinder_angle_pos_deg = 0.0f;
-  179   1          element_cylinder_angle_neg_deg = 0.0f;
-  180   1          element_cylinder_bucket_head = 0U;
-  181   1          element_cylinder_bucket_count = 0U;
-  182   1      }
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 4   
+  117          static uint32 element_seesaw_active_start_tick = 0U;
+  118          static float element_seesaw_event = 0.0f;
+  119          static uint8 element_roundabout_confirm = 0U;
+  120          static uint32 element_roundabout_dead_start_tick = 0U;
+  121          static uint8 element_roundabout_dead = 0U;
+  122          static uint8 element_roundabout_count = 0U;
+  123          static float element_roundabout_count_float = 0.0f;
+  124          static uint8 element_roundabout_gz_high = 0U;
+  125          static uint32 element_roundabout_gz_high_tick = 0U;
+  126          static uint8 element_roundabout_gz_integrate = 0U;
+  127          static float element_roundabout_gz_angle_deg = 0.0f;
+  128          static uint8 element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
+  129          static float element_roundabout_distance_m = 0.0f;
+  130          
+  131          float app_element_roundabout_bias_yaw_radps = 0.0f;
+  132          uint8 app_element_roundabout_bias_active = 0U;
+  133          float app_element_roundabout_feedforward_scale = 1.0f;
+  134          static float element_roundabout_ff_scale_1 = APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT;
+  135          static float element_roundabout_ff_scale_2 = APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT;
+  136          static float element_roundabout_ff_scale_3 = APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT;
+  137          static float element_roundabout_bias_dps_1 = APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT;
+  138          static float element_roundabout_bias_dps_2 = APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT;
+  139          static float element_roundabout_bias_dps_3 = APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT;
+  140          static float element_roundabout_angle_deg_1 = APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT;
+  141          static float element_roundabout_angle_deg_2 = APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT;
+  142          static float element_roundabout_angle_deg_3 = APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT;
+  143          static uint32 element_roundabout_bias_start_tick = 0U;
+  144          static uint32 element_roundabout_bias_duration_tick = 0U;
+  145          
+  146          static void app_element_cylinder_state_reply(void);
+  147          
+  148          static float app_element_roundabout_get_ff_scale(void)
+  149          {
+  150   1          switch(element_roundabout_count)
+  151   1          {
+  152   2              case 1U:
+  153   2                  return element_roundabout_ff_scale_1;
+  154   2              case 2U:
+  155   2                  return element_roundabout_ff_scale_2;
+  156   2              case 3U:
+  157   2                  return element_roundabout_ff_scale_3;
+  158   2              default:
+  159   2                  return 1.0f;
+  160   2          }
+  161   1      }
+  162          
+  163          static float app_element_roundabout_get_angle_deg(void)
+  164          {
+  165   1          switch(element_roundabout_count)
+  166   1          {
+  167   2              case 1U:
+  168   2                  return element_roundabout_angle_deg_1;
+  169   2              case 2U:
+  170   2                  return element_roundabout_angle_deg_2;
+  171   2              case 3U:
+  172   2                  return element_roundabout_angle_deg_3;
+  173   2              default:
+  174   2                  return APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT;
+  175   2          }
+  176   1      }
+  177          
+  178          static float app_element_roundabout_get_bias_dps(void)
+  179          {
+  180   1          switch(element_roundabout_count)
+  181   1          {
+  182   2              case 1U:
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 4   
 
-  183          
-  184          static uint8 app_element_cylinder_next_bucket(uint8 index)
-  185          {
-  186   1          index++;
-  187   1          if(index >= APP_ELEMENT_CYLINDER_BUCKET_COUNT)
-  188   1          {
-  189   2              index = 0U;
+  183   2                  return element_roundabout_bias_dps_1;
+  184   2              case 2U:
+  185   2                  return element_roundabout_bias_dps_2;
+  186   2              case 3U:
+  187   2                  return element_roundabout_bias_dps_3;
+  188   2              default:
+  189   2                  return 0.0f;
   190   2          }
-  191   1      
-  192   1          return index;
-  193   1      }
-  194          
-  195          static uint8 app_element_cylinder_tail_bucket(void)
-  196          {
-  197   1          uint16 index;
-  198   1      
-  199   1          index = (uint16)element_cylinder_bucket_head + (uint16)element_cylinder_bucket_count - 1U;
-  200   1          while(index >= APP_ELEMENT_CYLINDER_BUCKET_COUNT)
-  201   1          {
-  202   2              index -= APP_ELEMENT_CYLINDER_BUCKET_COUNT;
-  203   2          }
-  204   1      
-  205   1          return (uint8)index;
-  206   1      }
-  207          
-  208          static void app_element_cylinder_drop_head(void)
-  209          {
-  210   1          element_cylinder_angle_pos_deg = tfpu_sub(element_cylinder_angle_pos_deg,
-  211   1                  element_cylinder_bucket_angle_pos[element_cylinder_bucket_head]);
-  212   1          element_cylinder_angle_neg_deg = tfpu_sub(element_cylinder_angle_neg_deg,
-  213   1                  element_cylinder_bucket_angle_neg[element_cylinder_bucket_head]);
-  214   1          if(element_cylinder_angle_pos_deg < 0.0f)
-  215   1          {
-  216   2              element_cylinder_angle_pos_deg = 0.0f;
-  217   2          }
-  218   1          if(element_cylinder_angle_neg_deg < 0.0f)
-  219   1          {
-  220   2              element_cylinder_angle_neg_deg = 0.0f;
-  221   2          }
-  222   1          element_cylinder_bucket_angle_pos[element_cylinder_bucket_head] = 0.0f;
-  223   1          element_cylinder_bucket_angle_neg[element_cylinder_bucket_head] = 0.0f;
-  224   1          element_cylinder_bucket_head = app_element_cylinder_next_bucket(element_cylinder_bucket_head);
-  225   1          element_cylinder_bucket_count--;
-  226   1      }
-  227          
-  228          static void app_element_cylinder_drop_old(uint32 now)
-  229          {
-  230   1          while((0U != element_cylinder_bucket_count) &&
-  231   1                  ((uint32)(now - element_cylinder_bucket_tick[element_cylinder_bucket_head]) >
-  232   1                   APP_ELEMENT_CYLINDER_WINDOW_TICK))
-  233   1          {
-  234   2              app_element_cylinder_drop_head();
-  235   2          }
-  236   1      }
-  237          
-  238          static void app_element_cylinder_push(float delta_deg, uint32 now)
-  239          {
-  240   1          uint8 tail;
-  241   1          float angle_abs;
-  242   1      
-  243   1          if(0U == element_cylinder_bucket_count)
-  244   1          {
-  245   2              element_cylinder_bucket_head = 0U;
-  246   2              element_cylinder_bucket_count = 1U;
-  247   2              element_cylinder_bucket_angle_pos[0] = 0.0f;
-  248   2              element_cylinder_bucket_angle_neg[0] = 0.0f;
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 5   
+  191   1      }
+  192          
+  193          static void app_element_roundabout_apply_runtime_config(void)
+  194          {
+  195   1          float bias_dps;
+  196   1      
+  197   1          bias_dps = app_element_roundabout_get_bias_dps();
+  198   1          app_element_roundabout_bias_yaw_radps = tfpu_mul(bias_dps, APP_ELEMENT_DEG_TO_RAD);
+  199   1          app_element_roundabout_bias_active = (0.0f != bias_dps) ? 1U : 0U;
+  200   1          app_element_roundabout_feedforward_scale = app_element_roundabout_get_ff_scale();
+  201   1      }
+  202          
+  203          static void app_element_reset(void)
+  204          {
+  205   1          uint8 i;
+  206   1      
+  207   1          element_data.type = APP_ELEMENT_TYPE_NONE;
+  208   1          element_data.state = APP_ELEMENT_STATE_IDLE;
+  209   1          element_data.dir = APP_ELEMENT_DIR_NONE;
+  210   1          element_data.active = 0.0f;
+  211   1          element_data.gyro_x = 0.0f;
+  212   1          element_data.gyro_y = 0.0f;
+  213   1          element_data.gyro_z = 0.0f;
+  214   1          element_last_tick = service_timetick_what();
+  215   1          element_cylinder_dead_start_tick = 0U;
+  216   1          element_cylinder_angle_pos_deg = 0.0f;
+  217   1          element_cylinder_angle_neg_deg = 0.0f;
+  218   1          element_cylinder_gyro_x = 0.0f;
+  219   1          element_cylinder_event = 0.0f;
+  220   1          element_cylinder_dead = 0U;
+  221   1          element_gyro_x_lpf_ready = 0U;
+  222   1          element_cylinder_bucket_head = 0U;
+  223   1          element_cylinder_bucket_count = 0U;
+  224   1          element_seesaw_confirm = 0U;
+  225   1          element_seesaw_dead = 0U;
+  226   1          element_seesaw_gz_high = 0U;
+  227   1          element_seesaw_active = 0U;
+  228   1          element_seesaw_event = 0.0f;
+  229   1          element_roundabout_confirm = 0U;
+  230   1          element_roundabout_dead = 0U;
+  231   1          element_roundabout_count = 0U;
+  232   1          element_roundabout_count_float = 0.0f;
+  233   1          element_roundabout_gz_high = 0U;
+  234   1          element_roundabout_gz_integrate = 0U;
+  235   1          element_roundabout_gz_angle_deg = 0.0f;
+  236   1          element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
+  237   1          element_roundabout_distance_m = 0.0f;
+  238   1          app_element_roundabout_bias_yaw_radps = 0.0f;
+  239   1          app_element_roundabout_bias_active = 0U;
+  240   1          app_element_roundabout_feedforward_scale = 1.0f;
+  241   1          for(i = 0U; i < APP_ELEMENT_CYLINDER_BUCKET_COUNT; i++)
+  242   1          {
+  243   2              element_cylinder_bucket_angle_pos[i] = 0.0f;
+  244   2              element_cylinder_bucket_angle_neg[i] = 0.0f;
+  245   2              element_cylinder_bucket_tick[i] = 0U;
+  246   2          }
+  247   1          shared_lpf_init(&element_gyro_x_lpf, APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA, 0.0f);
+  248   1      }
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 5   
 
-  249   2              element_cylinder_bucket_tick[0] = now;
-  250   2          }
-  251   1      
-  252   1          tail = app_element_cylinder_tail_bucket();
-  253   1          if((uint32)(now - element_cylinder_bucket_tick[tail]) >= APP_ELEMENT_CYLINDER_BUCKET_TICK)
-  254   1          {
-  255   2              if(element_cylinder_bucket_count >= APP_ELEMENT_CYLINDER_BUCKET_COUNT)
-  256   2              {
-  257   3                  app_element_cylinder_drop_head();
-  258   3              }
-  259   2      
-  260   2              tail = app_element_cylinder_next_bucket(tail);
-  261   2              element_cylinder_bucket_angle_pos[tail] = 0.0f;
-  262   2              element_cylinder_bucket_angle_neg[tail] = 0.0f;
-  263   2              element_cylinder_bucket_tick[tail] = now;
-  264   2              element_cylinder_bucket_count++;
-  265   2          }
-  266   1      
-  267   1          if(delta_deg >= 0.0f)
-  268   1          {
-  269   2              element_cylinder_bucket_angle_pos[tail] = tfpu_add(element_cylinder_bucket_angle_pos[tail], delta
-             -_deg);
-  270   2              element_cylinder_angle_pos_deg = tfpu_add(element_cylinder_angle_pos_deg, delta_deg);
-  271   2          }
-  272   1          else
-  273   1          {
-  274   2              angle_abs = tfpu_sub(0.0f, delta_deg);
-  275   2              element_cylinder_bucket_angle_neg[tail] = tfpu_add(element_cylinder_bucket_angle_neg[tail], angle
-             -_abs);
-  276   2              element_cylinder_angle_neg_deg = tfpu_add(element_cylinder_angle_neg_deg, angle_abs);
+  249          
+  250          static void app_element_cylinder_clear(void)
+  251          {
+  252   1          element_cylinder_angle_pos_deg = 0.0f;
+  253   1          element_cylinder_angle_neg_deg = 0.0f;
+  254   1          element_cylinder_bucket_head = 0U;
+  255   1          element_cylinder_bucket_count = 0U;
+  256   1      }
+  257          
+  258          static uint8 app_element_cylinder_next_bucket(uint8 index)
+  259          {
+  260   1          index++;
+  261   1          if(index >= APP_ELEMENT_CYLINDER_BUCKET_COUNT)
+  262   1          {
+  263   2              index = 0U;
+  264   2          }
+  265   1      
+  266   1          return index;
+  267   1      }
+  268          
+  269          static uint8 app_element_cylinder_tail_bucket(void)
+  270          {
+  271   1          uint16 index;
+  272   1      
+  273   1          index = (uint16)element_cylinder_bucket_head + (uint16)element_cylinder_bucket_count - 1U;
+  274   1          while(index >= APP_ELEMENT_CYLINDER_BUCKET_COUNT)
+  275   1          {
+  276   2              index -= APP_ELEMENT_CYLINDER_BUCKET_COUNT;
   277   2          }
-  278   1      }
-  279          
-  280          static uint8 app_element_cylinder_in_dead(uint32 now)
-  281          {
-  282   1          /* 跷跷板死区内也阻挡圆筒 */
-  283   1          if(0U != element_seesaw_dead)
-  284   1          {
-  285   2              return 1U;
-  286   2          }
-  287   1      
-  288   1          if(0U == element_cylinder_dead)
+  278   1      
+  279   1          return (uint8)index;
+  280   1      }
+  281          
+  282          static void app_element_cylinder_drop_head(void)
+  283          {
+  284   1          element_cylinder_angle_pos_deg = tfpu_sub(element_cylinder_angle_pos_deg,
+  285   1                  element_cylinder_bucket_angle_pos[element_cylinder_bucket_head]);
+  286   1          element_cylinder_angle_neg_deg = tfpu_sub(element_cylinder_angle_neg_deg,
+  287   1                  element_cylinder_bucket_angle_neg[element_cylinder_bucket_head]);
+  288   1          if(element_cylinder_angle_pos_deg < 0.0f)
   289   1          {
-  290   2              return 0U;
+  290   2              element_cylinder_angle_pos_deg = 0.0f;
   291   2          }
-  292   1      
-  293   1          if((uint32)(now - element_cylinder_dead_start_tick) >= APP_ELEMENT_CYLINDER_DEAD_TICK)
-  294   1          {
-  295   2              element_cylinder_dead = 0U;
-  296   2              return 0U;
-  297   2          }
-  298   1      
-  299   1          return 1U;
+  292   1          if(element_cylinder_angle_neg_deg < 0.0f)
+  293   1          {
+  294   2              element_cylinder_angle_neg_deg = 0.0f;
+  295   2          }
+  296   1          element_cylinder_bucket_angle_pos[element_cylinder_bucket_head] = 0.0f;
+  297   1          element_cylinder_bucket_angle_neg[element_cylinder_bucket_head] = 0.0f;
+  298   1          element_cylinder_bucket_head = app_element_cylinder_next_bucket(element_cylinder_bucket_head);
+  299   1          element_cylinder_bucket_count--;
   300   1      }
   301          
-  302          static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
+  302          static void app_element_cylinder_drop_old(uint32 now)
   303          {
-  304   1          uint8 ea_backup;
-  305   1      
-  306   1          ea_backup = EA;
-  307   1          EA = 0;
-  308   1          element_data.type = APP_ELEMENT_TYPE_CYLINDER;
-  309   1          element_data.state = APP_ELEMENT_STATE_DONE;
-  310   1          element_data.dir = (0 < dir) ? APP_ELEMENT_DIR_LEFT : APP_ELEMENT_DIR_RIGHT;
-  311   1          element_data.active = 1.0f;
-  312   1          element_data.gyro_x = gyro_x;
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 6   
+  304   1          while((0U != element_cylinder_bucket_count) &&
+  305   1                  ((uint32)(now - element_cylinder_bucket_tick[element_cylinder_bucket_head]) >
+  306   1                   APP_ELEMENT_CYLINDER_WINDOW_TICK))
+  307   1          {
+  308   2              app_element_cylinder_drop_head();
+  309   2          }
+  310   1      }
+  311          
+  312          static void app_element_cylinder_push(float delta_deg, uint32 now)
+  313          {
+  314   1          uint8 tail;
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 6   
 
-  313   1          EA = ea_backup;
-  314   1      
-  315   1          element_cylinder_dead = 1U;
-  316   1          element_cylinder_dead_start_tick = now;
-  317   1          element_cylinder_yaw_limit_active = 1U;
-  318   1          element_cylinder_yaw_limit_start_tick = now;
-  319   1          element_cylinder_event = (0 < dir) ? 1.0f : -1.0f;
-  320   1          app_element_cylinder_clear();
-  321   1      
-  322   1          wprint("cylinder,1.000\r\n");
-  323   1          service_buzzer_beep_ms(300U);
-  324   1      }
-  325          
-  326          static void app_element_cylinder_update(float gyro_x, uint32 delta_tick, uint32 now)
-  327          {
-  328   1          float delta_deg;
-  329   1      
-  330   1          if(0U != app_element_cylinder_in_dead(now))
-  331   1          {
-  332   2              app_element_cylinder_clear();
-  333   2              return;
-  334   2          }
-  335   1          app_element_cylinder_drop_old(now);
-  336   1          element_cylinder_gyro_x = gyro_x;
-  337   1      
-  338   1          if((gyro_x <= APP_ELEMENT_CYLINDER_GYRO_DEADBAND) &&
-  339   1                  (gyro_x >= -APP_ELEMENT_CYLINDER_GYRO_DEADBAND))
-  340   1          {
-  341   2              return;
-  342   2          }
-  343   1      
-  344   1          delta_deg = tfpu_mul(gyro_x, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
-  345   1          app_element_cylinder_push(delta_deg, now);
-  346   1      
-  347   1          if(element_cylinder_angle_pos_deg >= APP_ELEMENT_CYLINDER_TRIGGER_DEG)
-  348   1          {
-  349   2              app_element_cylinder_found(1, gyro_x, now);
-  350   2          }
-  351   1          else if(element_cylinder_angle_neg_deg >= APP_ELEMENT_CYLINDER_TRIGGER_DEG)
-  352   1          {
-  353   2              app_element_cylinder_found(-1, gyro_x, now);
-  354   2          }
-  355   1      }
-  356          
-  357          static void app_element_cylinder_state_reply(void)
-  358          {
-  359   1          wprint("cylinder_state,%.3f,%.3f,%.3f,%u,%.3f\r\n",
-  360   1                  element_cylinder_gyro_x,
-  361   1                  element_cylinder_angle_pos_deg,
-  362   1                  element_cylinder_angle_neg_deg,
-  363   1                  (uint16)element_cylinder_bucket_count,
-  364   1                  element_cylinder_event);
-  365   1      }
-  366          
-  367          static float app_element_roundabout_score(const app_inductor_preprocess_data_t *inductor)
-  368          {
-  369   1          float y1 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1];
-  370   1          float x1 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2];
-  371   1          float x2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3];
-  372   1          float y2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4];
-  373   1          float m  = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
-  374   1          float score_a;
-  375   1          float score_b;
-  376   1          float score_c;
-  377   1          float sr;
-  378   1          float t;
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 7   
+  315   1          float angle_abs;
+  316   1      
+  317   1          if(0U == element_cylinder_bucket_count)
+  318   1          {
+  319   2              element_cylinder_bucket_head = 0U;
+  320   2              element_cylinder_bucket_count = 1U;
+  321   2              element_cylinder_bucket_angle_pos[0] = 0.0f;
+  322   2              element_cylinder_bucket_angle_neg[0] = 0.0f;
+  323   2              element_cylinder_bucket_tick[0] = now;
+  324   2          }
+  325   1      
+  326   1          tail = app_element_cylinder_tail_bucket();
+  327   1          if((uint32)(now - element_cylinder_bucket_tick[tail]) >= APP_ELEMENT_CYLINDER_BUCKET_TICK)
+  328   1          {
+  329   2              if(element_cylinder_bucket_count >= APP_ELEMENT_CYLINDER_BUCKET_COUNT)
+  330   2              {
+  331   3                  app_element_cylinder_drop_head();
+  332   3              }
+  333   2      
+  334   2              tail = app_element_cylinder_next_bucket(tail);
+  335   2              element_cylinder_bucket_angle_pos[tail] = 0.0f;
+  336   2              element_cylinder_bucket_angle_neg[tail] = 0.0f;
+  337   2              element_cylinder_bucket_tick[tail] = now;
+  338   2              element_cylinder_bucket_count++;
+  339   2          }
+  340   1      
+  341   1          if(delta_deg >= 0.0f)
+  342   1          {
+  343   2              element_cylinder_bucket_angle_pos[tail] = tfpu_add(element_cylinder_bucket_angle_pos[tail], delta
+             -_deg);
+  344   2              element_cylinder_angle_pos_deg = tfpu_add(element_cylinder_angle_pos_deg, delta_deg);
+  345   2          }
+  346   1          else
+  347   1          {
+  348   2              angle_abs = tfpu_sub(0.0f, delta_deg);
+  349   2              element_cylinder_bucket_angle_neg[tail] = tfpu_add(element_cylinder_bucket_angle_neg[tail], angle
+             -_abs);
+  350   2              element_cylinder_angle_neg_deg = tfpu_add(element_cylinder_angle_neg_deg, angle_abs);
+  351   2          }
+  352   1      }
+  353          
+  354          static uint8 app_element_cylinder_in_dead(uint32 now)
+  355          {
+  356   1          /* 跷跷板死区内也阻挡圆筒 */
+  357   1          if(0U != element_seesaw_dead)
+  358   1          {
+  359   2              return 1U;
+  360   2          }
+  361   1      
+  362   1          if(0U == element_cylinder_dead)
+  363   1          {
+  364   2              return 0U;
+  365   2          }
+  366   1      
+  367   1          if((uint32)(now - element_cylinder_dead_start_tick) >= APP_ELEMENT_CYLINDER_DEAD_TICK)
+  368   1          {
+  369   2              element_cylinder_dead = 0U;
+  370   2              return 0U;
+  371   2          }
+  372   1      
+  373   1          return 1U;
+  374   1      }
+  375          
+  376          static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
+  377          {
+  378   1          uint8 ea_backup;
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 7   
 
   379   1      
-  380   1          /* 分支 A：原有环岛特征 */
-  381   1          score_a = tfpu_add(tfpu_mul(103.613f, y1), tfpu_mul(23.045f, x1));
-  382   1          score_a = tfpu_add(score_a, tfpu_mul(373.933f, m));
-  383   1      
-  384   1          t = tfpu_mul(0.135f, tfpu_mul(y1, y1));
-  385   1          score_a = tfpu_sub(score_a, t);
-  386   1      
-  387   1          t = tfpu_mul(0.689f, tfpu_mul(x2, x2));
-  388   1          score_a = tfpu_add(score_a, t);
-  389   1      
-  390   1          t = tfpu_mul(0.703f, tfpu_mul(x2, y2));
-  391   1          score_a = tfpu_sub(score_a, t);
-  392   1      
-  393   1          t = tfpu_mul(0.937f, tfpu_mul(x2, m));
-  394   1          score_a = tfpu_sub(score_a, t);
+  380   1          ea_backup = EA;
+  381   1          EA = 0;
+  382   1          element_data.type = APP_ELEMENT_TYPE_CYLINDER;
+  383   1          element_data.state = APP_ELEMENT_STATE_DONE;
+  384   1          element_data.dir = (0 < dir) ? APP_ELEMENT_DIR_LEFT : APP_ELEMENT_DIR_RIGHT;
+  385   1          element_data.active = 1.0f;
+  386   1          element_data.gyro_x = gyro_x;
+  387   1          EA = ea_backup;
+  388   1      
+  389   1          element_cylinder_dead = 1U;
+  390   1          element_cylinder_dead_start_tick = now;
+  391   1          element_cylinder_yaw_limit_active = 1U;
+  392   1          element_cylinder_yaw_limit_start_tick = now;
+  393   1          element_cylinder_event = (0 < dir) ? 1.0f : -1.0f;
+  394   1          app_element_cylinder_clear();
   395   1      
-  396   1          t = tfpu_mul(1.116f, tfpu_mul(y2, y2));
-  397   1          score_a = tfpu_add(score_a, t);
-  398   1      
-  399   1          t = tfpu_mul(2.881f, tfpu_mul(m, m));
-  400   1          score_a = tfpu_sub(score_a, t);
-  401   1      
-  402   1          /* 分支 B：新环岛 5 特征 */
-  403   1          score_b = tfpu_sub(tfpu_mul(-12.226f, y1), tfpu_mul(17.723f, x1));
-  404   1          score_b = tfpu_sub(score_b, tfpu_mul(119.330f, x2));
-  405   1          score_b = tfpu_add(score_b, tfpu_mul(328.974f, y2));
-  406   1      
-  407   1          t = tfpu_mul(0.954f, tfpu_mul(y1, y1));
-  408   1          score_b = tfpu_sub(score_b, t);
-  409   1      
-  410   1          t = tfpu_mul(0.871f, tfpu_mul(y1, x1));
-  411   1          score_b = tfpu_add(score_b, t);
-  412   1      
-  413   1          t = tfpu_mul(2.299f, tfpu_mul(y1, y2));
-  414   1          score_b = tfpu_add(score_b, t);
-  415   1      
-  416   1          t = tfpu_mul(0.363f, tfpu_mul(x1, x1));
-  417   1          score_b = tfpu_add(score_b, t);
-  418   1      
-  419   1          t = tfpu_mul(0.835f, tfpu_mul(x1, x2));
-  420   1          score_b = tfpu_sub(score_b, t);
-  421   1      
-  422   1          t = tfpu_mul(0.216f, tfpu_mul(x1, m));
-  423   1          score_b = tfpu_add(score_b, t);
-  424   1      
-  425   1          t = tfpu_mul(0.819f, tfpu_mul(x2, x2));
-  426   1          score_b = tfpu_add(score_b, t);
-  427   1      
-  428   1          t = tfpu_mul(1.978f, tfpu_mul(y2, y2));
-  429   1          score_b = tfpu_sub(score_b, t);
-  430   1      
-  431   1          t = tfpu_mul(1.837f, tfpu_mul(m, m));
-  432   1          score_b = tfpu_sub(score_b, t);
-  433   1      
-  434   1          /* 分支 C：新环岛 6、7 特征 */
-  435   1          score_c = tfpu_add(tfpu_mul(138.507f, y1), tfpu_mul(262.993f, m));
-  436   1      
-  437   1          t = tfpu_mul(0.204f, tfpu_mul(y1, y1));
-  438   1          score_c = tfpu_sub(score_c, t);
-  439   1      
-  440   1          t = tfpu_mul(0.547f, tfpu_mul(y1, x2));
-  441   1          score_c = tfpu_sub(score_c, t);
-  442   1      
-  443   1          t = tfpu_mul(0.055f, tfpu_mul(x1, x1));
-  444   1          score_c = tfpu_sub(score_c, t);
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 8   
+  396   1          wprint("cylinder,1.000\r\n");
+  397   1          service_buzzer_beep_ms(300U);
+  398   1      }
+  399          
+  400          static void app_element_cylinder_update(float gyro_x, uint32 delta_tick, uint32 now)
+  401          {
+  402   1          float delta_deg;
+  403   1      
+  404   1          if(0U != app_element_cylinder_in_dead(now))
+  405   1          {
+  406   2              app_element_cylinder_clear();
+  407   2              return;
+  408   2          }
+  409   1          app_element_cylinder_drop_old(now);
+  410   1          element_cylinder_gyro_x = gyro_x;
+  411   1      
+  412   1          if((gyro_x <= APP_ELEMENT_CYLINDER_GYRO_DEADBAND) &&
+  413   1                  (gyro_x >= -APP_ELEMENT_CYLINDER_GYRO_DEADBAND))
+  414   1          {
+  415   2              return;
+  416   2          }
+  417   1      
+  418   1          delta_deg = tfpu_mul(gyro_x, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
+  419   1          app_element_cylinder_push(delta_deg, now);
+  420   1      
+  421   1          if(element_cylinder_angle_pos_deg >= APP_ELEMENT_CYLINDER_TRIGGER_DEG)
+  422   1          {
+  423   2              app_element_cylinder_found(1, gyro_x, now);
+  424   2          }
+  425   1          else if(element_cylinder_angle_neg_deg >= APP_ELEMENT_CYLINDER_TRIGGER_DEG)
+  426   1          {
+  427   2              app_element_cylinder_found(-1, gyro_x, now);
+  428   2          }
+  429   1      }
+  430          
+  431          static void app_element_cylinder_state_reply(void)
+  432          {
+  433   1          wprint("cylinder_state,%.3f,%.3f,%.3f,%u,%.3f\r\n",
+  434   1                  element_cylinder_gyro_x,
+  435   1                  element_cylinder_angle_pos_deg,
+  436   1                  element_cylinder_angle_neg_deg,
+  437   1                  (uint16)element_cylinder_bucket_count,
+  438   1                  element_cylinder_event);
+  439   1      }
+  440          
+  441          static float app_element_roundabout_score(const app_inductor_preprocess_data_t *inductor)
+  442          {
+  443   1          float y1 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1];
+  444   1          float x1 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2];
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 8   
 
-  445   1      
-  446   1          t = tfpu_mul(0.281f, tfpu_mul(x1, x2));
-  447   1          score_c = tfpu_sub(score_c, t);
-  448   1      
-  449   1          t = tfpu_mul(0.750f, tfpu_mul(x1, y2));
-  450   1          score_c = tfpu_add(score_c, t);
-  451   1      
-  452   1          t = tfpu_mul(0.541f, tfpu_mul(x2, x2));
-  453   1          score_c = tfpu_add(score_c, t);
-  454   1      
-  455   1          t = tfpu_mul(0.261f, tfpu_mul(y2, m));
-  456   1          score_c = tfpu_sub(score_c, t);
+  445   1          float x2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3];
+  446   1          float y2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4];
+  447   1          float m  = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
+  448   1          float score_a;
+  449   1          float score_b;
+  450   1          float score_c;
+  451   1          float sr;
+  452   1          float t;
+  453   1      
+  454   1          /* 分支 A：原有环岛特征 */
+  455   1          score_a = tfpu_add(tfpu_mul(103.613f, y1), tfpu_mul(23.045f, x1));
+  456   1          score_a = tfpu_add(score_a, tfpu_mul(373.933f, m));
   457   1      
-  458   1          t = tfpu_mul(2.282f, tfpu_mul(m, m));
-  459   1          score_c = tfpu_sub(score_c, t);
+  458   1          t = tfpu_mul(0.135f, tfpu_mul(y1, y1));
+  459   1          score_a = tfpu_sub(score_a, t);
   460   1      
-  461   1          sr = tfpu_sub(score_a, 21736.0f);
-  462   1          t = tfpu_sub(score_b, 8425.0f);
-  463   1          if(t > sr)
-  464   1          {
-  465   2              sr = t;
-  466   2          }
-  467   1      
-  468   1          t = tfpu_sub(score_c, 17502.0f);
-  469   1          if(t > sr)
-  470   1          {
-  471   2              sr = t;
-  472   2          }
-  473   1      
-  474   1          return sr;
-  475   1      }
-  476          
-  477          static void app_element_roundabout_found(uint32 now)
-  478          {
-  479   1          uint8 ea_backup;
+  461   1          t = tfpu_mul(0.689f, tfpu_mul(x2, x2));
+  462   1          score_a = tfpu_add(score_a, t);
+  463   1      
+  464   1          t = tfpu_mul(0.703f, tfpu_mul(x2, y2));
+  465   1          score_a = tfpu_sub(score_a, t);
+  466   1      
+  467   1          t = tfpu_mul(0.937f, tfpu_mul(x2, m));
+  468   1          score_a = tfpu_sub(score_a, t);
+  469   1      
+  470   1          t = tfpu_mul(1.116f, tfpu_mul(y2, y2));
+  471   1          score_a = tfpu_add(score_a, t);
+  472   1      
+  473   1          t = tfpu_mul(2.881f, tfpu_mul(m, m));
+  474   1          score_a = tfpu_sub(score_a, t);
+  475   1      
+  476   1          /* 分支 B：新环岛 5 特征 */
+  477   1          score_b = tfpu_sub(tfpu_mul(-12.226f, y1), tfpu_mul(17.723f, x1));
+  478   1          score_b = tfpu_sub(score_b, tfpu_mul(119.330f, x2));
+  479   1          score_b = tfpu_add(score_b, tfpu_mul(328.974f, y2));
   480   1      
-  481   1          element_roundabout_dead = 1U;
-  482   1          element_roundabout_dead_start_tick = now;
+  481   1          t = tfpu_mul(0.954f, tfpu_mul(y1, y1));
+  482   1          score_b = tfpu_sub(score_b, t);
   483   1      
-  484   1          ea_backup = EA;
-  485   1          EA = 0;
-  486   1          element_data.type = APP_ELEMENT_TYPE_ROUNDABOUT;
-  487   1          element_data.state = APP_ELEMENT_STATE_DONE;
-  488   1          element_data.dir = APP_ELEMENT_DIR_NONE;
-  489   1          element_data.active = 1.0f;
-  490   1          EA = ea_backup;
-  491   1      
-  492   1          wprint("roundabout,1.000,%u\r\n", (uint16)element_roundabout_count);
-  493   1          service_buzzer_beep_ms(300U);
-  494   1      
-  495   1          if(element_roundabout_count < 8U)
-  496   1          {
-  497   2              switch(element_roundabout_count)
-  498   2              {
-  499   3                  case 0U:
-  500   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
-  501   3                      app_element_roundabout_bias_active = 1U;
-  502   3                      element_roundabout_bias_start_tick = now;
-  503   3                      element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-  504   3                      app_element_roundabout_feedforward_scale = 3.00f;
-  505   3                      break;
-  506   3                  case 1U:
-  507   3                      app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
-  508   3                      app_element_roundabout_bias_active = 1U;
-  509   3                      element_roundabout_bias_start_tick = now;
-  510   3                      element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 9   
+  484   1          t = tfpu_mul(0.871f, tfpu_mul(y1, x1));
+  485   1          score_b = tfpu_add(score_b, t);
+  486   1      
+  487   1          t = tfpu_mul(2.299f, tfpu_mul(y1, y2));
+  488   1          score_b = tfpu_add(score_b, t);
+  489   1      
+  490   1          t = tfpu_mul(0.363f, tfpu_mul(x1, x1));
+  491   1          score_b = tfpu_add(score_b, t);
+  492   1      
+  493   1          t = tfpu_mul(0.835f, tfpu_mul(x1, x2));
+  494   1          score_b = tfpu_sub(score_b, t);
+  495   1      
+  496   1          t = tfpu_mul(0.216f, tfpu_mul(x1, m));
+  497   1          score_b = tfpu_add(score_b, t);
+  498   1      
+  499   1          t = tfpu_mul(0.819f, tfpu_mul(x2, x2));
+  500   1          score_b = tfpu_add(score_b, t);
+  501   1      
+  502   1          t = tfpu_mul(1.978f, tfpu_mul(y2, y2));
+  503   1          score_b = tfpu_sub(score_b, t);
+  504   1      
+  505   1          t = tfpu_mul(1.837f, tfpu_mul(m, m));
+  506   1          score_b = tfpu_sub(score_b, t);
+  507   1      
+  508   1          /* 分支 C：新环岛 6、7 特征 */
+  509   1          score_c = tfpu_add(tfpu_mul(138.507f, y1), tfpu_mul(262.993f, m));
+  510   1      
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 9   
 
-  511   3                      app_element_roundabout_feedforward_scale = 3.00f;
-  512   3                      break;
-  513   3                  case 2U:
-  514   3                      // app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
-  515   3                      // app_element_roundabout_bias_active = 1U;
-  516   3                      // element_roundabout_bias_start_tick = now;
-  517   3                      // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-  518   3                      // app_element_roundabout_feedforward_scale = 3.00f;
-  519   3                      break;
-  520   3                  case 3U:
-  521   3                      // app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
-  522   3                      // app_element_roundabout_bias_active = 1U;
-  523   3                      // element_roundabout_bias_start_tick = now;
-  524   3                      // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-  525   3                      // app_element_roundabout_feedforward_scale = 3.00f;
-  526   3                      break;
-  527   3                  // case 4U:
-  528   3                  //     app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
-  529   3                  //     app_element_roundabout_bias_active = 1U;
-  530   3                  //     element_roundabout_bias_start_tick = now;
-  531   3                  //     element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-  532   3                  //     app_element_roundabout_feedforward_scale = 3.00f;
-  533   3                  //     break;
-  534   3                  // case 5U:
-  535   3                  //     app_element_roundabout_bias_active = 0U;
-  536   3                  //     app_element_roundabout_bias_yaw_radps = 0.0f;
-  537   3                  //     app_element_roundabout_feedforward_scale = 1.0f;
-  538   3                  //     break;
-  539   3                  // case 6U:
-  540   3                  //     app_element_roundabout_bias_yaw_radps = tfpu_mul(-3000.0f, APP_ELEMENT_DEG_TO_RAD);
-  541   3                  //     app_element_roundabout_bias_active = 1U;
-  542   3                  //     element_roundabout_bias_start_tick = now;
-  543   3                  //     element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-  544   3                  //     app_element_roundabout_feedforward_scale = 2.80f;
-  545   3                  //     break;
-  546   3                  // case 7U:
-  547   3                  //     app_element_roundabout_bias_active = 0U;
-  548   3                  //     app_element_roundabout_bias_yaw_radps = 0.0f;
-  549   3                  //     app_element_roundabout_feedforward_scale = 1.0f;
-  550   3                  //     break;
-  551   3                  default:
-  552   3                      break;
-  553   3              }
-  554   2          }
-  555   1          element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
-  556   1          element_roundabout_gz_integrate = 1U;
-  557   1          element_roundabout_gz_angle_deg = 0.0f;
-  558   1          element_roundabout_count++;
-  559   1          element_roundabout_count_float = (float)element_roundabout_count;
-  560   1      }
-  561          
-  562          static void app_element_roundabout_task(void)
-  563          {
-  564   1          app_inductor_preprocess_data_t inductor;
-  565   1          uint32 now;
-  566   1          float score;
-  567   1          uint8 ea_backup;
-  568   1      
-  569   1          now = service_timetick_what();
+  511   1          t = tfpu_mul(0.204f, tfpu_mul(y1, y1));
+  512   1          score_c = tfpu_sub(score_c, t);
+  513   1      
+  514   1          t = tfpu_mul(0.547f, tfpu_mul(y1, x2));
+  515   1          score_c = tfpu_sub(score_c, t);
+  516   1      
+  517   1          t = tfpu_mul(0.055f, tfpu_mul(x1, x1));
+  518   1          score_c = tfpu_sub(score_c, t);
+  519   1      
+  520   1          t = tfpu_mul(0.281f, tfpu_mul(x1, x2));
+  521   1          score_c = tfpu_sub(score_c, t);
+  522   1      
+  523   1          t = tfpu_mul(0.750f, tfpu_mul(x1, y2));
+  524   1          score_c = tfpu_add(score_c, t);
+  525   1      
+  526   1          t = tfpu_mul(0.541f, tfpu_mul(x2, x2));
+  527   1          score_c = tfpu_add(score_c, t);
+  528   1      
+  529   1          t = tfpu_mul(0.261f, tfpu_mul(y2, m));
+  530   1          score_c = tfpu_sub(score_c, t);
+  531   1      
+  532   1          t = tfpu_mul(2.282f, tfpu_mul(m, m));
+  533   1          score_c = tfpu_sub(score_c, t);
+  534   1      
+  535   1          sr = tfpu_sub(score_a, 21736.0f);
+  536   1          t = tfpu_sub(score_b, 8425.0f);
+  537   1          if(t > sr)
+  538   1          {
+  539   2              sr = t;
+  540   2          }
+  541   1      
+  542   1          t = tfpu_sub(score_c, 17502.0f);
+  543   1          if(t > sr)
+  544   1          {
+  545   2              sr = t;
+  546   2          }
+  547   1      
+  548   1          return sr;
+  549   1      }
+  550          
+  551          static void app_element_roundabout_found(uint32 now)
+  552          {
+  553   1          uint8 ea_backup;
+  554   1      
+  555   1          element_roundabout_dead = 1U;
+  556   1          element_roundabout_dead_start_tick = now;
+  557   1      
+  558   1          ea_backup = EA;
+  559   1          EA = 0;
+  560   1          element_data.type = APP_ELEMENT_TYPE_ROUNDABOUT;
+  561   1          element_data.state = APP_ELEMENT_STATE_DONE;
+  562   1          element_data.dir = APP_ELEMENT_DIR_NONE;
+  563   1          element_data.active = 1.0f;
+  564   1          EA = ea_backup;
+  565   1      
+  566   1          element_roundabout_count++;
+  567   1          element_roundabout_count_float = (float)element_roundabout_count;
+  568   1          wprint("roundabout,1.000,%u\r\n", (uint16)element_roundabout_count);
+  569   1          service_buzzer_beep_ms(300U);
   570   1      
-  571   1          if((0U != element_roundabout_dead) &&
-  572   1                  ((uint32)(now - element_roundabout_dead_start_tick) >= APP_ELEMENT_ROUNDABOUT_DEAD_TICK))
-  573   1          {
-  574   2              element_roundabout_dead = 0U;
-  575   2              element_roundabout_confirm = 0U;
-  576   2          }
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 10  
+  571   1          app_element_roundabout_apply_runtime_config();
+  572   1          element_roundabout_bias_start_tick = now;
+  573   1          element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+  574   1          element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
+  575   1          element_roundabout_gz_integrate = 1U;
+  576   1          element_roundabout_gz_angle_deg = 0.0f;
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 10  
 
-  577   1      
-  578   1          if(0U != element_roundabout_dead)
-  579   1          {
-  580   2              return;
-  581   2          }
-  582   1      
-  583   1          /* FSM非空闲态不检测 */
-  584   1          if(APP_ELEMENT_ROUNDABOUT_FSM_IDLE != element_roundabout_fsm)
-  585   1          {
-  586   2              return;
-  587   2          }
-  588   1      
-  589   1          app_inductor_preprocess_get_data(&inductor);
-  590   1      
-  591   1          score = app_element_roundabout_score(&inductor);
-  592   1          if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD)
-  593   1          {
-  594   2              if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
-  595   2              {
-  596   3                  element_roundabout_confirm++;
-  597   3                  if(element_roundabout_confirm >= APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT)
-  598   3                  {
-  599   4                      app_element_roundabout_found(now);
-  600   4                  }
-  601   3              }
-  602   2          }
-  603   1          else
-  604   1          {
-  605   2              element_roundabout_confirm = 0U;
-  606   2          }
-  607   1      }
-*** WARNING C47 IN LINE 567 OF ..\L3_APP\app_element.c: 'ea_backup': unreferenced local variable
-  608          
-  609          static void app_element_roundabout_clear_count(void)
-  610          {
-  611   1          element_roundabout_count = 0U;
-  612   1          element_roundabout_count_float = 0.0f;
-  613   1          app_element_roundabout_bias_active = 0U;
-  614   1          app_element_roundabout_bias_yaw_radps = 0.0f;
-  615   1          app_element_roundabout_feedforward_scale = 1.0f;
-  616   1          wprint("roundabout_count,0.000\r\n");
-  617   1      }
-  618          
-  619          static void app_element_seesaw_found(uint32 now)
-  620          {
-  621   1          uint8 ea_backup;
-  622   1      
-  623   1          ea_backup = EA;
-  624   1          EA = 0;
-  625   1          element_data.type = APP_ELEMENT_TYPE_SEESAW;
-  626   1          element_data.state = APP_ELEMENT_STATE_DONE;
-  627   1          element_data.dir = APP_ELEMENT_DIR_NONE;
-  628   1          element_data.active = 1.0f;
-  629   1          EA = ea_backup;
-  630   1      
-  631   1          element_seesaw_dead = 1U;
-  632   1          element_seesaw_dead_start_tick = now;
-  633   1          element_seesaw_confirm = 0U;
-  634   1          element_cylinder_dead = 1U;
-  635   1          element_cylinder_dead_start_tick = now;
-  636   1          element_seesaw_active = 1U;
-  637   1          element_seesaw_active_start_tick = now;
-  638   1          element_seesaw_event = 1.0f;
-  639   1      
-  640   1          wprint("seesaw,1.000\r\n");
-  641   1          service_buzzer_beep_ms(300U);
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 11  
+  577   1      }
+  578          
+  579          static void app_element_roundabout_task(void)
+  580          {
+  581   1          app_inductor_preprocess_data_t inductor;
+  582   1          uint32 now;
+  583   1          float score;
+  584   1      
+  585   1          now = service_timetick_what();
+  586   1      
+  587   1          if((0U != element_roundabout_dead) &&
+  588   1                  ((uint32)(now - element_roundabout_dead_start_tick) >= APP_ELEMENT_ROUNDABOUT_DEAD_TICK))
+  589   1          {
+  590   2              element_roundabout_dead = 0U;
+  591   2              element_roundabout_confirm = 0U;
+  592   2          }
+  593   1      
+  594   1          if(0U != element_roundabout_dead)
+  595   1          {
+  596   2              return;
+  597   2          }
+  598   1      
+  599   1          /* FSM非空闲态不检测 */
+  600   1          if(APP_ELEMENT_ROUNDABOUT_FSM_IDLE != element_roundabout_fsm)
+  601   1          {
+  602   2              return;
+  603   2          }
+  604   1      
+  605   1          app_inductor_preprocess_get_data(&inductor);
+  606   1      
+  607   1          score = app_element_roundabout_score(&inductor);
+  608   1          if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD)
+  609   1          {
+  610   2              if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
+  611   2              {
+  612   3                  element_roundabout_confirm++;
+  613   3                  if(element_roundabout_confirm >= APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT)
+  614   3                  {
+  615   4                      app_element_roundabout_found(now);
+  616   4                  }
+  617   3              }
+  618   2          }
+  619   1          else
+  620   1          {
+  621   2              element_roundabout_confirm = 0U;
+  622   2          }
+  623   1      }
+  624          
+  625          static void app_element_roundabout_clear_count(void)
+  626          {
+  627   1          element_roundabout_count = 0U;
+  628   1          element_roundabout_count_float = 0.0f;
+  629   1          app_element_roundabout_bias_active = 0U;
+  630   1          app_element_roundabout_bias_yaw_radps = 0.0f;
+  631   1          app_element_roundabout_feedforward_scale = 1.0f;
+  632   1          wprint("roundabout_count,0.000\r\n");
+  633   1      }
+  634          
+  635          static void app_element_seesaw_found(uint32 now)
+  636          {
+  637   1          uint8 ea_backup;
+  638   1      
+  639   1          ea_backup = EA;
+  640   1          EA = 0;
+  641   1          element_data.type = APP_ELEMENT_TYPE_SEESAW;
+  642   1          element_data.state = APP_ELEMENT_STATE_DONE;
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 11  
 
-  642   1      }
-  643          
-  644          static void app_element_seesaw_update(uint32 now)
-  645          {
-  646   1          app_inductor_preprocess_data_t inductor;
-  647   1          int32 score;
-  648   1      
-  649   1          /* 死区检查 */
-  650   1          if(0U != element_seesaw_dead)
-  651   1          {
-  652   2              if((uint32)(now - element_seesaw_dead_start_tick) >= APP_ELEMENT_SEESAW_DEAD_TICK)
-  653   2              {
-  654   3                  element_seesaw_dead = 0U;
-  655   3                  element_seesaw_confirm = 0U;
-  656   3              }
-  657   2              return;
-  658   2          }
-  659   1      
-  660   1          app_inductor_preprocess_get_data(&inductor);
-  661   1      
-  662   1          score = (int32)(-81 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1]
-  663   1                          -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2]
-  664   1                          -204 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3]
-  665   1                          -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]
-  666   1                          +159 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M])
-  667   1                  - 2 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M] * (int16)inductor.normalize
+  643   1          element_data.dir = APP_ELEMENT_DIR_NONE;
+  644   1          element_data.active = 1.0f;
+  645   1          EA = ea_backup;
+  646   1      
+  647   1          element_seesaw_dead = 1U;
+  648   1          element_seesaw_dead_start_tick = now;
+  649   1          element_seesaw_confirm = 0U;
+  650   1          element_cylinder_dead = 1U;
+  651   1          element_cylinder_dead_start_tick = now;
+  652   1          element_seesaw_active = 1U;
+  653   1          element_seesaw_active_start_tick = now;
+  654   1          element_seesaw_event = 1.0f;
+  655   1      
+  656   1          wprint("seesaw,1.000\r\n");
+  657   1          service_buzzer_beep_ms(300U);
+  658   1      }
+  659          
+  660          static void app_element_seesaw_update(uint32 now)
+  661          {
+  662   1          app_inductor_preprocess_data_t inductor;
+  663   1          int32 score;
+  664   1      
+  665   1          /* 死区检查 */
+  666   1          if(0U != element_seesaw_dead)
+  667   1          {
+  668   2              if((uint32)(now - element_seesaw_dead_start_tick) >= APP_ELEMENT_SEESAW_DEAD_TICK)
+  669   2              {
+  670   3                  element_seesaw_dead = 0U;
+  671   3                  element_seesaw_confirm = 0U;
+  672   3              }
+  673   2              return;
+  674   2          }
+  675   1      
+  676   1          app_inductor_preprocess_get_data(&inductor);
+  677   1      
+  678   1          score = (int32)(-81 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1]
+  679   1                          -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2]
+  680   1                          -204 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3]
+  681   1                          -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]
+  682   1                          +159 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M])
+  683   1                  - 2 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M] * (int16)inductor.normalize
              -d[APP_INDUCTOR_PREPROCESS_INDEX_M];
-  668   1      
-  669   1          if((score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD) && (0U != element_seesaw_gz_high))
-  670   1          {
-  671   2              element_seesaw_confirm++;
-  672   2              if(element_seesaw_confirm >= APP_ELEMENT_SEESAW_CONFIRM_COUNT)
-  673   2              {
-  674   3                  app_element_seesaw_found(now);
-  675   3              }
-  676   2          }
-  677   1          else
-  678   1          {
-  679   2              element_seesaw_confirm = 0U;
-  680   2          }
-  681   1      }
-  682          
-  683          //-------------------------------------------------------------------------------------------------------
+  684   1      
+  685   1          if((score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD) && (0U != element_seesaw_gz_high))
+  686   1          {
+  687   2              element_seesaw_confirm++;
+  688   2              if(element_seesaw_confirm >= APP_ELEMENT_SEESAW_CONFIRM_COUNT)
+  689   2              {
+  690   3                  app_element_seesaw_found(now);
+  691   3              }
+  692   2          }
+  693   1          else
+  694   1          {
+  695   2              element_seesaw_confirm = 0U;
+  696   2          }
+  697   1      }
+  698          
+  699          //-------------------------------------------------------------------------------------------------------
              -------------
-  684          // 函数简介     元素识别初始化
-  685          // 参数说明     void
-  686          // 返回参数     void
-  687          // 使用示例     app_element_init();
-  688          // 备注信息     当前仅启用圆筒识别，初始化后默认无元素
-  689          //-------------------------------------------------------------------------------------------------------
+  700          // 函数简介     元素识别初始化
+  701          // 参数说明     void
+  702          // 返回参数     void
+  703          // 使用示例     app_element_init();
+  704          // 备注信息     当前仅启用圆筒识别，初始化后默认无元素
+  705          //-------------------------------------------------------------------------------------------------------
              -------------
-  690          void app_element_init(void)
-  691          {
-  692   1          app_element_reset();
-  693   1          (void)service_packet_add_action("cylinder_state", app_element_cylinder_state_reply, 0UL);
-  694   1          (void)service_packet_add_variable("cylinder_event",
-  695   1                  &element_cylinder_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
-  696   1          (void)service_packet_add_variable("seesaw_event",
-  697   1                  &element_seesaw_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
-  698   1          pit_ms_init(APP_ELEMENT_ROUNDABOUT_PIT, APP_ELEMENT_ROUNDABOUT_PERIOD_MS, app_element_roundabout_task
-             -);
-  699   1          (void)service_packet_add_action("reset_round", app_element_roundabout_clear_count, 0UL);
-  700   1          (void)service_packet_add_variable("roundabout_count",
-  701   1                  &element_roundabout_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
-  702   1      }
-  703          
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 12  
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 12  
 
-  704          //-------------------------------------------------------------------------------------------------------
+  706          void app_element_init(void)
+  707          {
+  708   1          app_element_reset();
+  709   1          (void)service_packet_add_action("cylinder_state", app_element_cylinder_state_reply, 0UL);
+  710   1          (void)service_packet_add_variable("cylinder_event",
+  711   1                  &element_cylinder_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  712   1          (void)service_packet_add_variable("seesaw_event",
+  713   1                  &element_seesaw_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  714   1          pit_ms_init(APP_ELEMENT_ROUNDABOUT_PIT, APP_ELEMENT_ROUNDABOUT_PERIOD_MS, app_element_roundabout_task
+             -);
+  715   1          (void)service_packet_add_action("reset_round", app_element_roundabout_clear_count, 0UL);
+  716   1          (void)service_packet_add_variable("roundabout_count",
+  717   1                  &element_roundabout_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  718   1          (void)service_packet_add_variable("round_ff_scale1",
+  719   1                  &element_roundabout_ff_scale_1, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  720   1          (void)service_packet_add_variable("round_ff_scale2",
+  721   1                  &element_roundabout_ff_scale_2, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  722   1          (void)service_packet_add_variable("round_ff_scale3",
+  723   1                  &element_roundabout_ff_scale_3, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  724   1          (void)service_packet_add_variable("round_bias1_dps",
+  725   1                  &element_roundabout_bias_dps_1, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  726   1          (void)service_packet_add_variable("round_bias2_dps",
+  727   1                  &element_roundabout_bias_dps_2, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  728   1          (void)service_packet_add_variable("round_bias3_dps",
+  729   1                  &element_roundabout_bias_dps_3, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  730   1          (void)service_packet_add_variable("round_angle1_deg",
+  731   1                  &element_roundabout_angle_deg_1, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  732   1          (void)service_packet_add_variable("round_angle2_deg",
+  733   1                  &element_roundabout_angle_deg_2, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  734   1          (void)service_packet_add_variable("round_angle3_deg",
+  735   1                  &element_roundabout_angle_deg_3, APP_ELEMENT_PACKET_SINGLE_COUNT);
+  736   1      }
+  737          
+  738          //-------------------------------------------------------------------------------------------------------
              -------------
-  705          // 函数简介     获取元素识别数据
-  706          // 参数说明     out_data        数据输出地址
-  707          // 返回参数     void
-  708          // 使用示例     app_element_get_data(&element_data);
-  709          //-------------------------------------------------------------------------------------------------------
+  739          // 函数简介     获取元素识别数据
+  740          // 参数说明     out_data        数据输出地址
+  741          // 返回参数     void
+  742          // 使用示例     app_element_get_data(&element_data);
+  743          //-------------------------------------------------------------------------------------------------------
              -------------
-  710          void app_element_get_data(app_element_data_t *out_data)
-  711          {
-  712   1          uint8 ea_backup;
-  713   1      
-  714   1          if(NULL == out_data)
-  715   1          {
-  716   2              return;
-  717   2          }
-  718   1      
-  719   1          ea_backup = EA;
-  720   1          EA = 0;
-  721   1          *out_data = element_data;
-  722   1          EA = ea_backup;
-  723   1      }
-  724          
-  725          //-------------------------------------------------------------------------------------------------------
-             -------------
-  726          // 函数简介     元素识别IMU输入任务
-  727          // 参数说明     gyro             IMU三轴陀螺仪数据，单位 deg/s
-  728          // 返回参数     void
-  729          // 使用示例     app_element_imu_task(&gyro);
-  730          // 备注信息     当前只识别gyro_x滑动窗口内单方向累计转动超过180度的圆筒元素
-  731          //-------------------------------------------------------------------------------------------------------
-             -------------
-  732          void app_element_imu_task(const service_imu_gyro_t *gyro)
-  733          {
-  734   1          uint8 ea_backup;
-  735   1          uint32 now;
-  736   1          uint32 delta_tick;
-  737   1          float gyro_x;
-  738   1      
-  739   1          if(NULL == gyro)
-  740   1          {
-  741   2              return;
-  742   2          }
-  743   1      
-  744   1          now = service_timetick_what();
-  745   1          delta_tick = now - element_last_tick;
-  746   1          element_last_tick = now;
+  744          void app_element_get_data(app_element_data_t *out_data)
+  745          {
+  746   1          uint8 ea_backup;
   747   1      
-  748   1          if(0U == element_gyro_x_lpf_ready)
+  748   1          if(NULL == out_data)
   749   1          {
-  750   2              shared_lpf_reset(&element_gyro_x_lpf, gyro->gyro_x);
-  751   2              element_gyro_x_lpf_ready = 1U;
-  752   2          }
-  753   1          gyro_x = shared_lpf_update(&element_gyro_x_lpf, gyro->gyro_x);
-  754   1      
-  755   1          ea_backup = EA;
-  756   1          EA = 0;
-  757   1          element_data.gyro_x = gyro_x;
-  758   1          element_data.gyro_y = gyro->gyro_y;
-  759   1          element_data.gyro_z = gyro->gyro_z;
-  760   1          EA = ea_backup;
-  761   1      
-  762   1          /* 追踪gz是否在50ms内出现过>50°/s（供跷跷板检测） */
-  763   1          if((gyro->gyro_z > 120.0f) || (gyro->gyro_z < -120.0f))
-  764   1          {
-  765   2              element_seesaw_gz_high = 1U;
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 13  
+  750   2              return;
+  751   2          }
+  752   1      
+  753   1          ea_backup = EA;
+  754   1          EA = 0;
+  755   1          *out_data = element_data;
+  756   1          EA = ea_backup;
+  757   1      }
+  758          
+  759          //-------------------------------------------------------------------------------------------------------
+             -------------
+  760          // 函数简介     元素识别IMU输入任务
+  761          // 参数说明     gyro             IMU三轴陀螺仪数据，单位 deg/s
+  762          // 返回参数     void
+  763          // 使用示例     app_element_imu_task(&gyro);
+  764          // 备注信息     当前只识别gyro_x滑动窗口内单方向累计转动超过180度的圆筒元素
+  765          //-------------------------------------------------------------------------------------------------------
+             -------------
+  766          void app_element_imu_task(const service_imu_gyro_t *gyro)
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 13  
 
-  766   2              element_seesaw_gz_high_tick = now;
-  767   2          }
-  768   1          else if((0U != element_seesaw_gz_high) &&
-  769   1                  ((uint32)(now - element_seesaw_gz_high_tick) > 50U * APP_ELEMENT_TICK_PER_MS))
-  770   1          {
-  771   2              element_seesaw_gz_high = 0U;
-  772   2          }
-  773   1      
-  774   1          /* 追踪gz是否在20ms内超过200°/s（环岛检测阻挡条件） */
-  775   1          if((gyro->gyro_z > 200.0f) || (gyro->gyro_z < -200.0f))
-  776   1          {
-  777   2              element_roundabout_gz_high = 1U;
-  778   2              element_roundabout_gz_high_tick = now;
-  779   2          }
-  780   1          else if((0U != element_roundabout_gz_high) &&
-  781   1                  ((uint32)(now - element_roundabout_gz_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
-  782   1          {
-  783   2              element_roundabout_gz_high = 0U;
-  784   2          }
-  785   1      
-  786   1          /* 环岛gz积分：累计达到300°退出环岛处理 */
-  787   1          if(0U != element_roundabout_gz_integrate)
-  788   1          {
-  789   2              float delta_angle = tfpu_mul(gyro->gyro_z,
-  790   2                      tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
-  791   2              if(delta_angle < 0.0f)
-  792   2              {
-  793   3                  delta_angle = tfpu_sub(0.0f, delta_angle);
-  794   3              }
-  795   2              element_roundabout_gz_angle_deg = tfpu_add(element_roundabout_gz_angle_deg, delta_angle);
-  796   2              if(element_roundabout_gz_angle_deg >= 340.0f)
-  797   2              {
-  798   3                  element_roundabout_gz_integrate = 0U;
-  799   3                  element_roundabout_gz_angle_deg = 0.0f;
-  800   3                  app_element_roundabout_bias_active = 0U;
-  801   3                  app_element_roundabout_bias_yaw_radps = 0.0f;
-  802   3                  app_element_roundabout_feedforward_scale = 1.0f;
-  803   3                  element_roundabout_dead = 0U;
-  804   3                  element_roundabout_confirm = 0U;
-  805   3                  element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
-  806   3                  element_roundabout_distance_m = 0.0f;
-  807   3                  wprint("roundabout_exit,1.000\r\n");
-  808   3                  ea_backup = EA;
-  809   3                  EA = 0;
-  810   3                  element_data.type = APP_ELEMENT_TYPE_NONE;
-  811   3                  element_data.state = APP_ELEMENT_STATE_IDLE;
-  812   3                  element_data.dir = APP_ELEMENT_DIR_NONE;
-  813   3                  element_data.active = 0.0f;
-  814   3                  EA = ea_backup;
-  815   3              }
-  816   2          }
-  817   1      
-  818   1          /* 环岛退出距离积分：累计前进1m后恢复空闲态 */
-  819   1          if(APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT == element_roundabout_fsm)
-  820   1          {
-  821   2              service_speed_data_t speed;
-  822   2              float avg_mps;
-  823   2      
-  824   2              service_speed_get(&speed);
-  825   2              avg_mps = tfpu_mul(tfpu_sub(speed.left_mps, speed.right_mps), 0.5f);
-  826   2              element_roundabout_distance_m = tfpu_add(element_roundabout_distance_m,
-  827   2                      tfpu_mul(avg_mps, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND))
-             -);
-  828   2              if(element_roundabout_distance_m >= APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M)
-  829   2              {
-  830   3                  element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 14  
+  767          {
+  768   1          uint8 ea_backup;
+  769   1          uint32 now;
+  770   1          uint32 delta_tick;
+  771   1          float gyro_x;
+  772   1      
+  773   1          if(NULL == gyro)
+  774   1          {
+  775   2              return;
+  776   2          }
+  777   1      
+  778   1          now = service_timetick_what();
+  779   1          delta_tick = now - element_last_tick;
+  780   1          element_last_tick = now;
+  781   1      
+  782   1          if(0U == element_gyro_x_lpf_ready)
+  783   1          {
+  784   2              shared_lpf_reset(&element_gyro_x_lpf, gyro->gyro_x);
+  785   2              element_gyro_x_lpf_ready = 1U;
+  786   2          }
+  787   1          gyro_x = shared_lpf_update(&element_gyro_x_lpf, gyro->gyro_x);
+  788   1      
+  789   1          ea_backup = EA;
+  790   1          EA = 0;
+  791   1          element_data.gyro_x = gyro_x;
+  792   1          element_data.gyro_y = gyro->gyro_y;
+  793   1          element_data.gyro_z = gyro->gyro_z;
+  794   1          EA = ea_backup;
+  795   1      
+  796   1          /* 追踪gz是否在50ms内出现过>50°/s（供跷跷板检测） */
+  797   1          if((gyro->gyro_z > 120.0f) || (gyro->gyro_z < -120.0f))
+  798   1          {
+  799   2              element_seesaw_gz_high = 1U;
+  800   2              element_seesaw_gz_high_tick = now;
+  801   2          }
+  802   1          else if((0U != element_seesaw_gz_high) &&
+  803   1                  ((uint32)(now - element_seesaw_gz_high_tick) > 50U * APP_ELEMENT_TICK_PER_MS))
+  804   1          {
+  805   2              element_seesaw_gz_high = 0U;
+  806   2          }
+  807   1      
+  808   1          /* 追踪gz是否在20ms内超过200°/s（环岛检测阻挡条件） */
+  809   1          if((gyro->gyro_z > 200.0f) || (gyro->gyro_z < -200.0f))
+  810   1          {
+  811   2              element_roundabout_gz_high = 1U;
+  812   2              element_roundabout_gz_high_tick = now;
+  813   2          }
+  814   1          else if((0U != element_roundabout_gz_high) &&
+  815   1                  ((uint32)(now - element_roundabout_gz_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
+  816   1          {
+  817   2              element_roundabout_gz_high = 0U;
+  818   2          }
+  819   1      
+  820   1          /* 环岛gz积分：达到当前环岛配置角度后退出，第三次环岛直接停车 */
+  821   1          if(0U != element_roundabout_gz_integrate)
+  822   1          {
+  823   2              float target_angle_deg;
+  824   2              float delta_angle = tfpu_mul(gyro->gyro_z,
+  825   2                      tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
+  826   2      
+  827   2              app_element_roundabout_apply_runtime_config();
+  828   2              target_angle_deg = app_element_roundabout_get_angle_deg();
+  829   2              if(delta_angle < 0.0f)
+  830   2              {
+  831   3                  delta_angle = tfpu_sub(0.0f, delta_angle);
+  832   3              }
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 14  
 
-  831   3                  element_roundabout_distance_m = 0.0f;
-  832   3                  wprint("roundabout_ready,1.000\r\n");
-  833   3              }
-  834   2          }
-  835   1      
-  836   1          if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)
-  837   1          {
-  838   2              app_element_cylinder_clear();
-  839   2          }
-  840   1          else if(0U != delta_tick)
-  841   1          {
-  842   2              app_element_cylinder_update(gyro_x, delta_tick, now);
-  843   2          }
-  844   1      
-  845   1          /* 跷跷板检测 */
-  846   1          app_element_seesaw_update(now);
-  847   1      
-  848   1          /* 跷跷板动作到期清除（100ms后释放控制，死区保留到500ms自动到期） */
-  849   1          if((0U != element_seesaw_active) &&
-  850   1                  ((uint32)(now - element_seesaw_active_start_tick) >= APP_ELEMENT_SEESAW_ACTIVE_TICK))
-  851   1          {
-  852   2              element_seesaw_active = 0U;
-  853   2              element_seesaw_event = 0.0f;
-  854   2              ea_backup = EA;
-  855   2              EA = 0;
-  856   2              element_data.type = APP_ELEMENT_TYPE_NONE;
-  857   2              element_data.state = APP_ELEMENT_STATE_IDLE;
-  858   2              element_data.dir = APP_ELEMENT_DIR_NONE;
-  859   2              element_data.active = 0.0f;
-  860   2              EA = ea_backup;
+  833   2              element_roundabout_gz_angle_deg = tfpu_add(element_roundabout_gz_angle_deg, delta_angle);
+  834   2              if(element_roundabout_gz_angle_deg >= target_angle_deg)
+  835   2              {
+  836   3                  element_roundabout_gz_integrate = 0U;
+  837   3                  element_roundabout_gz_angle_deg = 0.0f;
+  838   3                  app_element_roundabout_bias_active = 0U;
+  839   3                  app_element_roundabout_bias_yaw_radps = 0.0f;
+  840   3                  app_element_roundabout_feedforward_scale = 1.0f;
+  841   3                  element_roundabout_dead = 0U;
+  842   3                  element_roundabout_confirm = 0U;
+  843   3                  if(3U == element_roundabout_count)
+  844   3                  {
+  845   4                      app_speedout_stop();
+  846   4                  }
+  847   3                  else
+  848   3                  {
+  849   4                      element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
+  850   4                      element_roundabout_distance_m = 0.0f;
+  851   4                      wprint("roundabout_exit,1.000\r\n");
+  852   4                      ea_backup = EA;
+  853   4                      EA = 0;
+  854   4                      element_data.type = APP_ELEMENT_TYPE_NONE;
+  855   4                      element_data.state = APP_ELEMENT_STATE_IDLE;
+  856   4                      element_data.dir = APP_ELEMENT_DIR_NONE;
+  857   4                      element_data.active = 0.0f;
+  858   4                      EA = ea_backup;
+  859   4                  }
+  860   3              }
   861   2          }
   862   1      
-  863   1          /* 圆筒转向限幅持续时间到期后清除元素状态（跷跷板活跃时跳过） */
-  864   1          if((0U != element_cylinder_yaw_limit_active) &&
-  865   1                  (0U == element_seesaw_active) &&
-  866   1                  (0U == element_seesaw_dead) &&
-  867   1                  ((uint32)(now - element_cylinder_yaw_limit_start_tick) >= APP_ELEMENT_CYLINDER_YAW_LIMIT_TICK
-             -))
-  868   1          {
-  869   2              element_cylinder_yaw_limit_active = 0U;
-  870   2              ea_backup = EA;
-  871   2              EA = 0;
-  872   2              element_data.type = APP_ELEMENT_TYPE_NONE;
-  873   2              element_data.state = APP_ELEMENT_STATE_IDLE;
-  874   2              element_data.dir = APP_ELEMENT_DIR_NONE;
-  875   2              element_data.active = 0.0f;
-  876   2              EA = ea_backup;
-  877   2          }
-  878   1      
-  879   1          /* 环岛角速度偏置到期清除 */
-  880   1          if((0U != app_element_roundabout_bias_active) &&
-  881   1                  ((uint32)(now - element_roundabout_bias_start_tick) >= element_roundabout_bias_duration_tick)
-             -)
+  863   1          /* 环岛退出距离积分：累计前进1m后恢复空闲态 */
+  864   1          if(APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT == element_roundabout_fsm)
+  865   1          {
+  866   2              service_speed_data_t speed;
+  867   2              float avg_mps;
+  868   2      
+  869   2              service_speed_get(&speed);
+  870   2              avg_mps = tfpu_mul(tfpu_sub(speed.left_mps, speed.right_mps), 0.5f);
+  871   2              element_roundabout_distance_m = tfpu_add(element_roundabout_distance_m,
+  872   2                      tfpu_mul(avg_mps, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND))
+             -);
+  873   2              if(element_roundabout_distance_m >= APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M)
+  874   2              {
+  875   3                  element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
+  876   3                  element_roundabout_distance_m = 0.0f;
+  877   3                  wprint("roundabout_ready,1.000\r\n");
+  878   3              }
+  879   2          }
+  880   1      
+  881   1          if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)
   882   1          {
-  883   2              app_element_roundabout_bias_active = 0U;
-  884   2              app_element_roundabout_bias_yaw_radps = 0.0f;
-  885   2          }
-  886   1      }
+  883   2              app_element_cylinder_clear();
+  884   2          }
+  885   1          else if(0U != delta_tick)
+  886   1          {
+  887   2              app_element_cylinder_update(gyro_x, delta_tick, now);
+  888   2          }
+  889   1      
+  890   1          /* 跷跷板检测 */
+  891   1          app_element_seesaw_update(now);
+  892   1      
+  893   1          /* 跷跷板动作到期清除（100ms后释放控制，死区保留到500ms自动到期） */
+  894   1          if((0U != element_seesaw_active) &&
+  895   1                  ((uint32)(now - element_seesaw_active_start_tick) >= APP_ELEMENT_SEESAW_ACTIVE_TICK))
+  896   1          {
+  897   2              element_seesaw_active = 0U;
+C251 COMPILER V5.60.0,  app_element                                                        15/07/26  20:56:10  PAGE 15  
+
+  898   2              element_seesaw_event = 0.0f;
+  899   2              ea_backup = EA;
+  900   2              EA = 0;
+  901   2              element_data.type = APP_ELEMENT_TYPE_NONE;
+  902   2              element_data.state = APP_ELEMENT_STATE_IDLE;
+  903   2              element_data.dir = APP_ELEMENT_DIR_NONE;
+  904   2              element_data.active = 0.0f;
+  905   2              EA = ea_backup;
+  906   2          }
+  907   1      
+  908   1          /* 圆筒转向限幅持续时间到期后清除元素状态（跷跷板活跃时跳过） */
+  909   1          if((0U != element_cylinder_yaw_limit_active) &&
+  910   1                  (0U == element_seesaw_active) &&
+  911   1                  (0U == element_seesaw_dead) &&
+  912   1                  ((uint32)(now - element_cylinder_yaw_limit_start_tick) >= APP_ELEMENT_CYLINDER_YAW_LIMIT_TICK
+             -))
+  913   1          {
+  914   2              element_cylinder_yaw_limit_active = 0U;
+  915   2              ea_backup = EA;
+  916   2              EA = 0;
+  917   2              element_data.type = APP_ELEMENT_TYPE_NONE;
+  918   2              element_data.state = APP_ELEMENT_STATE_IDLE;
+  919   2              element_data.dir = APP_ELEMENT_DIR_NONE;
+  920   2              element_data.active = 0.0f;
+  921   2              EA = ea_backup;
+  922   2          }
+  923   1      
+  924   1          /* 环岛角速度偏置到期清除 */
+  925   1          if((0U != app_element_roundabout_bias_active) &&
+  926   1                  ((uint32)(now - element_roundabout_bias_start_tick) >= element_roundabout_bias_duration_tick)
+             -)
+  927   1          {
+  928   2              app_element_roundabout_bias_active = 0U;
+  929   2              app_element_roundabout_bias_yaw_radps = 0.0f;
+  930   2          }
+  931   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      7605     ------
+  ecode size           =      7925     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_element                                                        15/07/26  17:54:31  PAGE 15  
-
-  xdata size           =      1639     ------
+  xdata size           =      1679     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -963,8 +1007,8 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       602     ------
+  hconst size          =       830     ------
 End of Module Information.
 
 
-C251 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

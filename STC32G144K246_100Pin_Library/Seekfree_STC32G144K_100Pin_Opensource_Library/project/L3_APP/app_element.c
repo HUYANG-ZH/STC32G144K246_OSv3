@@ -8,6 +8,7 @@
 #include "service_wireless_uart.h"
 #include "service_buzzer.h"
 #include "app_inductor_preprocess.h"
+#include "app_speedout.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
@@ -48,6 +49,15 @@
 #define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
 #define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
 #define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (2.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (2.0f)
+#define APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT (1.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-2250.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-2250.0f)
+#define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (0.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (330.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (330.0f)
+#define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (180.0f)
 
 app_element_config_t app_element_config =
 {
@@ -121,10 +131,74 @@ static float element_roundabout_distance_m = 0.0f;
 float app_element_roundabout_bias_yaw_radps = 0.0f;
 uint8 app_element_roundabout_bias_active = 0U;
 float app_element_roundabout_feedforward_scale = 1.0f;
+static float element_roundabout_ff_scale_1 = APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT;
+static float element_roundabout_ff_scale_2 = APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT;
+static float element_roundabout_ff_scale_3 = APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT;
+static float element_roundabout_bias_dps_1 = APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT;
+static float element_roundabout_bias_dps_2 = APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT;
+static float element_roundabout_bias_dps_3 = APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT;
+static float element_roundabout_angle_deg_1 = APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT;
+static float element_roundabout_angle_deg_2 = APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT;
+static float element_roundabout_angle_deg_3 = APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT;
 static uint32 element_roundabout_bias_start_tick = 0U;
 static uint32 element_roundabout_bias_duration_tick = 0U;
 
 static void app_element_cylinder_state_reply(void);
+
+static float app_element_roundabout_get_ff_scale(void)
+{
+    switch(element_roundabout_count)
+    {
+        case 1U:
+            return element_roundabout_ff_scale_1;
+        case 2U:
+            return element_roundabout_ff_scale_2;
+        case 3U:
+            return element_roundabout_ff_scale_3;
+        default:
+            return 1.0f;
+    }
+}
+
+static float app_element_roundabout_get_angle_deg(void)
+{
+    switch(element_roundabout_count)
+    {
+        case 1U:
+            return element_roundabout_angle_deg_1;
+        case 2U:
+            return element_roundabout_angle_deg_2;
+        case 3U:
+            return element_roundabout_angle_deg_3;
+        default:
+            return APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT;
+    }
+}
+
+static float app_element_roundabout_get_bias_dps(void)
+{
+    switch(element_roundabout_count)
+    {
+        case 1U:
+            return element_roundabout_bias_dps_1;
+        case 2U:
+            return element_roundabout_bias_dps_2;
+        case 3U:
+            return element_roundabout_bias_dps_3;
+        default:
+            return 0.0f;
+    }
+}
+
+static void app_element_roundabout_apply_runtime_config(void)
+{
+    float bias_dps;
+
+    bias_dps = app_element_roundabout_get_bias_dps();
+    app_element_roundabout_bias_yaw_radps = tfpu_mul(bias_dps, APP_ELEMENT_DEG_TO_RAD);
+    app_element_roundabout_bias_active = (0.0f != bias_dps) ? 1U : 0U;
+    app_element_roundabout_feedforward_scale = app_element_roundabout_get_ff_scale();
+}
 
 static void app_element_reset(void)
 {
@@ -489,74 +563,17 @@ static void app_element_roundabout_found(uint32 now)
     element_data.active = 1.0f;
     EA = ea_backup;
 
+    element_roundabout_count++;
+    element_roundabout_count_float = (float)element_roundabout_count;
     wprint("roundabout,1.000,%u\r\n", (uint16)element_roundabout_count);
     service_buzzer_beep_ms(300U);
 
-    if(element_roundabout_count < 8U)
-    {
-        switch(element_roundabout_count)
-        {
-            case 0U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
-                app_element_roundabout_bias_active = 1U;
-                element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                app_element_roundabout_feedforward_scale = 3.00f;
-                break;
-            case 1U:
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(-2500.0f, APP_ELEMENT_DEG_TO_RAD);
-                app_element_roundabout_bias_active = 1U;
-                element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                app_element_roundabout_feedforward_scale = 3.00f;
-                break;
-            case 2U:
-                // app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
-                // app_element_roundabout_bias_active = 1U;
-                // element_roundabout_bias_start_tick = now;
-                // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                // app_element_roundabout_feedforward_scale = 3.00f;
-                break;
-            case 3U:
-                // app_element_roundabout_bias_yaw_radps = tfpu_mul(-2300.0f, APP_ELEMENT_DEG_TO_RAD);
-                // app_element_roundabout_bias_active = 1U;
-                // element_roundabout_bias_start_tick = now;
-                // element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-                // app_element_roundabout_feedforward_scale = 3.00f;
-                break;
-            // case 4U:
-            //     app_element_roundabout_bias_yaw_radps = tfpu_mul(1200.0f, APP_ELEMENT_DEG_TO_RAD);
-            //     app_element_roundabout_bias_active = 1U;
-            //     element_roundabout_bias_start_tick = now;
-            //     element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-            //     app_element_roundabout_feedforward_scale = 3.00f;
-            //     break;
-            // case 5U:
-            //     app_element_roundabout_bias_active = 0U;
-            //     app_element_roundabout_bias_yaw_radps = 0.0f;
-            //     app_element_roundabout_feedforward_scale = 1.0f;
-            //     break;
-            // case 6U:
-            //     app_element_roundabout_bias_yaw_radps = tfpu_mul(-3000.0f, APP_ELEMENT_DEG_TO_RAD);
-            //     app_element_roundabout_bias_active = 1U;
-            //     element_roundabout_bias_start_tick = now;
-            //     element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-            //     app_element_roundabout_feedforward_scale = 2.80f;
-            //     break;
-            // case 7U:
-            //     app_element_roundabout_bias_active = 0U;
-            //     app_element_roundabout_bias_yaw_radps = 0.0f;
-            //     app_element_roundabout_feedforward_scale = 1.0f;
-            //     break;
-            default:
-                break;
-        }
-    }
+    app_element_roundabout_apply_runtime_config();
+    element_roundabout_bias_start_tick = now;
+    element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
     element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
     element_roundabout_gz_integrate = 1U;
     element_roundabout_gz_angle_deg = 0.0f;
-    element_roundabout_count++;
-    element_roundabout_count_float = (float)element_roundabout_count;
 }
 
 static void app_element_roundabout_task(void)
@@ -564,7 +581,6 @@ static void app_element_roundabout_task(void)
     app_inductor_preprocess_data_t inductor;
     uint32 now;
     float score;
-    uint8 ea_backup;
 
     now = service_timetick_what();
 
@@ -699,6 +715,24 @@ void app_element_init(void)
     (void)service_packet_add_action("reset_round", app_element_roundabout_clear_count, 0UL);
     (void)service_packet_add_variable("roundabout_count",
             &element_roundabout_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_ff_scale1",
+            &element_roundabout_ff_scale_1, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_ff_scale2",
+            &element_roundabout_ff_scale_2, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_ff_scale3",
+            &element_roundabout_ff_scale_3, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_bias1_dps",
+            &element_roundabout_bias_dps_1, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_bias2_dps",
+            &element_roundabout_bias_dps_2, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_bias3_dps",
+            &element_roundabout_bias_dps_3, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_angle1_deg",
+            &element_roundabout_angle_deg_1, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_angle2_deg",
+            &element_roundabout_angle_deg_2, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("round_angle3_deg",
+            &element_roundabout_angle_deg_3, APP_ELEMENT_PACKET_SINGLE_COUNT);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -783,17 +817,21 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         element_roundabout_gz_high = 0U;
     }
 
-    /* 环岛gz积分：累计达到300°退出环岛处理 */
+    /* 环岛gz积分：达到当前环岛配置角度后退出，第三次环岛直接停车 */
     if(0U != element_roundabout_gz_integrate)
     {
+        float target_angle_deg;
         float delta_angle = tfpu_mul(gyro->gyro_z,
                 tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
+
+        app_element_roundabout_apply_runtime_config();
+        target_angle_deg = app_element_roundabout_get_angle_deg();
         if(delta_angle < 0.0f)
         {
             delta_angle = tfpu_sub(0.0f, delta_angle);
         }
         element_roundabout_gz_angle_deg = tfpu_add(element_roundabout_gz_angle_deg, delta_angle);
-        if(element_roundabout_gz_angle_deg >= 330.0f)
+        if(element_roundabout_gz_angle_deg >= target_angle_deg)
         {
             element_roundabout_gz_integrate = 0U;
             element_roundabout_gz_angle_deg = 0.0f;
@@ -802,16 +840,23 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
             app_element_roundabout_feedforward_scale = 1.0f;
             element_roundabout_dead = 0U;
             element_roundabout_confirm = 0U;
-            element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
-            element_roundabout_distance_m = 0.0f;
-            wprint("roundabout_exit,1.000\r\n");
-            ea_backup = EA;
-            EA = 0;
-            element_data.type = APP_ELEMENT_TYPE_NONE;
-            element_data.state = APP_ELEMENT_STATE_IDLE;
-            element_data.dir = APP_ELEMENT_DIR_NONE;
-            element_data.active = 0.0f;
-            EA = ea_backup;
+            if(3U == element_roundabout_count)
+            {
+                app_speedout_stop();
+            }
+            else
+            {
+                element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
+                element_roundabout_distance_m = 0.0f;
+                wprint("roundabout_exit,1.000\r\n");
+                ea_backup = EA;
+                EA = 0;
+                element_data.type = APP_ELEMENT_TYPE_NONE;
+                element_data.state = APP_ELEMENT_STATE_IDLE;
+                element_data.dir = APP_ELEMENT_DIR_NONE;
+                element_data.active = 0.0f;
+                EA = ea_backup;
+            }
         }
     }
 
