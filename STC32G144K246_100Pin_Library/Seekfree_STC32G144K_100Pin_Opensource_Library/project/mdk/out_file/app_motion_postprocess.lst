@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             16/07/26  18:10:36  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/07/26  04:05:59  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          
    52          static shared_pos_pid_t motion_postprocess_yaw_pid;
    53          static shared_lpf_t motion_postprocess_gyro_z_lpf;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             16/07/26  18:10:36  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/07/26  04:05:59  PAGE 2   
 
    54          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
    55          static uint8 motion_postprocess_last_enabled = 0U;
@@ -134,7 +134,7 @@ stmt  level    source
   117   1      }
   118          
   119          static void app_motion_postprocess_register_packet(void)
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             16/07/26  18:10:36  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/07/26  04:05:59  PAGE 3   
 
   120          {
   121   1          (void)service_packet_add_variable_with_callback("motion_post_kp",
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          app_element_imu_task(&gyro);
   184   1          app_motion_postprocess_sync_pid();
   185   1          shared_pos_pid_init(&motion_postprocess_yaw_pid);
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             16/07/26  18:10:36  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/07/26  04:05:59  PAGE 4   
 
   186   1          motion_postprocess_last_enabled =
   187   1                  (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
@@ -270,7 +270,7 @@ stmt  level    source
   249   1          app_feedforward_get_data(&feedforward);
   250   1          gyro_z = motion_postprocess_gyro_z_filtered;
   251   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             16/07/26  18:10:36  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/07/26  04:05:59  PAGE 5   
 
   252   1          raw_error = motion_preprocess.line_error;
   253   1          processed_error = raw_error;
@@ -338,7 +338,7 @@ stmt  level    source
   315   1          enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U
              -;
   316   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             16/07/26  18:10:36  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/07/26  04:05:59  PAGE 6   
 
   317   1          if(0U == enabled)
   318   1          {
@@ -407,7 +407,7 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             16/07/26  18:10:36  PAGE 7   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/07/26  04:05:59  PAGE 7   
 
   huge data size       =    ------     ------
   const size           =    ------     ------

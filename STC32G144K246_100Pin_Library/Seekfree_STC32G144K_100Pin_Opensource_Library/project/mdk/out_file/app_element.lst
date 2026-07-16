@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -66,7 +66,7 @@ stmt  level    source
    49          #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
    50          #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
    51          
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 2   
 
    52          #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
    53          #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
@@ -82,11 +82,11 @@ stmt  level    source
    62          #define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (0.6f)
    63          #define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (0.6f)
    64          #define APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT (1.0f)
-   65          #define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-1800.0f)
-   66          #define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-1800.0f)
+   65          #define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-1600.0f)
+   66          #define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-1600.0f)
    67          #define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (-1800.0f)
-   68          #define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (290.0f)
-   69          #define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (290.0f)
+   68          #define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (270.0f)
+   69          #define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (270.0f)
    70          #define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (170.0f)
    71          #define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS           (40UL)
    72          #define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK         (APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS * APP_EL
@@ -134,7 +134,7 @@ stmt  level    source
   113          static uint32 element_cylinder_dead_start_tick = 0U;
   114          static uint32 element_cylinder_yaw_limit_start_tick = 0U;
   115          static uint8 element_cylinder_yaw_limit_active = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 3   
 
   116          static float element_cylinder_angle_pos_deg = 0.0f;
   117          static float element_cylinder_angle_neg_deg = 0.0f;
@@ -202,7 +202,7 @@ stmt  level    source
   179          {
   180   1          switch(element_roundabout_count)
   181   1          {
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 4   
 
   182   2              case 1U:
   183   2                  return element_roundabout_angle_deg_1;
@@ -270,7 +270,7 @@ stmt  level    source
   245   1          element_seesaw_event = 0.0f;
   246   1          element_roundabout_confirm = 0U;
   247   1          element_roundabout_dead = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 5   
 
   248   1          element_roundabout_count = 0U;
   249   1          element_roundabout_count_float = 0.0f;
@@ -338,7 +338,7 @@ stmt  level    source
   311   2              element_cylinder_angle_neg_deg = 0.0f;
   312   2          }
   313   1          element_cylinder_bucket_angle_pos[element_cylinder_bucket_head] = 0.0f;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 6   
 
   314   1          element_cylinder_bucket_angle_neg[element_cylinder_bucket_head] = 0.0f;
   315   1          element_cylinder_bucket_head = app_element_cylinder_next_bucket(element_cylinder_bucket_head);
@@ -406,7 +406,7 @@ stmt  level    source
   375   1          {
   376   2              return 1U;
   377   2          }
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 7   
 
   378   1      
   379   1          if(0U == element_cylinder_dead)
@@ -474,7 +474,7 @@ stmt  level    source
   441   1          if(0U != app_element_cylinder_in_dead(now))
   442   1          {
   443   2              app_element_cylinder_clear();
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 8   
 
   444   2              return;
   445   2          }
@@ -542,7 +542,7 @@ stmt  level    source
   507          {
   508   1          app_inductor_preprocess_data_t inductor;
   509   1          uint32 now;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 9   
 
   510   1          uint8 roundabout_detected;
   511   1      
@@ -610,7 +610,7 @@ stmt  level    source
   573          
   574          static void app_element_seesaw_found(uint32 now)
   575          {
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 10  
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 10  
 
   576   1          uint8 ea_backup;
   577   1      
@@ -678,7 +678,7 @@ stmt  level    source
   638          //-------------------------------------------------------------------------------------------------------
              -------------
   639          // 函数简介     元素识别初始化
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 11  
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 11  
 
   640          // 参数说明     void
   641          // 返回参数     void
@@ -746,7 +746,7 @@ stmt  level    source
   699   1      }
   700          
   701          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 12  
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 12  
 
              -------------
   702          // 函数简介     元素识别IMU输入任务
@@ -814,7 +814,7 @@ stmt  level    source
   763   1          if(0U != element_roundabout_gz_integrate)
   764   1          {
   765   2              float target_angle_deg;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 13  
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 13  
 
   766   2              float delta_angle = tfpu_mul(gyro->gyro_z,
   767   2                      tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
@@ -882,7 +882,7 @@ stmt  level    source
   827   3              }
   828   2          }
   829   1      
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 14  
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 14  
 
   830   1          if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)
   831   1          {
@@ -951,7 +951,7 @@ Module Information          Static   Overlayable
   edata size           =    ------     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  22:56:55  PAGE 15  
+C251 COMPILER V5.60.0,  app_element                                                        17/07/26  04:14:25  PAGE 15  
 
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
