@@ -569,14 +569,14 @@ static float app_element_roundabout_score(const app_inductor_preprocess_data_t *
     t = tfpu_mul(2.282f, tfpu_mul(m, m));
     score_c = tfpu_sub(score_c, t);
 
-    sr = tfpu_sub(score_a, 21600.0f);
-    t = tfpu_sub(score_b, 8250.0f);
+    sr = tfpu_sub(score_a, 21736.0f);
+    t = tfpu_sub(score_b, 8425.0f);
     if(t > sr)
     {
         sr = t;
     }
 
-    t = tfpu_sub(score_c, 17300.0f);
+    t = tfpu_sub(score_c, 1750.0f);
     if(t > sr)
     {
         sr = t;
