@@ -13,6 +13,7 @@
 #include "app_feedforward.h"
 #include "app_motion_preprocess.h"
 #include "service_function_queue.h"
+#include "roundabout_priority_tree.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
@@ -51,7 +52,6 @@
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
-#define APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD  (0.0f)
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)
 #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (1U)
@@ -475,116 +475,6 @@ static void app_element_cylinder_state_reply(void)
             element_cylinder_event);
 }
 
-static float app_element_roundabout_score(const app_inductor_preprocess_data_t *inductor)
-{
-    float y1 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1];
-    float x1 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2];
-    float x2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3];
-    float y2 = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4];
-    float m  = inductor->normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
-    float score_a;
-    float score_b;
-    float score_c;
-    float sr;
-    float t;
-
-    /* 分支 A：原有环岛特征 */
-    score_a = tfpu_add(tfpu_mul(103.613f, y1), tfpu_mul(23.045f, x1));
-    score_a = tfpu_add(score_a, tfpu_mul(373.933f, m));
-
-    t = tfpu_mul(0.135f, tfpu_mul(y1, y1));
-    score_a = tfpu_sub(score_a, t);
-
-    t = tfpu_mul(0.689f, tfpu_mul(x2, x2));
-    score_a = tfpu_add(score_a, t);
-
-    t = tfpu_mul(0.703f, tfpu_mul(x2, y2));
-    score_a = tfpu_sub(score_a, t);
-
-    t = tfpu_mul(0.937f, tfpu_mul(x2, m));
-    score_a = tfpu_sub(score_a, t);
-
-    t = tfpu_mul(1.116f, tfpu_mul(y2, y2));
-    score_a = tfpu_add(score_a, t);
-
-    t = tfpu_mul(2.881f, tfpu_mul(m, m));
-    score_a = tfpu_sub(score_a, t);
-
-    /* 分支 B：新环岛 5 特征 */
-    score_b = tfpu_sub(tfpu_mul(-12.226f, y1), tfpu_mul(17.723f, x1));
-    score_b = tfpu_sub(score_b, tfpu_mul(119.330f, x2));
-    score_b = tfpu_add(score_b, tfpu_mul(328.974f, y2));
-
-    t = tfpu_mul(0.954f, tfpu_mul(y1, y1));
-    score_b = tfpu_sub(score_b, t);
-
-    t = tfpu_mul(0.871f, tfpu_mul(y1, x1));
-    score_b = tfpu_add(score_b, t);
-
-    t = tfpu_mul(2.299f, tfpu_mul(y1, y2));
-    score_b = tfpu_add(score_b, t);
-
-    t = tfpu_mul(0.363f, tfpu_mul(x1, x1));
-    score_b = tfpu_add(score_b, t);
-
-    t = tfpu_mul(0.835f, tfpu_mul(x1, x2));
-    score_b = tfpu_sub(score_b, t);
-
-    t = tfpu_mul(0.216f, tfpu_mul(x1, m));
-    score_b = tfpu_add(score_b, t);
-
-    t = tfpu_mul(0.819f, tfpu_mul(x2, x2));
-    score_b = tfpu_add(score_b, t);
-
-    t = tfpu_mul(1.978f, tfpu_mul(y2, y2));
-    score_b = tfpu_sub(score_b, t);
-
-    t = tfpu_mul(1.837f, tfpu_mul(m, m));
-    score_b = tfpu_sub(score_b, t);
-
-    /* 分支 C：新环岛 6、7 特征 */
-    score_c = tfpu_add(tfpu_mul(138.507f, y1), tfpu_mul(262.993f, m));
-
-    t = tfpu_mul(0.204f, tfpu_mul(y1, y1));
-    score_c = tfpu_sub(score_c, t);
-
-    t = tfpu_mul(0.547f, tfpu_mul(y1, x2));
-    score_c = tfpu_sub(score_c, t);
-
-    t = tfpu_mul(0.055f, tfpu_mul(x1, x1));
-    score_c = tfpu_sub(score_c, t);
-
-    t = tfpu_mul(0.281f, tfpu_mul(x1, x2));
-    score_c = tfpu_sub(score_c, t);
-
-    t = tfpu_mul(0.750f, tfpu_mul(x1, y2));
-    score_c = tfpu_add(score_c, t);
-
-    t = tfpu_mul(0.541f, tfpu_mul(x2, x2));
-    score_c = tfpu_add(score_c, t);
-
-    t = tfpu_mul(0.261f, tfpu_mul(y2, m));
-    score_c = tfpu_sub(score_c, t);
-
-    t = tfpu_mul(2.282f, tfpu_mul(m, m));
-    score_c = tfpu_sub(score_c, t);
-
-    sr = tfpu_sub(score_a, 21736.0f);
-    t = tfpu_sub(score_b, 8425.0f);
-    if(t > sr)
-    {
-        sr = t;
-    }
-
-    t = tfpu_sub(score_c, 17502.0f);
-    if(t > sr)
-    {
-        sr = t;
-    }
-
-    return sr;
-}
-
 static void app_element_roundabout_found(uint32 now)
 {
     uint8 ea_backup;
@@ -617,7 +507,7 @@ static void app_element_roundabout_task(void)
 {
     app_inductor_preprocess_data_t inductor;
     uint32 now;
-    float score;
+    uint8 roundabout_detected;
 
     now = service_timetick_what();
 
@@ -641,8 +531,13 @@ static void app_element_roundabout_task(void)
 
     app_inductor_preprocess_get_data(&inductor);
 
-    score = app_element_roundabout_score(&inductor);
-    if(score >= APP_ELEMENT_ROUNDABOUT_SCORE_THRESHOLD)
+    roundabout_detected = roundabout_priority_tree_predict(
+            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
+    if(0U != roundabout_detected)
     {
         if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
         {

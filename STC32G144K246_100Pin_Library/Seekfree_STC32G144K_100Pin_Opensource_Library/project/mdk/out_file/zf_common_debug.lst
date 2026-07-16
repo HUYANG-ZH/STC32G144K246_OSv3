@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  17:27:06  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_debug
@@ -66,7 +66,7 @@ stmt  level    source
    47          #pragma warning disable = 183
    48          #pragma warning disable = 177
    49          
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  17:27:06  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 2   
 
    50          
    51          #if DEBUG_UART_USE_INTERRUPT                                                    // 如果启用 debug uar
@@ -134,7 +134,7 @@ stmt  level    source
   108   1          fifo_read_buffer(&debug_uart_fifo, buff, &len, FIFO_READ_AND_CLEAN);
   109   1          return len;
   110   1      }
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  17:27:06  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 3   
 
   111          extern uint8 test_count ;
   112          //-------------------------------------------------------------------------------------------------------
@@ -202,7 +202,7 @@ stmt  level    source
   168              {
   169   1              #if(USER_USB_CDC)
                            usb_cdc_write_byte(c);
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  17:27:06  PAGE 4   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 4   
 
                            return c;
                        #else
@@ -270,7 +270,7 @@ stmt  level    source
   228   1      #if(USER_USB_CDC)
                    usb_cdc_init();
                    #if DEBUG_UART_USE_INTERRUPT                                               // 条件编译 只有在�
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  17:27:06  PAGE 5   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 5   
 
              -��用串口中断才编译
                        fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);

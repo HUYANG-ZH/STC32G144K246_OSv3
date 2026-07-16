@@ -63,14 +63,36 @@ void main(void)
 
     service_timetick_init();
     service_function_queue_init();
+    app_scheduler_init();
     service_wireless_uart_init();
     service_packet_init();
+    // app_log_init();
+    service_batterycheck_init();
+    service_buzzer_init();
+    service_buzzer_stop();
+    service_imu_init();
+    service_delay_ms(2000U);
+    service_imu_calibrate_gyro_z();
+    service_imu_calibrate_gyro_x();
+    service_motor_init();
+    service_negative_pressure_init();
+    service_speed_init();
     app_inductor_preprocess_init();
+    app_motion_preprocess_init();
+    app_feedforward_init();
+    app_speed_plan_init();
+    app_element_init();
+    app_speedout_init();
+    app_motion_postprocess_init();
+    // app_battery_guard_init();
+    app_boot_sequence_init();
 
     while(1)
     {
         service_function_queue_update();
         service_packet_update();
-        app_inductor_preprocess_debug();
+        app_scheduler_run();
+        service_negative_pressure_task();
+        service_buzzer_task();
     }
 }
