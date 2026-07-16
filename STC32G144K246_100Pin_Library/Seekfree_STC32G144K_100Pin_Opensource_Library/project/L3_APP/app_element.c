@@ -852,8 +852,8 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         element_seesaw_gz_high = 0U;
     }
 
-    /* 追踪gz是否在20ms内超过200°/s（环岛检测阻挡条件） */
-    if((gyro->gyro_z > 200.0f) || (gyro->gyro_z < -200.0f))
+    /* 追踪gx是否在20ms内超过200°/s（环岛检测阻挡条件） */
+    if((gyro->gyro_x > 200.0f) || (gyro->gyro_x < -200.0f))
     {
         element_roundabout_gz_high = 1U;
         element_roundabout_gz_high_tick = now;
