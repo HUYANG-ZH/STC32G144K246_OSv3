@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -66,7 +66,7 @@ stmt  level    source
    48          #define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (1U)
    49          #define APP_ELEMENT_ROUNDABOUT_FSM_IDLE          (0U)
    50          #define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 2   
 
    51          #define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
    52          #define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
@@ -134,7 +134,7 @@ stmt  level    source
   113          static uint8 element_cylinder_bucket_head = 0U;
   114          static uint8 element_cylinder_bucket_count = 0U;
   115          static uint8 element_seesaw_confirm = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 3   
 
   116          static uint8 element_seesaw_dead = 0U;
   117          static uint32 element_seesaw_dead_start_tick = 0U;
@@ -202,7 +202,7 @@ stmt  level    source
   179   2          }
   180   1      }
   181          
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 4   
 
   182          static float app_element_roundabout_get_bias_dps(void)
   183          {
@@ -270,7 +270,7 @@ stmt  level    source
   245   1          for(i = 0U; i < APP_ELEMENT_CYLINDER_BUCKET_COUNT; i++)
   246   1          {
   247   2              element_cylinder_bucket_angle_pos[i] = 0.0f;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 5   
 
   248   2              element_cylinder_bucket_angle_neg[i] = 0.0f;
   249   2              element_cylinder_bucket_tick[i] = 0U;
@@ -338,7 +338,7 @@ stmt  level    source
   311   1          {
   312   2              app_element_cylinder_drop_head();
   313   2          }
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 6   
 
   314   1      }
   315          
@@ -406,7 +406,7 @@ stmt  level    source
   375   2          }
   376   1      
   377   1          return 1U;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 7   
 
   378   1      }
   379          
@@ -474,7 +474,7 @@ stmt  level    source
   441   1                  (uint16)element_cylinder_bucket_count,
   442   1                  element_cylinder_event);
   443   1      }
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 8   
 
   444          
   445          static float app_element_roundabout_score(const app_inductor_preprocess_data_t *inductor)
@@ -542,7 +542,7 @@ stmt  level    source
   507   1          score_b = tfpu_sub(score_b, t);
   508   1      
   509   1          t = tfpu_mul(1.837f, tfpu_mul(m, m));
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 9   
 
   510   1          score_b = tfpu_sub(score_b, t);
   511   1      
@@ -610,7 +610,7 @@ stmt  level    source
   573   1          service_buzzer_beep_ms(300U);
   574   1      
   575   1          app_element_roundabout_apply_runtime_config();
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 10  
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 10  
 
   576   1          element_roundabout_bias_start_tick = now;
   577   1          element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
@@ -678,7 +678,7 @@ stmt  level    source
   639          static void app_element_seesaw_found(uint32 now)
   640          {
   641   1          uint8 ea_backup;
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 11  
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 11  
 
   642   1      
   643   1          ea_backup = EA;
@@ -746,7 +746,7 @@ stmt  level    source
              -------------
   704          // 函数简介     元素识别初始化
   705          // 参数说明     void
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 12  
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 12  
 
   706          // 返回参数     void
   707          // 使用示例     app_element_init();
@@ -814,7 +814,7 @@ stmt  level    source
   764          // 函数简介     元素识别IMU输入任务
   765          // 参数说明     gyro             IMU三轴陀螺仪数据，单位 deg/s
   766          // 返回参数     void
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 13  
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 13  
 
   767          // 使用示例     app_element_imu_task(&gyro);
   768          // 备注信息     当前只识别gyro_x滑动窗口内单方向累计转动超过180度的圆筒元素
@@ -882,7 +882,7 @@ stmt  level    source
   829   2                      tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
   830   2      
   831   2              app_element_roundabout_apply_runtime_config();
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 14  
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 14  
 
   832   2              target_angle_deg = app_element_roundabout_get_angle_deg();
   833   2              if(delta_angle < 0.0f)
@@ -950,7 +950,7 @@ stmt  level    source
   893   1          {
   894   2              app_element_cylinder_clear();
   895   2          }
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 15  
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 15  
 
   896   1          else if(0U != delta_tick)
   897   1          {
@@ -1019,7 +1019,7 @@ Module Information          Static   Overlayable
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
-C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:04:25  PAGE 16  
+C251 COMPILER V5.60.0,  app_element                                                        16/07/26  02:56:11  PAGE 16  
 
   const size           =    ------     ------
   hconst size          =       830     ------

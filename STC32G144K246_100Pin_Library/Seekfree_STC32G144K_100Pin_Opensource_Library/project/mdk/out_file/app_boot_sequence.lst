@@ -1,0 +1,157 @@
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  16/07/26  10:07:08  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_boot_sequence
+OBJECT MODULE PLACED IN .\out_file\app_boot_sequence.obj
+COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_boot_sequence.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMI
+                    -ZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
+                    -ies\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compone
+                    -nts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_boot_sequence.lst) TABS(
+                    -2) OBJECT(.\out_file\app_boot_sequence.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "sys_tfpu.h"
+    3          #include "service_timetick.h"
+    4          #include "service_packet.h"
+    5          #include "service_wireless_uart.h"
+    6          #include "service_buzzer.h"
+    7          #include "service_negative_pressure.h"
+    8          #include "app_scheduler.h"
+    9          #include "app_speedout.h"
+   10          #include "app_motion_preprocess.h"
+   11          #include "app_boot_sequence.h"
+   12          
+   13          #define APP_BOOT_TASK_ID                    (5U)
+   14          #define APP_BOOT_TASK_PRIORITY              (1U)
+   15          #define APP_BOOT_TASK_PERIOD_MS             (10U)
+   16          #define APP_BOOT_TICKS_PER_MS               (10UL)
+   17          
+   18          #define APP_BOOT_BEEP_MS                    (1000UL)
+   19          #define APP_BOOT_WAIT_MS                    (5000UL)
+   20          #define APP_BOOT_PRESSURE_PERCENT           (60U)
+   21          #define APP_BOOT_PRESSURE_DELAY_MS          (2000UL)
+   22          #define APP_BOOT_DEFAULT_SPEED_MPS          (2.1f)
+   23          
+   24          #define APP_BOOT_BEEP_TICKS                 (APP_BOOT_BEEP_MS * APP_BOOT_TICKS_PER_MS)
+   25          #define APP_BOOT_WAIT_TICKS                 (APP_BOOT_WAIT_MS * APP_BOOT_TICKS_PER_MS)
+   26          #define APP_BOOT_PRESSURE_DELAY_TICKS       (APP_BOOT_PRESSURE_DELAY_MS * APP_BOOT_TICKS_PER_MS)
+   27          
+   28          #define APP_BOOT_STATE_IDLE                 (0U)
+   29          #define APP_BOOT_STATE_BEEP                 (1U)
+   30          #define APP_BOOT_STATE_WAIT                 (2U)
+   31          #define APP_BOOT_STATE_PRESSURE             (3U)
+   32          #define APP_BOOT_STATE_DONE                 (4U)
+   33          #define APP_BOOT_STATE_ABORTED              (5U)
+   34          
+   35          static uint8 boot_state = APP_BOOT_STATE_IDLE;
+   36          static uint32 boot_state_tick = 0U;
+   37          static volatile uint8 boot_stop_received = 0U;
+   38          
+   39          static void app_boot_stop_handler(void)
+   40          {
+   41   1          app_speedout_stop();
+   42   1          service_negative_pressure_set_percent(0U);
+   43   1          boot_stop_received = 1U;
+   44   1          wprint("stop,0.000\r\n");
+   45   1      }
+   46          
+   47          static void app_boot_task(void)
+   48          {
+   49   1          uint32 now;
+   50   1      
+   51   1          if((APP_BOOT_STATE_DONE == boot_state) || (APP_BOOT_STATE_ABORTED == boot_state))
+   52   1          {
+   53   2              return;
+   54   2          }
+   55   1      
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  16/07/26  10:07:08  PAGE 2   
+
+   56   1          if(0U != boot_stop_received)
+   57   1          {
+   58   2              boot_state = APP_BOOT_STATE_ABORTED;
+   59   2              wprint("boot_abort,1.000\r\n");
+   60   2              return;
+   61   2          }
+   62   1      
+   63   1          now = service_timetick_what();
+   64   1      
+   65   1          switch(boot_state)
+   66   1          {
+   67   2              case APP_BOOT_STATE_BEEP:
+   68   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_BEEP_TICKS)
+   69   2                  {
+   70   3                      boot_state = APP_BOOT_STATE_WAIT;
+   71   3                      boot_state_tick = now;
+   72   3                      wprint("boot_wait,1.000\r\n");
+   73   3                  }
+   74   2                  break;
+   75   2      
+   76   2              case APP_BOOT_STATE_WAIT:
+   77   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_WAIT_TICKS)
+   78   2                  {
+   79   3                      service_negative_pressure_set_percent(APP_BOOT_PRESSURE_PERCENT);
+   80   3                      boot_state = APP_BOOT_STATE_PRESSURE;
+   81   3                      boot_state_tick = now;
+   82   3                      wprint("boot_pressure,1.000\r\n");
+   83   3                  }
+   84   2                  break;
+   85   2      
+   86   2              case APP_BOOT_STATE_PRESSURE:
+   87   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_PRESSURE_DELAY_TICKS)
+   88   2                  {
+   89   3                      app_motion_preprocess_config.linear_mps = APP_BOOT_DEFAULT_SPEED_MPS;
+   90   3                      app_speedout_start();
+   91   3                      boot_state = APP_BOOT_STATE_DONE;
+   92   3                      wprint("boot_drive,1.000\r\n");
+   93   3                  }
+   94   2                  break;
+   95   2      
+   96   2              default:
+   97   2                  break;
+   98   2          }
+   99   1      }
+  100          
+  101          void app_boot_sequence_init(void)
+  102          {
+  103   1          service_negative_pressure_set_percent(0U);
+  104   1          service_buzzer_beep_ms(APP_BOOT_BEEP_MS);
+  105   1      
+  106   1          boot_stop_received = 0U;
+  107   1          boot_state = APP_BOOT_STATE_BEEP;
+  108   1          boot_state_tick = service_timetick_what();
+  109   1      
+  110   1          (void)service_packet_add_action("stop", app_boot_stop_handler, 0UL);
+  111   1      
+  112   1          wprint("boot_beep,1.000\r\n");
+  113   1      
+  114   1          (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
+  115   1                  APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
+  116   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       436     ------
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  16/07/26  10:07:08  PAGE 3   
+
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        10     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       135     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

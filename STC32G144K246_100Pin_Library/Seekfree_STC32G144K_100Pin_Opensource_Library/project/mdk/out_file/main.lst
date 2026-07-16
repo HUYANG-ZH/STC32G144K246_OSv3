@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               15/07/26  23:44:10  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               16/07/26  02:56:12  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,7 +66,7 @@ stmt  level    source
    47          #include "service_delay.h"
    48          // #include "app_battery_guard.h"
    49          #include "app_element.h"
-C251 COMPILER V5.60.0,  main                                                               15/07/26  23:44:10  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               16/07/26  02:56:12  PAGE 2   
 
    50          #include "app_feedforward.h"
    51          #include "app_inductor_preprocess.h"
@@ -76,52 +76,53 @@ stmt  level    source
    55          #include "app_scheduler.h"
    56          #include "app_speed_plan.h"
    57          #include "app_speedout.h"
-   58          
-   59          void main(void)
-   60          {
-   61   1          SystemStart();
-   62   1      
-   63   1          service_timetick_init();
-   64   1          service_function_queue_init();
-   65   1          app_scheduler_init();
-   66   1          service_wireless_uart_init();
-   67   1          service_packet_init();
-   68   1          // app_log_init();
-   69   1          service_batterycheck_init();
-   70   1          service_buzzer_init();
-   71   1          service_buzzer_stop();
-   72   1          service_imu_init();
-   73   1          service_delay_ms(2000U);
-   74   1          service_imu_calibrate_gyro_z();
-   75   1          service_imu_calibrate_gyro_x();
-   76   1          service_motor_init();
-   77   1          service_negative_pressure_init();
-   78   1          service_speed_init();
-   79   1          app_inductor_preprocess_init();
-   80   1          app_motion_preprocess_init();
-   81   1          app_feedforward_init();
-   82   1          app_speed_plan_init();
-   83   1          app_element_init();
-   84   1          app_speedout_init();
-   85   1          app_motion_postprocess_init();
-   86   1          // app_battery_guard_init();
-   87   1          service_negative_pressure_set_percent(25U);
-   88   1      
-   89   1          while(1)
-   90   1          {
-   91   2              service_function_queue_update();
-   92   2              service_packet_update();
-   93   2              app_scheduler_run();
-   94   2              service_negative_pressure_task();
-   95   2              service_buzzer_task();
-   96   2          }
-   97   1      }
+   58          #include "app_boot_sequence.h"
+   59          
+   60          void main(void)
+   61          {
+   62   1          SystemStart();
+   63   1      
+   64   1          service_timetick_init();
+   65   1          service_function_queue_init();
+   66   1          app_scheduler_init();
+   67   1          service_wireless_uart_init();
+   68   1          service_packet_init();
+   69   1          // app_log_init();
+   70   1          service_batterycheck_init();
+   71   1          service_buzzer_init();
+   72   1          service_buzzer_stop();
+   73   1          service_imu_init();
+   74   1          service_delay_ms(2000U);
+   75   1          service_imu_calibrate_gyro_z();
+   76   1          service_imu_calibrate_gyro_x();
+   77   1          service_motor_init();
+   78   1          service_negative_pressure_init();
+   79   1          service_speed_init();
+   80   1          app_inductor_preprocess_init();
+   81   1          app_motion_preprocess_init();
+   82   1          app_feedforward_init();
+   83   1          app_speed_plan_init();
+   84   1          app_element_init();
+   85   1          app_speedout_init();
+   86   1          app_motion_postprocess_init();
+   87   1          // app_battery_guard_init();
+   88   1          app_boot_sequence_init();
+   89   1      
+   90   1          while(1)
+   91   1          {
+   92   2              service_function_queue_update();
+   93   2              service_packet_update();
+   94   2              app_scheduler_run();
+   95   2              service_negative_pressure_task();
+   96   2              service_buzzer_task();
+   97   2          }
+   98   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       171     ------
+  ecode size           =       169     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -134,9 +135,9 @@ Module Information          Static   Overlayable
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
-  const size           =    ------     ------
-C251 COMPILER V5.60.0,  main                                                               15/07/26  23:44:10  PAGE 3   
+C251 COMPILER V5.60.0,  main                                                               16/07/26  02:56:12  PAGE 3   
 
+  const size           =    ------     ------
   hconst size          =         2     ------
 End of Module Information.
 

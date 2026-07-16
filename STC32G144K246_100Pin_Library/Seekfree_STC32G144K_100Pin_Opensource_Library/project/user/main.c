@@ -55,6 +55,7 @@
 #include "app_scheduler.h"
 #include "app_speed_plan.h"
 #include "app_speedout.h"
+#include "app_boot_sequence.h"
 
 void main(void)
 {
@@ -84,7 +85,7 @@ void main(void)
     app_speedout_init();
     app_motion_postprocess_init();
     // app_battery_guard_init();
-    service_negative_pressure_set_percent(25U);
+    app_boot_sequence_init();
 
     while(1)
     {

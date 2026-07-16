@@ -40,7 +40,7 @@ static void app_speedout_tick(void);
 static void app_speedout_restart_left_pid(void);
 static void app_speedout_restart_right_pid(void);
 static void app_speedout_stop_all(void);
-static void app_speedout_start(void);
+void app_speedout_start(void);
 
 static float app_speedout_output_limit(app_speedout_pid_config_t *config)
 {
@@ -204,7 +204,7 @@ static void app_speedout_stop_all(void)
     wprint("stop,0.000\r\n");
 }
 
-static void app_speedout_start(void)
+void app_speedout_start(void)
 {
     app_speedout_config.left.target_mps = 0.0f;
     app_speedout_config.right.target_mps = 0.0f;
