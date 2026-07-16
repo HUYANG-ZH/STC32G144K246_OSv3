@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_ips114
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   GND                 电源地
    47          *                   最大分辨率 135 * 240
    48          *                   ------------------------------------
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 2   
 
    49          *********************************************************************************************************
              -***********/
@@ -134,7 +134,7 @@ stmt  level    source
   107   1          zf_assert(y1 < ips114_y_max);
   108   1          zf_assert(x2 < ips114_x_max);
   109   1          zf_assert(y2 < ips114_y_max);
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 3   
 
   110   1      
   111   1          if(ips114_display_dir==IPS114_PORTAIT)
@@ -202,7 +202,7 @@ stmt  level    source
   170   1          {
   171   2              ips114_write_16bit_data_array(tmp, IPS_LEN);
   172   2          }
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 4   
 
   173   1      }
   174          
@@ -270,7 +270,7 @@ stmt  level    source
   226   1          zf_assert(y < ips114_y_max);
   227   1      
   228   1          ips114_set_region(x,y,x,y);
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 5   
 
   229   1          ips114_write_16bit_data(color);
   230   1      }
@@ -338,7 +338,7 @@ stmt  level    source
              -------------
   286          //  @brief      液晶显示8位有符号
   287          // 参数说明       x               坐标x方向的起点 参数范围 [0, ips114_x_max-1]
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 6   
 
   288          // 参数说明       y               坐标y方向的起点 参数范围 [0, ips114_y_max-1]
   289          //  @param      dat             需要显示的变量，数据类型int8
@@ -406,7 +406,7 @@ stmt  level    source
   348          //-------------------------------------------------------------------------------------------------------
              -------------
   349          // 函数简介       液晶显示16位有符号
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 7   
 
   350          // 参数说明       x               坐标x方向的起点 参数范围 [0, ips114_x_max-1]
   351          // 参数说明       y               坐标y方向的起点 参数范围 [0, ips114_y_max-1]
@@ -474,7 +474,7 @@ stmt  level    source
   410   2              ips114_show_char(x+(8*i),y,(uint8)('0' + a[i]));
   411   2              i++;
   412   2          }
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 8   
 
   413   1      }
   414          
@@ -542,7 +542,7 @@ stmt  level    source
              -------------
   468          void ips114_show_float(uint16 x,uint16 y,double dat,uint8 num,uint8 pointnum)
   469          {
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 9   
 
   470   1          uint8   length;
   471   1          int8    buff[34];
@@ -610,7 +610,7 @@ stmt  level    source
   528   2              for(j=0;j<dis_width;j++)
   529   2              {
   530   3                  ips114_write_16bit_data(ips114_bgcolor); 
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 10  
 
   531   3              }
   532   2          }
@@ -678,7 +678,7 @@ stmt  level    source
   586   4                      data_buffer[i] = (color);
   587   4                  }
   588   3                  else if(temp < threshold)
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 11  
 
   589   3                  {
   590   4                      data_buffer[i] = (RGB565_BLACK);
@@ -746,7 +746,7 @@ stmt  level    source
   647   1      }
   648          
   649          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 12  
 
              -------------
   650          // 函数简介       1.14寸 IPS液晶初始化
@@ -814,7 +814,7 @@ stmt  level    source
   709   1          ips114_write_8bit_data(0x20);
   710   1      
   711   1          ips114_write_index(0xC6);
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 13  
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 13  
 
   712   1          ips114_write_8bit_data(0x0F);
   713   1      
@@ -883,7 +883,7 @@ Module Information          Static   Overlayable
   huge data size       =    ------     ------
   const size           =    ------     ------
   hconst size          =        84     ------
-C251 COMPILER V5.60.0,  zf_device_ips114                                                   15/07/26  22:53:48  PAGE 14  
+C251 COMPILER V5.60.0,  zf_device_ips114                                                   16/07/26  17:27:09  PAGE 14  
 
 End of Module Information.
 

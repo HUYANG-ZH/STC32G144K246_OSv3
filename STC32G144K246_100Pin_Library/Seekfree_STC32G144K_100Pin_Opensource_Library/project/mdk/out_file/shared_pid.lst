@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 1   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE shared_pid
@@ -66,7 +66,7 @@ stmt  level    source
    48          {
    49   1          if(NULL == pid)
    50   1          {
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 2   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 2   
 
    51   2              return;
    52   2          }
@@ -134,7 +134,7 @@ stmt  level    source
   110          float shared_pid_update(shared_pid_t *pid, float target, float feedback, float dt)
   111          {
   112   1          float use_target;
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 3   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 3   
 
   113   1          float error;
   114   1      
@@ -202,7 +202,7 @@ stmt  level    source
   172   1          return pid->output;
   173   1      }
   174          
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 4   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 4   
 
   175          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -270,7 +270,7 @@ stmt  level    source
   234   1      
   235   1          if(*max_value < *min_value)
   236   1          {
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 5   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 5   
 
   237   2              temp = *min_value;
   238   2              *min_value = *max_value;
@@ -338,7 +338,7 @@ stmt  level    source
   294   1      
   295   1          return output;
   296   1      }
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 6   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 6   
 
   297          
   298          //-------------------------------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ stmt  level    source
   353          // 返回参数     float           斜坡处理后的目标值
   354          // 使用示例     target = shared_pid_update_target(&pid, target, dt);
   355          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 7   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 7   
 
              -------------
   356          static float shared_pid_update_target(shared_pid_t *pid, float target, float dt)
@@ -474,7 +474,7 @@ stmt  level    source
   415   1          {
   416   2              return 0.0f;
   417   2          }
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 8   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 8   
 
   418   1      
   419   1          first_update = (ZF_FALSE == pid->initialized) ? ZF_TRUE : ZF_FALSE;
@@ -542,7 +542,7 @@ stmt  level    source
   481   1          {
   482   2              pid->prev_error = pid->last_error;
   483   2              pid->last_error = error;
-C251 COMPILER V5.60.0,  shared_pid                                                         15/07/26  22:53:57  PAGE 9   
+C251 COMPILER V5.60.0,  shared_pid                                                         16/07/26  17:27:19  PAGE 9   
 
   484   2              if(ZF_TRUE == feedback_valid)
   485   2              {
