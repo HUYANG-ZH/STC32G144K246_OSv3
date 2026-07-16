@@ -15,8 +15,8 @@
 #define APP_BOOT_TASK_PERIOD_MS             (10U)
 #define APP_BOOT_TICKS_PER_MS               (10UL)
 
-#define APP_BOOT_BEEP_MS                    (1000UL)
-#define APP_BOOT_WAIT_MS                    (5000UL)
+#define APP_BOOT_BEEP_MS                    (500UL)
+#define APP_BOOT_WAIT_MS                    (2000UL)
 #define APP_BOOT_PRESSURE_PERCENT           (60U)
 #define APP_BOOT_PRESSURE_DELAY_MS          (2000UL)
 #define APP_BOOT_DEFAULT_SPEED_MPS          (2.1f)

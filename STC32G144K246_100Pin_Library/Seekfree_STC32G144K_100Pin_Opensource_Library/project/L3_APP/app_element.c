@@ -10,6 +10,9 @@
 #include "app_inductor_preprocess.h"
 #include "app_speedout.h"
 #include "service_negative_pressure.h"
+#include "app_feedforward.h"
+#include "app_motion_preprocess.h"
+#include "service_function_queue.h"
 #include "app_element.h"
 
 #define APP_ELEMENT_TICK_PER_MS                 (10UL)
@@ -28,6 +31,12 @@
 #define APP_ELEMENT_CYLINDER_TRIGGER_DEG        (220.0f)
 #define APP_ELEMENT_CYLINDER_GYRO_DEADBAND      (15.0f)
 #define APP_ELEMENT_CYLINDER_GYRO_LPF_ALPHA     (0.20f)
+#define APP_ELEMENT_CYLINDER_SLOWDOWN_TRIGGER     (3U)
+#define APP_ELEMENT_CYLINDER_SLOWDOWN_DELAY_MS    (2000UL)
+#define APP_ELEMENT_CYLINDER_SLOWDOWN_SPEED_MPS   (1.7f)
+#define APP_ELEMENT_CYLINDER_SLOWDOWN_KFF         (0.9f)
+#define APP_ELEMENT_CYLINDER_SLOWDOWN_YAW_GAIN    (11.0f)
+#define APP_ELEMENT_CYLINDER_SLOWDOWN_PRESSURE    (45U)
 #define APP_ELEMENT_TICK_TO_SECOND              (0.0001f)
 #define APP_ELEMENT_DEG_TO_RAD                  (0.0174532925f)
 #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
@@ -53,8 +62,8 @@
 #define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (0.6f)
 #define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (0.6f)
 #define APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT (1.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-1700.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-1700.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-2000.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-2000.0f)
 #define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (-1800.0f)
 #define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (290.0f)
 #define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (290.0f)
@@ -108,6 +117,8 @@ static float element_cylinder_angle_pos_deg = 0.0f;
 static float element_cylinder_angle_neg_deg = 0.0f;
 static float element_cylinder_gyro_x = 0.0f;
 static float element_cylinder_event = 0.0f;
+static uint8 element_cylinder_count = 0U;
+static float element_cylinder_count_float = 0.0f;
 static uint8 element_cylinder_dead = 0U;
 static uint8 element_gyro_x_lpf_ready = 0U;
 static uint8 element_cylinder_bucket_head = 0U;
@@ -221,6 +232,8 @@ static void app_element_reset(void)
     element_cylinder_angle_neg_deg = 0.0f;
     element_cylinder_gyro_x = 0.0f;
     element_cylinder_event = 0.0f;
+    element_cylinder_count = 0U;
+    element_cylinder_count_float = 0.0f;
     element_cylinder_dead = 0U;
     element_gyro_x_lpf_ready = 0U;
     element_cylinder_bucket_head = 0U;
@@ -377,6 +390,18 @@ static uint8 app_element_cylinder_in_dead(uint32 now)
     return 1U;
 }
 
+static void app_element_cylinder_slowdown(void)
+{
+    app_motion_preprocess_config.linear_mps = APP_ELEMENT_CYLINDER_SLOWDOWN_SPEED_MPS;
+    app_feedforward_config.kff = APP_ELEMENT_CYLINDER_SLOWDOWN_KFF;
+    app_motion_preprocess_config.yaw_rate_gain = APP_ELEMENT_CYLINDER_SLOWDOWN_YAW_GAIN;
+    if(app_speedout_data.enabled > 0.0f)
+    {
+        service_negative_pressure_set_percent(APP_ELEMENT_CYLINDER_SLOWDOWN_PRESSURE);
+    }
+    wprint("cylinder_slowdown,1.000\r\n");
+}
+
 static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
 {
     uint8 ea_backup;
@@ -395,6 +420,14 @@ static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
     element_cylinder_yaw_limit_active = 1U;
     element_cylinder_yaw_limit_start_tick = now;
     element_cylinder_event = (0 < dir) ? 1.0f : -1.0f;
+    element_cylinder_count++;
+    element_cylinder_count_float = (float)element_cylinder_count;
+    wprint("cylinder_count,%u\r\n", (uint16)element_cylinder_count);
+    if(APP_ELEMENT_CYLINDER_SLOWDOWN_TRIGGER == element_cylinder_count)
+    {
+        (void)service_function_queue_add(app_element_cylinder_slowdown,
+                APP_ELEMENT_CYLINDER_SLOWDOWN_DELAY_MS, 1U);
+    }
     app_element_cylinder_clear();
 
     wprint("cylinder,1.000\r\n");
@@ -536,14 +569,14 @@ static float app_element_roundabout_score(const app_inductor_preprocess_data_t *
     t = tfpu_mul(2.282f, tfpu_mul(m, m));
     score_c = tfpu_sub(score_c, t);
 
-    sr = tfpu_sub(score_a, 21736.0f);
-    t = tfpu_sub(score_b, 8425.0f);
+    sr = tfpu_sub(score_a, 21600.0f);
+    t = tfpu_sub(score_b, 8250.0f);
     if(t > sr)
     {
         sr = t;
     }
 
-    t = tfpu_sub(score_c, 17502.0f);
+    t = tfpu_sub(score_c, 17300.0f);
     if(t > sr)
     {
         sr = t;
@@ -636,6 +669,13 @@ static void app_element_roundabout_clear_count(void)
     wprint("roundabout_count,0.000\r\n");
 }
 
+static void app_element_cylinder_clear_count(void)
+{
+    element_cylinder_count = 0U;
+    element_cylinder_count_float = 0.0f;
+    wprint("cylinder_count,0.000\r\n");
+}
+
 static void app_element_seesaw_found(uint32 now)
 {
     uint8 ea_backup;
@@ -713,6 +753,9 @@ void app_element_init(void)
     (void)service_packet_add_action("cylinder_state", app_element_cylinder_state_reply, 0UL);
     (void)service_packet_add_variable("cylinder_event",
             &element_cylinder_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("cylinder_count",
+            &element_cylinder_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_action("reset_cylinder", app_element_cylinder_clear_count, 0UL);
     (void)service_packet_add_variable("seesaw_event",
             &element_seesaw_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
     pit_ms_init(APP_ELEMENT_ROUNDABOUT_PIT, APP_ELEMENT_ROUNDABOUT_PERIOD_MS, app_element_roundabout_task);

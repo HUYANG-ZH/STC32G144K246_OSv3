@@ -5,7 +5,7 @@
 #include "service_wireless_uart.h"
 #include "service_imu.h"
 
-#define SERVICE_IMU_CALIBRATE_COUNT     (500U)
+#define SERVICE_IMU_CALIBRATE_COUNT     (200U)
 #define SERVICE_IMU_CALIBRATE_INTERVAL  (10U)
 
 static float gyro_x_offset = 0.0f;
