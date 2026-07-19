@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speed_plan                                                     17/07/26  04:05:59  PAGE 1   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     17/07/26  06:24:55  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speed_plan
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          {
    54   2              return 0.0f;
    55   2          }
-C251 COMPILER V5.60.0,  app_speed_plan                                                     17/07/26  04:05:59  PAGE 2   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     17/07/26  06:24:55  PAGE 2   
 
    56   1      
    57   1          abs_value = app_speed_plan_abs(value);
@@ -131,38 +131,39 @@ stmt  level    source
   116   1          float target_raw_mps;
   117   1          app_motion_preprocess_data_t motion_preprocess;
   118   1          app_feedforward_data_t feedforward;
-  119   1          app_element_data_t element;
-  120   1      
-  121   1          app_motion_preprocess_get_data(&motion_preprocess);
-C251 COMPILER V5.60.0,  app_speed_plan                                                     17/07/26  04:05:59  PAGE 3   
+  119   1      
+  120   1          app_motion_preprocess_get_data(&motion_preprocess);
+  121   1          app_feedforward_get_data(&feedforward);
+C251 COMPILER V5.60.0,  app_speed_plan                                                     17/07/26  06:24:55  PAGE 3   
 
-  122   1          app_feedforward_get_data(&feedforward);
-  123   1          app_element_get_data(&element);
-  124   1      
-  125   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
-  126   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
-  127   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
-  128   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
-  129   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
-  130   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
-  131   1      
-  132   1          if((APP_ELEMENT_TYPE_SEESAW == element.type) && (element.active >= 0.5f))
-  133   1          {
-  134   2              target_raw_mps = 1.0f;
-  135   2          }
-  136   1      
-  137   1          speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
-  138   1      }
+  122   1      
+  123   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
+  124   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
+  125   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
+  126   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
+  127   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
+  128   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
+  129   1      
+  130   1          /* 跷跷板触发后立即降速到 0.8m/s，持续 160ms，跳过 ramp 实现硬立即 */
+  131   1          if(0U != app_element_seesaw_is_slowdown_active())
+  132   1          {
+  133   2              speed_plan_linear_mps = app_element_seesaw_slowdown_speed_mps();
+  134   2          }
+  135   1          else
+  136   1          {
+  137   2              speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
+  138   2          }
+  139   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1060     ------
+  ecode size           =      1021     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       154     ------
+  xdata size           =       132     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

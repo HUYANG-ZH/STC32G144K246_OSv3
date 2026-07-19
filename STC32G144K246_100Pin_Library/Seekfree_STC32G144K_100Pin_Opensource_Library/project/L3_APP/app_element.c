@@ -48,25 +48,28 @@
 #define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
 #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
+#define APP_ELEMENT_SEESAW_SLOWDOWN_MS          (160UL)
+#define APP_ELEMENT_SEESAW_SLOWDOWN_TICK        (APP_ELEMENT_SEESAW_SLOWDOWN_MS * APP_ELEMENT_TICK_PER_MS)
+#define APP_ELEMENT_SEESAW_SLOWDOWN_SPEED_MPS   (1.4f)
 
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
 #define APP_ELEMENT_ROUNDABOUT_TASK_PRIORITY    (9U)
-#define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (1U)
+#define APP_ELEMENT_ROUNDABOUT_PERIOD_MS        (5U)
 #define APP_ELEMENT_ROUNDABOUT_FSM_IDLE          (0U)
 #define APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE        (1U)
 #define APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT     (2U)
 #define APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M   (1.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (0.6f)
-#define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (0.6f)
+#define APP_ELEMENT_ROUNDABOUT_1_FF_SCALE_DEFAULT (2.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT (2.0f)
 #define APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT (1.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-1800.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-1800.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-1700.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (-1700.0f)
 #define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (-1800.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (270.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (270.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (275.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (275.0f)
 #define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (170.0f)
 #define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS           (40UL)
 #define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK         (APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS * APP_ELEMENT_TICK_PER_MS)
@@ -131,6 +134,8 @@ static uint32 element_seesaw_gz_high_tick = 0U;
 static uint8 element_seesaw_active = 0U;
 static uint32 element_seesaw_active_start_tick = 0U;
 static float element_seesaw_event = 0.0f;
+static volatile uint8 element_seesaw_slowdown_active = 0U;
+static volatile uint32 element_seesaw_slowdown_start_tick = 0U;
 static uint8 element_roundabout_confirm = 0U;
 static uint32 element_roundabout_dead_start_tick = 0U;
 static uint8 element_roundabout_dead = 0U;
@@ -158,7 +163,18 @@ static float element_roundabout_angle_deg_3 = APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG
 static uint32 element_roundabout_bias_start_tick = 0U;
 static uint32 element_roundabout_bias_duration_tick = 0U;
 
+/* —— 环岛硬实时中断改造：主循环写、TIM7中断读的共享数据 —— */
+static volatile service_imu_gyro_t element_gyro_snapshot = {0.0f, 0.0f, 0.0f};
+static volatile uint32 element_roundabout_last_tick = 0U;
+static volatile uint8 element_roundabout_event_flags = 0U;
+static volatile uint16 element_roundabout_event_count = 0U;   /* FOUND 事件携带的 count */
+#define ELEMENT_RB_EVENT_FOUND    (0x01U)
+#define ELEMENT_RB_EVENT_EXIT     (0x02U)
+#define ELEMENT_RB_EVENT_READY    (0x04U)
+#define ELEMENT_RB_EVENT_FINISH   (0x08U)
+
 static void app_element_cylinder_state_reply(void);
+static void app_element_roundabout_imu_step(void);
 
 static float app_element_roundabout_get_ff_scale(void)
 {
@@ -243,6 +259,8 @@ static void app_element_reset(void)
     element_seesaw_gz_high = 0U;
     element_seesaw_active = 0U;
     element_seesaw_event = 0.0f;
+    element_seesaw_slowdown_active = 0U;
+    element_seesaw_slowdown_start_tick = 0U;
     element_roundabout_confirm = 0U;
     element_roundabout_dead = 0U;
     element_roundabout_count = 0U;
@@ -492,8 +510,8 @@ static void app_element_roundabout_found(uint32 now)
 
     element_roundabout_count++;
     element_roundabout_count_float = (float)element_roundabout_count;
-    wprint("roundabout,1.000,%u\r\n", (uint16)element_roundabout_count);
-    service_buzzer_beep_ms(300U);
+    element_roundabout_event_count = (uint16)element_roundabout_count;
+    element_roundabout_event_flags |= ELEMENT_RB_EVENT_FOUND;
 
     app_element_roundabout_apply_runtime_config();
     element_roundabout_bias_start_tick = now;
@@ -520,12 +538,14 @@ static void app_element_roundabout_task(void)
 
     if(0U != element_roundabout_dead)
     {
+        app_element_roundabout_imu_step();
         return;
     }
 
     /* FSM非空闲态不检测 */
     if(APP_ELEMENT_ROUNDABOUT_FSM_IDLE != element_roundabout_fsm)
     {
+        app_element_roundabout_imu_step();
         return;
     }
 
@@ -552,6 +572,124 @@ static void app_element_roundabout_task(void)
     {
         element_roundabout_confirm = 0U;
     }
+
+    app_element_roundabout_imu_step();
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     环岛状态机 IMU 步进 - 在 TIM7 中断内硬实时执行
+// 参数说明     void
+// 返回参数     void
+// 使用示例     app_element_roundabout_imu_step();
+// 备注信息     从主循环 imu_task 移植而来，使用 element_gyro_snapshot 共享数据，时基独立
+//-------------------------------------------------------------------------------------------------------------------
+static void app_element_roundabout_imu_step(void)
+{
+    service_imu_gyro_t gyro;
+    uint8 ea_backup;
+    uint32 now;
+    uint32 delta_tick;
+
+    gyro = element_gyro_snapshot;   /* volatile 读主循环快照 */
+
+    now = service_timetick_what();
+    if(0U == element_roundabout_last_tick)
+    {
+        element_roundabout_last_tick = now;
+        return;
+    }
+    delta_tick = now - element_roundabout_last_tick;
+    element_roundabout_last_tick = now;
+
+    /* 追踪gx是否在20ms内超过200°/s（环岛检测阻挡条件） */
+    if((gyro.gyro_x > 200.0f) || (gyro.gyro_x < -200.0f))
+    {
+        element_roundabout_gz_high = 1U;
+        element_roundabout_gz_high_tick = now;
+    }
+    else if((0U != element_roundabout_gz_high) &&
+            ((uint32)(now - element_roundabout_gz_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
+    {
+        element_roundabout_gz_high = 0U;
+    }
+
+    /* 环岛gz积分：达到当前环岛配置角度后退出，第三次环岛直接停车 */
+    if(0U != element_roundabout_gz_integrate)
+    {
+        float target_angle_deg;
+        float delta_angle = tfpu_mul(gyro.gyro_z,
+                tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
+
+        app_element_roundabout_apply_runtime_config();
+        target_angle_deg = app_element_roundabout_get_angle_deg();
+        if(delta_angle < 0.0f)
+        {
+            delta_angle = tfpu_sub(0.0f, delta_angle);
+        }
+        element_roundabout_gz_angle_deg = tfpu_add(element_roundabout_gz_angle_deg, delta_angle);
+        if(element_roundabout_gz_angle_deg >= target_angle_deg)
+        {
+            element_roundabout_gz_integrate = 0U;
+            element_roundabout_gz_angle_deg = 0.0f;
+            app_element_roundabout_bias_active = 0U;
+            app_element_roundabout_bias_yaw_radps = 0.0f;
+            app_element_roundabout_feedforward_scale = 1.0f;
+            element_roundabout_dead = 0U;
+            element_roundabout_confirm = 0U;
+            if(3U == element_roundabout_count)
+            {
+                /* 第3环岛：停车+关负压在中断内即时执行（非阻塞寄存器写） */
+                app_speedout_stop();
+                service_negative_pressure_set_percent(0U);
+                element_roundabout_event_flags |= ELEMENT_RB_EVENT_FINISH;
+            }
+            else
+            {
+                /* 出环反向偏置：持续40ms，由到期机制自动清除 */
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT, APP_ELEMENT_DEG_TO_RAD);
+                app_element_roundabout_bias_active = 1U;
+                element_roundabout_bias_start_tick = now;
+                element_roundabout_bias_duration_tick = APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK;
+
+                element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
+                element_roundabout_distance_m = 0.0f;
+                element_roundabout_event_flags |= ELEMENT_RB_EVENT_EXIT;
+                ea_backup = EA;
+                EA = 0;
+                element_data.type = APP_ELEMENT_TYPE_NONE;
+                element_data.state = APP_ELEMENT_STATE_IDLE;
+                element_data.dir = APP_ELEMENT_DIR_NONE;
+                element_data.active = 0.0f;
+                EA = ea_backup;
+            }
+        }
+    }
+
+    /* 环岛退出距离积分：累计前进1m后恢复空闲态 */
+    if(APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT == element_roundabout_fsm)
+    {
+        service_speed_data_t speed;
+        float avg_mps;
+
+        service_speed_get(&speed);
+        avg_mps = tfpu_mul(tfpu_sub(speed.left_mps, speed.right_mps), 0.5f);
+        element_roundabout_distance_m = tfpu_add(element_roundabout_distance_m,
+                tfpu_mul(avg_mps, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND)));
+        if(element_roundabout_distance_m >= APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M)
+        {
+            element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
+            element_roundabout_distance_m = 0.0f;
+            element_roundabout_event_flags |= ELEMENT_RB_EVENT_READY;
+        }
+    }
+
+    /* 环岛角速度偏置到期清除 */
+    if((0U != app_element_roundabout_bias_active) &&
+            ((uint32)(now - element_roundabout_bias_start_tick) >= element_roundabout_bias_duration_tick))
+    {
+        app_element_roundabout_bias_active = 0U;
+        app_element_roundabout_bias_yaw_radps = 0.0f;
+    }
 }
 
 static void app_element_roundabout_clear_count(void)
@@ -562,6 +700,72 @@ static void app_element_roundabout_clear_count(void)
     app_element_roundabout_bias_yaw_radps = 0.0f;
     app_element_roundabout_feedforward_scale = 1.0f;
     wprint("roundabout_count,0.000\r\n");
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     环岛事件泵 - 主循环调用，把中断中置位的事件转为 wprint/蜂鸣器
+// 参数说明     void
+// 返回参数     void
+// 使用示例     app_element_pump_events();
+// 备注信息     由 app_motion_postprocess_gyro_task 周期调用
+//-------------------------------------------------------------------------------------------------------------------
+void app_element_pump_events(void)
+{
+    uint8 flags;
+    uint16 count_snapshot;
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
+    flags = element_roundabout_event_flags;
+    element_roundabout_event_flags = 0U;
+    count_snapshot = element_roundabout_event_count;
+    EA = ea_backup;
+
+    if(0U == flags)
+    {
+        return;
+    }
+
+    if(0U != (flags & ELEMENT_RB_EVENT_FOUND))
+    {
+        wprint("roundabout,1.000,%u\r\n", (uint16)count_snapshot);
+        service_buzzer_beep_ms(300U);
+    }
+    if(0U != (flags & ELEMENT_RB_EVENT_EXIT))
+    {
+        wprint("roundabout_exit,1.000\r\n");
+    }
+    if(0U != (flags & ELEMENT_RB_EVENT_READY))
+    {
+        wprint("roundabout_ready,1.000\r\n");
+    }
+    if(0U != (flags & ELEMENT_RB_EVENT_FINISH))
+    {
+        wprint("roundabout_finish,1.000\r\n");
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     跷跷板降速是否激活
+// 参数说明     void
+// 返回参数     uint8           1：降速激活中 0：已到期或未触发
+// 使用示例     if(app_element_seesaw_is_slowdown_active()) ...
+//-------------------------------------------------------------------------------------------------------------------
+uint8 app_element_seesaw_is_slowdown_active(void)
+{
+    return element_seesaw_slowdown_active;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     跷跷板降速目标速度
+// 参数说明     void
+// 返回参数     float           降速目标速度 m/s
+// 使用示例     speed = app_element_seesaw_slowdown_speed_mps();
+//-------------------------------------------------------------------------------------------------------------------
+float app_element_seesaw_slowdown_speed_mps(void)
+{
+    return APP_ELEMENT_SEESAW_SLOWDOWN_SPEED_MPS;
 }
 
 static void app_element_cylinder_clear_count(void)
@@ -591,6 +795,8 @@ static void app_element_seesaw_found(uint32 now)
     element_seesaw_active = 1U;
     element_seesaw_active_start_tick = now;
     element_seesaw_event = 1.0f;
+    element_seesaw_slowdown_active = 1U;
+    element_seesaw_slowdown_start_tick = now;
 
     wprint("seesaw,1.000\r\n");
     service_buzzer_beep_ms(300U);
@@ -717,6 +923,9 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         return;
     }
 
+    /* 提供 gyro 快照供 TIM7 环岛中断读取（volatile 写） */
+    element_gyro_snapshot = *gyro;
+
     now = service_timetick_what();
     delta_tick = now - element_last_tick;
     element_last_tick = now;
@@ -735,7 +944,7 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
     element_data.gyro_z = gyro->gyro_z;
     EA = ea_backup;
 
-    /* 追踪gz是否在50ms内出现过>50°/s（供跷跷板检测） */
+    /* 追踪gz是否在50ms内出现过>120°/s（供跷跷板检测） */
     if((gyro->gyro_z > 120.0f) || (gyro->gyro_z < -120.0f))
     {
         element_seesaw_gz_high = 1U;
@@ -747,85 +956,8 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         element_seesaw_gz_high = 0U;
     }
 
-    /* 追踪gx是否在20ms内超过200°/s（环岛检测阻挡条件） */
-    if((gyro->gyro_x > 200.0f) || (gyro->gyro_x < -200.0f))
-    {
-        element_roundabout_gz_high = 1U;
-        element_roundabout_gz_high_tick = now;
-    }
-    else if((0U != element_roundabout_gz_high) &&
-            ((uint32)(now - element_roundabout_gz_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
-    {
-        element_roundabout_gz_high = 0U;
-    }
-
-    /* 环岛gz积分：达到当前环岛配置角度后退出，第三次环岛直接停车 */
-    if(0U != element_roundabout_gz_integrate)
-    {
-        float target_angle_deg;
-        float delta_angle = tfpu_mul(gyro->gyro_z,
-                tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
-
-        app_element_roundabout_apply_runtime_config();
-        target_angle_deg = app_element_roundabout_get_angle_deg();
-        if(delta_angle < 0.0f)
-        {
-            delta_angle = tfpu_sub(0.0f, delta_angle);
-        }
-        element_roundabout_gz_angle_deg = tfpu_add(element_roundabout_gz_angle_deg, delta_angle);
-        if(element_roundabout_gz_angle_deg >= target_angle_deg)
-        {
-            element_roundabout_gz_integrate = 0U;
-            element_roundabout_gz_angle_deg = 0.0f;
-            app_element_roundabout_bias_active = 0U;
-            app_element_roundabout_bias_yaw_radps = 0.0f;
-            app_element_roundabout_feedforward_scale = 1.0f;
-            element_roundabout_dead = 0U;
-            element_roundabout_confirm = 0U;
-            if(3U == element_roundabout_count)
-            {
-                app_speedout_stop();
-                service_negative_pressure_set_percent(0U);
-            }
-            else
-            {
-                /* 出环反向偏置：持续100ms，由到期机制自动清除 */
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT, APP_ELEMENT_DEG_TO_RAD);
-                app_element_roundabout_bias_active = 1U;
-                element_roundabout_bias_start_tick = now;
-                element_roundabout_bias_duration_tick = APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK;
-
-                element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT;
-                element_roundabout_distance_m = 0.0f;
-                wprint("roundabout_exit,1.000\r\n");
-                ea_backup = EA;
-                EA = 0;
-                element_data.type = APP_ELEMENT_TYPE_NONE;
-                element_data.state = APP_ELEMENT_STATE_IDLE;
-                element_data.dir = APP_ELEMENT_DIR_NONE;
-                element_data.active = 0.0f;
-                EA = ea_backup;
-            }
-        }
-    }
-
-    /* 环岛退出距离积分：累计前进1m后恢复空闲态 */
-    if(APP_ELEMENT_ROUNDABOUT_FSM_EXIT_WAIT == element_roundabout_fsm)
-    {
-        service_speed_data_t speed;
-        float avg_mps;
-
-        service_speed_get(&speed);
-        avg_mps = tfpu_mul(tfpu_sub(speed.left_mps, speed.right_mps), 0.5f);
-        element_roundabout_distance_m = tfpu_add(element_roundabout_distance_m,
-                tfpu_mul(avg_mps, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND)));
-        if(element_roundabout_distance_m >= APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M)
-        {
-            element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
-            element_roundabout_distance_m = 0.0f;
-            wprint("roundabout_ready,1.000\r\n");
-        }
-    }
+    /* 注：gx 阻挡追踪、环岛 gz 积分、退出、EXIT_WAIT 距离积分、偏置到期清除
+       已移至 app_element_roundabout_imu_step() 在 TIM7 中断内硬实时执行 */
 
     if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)
     {
@@ -854,6 +986,13 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         EA = ea_backup;
     }
 
+    /* 跷跷板降速到期清除（160ms后恢复正常速度规划） */
+    if((0U != element_seesaw_slowdown_active) &&
+            ((uint32)(now - element_seesaw_slowdown_start_tick) >= APP_ELEMENT_SEESAW_SLOWDOWN_TICK))
+    {
+        element_seesaw_slowdown_active = 0U;
+    }
+
     /* 圆筒转向限幅持续时间到期后清除元素状态（跷跷板活跃时跳过） */
     if((0U != element_cylinder_yaw_limit_active) &&
             (0U == element_seesaw_active) &&
@@ -868,13 +1007,5 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         element_data.dir = APP_ELEMENT_DIR_NONE;
         element_data.active = 0.0f;
         EA = ea_backup;
-    }
-
-    /* 环岛角速度偏置到期清除 */
-    if((0U != app_element_roundabout_bias_active) &&
-            ((uint32)(now - element_roundabout_bias_start_tick) >= element_roundabout_bias_duration_tick))
-    {
-        app_element_roundabout_bias_active = 0U;
-        app_element_roundabout_bias_yaw_radps = 0.0f;
     }
 }

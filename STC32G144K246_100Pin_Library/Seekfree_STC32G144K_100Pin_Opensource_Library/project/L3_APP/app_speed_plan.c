@@ -116,11 +116,9 @@ static void app_speed_plan_task(void)
     float target_raw_mps;
     app_motion_preprocess_data_t motion_preprocess;
     app_feedforward_data_t feedforward;
-    app_element_data_t element;
 
     app_motion_preprocess_get_data(&motion_preprocess);
     app_feedforward_get_data(&feedforward);
-    app_element_get_data(&element);
 
     line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
     curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
@@ -129,10 +127,13 @@ static void app_speed_plan_task(void)
     target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
             tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
 
-    if((APP_ELEMENT_TYPE_SEESAW == element.type) && (element.active >= 0.5f))
+    /* 跷跷板触发后立即降速到 0.8m/s，持续 160ms，跳过 ramp 实现硬立即 */
+    if(0U != app_element_seesaw_is_slowdown_active())
     {
-        target_raw_mps = 1.0f;
+        speed_plan_linear_mps = app_element_seesaw_slowdown_speed_mps();
     }
-
-    speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
+    else
+    {
+        speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
+    }
 }

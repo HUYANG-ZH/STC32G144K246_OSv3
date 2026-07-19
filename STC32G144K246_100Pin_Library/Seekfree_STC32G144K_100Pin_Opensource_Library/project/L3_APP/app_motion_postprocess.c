@@ -168,6 +168,7 @@ static void app_motion_postprocess_gyro_task(void)
     motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, gyro.gyro_z);
     EA = ea_backup;
     app_element_imu_task(&gyro);
+    app_element_pump_events();
 }
 
 void app_motion_postprocess_init(void)
