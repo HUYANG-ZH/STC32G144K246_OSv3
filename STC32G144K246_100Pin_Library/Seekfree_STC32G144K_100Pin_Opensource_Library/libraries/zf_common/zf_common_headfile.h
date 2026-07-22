@@ -71,6 +71,7 @@
 #include "zf_driver_pit.h"
 #include "zf_driver_encoder.h"
 #include "zf_driver_usb_cdc.h"
+#include "zf_driver_iic.h"
 
 
 ////------逐飞科技产品驱动头文件

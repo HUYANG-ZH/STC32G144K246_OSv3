@@ -48,6 +48,7 @@
 
 #include "zf_driver_delay.h"
 #include "zf_driver_exti.h"
+#include "zf_driver_iic.h"
 #include "zf_driver_soft_iic.h"
 
 #include "zf_device_dl1b.h"
@@ -56,17 +57,98 @@
 
 #pragma warning disable = 177
 #pragma warning disable = 183
+#pragma warning disable = 209
 
 static uint8 dl1b_init_flag = 0;
 uint8 dl1b_finsh_flag = 0;
 uint16 dl1b_distance_mm = 8192;
+uint8 dl1b_debug_i2c_error = 0;
+uint8 dl1b_debug_firmware_status = 0;
+uint8 dl1b_debug_model_id = 0;
+uint8 dl1b_debug_gpio_status = 0;
+uint8 dl1b_debug_range_status = 0;
+uint16 dl1b_debug_range_mm = 0;
+uint8 dl1b_debug_init_result = 1;
+uint8 dl1b_debug_scl_level = 0;
+uint8 dl1b_debug_sda_level = 0;
+uint8 dl1b_debug_scan_count = 0;
+uint8 dl1b_debug_scan_first_address = 0xFF;
+static uint8 dl1b_debug_i2c_initialized = 0;
 
 #if (DL1B_USE_INTERFACE==SOFT_IIC) 
 	static soft_iic_info_struct dl1b_iic_struct;
-	#define dl1b_transfer_8bit_array(tdata, tlen, rdata, rlen)      (soft_iic_transfer_8bit_array(&dl1b_iic_struct, (tdata), (tlen), (rdata), (rlen)))
+	#define dl1b_transfer_8bit_array(tdata, tlen, rdata, rlen)      (dl1b_debug_i2c_error |= soft_iic_transfer_8bit_array_status(&dl1b_iic_struct, (tdata), (tlen), (rdata), (rlen)))
+
+static void dl1b_i2c_init_pins(void)
+{
+    soft_iic_init(&dl1b_iic_struct, DL1B_DEV_ADDR, DL1B_SOFT_IIC_DELAY, DL1B_SCL_PIN, DL1B_SDA_PIN);
+
+    // 单点主从通信：SCL 由主机推挽驱动，SDA 保持开漏以接收传感器 ACK/数据。
+    gpio_init(DL1B_SCL_PIN, GPO, 1, GPO_PUSH_PULL);
+    gpio_init(DL1B_SDA_PIN, GPO, 1, GPO_OPEN_DTAIN);
+    gpio_set_pull_up(DL1B_SDA_PIN);
+}
 #elif (DL1B_USE_INTERFACE==HARDWARE_IIC)
-	#define dl1b_transfer_8bit_array(tdata, tlen, rdata, rlen)      (iic_transfer_8bit_array(DL1B_IIC, DL1B_DEV_ADDR, (tdata), (tlen), (rdata), (rlen)))
+static uint8 dl1b_hardware_iic_transfer(const uint8 *write_data, uint32 write_len, uint8 *read_data, uint32 read_len)
+{
+    iic_transfer_8bit_array(DL1B_IIC, DL1B_DEV_ADDR, write_data, write_len, read_data, read_len);
+    return (IIC_SUCCESS == iic_get_last_status(DL1B_IIC)) ? 0 : 1;
+}
+	#define dl1b_transfer_8bit_array(tdata, tlen, rdata, rlen)      (dl1b_debug_i2c_error |= dl1b_hardware_iic_transfer((tdata), (tlen), (rdata), (rlen)))
 #endif
+
+void dl1b_debug_i2c_init(void)
+{
+#if (DL1B_USE_INTERFACE==SOFT_IIC)
+    dl1b_i2c_init_pins();
+    dl1b_debug_i2c_initialized = 1;
+    dl1b_debug_i2c_error = 0;
+    dl1b_debug_scl_level = gpio_get_level(DL1B_SCL_PIN);
+    dl1b_debug_sda_level = gpio_get_level(DL1B_SDA_PIN);
+#elif (DL1B_USE_INTERFACE==HARDWARE_IIC)
+    dl1b_debug_i2c_error = (IIC_SUCCESS == iic_init(DL1B_IIC, DL1B_DEV_ADDR, DL1B_IIC_SPEED, DL1B_SCL_PIN, DL1B_SDA_PIN)) ? 0 : 1;
+    dl1b_debug_i2c_initialized = (0 == dl1b_debug_i2c_error) ? 1 : 0;
+    dl1b_debug_scl_level = gpio_get_level((gpio_pin_enum)(DL1B_SCL_PIN & 0xFF));
+    dl1b_debug_sda_level = gpio_get_level((gpio_pin_enum)(DL1B_SDA_PIN & 0xFF));
+#else
+    dl1b_debug_i2c_initialized = 0;
+#endif
+}
+
+void dl1b_debug_i2c_poll(void)
+{
+#if (DL1B_USE_INTERFACE==SOFT_IIC)
+    uint8 data_buffer[3];
+
+    if(0 == dl1b_debug_i2c_initialized)
+    {
+        dl1b_debug_i2c_init();
+    }
+
+    data_buffer[0] = 0x00;
+    data_buffer[1] = 0xE5;
+    data_buffer[2] = 0;
+    dl1b_debug_i2c_error = soft_iic_transfer_8bit_array_status(&dl1b_iic_struct, data_buffer, 2, &data_buffer[2], 1);
+    dl1b_debug_firmware_status = data_buffer[2];
+    dl1b_debug_scl_level = gpio_get_level(DL1B_SCL_PIN);
+    dl1b_debug_sda_level = gpio_get_level(DL1B_SDA_PIN);
+#elif (DL1B_USE_INTERFACE==HARDWARE_IIC)
+    uint8 data_buffer[3];
+
+    if(0 == dl1b_debug_i2c_initialized)
+    {
+        dl1b_debug_i2c_init();
+    }
+
+    data_buffer[0] = 0x00;
+    data_buffer[1] = 0xE5;
+    data_buffer[2] = 0;
+    dl1b_transfer_8bit_array(data_buffer, 2, &data_buffer[2], 1);
+    dl1b_debug_firmware_status = data_buffer[2];
+    dl1b_debug_scl_level = gpio_get_level((gpio_pin_enum)(DL1B_SCL_PIN & 0xFF));
+    dl1b_debug_sda_level = gpio_get_level((gpio_pin_enum)(DL1B_SDA_PIN & 0xFF));
+#endif
+}
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     返回以毫米为单位的范围读数
@@ -85,18 +167,21 @@ void dl1b_get_distance (void)
         data_buffer[0] = DL1B_GPIO__TIO_HV_STATUS >> 8;
         data_buffer[1] = DL1B_GPIO__TIO_HV_STATUS & 0xFF;
         dl1b_transfer_8bit_array(data_buffer, 2, &data_buffer[2], 1);
+        dl1b_debug_gpio_status = data_buffer[2];
         
+        // DL1B 的 GPIO__TIO_HV_STATUS 返回非零即表示有测量结果。
+        // 该器件常见返回值为 0x02，不能只检查 bit0。
         if(data_buffer[2])
         {
-        
             data_buffer[0] = DL1B_SYSTEM__INTERRUPT_CLEAR >> 8;
             data_buffer[1] = DL1B_SYSTEM__INTERRUPT_CLEAR & 0xFF;
             data_buffer[2] = 0x01;
             dl1b_transfer_8bit_array(data_buffer, 3, data_buffer, 0);// clear Interrupt
-            
+
             data_buffer[0] = DL1B_RESULT__RANGE_STATUS >> 8;
             data_buffer[1] = DL1B_RESULT__RANGE_STATUS & 0xFF;
             dl1b_transfer_8bit_array(data_buffer, 2, &data_buffer[2], 1);
+            dl1b_debug_range_status = data_buffer[2];
             
             if(0x89 == data_buffer[2])
             {
@@ -105,6 +190,7 @@ void dl1b_get_distance (void)
                 dl1b_transfer_8bit_array(data_buffer, 2, data_buffer, 2);
                 dl1b_distance_temp = data_buffer[0];
                 dl1b_distance_temp = (dl1b_distance_temp << 8) | data_buffer[1];
+                dl1b_debug_range_mm = (uint16)dl1b_distance_temp;
                 
                 if(dl1b_distance_temp > 4000 || dl1b_distance_temp < 0)
                 {
@@ -122,6 +208,7 @@ void dl1b_get_distance (void)
                 dl1b_distance_mm = 8192;
                 dl1b_finsh_flag = 0;
             }
+
         }
         else
         {
@@ -157,11 +244,39 @@ uint8 dl1b_init (void)
     uint8   return_state    = 0;
     uint8   data_buffer[2 + sizeof(dl1b_config_file)];
     uint16  time_out_count  = 0;
+
+    dl1b_init_flag = 0;
+    dl1b_debug_i2c_error = 0;
+    dl1b_debug_init_result = 1;
     
 #if (DL1B_USE_INTERFACE==SOFT_IIC)        
-    soft_iic_init(&dl1b_iic_struct, DL1B_DEV_ADDR, DL1B_SOFT_IIC_DELAY, DL1B_SCL_PIN, DL1B_SDA_PIN);
+    dl1b_i2c_init_pins();
+    dl1b_debug_scl_level = gpio_get_level(DL1B_SCL_PIN);
+    dl1b_debug_sda_level = gpio_get_level(DL1B_SDA_PIN);
+    dl1b_debug_scan_count = 0;
+    dl1b_debug_scan_first_address = 0xFF;
+    system_delay_ms(10);
+    {
+        uint8 scan_address;
+        for(scan_address = 0x08; scan_address <= 0x77; scan_address ++)
+        {
+            if(0 == soft_iic_probe_7bit_address(&dl1b_iic_struct, scan_address))
+            {
+                if(0xFF == dl1b_debug_scan_first_address)
+                {
+                    dl1b_debug_scan_first_address = scan_address;
+                }
+                dl1b_debug_scan_count ++;
+            }
+        }
+    }
 #elif (DL1B_USE_INTERFACE==HARDWARE_IIC)
-    iic_init(DL1B_IIC, DL1B_DEV_ADDR, DL1B_IIC_SPEED, DL1B_SCL_PIN, DL1B_SDA_PIN);
+    if(IIC_SUCCESS != iic_init(DL1B_IIC, DL1B_DEV_ADDR, DL1B_IIC_SPEED, DL1B_SCL_PIN, DL1B_SDA_PIN))
+    {
+        dl1b_debug_i2c_error = 1;
+        dl1b_debug_init_result = 1;
+        return 1;
+    }
 #endif
     
 #if	DL1B_XS_ENABLE
@@ -182,10 +297,23 @@ uint8 dl1b_init (void)
         data_buffer[0] = DL1B_FIRMWARE__SYSTEM_STATUS >> 8;
         data_buffer[1] = DL1B_FIRMWARE__SYSTEM_STATUS & 0xFF;
         dl1b_transfer_8bit_array(data_buffer, 2, &data_buffer[2], 1);
+        dl1b_debug_scl_level = gpio_get_level(DL1B_SCL_PIN);
+        dl1b_debug_sda_level = gpio_get_level(DL1B_SDA_PIN);
+        dl1b_debug_firmware_status = data_buffer[2];
         return_state = (0x01 == (data_buffer[2] & 0x01)) ? (0) : (1);
         
         if(1 == return_state)
         {
+            break;
+        }
+
+        data_buffer[0] = DL1B_IDENTIFICATION__MODEL_ID >> 8;
+        data_buffer[1] = DL1B_IDENTIFICATION__MODEL_ID & 0xFF;
+        dl1b_transfer_8bit_array(data_buffer, 2, &data_buffer[2], 1);
+        dl1b_debug_model_id = data_buffer[2];
+        if(((uint8)0xEA != data_buffer[2]) || dl1b_debug_i2c_error)
+        {
+            return_state = 1;
             break;
         }
         
@@ -194,12 +322,24 @@ uint8 dl1b_init (void)
         
         memcpy(&data_buffer[2], (uint8 *)dl1b_config_file, sizeof(dl1b_config_file));
         dl1b_transfer_8bit_array(data_buffer, 2 + sizeof(dl1b_config_file), data_buffer, 0);
+        if(dl1b_debug_i2c_error)
+        {
+            return_state = 1;
+            break;
+        }
         
         while(1)
         {
             data_buffer[0] = DL1B_GPIO__TIO_HV_STATUS >> 8;
             data_buffer[1] = DL1B_GPIO__TIO_HV_STATUS & 0xFF;
             dl1b_transfer_8bit_array(data_buffer, 2, &data_buffer[2], 1);
+            dl1b_debug_gpio_status = data_buffer[2];
+
+            if(dl1b_debug_i2c_error)
+            {
+                return_state = 1;
+                break;
+            }
             
             if(0x00 == (data_buffer[2] & 0x01))
             {
@@ -216,7 +356,10 @@ uint8 dl1b_init (void)
             system_delay_ms(1);
         }
         
-        dl1b_init_flag = 1;
+        if(0 == return_state)
+        {
+            dl1b_init_flag = 1;
+        }
         
     #if DL1B_INT_ENABLE
         exti_init(DL1B_INT_PIN, EXTI_TRIGGER_FALLING);
@@ -226,6 +369,6 @@ uint8 dl1b_init (void)
         set_tof_type(TOF_DL1B, dl1b_int_handler);
     }
     while(0);
-   
+    dl1b_debug_init_result = return_state;
     return return_state;
 }

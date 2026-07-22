@@ -55,30 +55,30 @@
 // 需要注意的是 DL1B 最高支持 400KHz 的 IIC 通信速率
 // 需要注意的是 DL1B 最高支持 400KHz 的 IIC 通信速率
 
-#define DL1B_USE_INTERFACE           SOFT_IIC                                   // 默认使用软件 IIC 方式驱动 建议使用软件 IIC 方式
+#define DL1B_USE_INTERFACE           HARDWARE_IIC                              // 使用硬件 IIC，采用参考工程的无冲突引脚
 #if (DL1B_USE_INTERFACE==SOFT_IIC)                                              // 这两段 颜色正常的才是正确的 颜色灰的就是没有用的
 //====================================================软件 IIC 驱动====================================================
-	#define DL1B_SOFT_IIC_DELAY         ( 0 )                                   // 软件 IIC 的时钟延时周期 数值越小 IIC 通信速率越快
-	#define DL1B_SCL_PIN                ( IO_P61 )                              // 软件 IIC SCL 引脚 连接 DL1B 的 SCL 引脚
-	#define DL1B_SDA_PIN                ( IO_P63 )                              // 软件 IIC SDA 引脚 连接 DL1B 的 SDA 引脚
+	#define DL1B_SOFT_IIC_DELAY         ( 10 )                                  // 软件 IIC 的时钟延时周期 数值越小 IIC 通信速率越快
+	#define DL1B_SCL_PIN                ( IO_P52 )                              // 软件 IIC SCL 引脚 连接 DL1B 的 SCL 引脚
+	#define DL1B_SDA_PIN                ( IO_P53 )                              // 软件 IIC SDA 引脚 连接 DL1B 的 SDA 引脚
 //====================================================软件 IIC 驱动====================================================
 #elif (DL1B_USE_INTERFACE==HARDWARE_IIC)
 //====================================================硬件 IIC 驱动====================================================
 	#define DL1B_IIC_SPEED              ( 40 * 1000  )                          // 硬件 IIC 通信速率 最高 400KHz 不建议低于 40KHz
-	#define DL1B_IIC                    ( 暂不支持  )                            // 硬件 IIC SCL 引脚 连接 DL1B 的 SCL 引脚
-	#define DL1B_SCL_PIN                ( 暂不支持  )                            // 硬件 IIC SCL 引脚 连接 DL1B 的 SCL 引脚
-	#define DL1B_SDA_PIN                ( 暂不支持  )                            // 硬件 IIC SDA 引脚 连接 DL1B 的 SDA 引脚
+	#define DL1B_IIC                    ( IIC_1 )                                 // 硬件 IIC 控制器
+	#define DL1B_SCL_PIN                ( IIC1_CH3_SCL_P77 )                      // 硬件 IIC SCL：P7.7
+	#define DL1B_SDA_PIN                ( IIC1_CH3_SDA_P76 )                      // 硬件 IIC SDA：P7.6
 //====================================================硬件 IIC 驱动====================================================
 #endif
 
-#define DL1B_XS_ENABLE              ( 1  )                                      // 是否启用 INT 引脚 启用则会自动更新数据
+#define DL1B_XS_ENABLE              ( 1  )                                      // 启用参考工程的 XSHUT 引脚
 #if DL1B_XS_ENABLE
-	#define DL1B_XS_PIN             ( IO_P64 )
+	#define DL1B_XS_PIN             ( IO_P60 )
 #endif
 
 #define DL1B_INT_ENABLE             ( 0  )                                      // 是否启用 INT 引脚 启用则会自动更新数据
 #if DL1B_INT_ENABLE
-	#define DL1B_INT_PIN           	( IO_P84 )
+	#define DL1B_INT_PIN           	( IO_P75 )
 #endif
 
 #define DL1B_TIMEOUT_COUNT          ( 1000 )                                    // DL1B 超时计数
@@ -93,13 +93,28 @@
 #define DL1B_RESULT__RANGE_STATUS                               ( 0x0089 )
 #define DL1B_RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0     ( 0x0096 )
 #define DL1B_FIRMWARE__SYSTEM_STATUS                            ( 0x00E5 )
+#define DL1B_IDENTIFICATION__MODEL_ID                           ( 0x010F )
 
 //================================================定义 DL1B 内部地址================================================
 
 extern uint8 dl1b_finsh_flag;
 extern uint16 dl1b_distance_mm;
+extern uint8 dl1b_debug_i2c_error;
+extern uint8 dl1b_debug_firmware_status;
+extern uint8 dl1b_debug_model_id;
+extern uint8 dl1b_debug_gpio_status;
+extern uint8 dl1b_debug_range_status;
+extern uint16 dl1b_debug_range_mm;
+extern uint8 dl1b_debug_init_result;
+extern uint8 dl1b_debug_scl_level;
+extern uint8 dl1b_debug_sda_level;
+extern uint8 dl1b_debug_scan_count;
+extern uint8 dl1b_debug_scan_first_address;
 
 void   dl1b_get_distance (void);
+
+void   dl1b_debug_i2c_init(void);
+void   dl1b_debug_i2c_poll(void);
 
 void   dl1b_int_handler  (void);
 uint8  dl1b_init         (void);

@@ -34,65 +34,38 @@
 ********************************************************************************************************************/
 #include "zf_common_headfile.h"
 #include "sys_include.h"
-#include "service_timetick.h"
-#include "service_function_queue.h"
-#include "service_wireless_uart.h"
-#include "service_packet.h"
-#include "service_batterycheck.h"
-#include "service_buzzer.h"
-#include "service_imu.h"
-#include "service_motor.h"
-#include "service_negative_pressure.h"
-#include "service_speed.h"
-#include "service_delay.h"
-// #include "app_battery_guard.h"
-#include "app_element.h"
-#include "app_feedforward.h"
-#include "app_inductor_preprocess.h"
-// #include "app_log.h"
-#include "app_motion_preprocess.h"
-#include "app_motion_postprocess.h"
-#include "app_scheduler.h"
-#include "app_speed_plan.h"
-#include "app_speedout.h"
-#include "app_boot_sequence.h"
+#include "zf_device_dl1b.h"
 
 void main(void)
 {
-    SystemStart();
+    uint8 init_result;
 
-    service_timetick_init();
-    service_function_queue_init();
-    app_scheduler_init();
-    service_wireless_uart_init();
-    service_packet_init();
-    // app_log_init();
-    service_batterycheck_init();
-    service_buzzer_init();
-    service_buzzer_stop();
-    service_imu_init();
-    service_delay_ms(2000U);
-    service_imu_calibrate_gyro_z();
-    service_imu_calibrate_gyro_x();
-    service_motor_init();
-    service_negative_pressure_init();
-    service_speed_init();
-    app_inductor_preprocess_init();
-    app_motion_preprocess_init();
-    app_feedforward_init();
-    app_speed_plan_init();
-    app_element_init();
-    app_speedout_init();
-    app_motion_postprocess_init();
-    // app_battery_guard_init();
-    app_boot_sequence_init();
+    SystemStart();
+    init_result = dl1b_init();
 
     while(1)
     {
-        service_function_queue_update();
-        service_packet_update();
-        app_scheduler_run();
-        service_negative_pressure_task();
-        service_buzzer_task();
+        if(0 == init_result)
+        {
+            dl1b_get_distance();
+        }
+        else
+        {
+            init_result = dl1b_init();
+        }
+
+        printf("tof_diag,init=%u,i2c=%u,scl=%u,sda=%u,fw=%u,model=%u,gpio=%u,status=%u,raw=%u,distance=%u\r\n",
+               (unsigned int)init_result,
+               (unsigned int)dl1b_debug_i2c_error,
+               (unsigned int)dl1b_debug_scl_level,
+               (unsigned int)dl1b_debug_sda_level,
+               (unsigned int)dl1b_debug_firmware_status,
+               (unsigned int)dl1b_debug_model_id,
+               (unsigned int)dl1b_debug_gpio_status,
+               (unsigned int)dl1b_debug_range_status,
+               (unsigned int)dl1b_debug_range_mm,
+               (unsigned int)dl1b_distance_mm);
+
+        system_delay_ms(100U);
     }
 }
