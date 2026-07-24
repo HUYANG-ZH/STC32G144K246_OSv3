@@ -1,7 +1,6 @@
 #include "zf_common_headfile.h"
 #include "bsp_include.h"
 #include "service_buzzer.h"
-#include "service_delay.h"
 #include "service_timetick.h"
 
 #define SERVICE_BUZZER_TICKS_PER_MS        (10UL)
@@ -26,11 +25,8 @@ void service_buzzer_init(void)
 
 void service_buzzer_debug(void)
 {
-    printf("[buzzer:start500ms]\r\n");
+    printf("[buzzer:scheduled500ms]\r\n");
     service_buzzer_beep_ms(500);
-    service_delay_ms(500U);
-    service_buzzer_stop();
-    printf("[buzzer:stop]\r\n");
 }
 
 void service_buzzer_beep_ms(uint32 duration_ms)

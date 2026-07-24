@@ -1,0 +1,515 @@
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_tof_async
+OBJECT MODULE PLACED IN .\out_file\bsp_tof_async.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe ..\L1_BSP\bsp_tof_async.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,
+                    -SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\z
+                    -f_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\s
+                    -tc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\bsp_tof_async.lst) OBJECT(.\out_f
+                    -ile\bsp_tof_async.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_tof.h"
+    3          #include "bsp_tof_async.h"
+    4          #include "service_timetick.h"
+    5          #include "zf_device_config.h"
+    6          #include "zf_device_dl1b.h"
+    7          #include "zf_device_type.h"
+    8          #include "zf_driver_iic.h"
+    9          
+   10          #if (BSP_TOF_DRIVER != BSP_TOF_DRIVER_DL1B)
+                   #error "The architecture runtime supports the verified VL53L1X/DL1B hardware only."
+               #endif
+   13          
+   14          #define BSP_TOF_CONFIG_BYTES                (135U)
+   15          #define BSP_TOF_TRANSFER_BYTES              (BSP_TOF_CONFIG_BYTES + 2U)
+   16          #define BSP_TOF_XS_HIGH_WAIT_TICK           (500UL)
+   17          #define BSP_TOF_XS_LOW_WAIT_TICK            (100UL)
+   18          #define BSP_TOF_XS_BOOT_WAIT_TICK           (500UL)
+   19          #define BSP_TOF_READY_POLL_TICK             (10UL)
+   20          #define BSP_TOF_READY_MAX_POLLS              (1000U)
+   21          #define BSP_TOF_RETRY_WAIT_TICK              (10000UL)
+   22          /* Match the bounded hardware-IIC transaction timeout (100 us tick base). */
+   23          #define BSP_TOF_SUBMIT_BUSY_TIMEOUT_TICK     (100UL)
+   24          
+   25          typedef enum
+   26          {
+   27              BSP_TOF_STATE_IDLE = 0,
+   28              BSP_TOF_STATE_XS_HIGH_WAIT,
+   29              BSP_TOF_STATE_XS_LOW_WAIT,
+   30              BSP_TOF_STATE_XS_BOOT_WAIT,
+   31              BSP_TOF_STATE_IIC_INIT,
+   32              BSP_TOF_STATE_FIRMWARE_SUBMIT,
+   33              BSP_TOF_STATE_FIRMWARE_WAIT,
+   34              BSP_TOF_STATE_MODEL_SUBMIT,
+   35              BSP_TOF_STATE_MODEL_WAIT,
+   36              BSP_TOF_STATE_CONFIG_SUBMIT,
+   37              BSP_TOF_STATE_CONFIG_WAIT,
+   38              BSP_TOF_STATE_READY_POLL_DELAY,
+   39              BSP_TOF_STATE_READY_POLL_SUBMIT,
+   40              BSP_TOF_STATE_READY_POLL_WAIT,
+   41              BSP_TOF_STATE_READY,
+   42              BSP_TOF_STATE_SAMPLE_GPIO_SUBMIT,
+   43              BSP_TOF_STATE_SAMPLE_GPIO_WAIT,
+   44              BSP_TOF_STATE_SAMPLE_CLEAR_SUBMIT,
+   45              BSP_TOF_STATE_SAMPLE_CLEAR_WAIT,
+   46              BSP_TOF_STATE_SAMPLE_STATUS_SUBMIT,
+   47              BSP_TOF_STATE_SAMPLE_STATUS_WAIT,
+   48              BSP_TOF_STATE_SAMPLE_DISTANCE_SUBMIT,
+   49              BSP_TOF_STATE_SAMPLE_DISTANCE_WAIT,
+   50              BSP_TOF_STATE_ERROR,
+   51          } bsp_tof_state_enum;
+   52          
+   53          static uint8 xdata tof_transfer_buffer[BSP_TOF_TRANSFER_BYTES];
+   54          static uint8 xdata tof_read_buffer[2];
+   55          static uint16 tof_distance_mm = BSP_TOF_INVALID_DISTANCE_MM;
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 2   
+
+   56          static uint32 tof_deadline_tick = 0UL;
+   57          static uint16 tof_ready_poll_count = 0U;
+   58          static uint32 tof_retry_deadline_tick = 0UL;
+   59          static uint32 tof_submit_busy_deadline_tick = 0UL;
+   60          static uint8 tof_initialized = 0U;
+   61          static uint8 tof_ready = 0U;
+   62          static uint8 tof_sample_requested = 0U;
+   63          static uint8 tof_last_error = 0U;
+   64          static uint8 tof_submit_busy_pending = 0U;
+   65          static bsp_tof_state_enum tof_state = BSP_TOF_STATE_IDLE;
+   66          
+   67          static uint8 bsp_tof_deadline_reached(uint32 now)
+   68          {
+   69   1          return ((uint32)(now - tof_deadline_tick) < 0x80000000UL) ? 1U : 0U;
+   70   1      }
+   71          
+   72          static uint8 bsp_tof_retry_deadline_reached(uint32 now)
+   73          {
+   74   1          return ((uint32)(now - tof_retry_deadline_tick) < 0x80000000UL) ? 1U : 0U;
+   75   1      }
+   76          
+   77          static void bsp_tof_fail(iic_status_enum status)
+   78          {
+   79   1          tof_last_error = (uint8)status;
+   80   1          tof_distance_mm = BSP_TOF_INVALID_DISTANCE_MM;
+   81   1          tof_ready = 0U;
+   82   1          tof_sample_requested = 0U;
+   83   1          tof_submit_busy_pending = 0U;
+   84   1          tof_retry_deadline_tick = service_timetick_what() + BSP_TOF_RETRY_WAIT_TICK;
+   85   1          tof_state = BSP_TOF_STATE_ERROR;
+   86   1      }
+   87          
+   88          /* Return 1 when accepted, 0 when the shared controller is busy, and 2 on an error. */
+   89          static uint8 bsp_tof_submit(uint16 reg, uint8 write_len, uint8 read_len)
+   90          {
+   91   1          iic_status_enum status;
+   92   1          uint32 now;
+   93   1      
+   94   1          tof_transfer_buffer[0] = (uint8)(reg >> 8);
+   95   1          tof_transfer_buffer[1] = (uint8)reg;
+   96   1          status = iic_async_transfer(DL1B_IIC, DL1B_DEV_ADDR,
+   97   1                  tof_transfer_buffer, (uint32)(write_len + 2U), tof_read_buffer, read_len);
+   98   1          if(IIC_SUCCESS == status)
+   99   1          {
+  100   2              tof_submit_busy_pending = 0U;
+  101   2              return 1U;
+  102   2          }
+  103   1          if(IIC_ERROR_BUSY == status)
+  104   1          {
+  105   2              /* A normal shared-bus owner may complete on the next main-loop pass,
+  106   2                 but a hardware BUSY bit that never clears must reach the same
+  107   2                 XSHUT/retreat recovery chain as a command timeout. */
+  108   2              now = service_timetick_what();
+  109   2              if(0U == tof_submit_busy_pending)
+  110   2              {
+  111   3                  tof_submit_busy_pending = 1U;
+  112   3                  tof_submit_busy_deadline_tick = now + BSP_TOF_SUBMIT_BUSY_TIMEOUT_TICK;
+  113   3                  return 0U;
+  114   3              }
+  115   2              if((uint32)(now - tof_submit_busy_deadline_tick) < 0x80000000UL)
+  116   2              {
+  117   3                  bsp_tof_fail(IIC_ERROR_TIMEOUT);
+  118   3                  return 2U;
+  119   3              }
+  120   2              return 0U;
+  121   2          }
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 3   
+
+  122   1      
+  123   1          bsp_tof_fail(status);
+  124   1          return 2U;
+  125   1      }
+  126          
+  127          static uint8 bsp_tof_transfer_succeeded(void)
+  128          {
+  129   1          iic_status_enum status;
+  130   1      
+  131   1          if(0U != iic_async_is_busy(DL1B_IIC))
+  132   1          {
+  133   2              return 0U;
+  134   2          }
+  135   1          status = iic_async_get_status(DL1B_IIC);
+  136   1          if(IIC_SUCCESS != status)
+  137   1          {
+  138   2              bsp_tof_fail(status);
+  139   2              return 0U;
+  140   2          }
+  141   1          return 1U;
+  142   1      }
+  143          
+  144          uint8 bsp_tof_async_init(void)
+  145          {
+  146   1          uint8 index;
+  147   1      
+  148   1          /*
+  149   1           * XSHUT must precede every IIC electrical probe.  If a failed VL53L1X
+  150   1           * holds SDA/SCL low, iic_init() intentionally returns BUS_STUCK without
+  151   1           * executing synchronous GPIO recovery.  Starting with XSHUT instead
+  152   1           * gives the sensor a bounded, asynchronous chance to release the bus;
+  153   1           * BSP_TOF_STATE_IIC_INIT performs the probe only after the boot delay.
+  154   1           */
+  155   1          tof_initialized = 1U;
+  156   1      
+  157   1          for(index = 0U; index < BSP_TOF_CONFIG_BYTES; index++)
+  158   1          {
+  159   2              tof_transfer_buffer[index + 2U] = dl1b_config_file[index];
+  160   2          }
+  161   1          tof_read_buffer[0] = 0U;
+  162   1          tof_read_buffer[1] = 0U;
+  163   1          tof_distance_mm = BSP_TOF_INVALID_DISTANCE_MM;
+  164   1          tof_ready_poll_count = 0U;
+  165   1          tof_ready = 0U;
+  166   1          tof_sample_requested = 0U;
+  167   1          tof_last_error = IIC_SUCCESS;
+  168   1          tof_retry_deadline_tick = 0UL;
+  169   1          tof_submit_busy_deadline_tick = 0UL;
+  170   1          tof_submit_busy_pending = 0U;
+  171   1          set_tof_type(TOF_DL1B, 0);
+  172   1      
+  173   1      #if DL1B_XS_ENABLE
+  174   1          gpio_init(DL1B_XS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
+  175   1      #endif
+  176   1          tof_deadline_tick = service_timetick_what() + BSP_TOF_XS_HIGH_WAIT_TICK;
+  177   1          tof_state = BSP_TOF_STATE_XS_HIGH_WAIT;
+  178   1          return 1U;
+  179   1      }
+  180          
+  181          void bsp_tof_async_process(void)
+  182          {
+  183   1          uint8 submit_result;
+  184   1          uint32 now;
+  185   1          iic_status_enum status;
+  186   1      
+  187   1          if(0U == tof_initialized)
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 4   
+
+  188   1          {
+  189   2              return;
+  190   2          }
+  191   1      
+  192   1          now = service_timetick_what();
+  193   1          switch(tof_state)
+  194   1          {
+  195   2              case BSP_TOF_STATE_XS_HIGH_WAIT:
+  196   2                  if(0U != bsp_tof_deadline_reached(now))
+  197   2                  {
+  198   3      #if DL1B_XS_ENABLE
+  199   3                      gpio_low(DL1B_XS_PIN);
+  200   3      #endif
+  201   3                      tof_deadline_tick = now + BSP_TOF_XS_LOW_WAIT_TICK;
+  202   3                      tof_state = BSP_TOF_STATE_XS_LOW_WAIT;
+  203   3                  }
+  204   2                  break;
+  205   2      
+  206   2              case BSP_TOF_STATE_XS_LOW_WAIT:
+  207   2                  if(0U != bsp_tof_deadline_reached(now))
+  208   2                  {
+  209   3      #if DL1B_XS_ENABLE
+  210   3                      gpio_high(DL1B_XS_PIN);
+  211   3      #endif
+  212   3                      tof_deadline_tick = now + BSP_TOF_XS_BOOT_WAIT_TICK;
+  213   3                      tof_state = BSP_TOF_STATE_XS_BOOT_WAIT;
+  214   3                  }
+  215   2                  break;
+  216   2      
+  217   2              case BSP_TOF_STATE_XS_BOOT_WAIT:
+  218   2                  if(0U != bsp_tof_deadline_reached(now))
+  219   2                  {
+  220   3                      /* Never let a low IIC line skip the XSHUT recovery sequence. */
+  221   3                      tof_state = BSP_TOF_STATE_IIC_INIT;
+  222   3                  }
+  223   2                  break;
+  224   2      
+  225   2              case BSP_TOF_STATE_IIC_INIT:
+  226   2                  status = iic_init(DL1B_IIC, DL1B_DEV_ADDR, DL1B_IIC_SPEED,
+  227   2                          DL1B_SCL_PIN, DL1B_SDA_PIN);
+  228   2                  if(IIC_SUCCESS != status)
+  229   2                  {
+  230   3                      /* BUS_STUCK/NACK is retried through XSHUT after the bounded
+  231   3                         background backoff; no synchronous recovery is introduced. */
+  232   3                      bsp_tof_fail(status);
+  233   3                  }
+  234   2                  else
+  235   2                  {
+  236   3                      tof_state = BSP_TOF_STATE_FIRMWARE_SUBMIT;
+  237   3                  }
+  238   2                  break;
+  239   2      
+  240   2              case BSP_TOF_STATE_FIRMWARE_SUBMIT:
+  241   2                  submit_result = bsp_tof_submit(DL1B_FIRMWARE__SYSTEM_STATUS, 0U, 1U);
+  242   2                  if(1U == submit_result)
+  243   2                  {
+  244   3                      tof_state = BSP_TOF_STATE_FIRMWARE_WAIT;
+  245   3                  }
+  246   2                  break;
+  247   2      
+  248   2              case BSP_TOF_STATE_FIRMWARE_WAIT:
+  249   2                  if(0U != bsp_tof_transfer_succeeded())
+  250   2                  {
+  251   3                      if(0U == (tof_read_buffer[0] & 0x01U))
+  252   3                      {
+  253   4                          bsp_tof_fail(IIC_ERROR_NACK);
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 5   
+
+  254   4                      }
+  255   3                      else
+  256   3                      {
+  257   4                          tof_state = BSP_TOF_STATE_MODEL_SUBMIT;
+  258   4                      }
+  259   3                  }
+  260   2                  break;
+  261   2      
+  262   2              case BSP_TOF_STATE_MODEL_SUBMIT:
+  263   2                  submit_result = bsp_tof_submit(DL1B_IDENTIFICATION__MODEL_ID, 0U, 1U);
+  264   2                  if(1U == submit_result)
+  265   2                  {
+  266   3                      tof_state = BSP_TOF_STATE_MODEL_WAIT;
+  267   3                  }
+  268   2                  break;
+  269   2      
+  270   2              case BSP_TOF_STATE_MODEL_WAIT:
+  271   2                  if(0U != bsp_tof_transfer_succeeded())
+  272   2                  {
+  273   3                      if(0xEAU != tof_read_buffer[0])
+  274   3                      {
+  275   4                          bsp_tof_fail(IIC_ERROR_NACK);
+  276   4                      }
+  277   3                      else
+  278   3                      {
+  279   4                          tof_state = BSP_TOF_STATE_CONFIG_SUBMIT;
+  280   4                      }
+  281   3                  }
+  282   2                  break;
+  283   2      
+  284   2              case BSP_TOF_STATE_CONFIG_SUBMIT:
+  285   2                  submit_result = bsp_tof_submit(DL1B_I2C_SLAVE__DEVICE_ADDRESS, BSP_TOF_CONFIG_BYTES, 0U);
+  286   2                  if(1U == submit_result)
+  287   2                  {
+  288   3                      tof_state = BSP_TOF_STATE_CONFIG_WAIT;
+  289   3                  }
+  290   2                  break;
+  291   2      
+  292   2              case BSP_TOF_STATE_CONFIG_WAIT:
+  293   2                  if(0U != bsp_tof_transfer_succeeded())
+  294   2                  {
+  295   3                      tof_ready_poll_count = 0U;
+  296   3                      tof_deadline_tick = now;
+  297   3                      tof_state = BSP_TOF_STATE_READY_POLL_DELAY;
+  298   3                  }
+  299   2                  break;
+  300   2      
+  301   2              case BSP_TOF_STATE_READY_POLL_DELAY:
+  302   2                  if(0U != bsp_tof_deadline_reached(now))
+  303   2                  {
+  304   3                      tof_state = BSP_TOF_STATE_READY_POLL_SUBMIT;
+  305   3                  }
+  306   2                  break;
+  307   2      
+  308   2              case BSP_TOF_STATE_READY_POLL_SUBMIT:
+  309   2                  submit_result = bsp_tof_submit(DL1B_GPIO__TIO_HV_STATUS, 0U, 1U);
+  310   2                  if(1U == submit_result)
+  311   2                  {
+  312   3                      tof_state = BSP_TOF_STATE_READY_POLL_WAIT;
+  313   3                  }
+  314   2                  break;
+  315   2      
+  316   2              case BSP_TOF_STATE_READY_POLL_WAIT:
+  317   2                  if(0U != bsp_tof_transfer_succeeded())
+  318   2                  {
+  319   3                      if(0U == (tof_read_buffer[0] & 0x01U))
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 6   
+
+  320   3                      {
+  321   4                          tof_ready = 1U;
+  322   4                          tof_state = BSP_TOF_STATE_READY;
+  323   4                      }
+  324   3                      else if(tof_ready_poll_count++ >= BSP_TOF_READY_MAX_POLLS)
+  325   3                      {
+  326   4                          bsp_tof_fail(IIC_ERROR_TIMEOUT);
+  327   4                      }
+  328   3                      else
+  329   3                      {
+  330   4                          tof_deadline_tick = now + BSP_TOF_READY_POLL_TICK;
+  331   4                          tof_state = BSP_TOF_STATE_READY_POLL_DELAY;
+  332   4                      }
+  333   3                  }
+  334   2                  break;
+  335   2      
+  336   2              case BSP_TOF_STATE_READY:
+  337   2                  if(0U != tof_sample_requested)
+  338   2                  {
+  339   3                      tof_state = BSP_TOF_STATE_SAMPLE_GPIO_SUBMIT;
+  340   3                  }
+  341   2                  break;
+  342   2      
+  343   2              case BSP_TOF_STATE_SAMPLE_GPIO_SUBMIT:
+  344   2                  submit_result = bsp_tof_submit(DL1B_GPIO__TIO_HV_STATUS, 0U, 1U);
+  345   2                  if(1U == submit_result)
+  346   2                  {
+  347   3                      tof_state = BSP_TOF_STATE_SAMPLE_GPIO_WAIT;
+  348   3                  }
+  349   2                  break;
+  350   2      
+  351   2              case BSP_TOF_STATE_SAMPLE_GPIO_WAIT:
+  352   2                  if(0U != bsp_tof_transfer_succeeded())
+  353   2                  {
+  354   3                      if(0U == tof_read_buffer[0])
+  355   3                      {
+  356   4                          tof_sample_requested = 0U;
+  357   4                          tof_state = BSP_TOF_STATE_READY;
+  358   4                      }
+  359   3                      else
+  360   3                      {
+  361   4                          tof_state = BSP_TOF_STATE_SAMPLE_CLEAR_SUBMIT;
+  362   4                      }
+  363   3                  }
+  364   2                  break;
+  365   2      
+  366   2              case BSP_TOF_STATE_SAMPLE_CLEAR_SUBMIT:
+  367   2                  tof_transfer_buffer[2] = 0x01U;
+  368   2                  submit_result = bsp_tof_submit(DL1B_SYSTEM__INTERRUPT_CLEAR, 1U, 0U);
+  369   2                  if(1U == submit_result)
+  370   2                  {
+  371   3                      tof_state = BSP_TOF_STATE_SAMPLE_CLEAR_WAIT;
+  372   3                  }
+  373   2                  break;
+  374   2      
+  375   2              case BSP_TOF_STATE_SAMPLE_CLEAR_WAIT:
+  376   2                  if(0U != bsp_tof_transfer_succeeded())
+  377   2                  {
+  378   3                      tof_state = BSP_TOF_STATE_SAMPLE_STATUS_SUBMIT;
+  379   3                  }
+  380   2                  break;
+  381   2      
+  382   2              case BSP_TOF_STATE_SAMPLE_STATUS_SUBMIT:
+  383   2                  submit_result = bsp_tof_submit(DL1B_RESULT__RANGE_STATUS, 0U, 1U);
+  384   2                  if(1U == submit_result)
+  385   2                  {
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 7   
+
+  386   3                      tof_state = BSP_TOF_STATE_SAMPLE_STATUS_WAIT;
+  387   3                  }
+  388   2                  break;
+  389   2      
+  390   2              case BSP_TOF_STATE_SAMPLE_STATUS_WAIT:
+  391   2                  if(0U != bsp_tof_transfer_succeeded())
+  392   2                  {
+  393   3                      if(0x89U != tof_read_buffer[0])
+  394   3                      {
+  395   4                          tof_distance_mm = BSP_TOF_INVALID_DISTANCE_MM;
+  396   4                          tof_sample_requested = 0U;
+  397   4                          tof_state = BSP_TOF_STATE_READY;
+  398   4                      }
+  399   3                      else
+  400   3                      {
+  401   4                          tof_state = BSP_TOF_STATE_SAMPLE_DISTANCE_SUBMIT;
+  402   4                      }
+  403   3                  }
+  404   2                  break;
+  405   2      
+  406   2              case BSP_TOF_STATE_SAMPLE_DISTANCE_SUBMIT:
+  407   2                  submit_result = bsp_tof_submit(DL1B_RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, 0U, 2U);
+  408   2                  if(1U == submit_result)
+  409   2                  {
+  410   3                      tof_state = BSP_TOF_STATE_SAMPLE_DISTANCE_WAIT;
+  411   3                  }
+  412   2                  break;
+  413   2      
+  414   2              case BSP_TOF_STATE_SAMPLE_DISTANCE_WAIT:
+  415   2                  if(0U != bsp_tof_transfer_succeeded())
+  416   2                  {
+  417   3                      tof_distance_mm = (uint16)(((uint16)tof_read_buffer[0] << 8) | tof_read_buffer[1]);
+  418   3                      if(tof_distance_mm > 4000U)
+  419   3                      {
+  420   4                          tof_distance_mm = BSP_TOF_INVALID_DISTANCE_MM;
+  421   4                      }
+  422   3                      tof_sample_requested = 0U;
+  423   3                      tof_state = BSP_TOF_STATE_READY;
+  424   3                  }
+  425   2                  break;
+  426   2      
+  427   2              case BSP_TOF_STATE_ERROR:
+  428   2                  if(0U != bsp_tof_retry_deadline_reached(now))
+  429   2                  {
+  430   3                      (void)bsp_tof_async_init();
+  431   3                  }
+  432   2                  break;
+  433   2      
+  434   2              case BSP_TOF_STATE_IDLE:
+  435   2              default:
+  436   2                  break;
+  437   2          }
+  438   1      }
+  439          
+  440          uint8 bsp_tof_async_is_ready(void)
+  441          {
+  442   1          return tof_ready;
+  443   1      }
+  444          
+  445          uint8 bsp_tof_async_request_sample(void)
+  446          {
+  447   1          if(0U == tof_ready)
+  448   1          {
+  449   2              return 0U;
+  450   2          }
+  451   1      
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      23/07/26  15:26:52  PAGE 8   
+
+  452   1          tof_sample_requested = 1U;
+  453   1          return 1U;
+  454   1      }
+  455          
+  456          uint16 bsp_tof_async_get_distance_mm(void)
+  457          {
+  458   1          return (0U != tof_ready) ? tof_distance_mm : BSP_TOF_INVALID_DISTANCE_MM;
+  459   1      }
+  460          
+  461          uint8 bsp_tof_async_get_last_error(void)
+  462          {
+  463   1          return tof_last_error;
+  464   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1979     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       192     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        78     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

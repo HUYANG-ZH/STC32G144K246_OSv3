@@ -370,12 +370,16 @@ static void service_packet_print_variable(service_packet_variable_t *variable)
 {
     uint8 i;
     uint8 index = 0U;
+    uint8 ea_backup;
     float value_copy[SERVICE_PACKET_VALUE_MAX];
 
+    ea_backup = EA;
+    EA = 0;
     for(i = 0; i < variable->value_count; i++)
     {
         value_copy[i] = variable->value[i];
     }
+    EA = ea_backup;
 
     service_packet_append_string(packet_reply, &index, variable->name);
     service_packet_append_char(packet_reply, &index, ',');
@@ -425,6 +429,7 @@ static void service_packet_handle_write(char *name, char *value_text)
 {
     uint8 i;
     uint8 changed;
+    uint8 ea_backup;
     float value_copy[SERVICE_PACKET_VALUE_MAX];
     service_packet_variable_t *variable;
 
@@ -444,10 +449,14 @@ static void service_packet_handle_write(char *name, char *value_text)
     }
 
     changed = service_packet_value_changed(variable, value_copy);
+    /* float 在 C251 上不是原子写；防止实时 TIM 读取到撕裂的参数帧。 */
+    ea_backup = EA;
+    EA = 0;
     for(i = 0; i < variable->value_count; i++)
     {
         variable->value[i] = value_copy[i];
     }
+    EA = ea_backup;
 
     packet_write_ok_total++;
     if((0U != changed) && (NULL != variable->callback))
@@ -462,7 +471,7 @@ static void service_packet_handle_write(char *name, char *value_text)
 // 参数说明     name            操作名称
 // 返回参数     void
 // 使用示例     内部调用，用户无需关心
-// 备注信息     匹配成功后将动作加入 service_function_queue，优先级为 1
+// 备注信息     零延时动作在通讯服务上下文立即写入其邮箱/执行非实时逻辑；延时动作才走兼容队列。
 //-------------------------------------------------------------------------------------------------------------------
 static void service_packet_handle_trigger(char *name)
 {
@@ -474,7 +483,14 @@ static void service_packet_handle_trigger(char *name)
         return;
     }
 
-    (void)service_function_queue_add(action->func, action->delay_ms, SERVICE_PACKET_TRIGGER_PRIORITY);
+    if(0U == action->delay_ms)
+    {
+        action->func();
+    }
+    else
+    {
+        (void)service_function_queue_add(action->func, action->delay_ms, SERVICE_PACKET_TRIGGER_PRIORITY);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -785,10 +801,11 @@ uint8 service_packet_add_action(const char *name, service_packet_action_func_t f
 void service_packet_update(void)
 {
     uint8 i;
+    uint8 chunk_count;
     uint8 read_buffer[SERVICE_PACKET_RX_READ_SIZE];
     uint8 read_length;
 
-    do
+    for(chunk_count = 0U; chunk_count < SERVICE_PACKET_MAX_CHUNKS_PER_UPDATE; chunk_count++)
     {
         read_length = (uint8)service_wireless_uart_read_buffer(read_buffer, SERVICE_PACKET_RX_READ_SIZE);
         packet_rx_byte_total += read_length;
@@ -797,6 +814,10 @@ void service_packet_update(void)
         {
             service_packet_input_char((char)read_buffer[i]);
         }
+
+        if(SERVICE_PACKET_RX_READ_SIZE != read_length)
+        {
+            break;
+        }
     }
-    while(SERVICE_PACKET_RX_READ_SIZE == read_length);
 }

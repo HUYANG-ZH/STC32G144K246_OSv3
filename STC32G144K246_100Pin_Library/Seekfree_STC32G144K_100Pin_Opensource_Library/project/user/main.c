@@ -41,11 +41,12 @@
 #include "service_batterycheck.h"
 #include "service_buzzer.h"
 #include "service_imu.h"
+#include "service_inductor.h"
 #include "service_motor.h"
 #include "service_negative_pressure.h"
 #include "service_speed.h"
-#include "service_delay.h"
-// #include "app_battery_guard.h"
+#include "service_tof.h"
+#include "app_battery_guard.h"
 #include "app_element.h"
 #include "app_feedforward.h"
 #include "app_inductor_preprocess.h"
@@ -71,9 +72,7 @@ void main(void)
     service_buzzer_init();
     service_buzzer_stop();
     service_imu_init();
-    service_delay_ms(2000U);
-    service_imu_calibrate_gyro_z();
-    service_imu_calibrate_gyro_x();
+    service_tof_init();
     service_motor_init();
     service_negative_pressure_init();
     service_speed_init();
@@ -84,14 +83,22 @@ void main(void)
     app_element_init();
     app_speedout_init();
     app_motion_postprocess_init();
-    // app_battery_guard_init();
+    app_battery_guard_init();
     app_boot_sequence_init();
 
     while(1)
     {
+        /* IIC 异步状态机只在后台推进；控制中断从不等待总线。 */
+        iic_async_process_all_timed(service_timetick_what());
+        service_imu_task();
+        service_tof_task();
+        service_batterycheck_task();
+        service_inductor_task();
         service_function_queue_update();
         service_packet_update();
         app_scheduler_run();
+        app_element_pump_events();
+        app_battery_guard_pump_events();
         service_negative_pressure_task();
         service_buzzer_task();
     }

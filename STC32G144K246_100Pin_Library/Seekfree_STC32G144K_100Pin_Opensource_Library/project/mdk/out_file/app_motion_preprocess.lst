@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              17/07/26  09:18:44  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              22/07/26  20:00:31  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_preprocess
 OBJECT MODULE PLACED IN .\out_file\app_motion_preprocess.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_motion_preprocess.c LARGE ROM(HUGE) WARNINGLEVEL(3) OP
-                    -TIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\li
-                    -braries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_com
-                    -ponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_motion_preprocess.ls
-                    -t) TABS(2) OBJECT(.\out_file\app_motion_preprocess.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_motion_preprocess.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPT
+                    -IMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\lib
+                    -raries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_comp
+                    -onents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_motion_preprocess.lst
+                    -) OBJECT(.\out_file\app_motion_preprocess.obj) 
 
 stmt  level    source
 
@@ -33,7 +33,7 @@ stmt  level    source
    19          
    20          static volatile app_motion_preprocess_data_t motion_preprocess_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
    21          
-   22          static void app_motion_preprocess_tick(void);
+   22          void app_motion_preprocess_control_step(void);
    23          
    24          static float app_motion_preprocess_diff_ratio(float left_value, float right_value)
    25          {
@@ -66,12 +66,13 @@ stmt  level    source
    51          //-------------------------------------------------------------------------------------------------------
              -------------
    52          void app_motion_preprocess_init(void)
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              17/07/26  09:18:44  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              22/07/26  20:00:31  PAGE 2   
 
    53          {
    54   1          app_motion_preprocess_register_packet();
-   55   1          app_motion_preprocess_tick();
-   56   1          pit_ms_init(APP_MOTION_PREPROCESS_PIT, APP_MOTION_PREPROCESS_PERIOD_MS, app_motion_preprocess_tick);
+   55   1          /* 首次仅发布当前快照；周期调度统一由 app_motion_postprocess 的 TIM6 控制链承�
+             -�。 */
+   56   1          app_motion_preprocess_control_step();
    57   1      }
    58          
    59          //-------------------------------------------------------------------------------------------------------
@@ -101,7 +102,7 @@ stmt  level    source
    81   1          EA = ea_backup;
    82   1      }
    83          
-   84          static void app_motion_preprocess_tick(void)
+   84          void app_motion_preprocess_control_step(void)
    85          {
    86   1          app_inductor_preprocess_data_t inductor_data;
    87   1          app_motion_preprocess_data_t output;
@@ -129,14 +130,14 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       723     ------
+  ecode size           =       665     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =       105     ------
-  xdata-const size     =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              17/07/26  09:18:44  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              22/07/26  20:00:31  PAGE 3   
 
+  xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------

@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 1   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE usb
 OBJECT MODULE PLACED IN .\out_file\usb.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_components\stc32g_usb_lib\usb.c LARGE ROM(HUGE) W
-                    -ARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
-                    -f_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..
-                    -\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\usb.lst
-                    -) TABS(2) OBJECT(.\out_file\usb.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_components\stc32g_usb_lib\usb.c LARGE ROM(HUGE) WA
+                    -RNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf
+                    -_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\
+                    -libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\usb.lst)
+                    - OBJECT(.\out_file\usb.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    53   1      
    54   1          DeviceState = DEVSTATE_DEFAULT;
    55   1          Ep0State.bState = EPSTATE_IDLE;
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 2   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 2   
 
    56   1          InEpState = 0x00;
    57   1          OutEpState = 0x00;
@@ -85,21 +85,21 @@ stmt  level    source
    70          
    71          BYTE usb_read_reg(BYTE addr)
    72          {
-   73   1        BYTE dat;
+   73   1              BYTE dat;
    74   1      
-   75   1        while (USBADR & 0x80);
-   76   1        USBADR = addr | 0x80;
-   77   1        while (USBADR & 0x80);
-   78   1        dat = USBDAT;
+   75   1              while (USBADR & 0x80);
+   76   1              USBADR = addr | 0x80;
+   77   1              while (USBADR & 0x80);
+   78   1              dat = USBDAT;
    79   1      
-   80   1        return dat;
+   80   1              return dat;
    81   1      }
    82          
    83          void usb_write_reg(BYTE addr, BYTE dat)
    84          {
-   85   1        while (USBADR & 0x80);
-   86   1        USBADR = addr & 0x7f;
-   87   1        USBDAT = dat;
+   85   1              while (USBADR & 0x80);
+   86   1              USBADR = addr & 0x7f;
+   87   1              USBDAT = dat;
    88   1      }
    89          
    90          BYTE usb_read_fifo(BYTE fifo, BYTE *pdat)
@@ -110,7 +110,7 @@ stmt  level    source
    95   1          ret = cnt = usb_read_reg(COUNT0);
    96   1          while (cnt--)
    97   1          {
-   98   2            *pdat++ = usb_read_reg(fifo);
+   98   2              *pdat++ = usb_read_reg(fifo);
    99   2          }
   100   1      
   101   1          return ret;
@@ -118,8 +118,8 @@ stmt  level    source
   103          
   104          void usb_write_fifo(BYTE fifo, BYTE *pdat, BYTE cnt)
   105          {
-  106   1        while (cnt--)
-  107   1        {
+  106   1              while (cnt--)
+  107   1              {
   108   2              usb_write_reg(fifo, *pdat++);
   109   2          }
   110   1      }
@@ -134,7 +134,7 @@ stmt  level    source
   119   1          adrTemp = USBADR;     //USBADR 现场保存，避免主循环里写完 USBADR 后产生中断，在�
              -�断里修改了 USBADR 内容
   120   1      
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 3   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 3   
 
   121   1          intrusb = usb_read_reg(INTRUSB);
   122   1          intrin = usb_read_reg(INTRIN1);
@@ -202,7 +202,7 @@ stmt  level    source
   184   1      #endif
   185   1      #ifdef EN_EP3IN
                    usb_write_reg(INDEX, 3);
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 4   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 4   
 
                    usb_write_reg(INCSR1, INCLRDT | INFLUSH);
                #endif
@@ -270,7 +270,7 @@ stmt  level    source
   250   4                  case STANDARD_REQUEST:
   251   4                      usb_req_std();
   252   4                      break;
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 5   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 5   
 
   253   4                  case CLASS_REQUEST:
   254   4                      usb_req_class();
@@ -338,7 +338,7 @@ stmt  level    source
   316   2          }
   317   1          else
   318   1          {
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 6   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 6   
 
   319   2              usb_write_reg(CSR0, IPRDY);
   320   2          }
@@ -406,7 +406,7 @@ stmt  level    source
   382   2          }
   383   1      }
   384          #endif
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 7   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 7   
 
   385          
   386          #ifdef EN_EP3IN
@@ -474,7 +474,7 @@ stmt  level    source
   448   1          BYTE idx;
   449   1          BYTE xdata rx_buff[64];
   450   1          
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 8   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 8   
 
   451   1          usb_write_reg(INDEX, 1);
   452   1          csr = usb_read_reg(OUTCSR1);
@@ -542,7 +542,7 @@ stmt  level    source
   514          
   515          #ifdef EN_EP4OUT
                void usb_out_ep4()
-C251 COMPILER V5.60.0,  usb                                                                16/07/26  18:10:27  PAGE 9   
+C251 COMPILER V5.60.0,  usb                                                                20/07/26  19:25:34  PAGE 9   
 
                {
                    BYTE csr;

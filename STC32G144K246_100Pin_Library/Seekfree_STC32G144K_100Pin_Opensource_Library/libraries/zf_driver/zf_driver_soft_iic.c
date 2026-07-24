@@ -185,6 +185,26 @@ uint8 soft_iic_send_data (soft_iic_info_struct *soft_iic_obj, const uint8 dat)
     return ((soft_iic_wait_ack(soft_iic_obj) == 1) ? 0 : 1 );
 }
 
+static uint8 soft_iic_send_data_status (soft_iic_info_struct *soft_iic_obj, const uint8 dat)
+{
+    return (0 == soft_iic_send_data(soft_iic_obj, dat)) ? 1 : 0;
+}
+
+uint8 soft_iic_probe_7bit_address (soft_iic_info_struct *soft_iic_obj, uint8 addr)
+{
+    uint8 old_addr;
+    uint8 error;
+
+    zf_assert(soft_iic_obj != NULL);
+    old_addr = soft_iic_obj->addr;
+    soft_iic_obj->addr = addr;
+    soft_iic_start(soft_iic_obj);
+    error = soft_iic_send_data_status(soft_iic_obj, (uint8)(addr << 1));
+    soft_iic_stop(soft_iic_obj);
+    soft_iic_obj->addr = old_addr;
+    return error;
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     软件 IIC 读取 8bit 数据
 // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格式看看
@@ -588,28 +608,36 @@ void soft_iic_read_16bit_registers (soft_iic_info_struct *soft_iic_obj, const ui
 // 使用示例     iic_transfer_8bit_array(IIC_1, addr, dat, 64, dat, 64);
 // 备注信息     
 //-------------------------------------------------------------------------------------------------------------------
-void soft_iic_transfer_8bit_array (soft_iic_info_struct *soft_iic_obj, const uint8 *write_data, uint32 write_len, uint8 *read_data, uint32 read_len)
+uint8 soft_iic_transfer_8bit_array_status (soft_iic_info_struct *soft_iic_obj, const uint8 *write_data, uint32 write_len, uint8 *read_data, uint32 read_len)
 {
+    uint8 error = 0;
+
     zf_assert(soft_iic_obj != NULL);
     zf_assert(write_data != NULL);
     zf_assert(read_data != NULL);
     soft_iic_start(soft_iic_obj);
-    soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+    error |= soft_iic_send_data_status(soft_iic_obj, soft_iic_obj->addr << 1);
     while(write_len --)
     {
-        soft_iic_send_data(soft_iic_obj, *write_data ++);
+        error |= soft_iic_send_data_status(soft_iic_obj, *write_data ++);
     }
 
     if(read_len)
     {
         soft_iic_start(soft_iic_obj);
-        soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+        error |= soft_iic_send_data_status(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
         while(read_len --)
         {
             *read_data ++ = soft_iic_read_data(soft_iic_obj, read_len == 0);
         }
     }
     soft_iic_stop(soft_iic_obj);
+    return error;
+}
+
+void soft_iic_transfer_8bit_array (soft_iic_info_struct *soft_iic_obj, const uint8 *write_data, uint32 write_len, uint8 *read_data, uint32 read_len)
+{
+    (void)soft_iic_transfer_8bit_array_status(soft_iic_obj, write_data, write_len, read_data, read_len);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -713,4 +741,6 @@ void soft_iic_init (soft_iic_info_struct *soft_iic_obj, uint8 addr, uint32 delay
     soft_iic_obj->delay = delay;
     gpio_init(scl_pin, GPO, 1, GPO_OPEN_DTAIN);                          	// 提取对应IO索引 AF功能编码
     gpio_init(sda_pin, GPO, 1, GPO_OPEN_DTAIN);                         	// 提取对应IO索引 AF功能编码
+    gpio_set_pull_up(scl_pin);
+    gpio_set_pull_up(sda_pin);
 }

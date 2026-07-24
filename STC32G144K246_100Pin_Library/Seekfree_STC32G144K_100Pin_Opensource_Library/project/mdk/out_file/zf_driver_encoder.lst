@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  16/07/26  18:10:24  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  20/07/26  23:08:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_encoder
 OBJECT MODULE PLACED IN .\out_file\zf_driver_encoder.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_encoder.c LARGE ROM(HUGE) WARNIN
-                    -GLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
-                    -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
-                    -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_en
-                    -coder.lst) TABS(2) OBJECT(.\out_file\zf_driver_encoder.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_encoder.c LARGE ROM(HUGE) WARNING
+                    -LEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
+                    -ce;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libra
+                    -ries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_enc
+                    -oder.lst) OBJECT(.\out_file\zf_driver_encoder.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    47              0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
    48              0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
    49              0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  16/07/26  18:10:24  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  20/07/26  23:08:27  PAGE 2   
 
    50              0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
    51          };
@@ -134,7 +134,7 @@ stmt  level    source
              -------------
   111          // 函数简介     定时器的计数器清空
   112          // 参数说明     timer_ch      定时器枚举体
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  16/07/26  18:10:24  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  20/07/26  23:08:27  PAGE 3   
 
   113          // 返回参数     void
   114          // 备注信息
@@ -192,8 +192,8 @@ stmt  level    source
   162   1          // 如果程序在输出了断言信息 并且提示出错位置在这里
   163   1          // 就去查看你在什么地方调用这个函数 检查你的传入参数
   164   1          // 这里是检查是否有重复使用定时器
-  165   1        // TIM2已经给串口用作波特率发生器了。不能再初始化为其他的。
-  166   1        zf_assert(timer_funciton_check(encoder_n & 0xFF, TIMER_FUNCTION_ENCODER));
+  165   1              // TIM2已经给串口用作波特率发生器了。不能再初始化为其他的。
+  166   1              zf_assert(timer_funciton_check(encoder_n & 0xFF, TIMER_FUNCTION_ENCODER));
   167   1      
   168   1          // 传入的引脚错误
   169   1          zf_assert(((uint16)lsb_pin >> 13) == 6);
@@ -202,7 +202,7 @@ stmt  level    source
   172   1          encoder_dir_pin[encoder_n & 0x0F + PWMF_ENCODER + 1] = (uint8)(dir_pin & 0xFF);
   173   1          switch(encoder_n)
   174   1          {
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  16/07/26  18:10:24  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  20/07/26  23:08:27  PAGE 4   
 
   175   2              case TIM0_ENCODER:  TL0=0;  TH0=0;  TMOD|=0x04; TR0=1; break;
   176   2              case TIM1_ENCODER:  TL1=0;  TH1=0;  TMOD|=0x40; TR1=1; break;
@@ -243,7 +243,7 @@ stmt  level    source
   208   1          
   209   1          
   210   1          PWMX_CR1(ch1_pin) &= 0xFE;
-  211   1          PWMX_PS(ch1_pin)  |= ((ch1_pin >> 8) & 0x03) << (((ch1_pin >> 11) & 0x03) * 2);       // 选择引脚
+  211   1          PWMX_PS(ch1_pin)  |= ((ch1_pin >> 8) & 0x03) << (((ch1_pin >> 11) & 0x03) * 2);                             // 选择引脚
   212   1      
   213   1          PWMX_ARRH(ch1_pin) = 0xFF;              // 周期寄存器
   214   1          PWMX_ARRL(ch1_pin) = 0xFF;              // 周期寄存器
@@ -255,8 +255,8 @@ stmt  level    source
   220   1      
   221   1          PWMX_CCERX(ch1_pin) = 0x00;             // 关闭所有输出
   222   1          PWMX_CCERX(ch2_pin) = 0x00;             // 关闭所有输出
-  223   1          PWMX_CCMRX(ch1_pin) |= 0x01;          // 01:CC1 通道被配置为输入，IC1 映射在TI1 上
-  224   1          PWMX_CR1(ch1_pin)   |= 0x01;          // 开启定时器，向上计数
+  223   1          PWMX_CCMRX(ch1_pin) |= 0x01;                // 01:CC1 通道被配置为输入，IC1 映射在TI1 上
+  224   1          PWMX_CR1(ch1_pin)   |= 0x01;                // 开启定时器，向上计数
   225   1          
   226   1      }
   227          
@@ -270,7 +270,7 @@ stmt  level    source
   234          // 返回参数     void
   235          // 使用示例             encoder_quad_init(PWMA_ENCODER, PWMA_ENCODER_CH1P_P60, PWMA_ENCODER_CH2P_P62)
   236          //                      // 使用PWMA 做正交解码使用， 通道1脉冲信号引脚P60，通道2脉�
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  16/07/26  18:10:24  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  20/07/26  23:08:27  PAGE 5   
 
              -��信号引脚P62
   237          // 备注信息                                
@@ -287,12 +287,12 @@ stmt  level    source
              -�� encoder_n 匹配
   245   1      
   246   1      
-  247   1          gpio_init(ch1_pin  & 0xFF, GPI, 1, GPI_IMPEDANCE);        // 初始化引脚
-  248   1          gpio_init(ch2_pin  & 0xFF, GPI, 1, GPI_IMPEDANCE);        // 初始化引脚
+  247   1          gpio_init(ch1_pin  & 0xFF, GPI, 1, GPI_IMPEDANCE);              // 初始化引脚
+  248   1          gpio_init(ch2_pin  & 0xFF, GPI, 1, GPI_IMPEDANCE);              // 初始化引脚
   249   1      
   250   1          PWMX_CR1(ch1_pin) &= 0xFE;
-  251   1          PWMX_PS(ch1_pin)  |= ((ch1_pin >> 8) & 0x03) << (((ch1_pin >> 11) & 0x03) * 2);       // 选择引脚
-  252   1          PWMX_PS(ch2_pin)  |= ((ch2_pin >> 8) & 0x03) << (((ch2_pin >> 11) & 0x03) * 2);       // 选择引脚
+  251   1          PWMX_PS(ch1_pin)  |= ((ch1_pin >> 8) & 0x03) << (((ch1_pin >> 11) & 0x03) * 2);                             // 选择引脚
+  252   1          PWMX_PS(ch2_pin)  |= ((ch2_pin >> 8) & 0x03) << (((ch2_pin >> 11) & 0x03) * 2);                             // 选择引脚
   253   1      
   254   1          PWMX_ARRH(ch1_pin) = 0xFF;      // 周期寄存器
   255   1          PWMX_ARRL(ch1_pin) = 0xFF;      // 周期寄存器
@@ -300,33 +300,33 @@ stmt  level    source
   257   1          PWMX_PSCRH(ch1_pin) = 0;        // 分频寄存器
   258   1          PWMX_PSCRL(ch1_pin) = 0;        // 分频寄存器
   259   1      
-  260   1          PWMX_SMCR(ch1_pin)  = 0x03;   // 边沿计数
+  260   1          PWMX_SMCR(ch1_pin)  = 0x03;         // 边沿计数
   261   1      
   262   1          PWMX_CCERX(ch1_pin) = 0x00;     // 关闭所有输出
   263   1          PWMX_CCERX(ch2_pin) = 0x00;     // 关闭所有输出
-  264   1          PWMX_CCMRX(ch1_pin) |= 0x01;  // 01:CC1 通道被配置为输入，IC1 映射在TI1 上
+  264   1          PWMX_CCMRX(ch1_pin) |= 0x01;        // 01:CC1 通道被配置为输入，IC1 映射在TI1 上
   265   1          PWMX_CCMRX(ch2_pin) |= 0x01;    // 01:CC2 通道被配置为输入，IC2 映射在TI2 上
-  266   1          PWMX_CR1(ch1_pin)   |= 0x01;  // 开启定时器，向上计数
+  266   1          PWMX_CR1(ch1_pin)   |= 0x01;        // 开启定时器，向上计数
   267   1      
   268   1      
   269   1      
-  270   1          // PWMA_PS |= 0x02;   // 选择引脚
-  271   1          // PWMA_PS |= 0x02 << 2;  // 选择引脚
+  270   1          // PWMA_PS |= 0x02;         // 选择引脚
+  271   1          // PWMA_PS |= 0x02 << 2;    // 选择引脚
   272   1          // PWMA_PSCRH = 0;         // 分频寄存器
   273   1          // PWMA_PSCRL = 1;         // 分频寄存器
   274   1          // PWMA_CR1 = 0;           // 控制寄存器
-  275   1          // PWMA_CR2 = 0;          // 控制寄存器
+  275   1          // PWMA_CR2 = 0;            // 控制寄存器
   276   1          // PWMA_SR1 = 0;           // 状态寄存器
-  277   1          // PWMA_SR2 = 0;          // 状态寄存器
-  278   1          // PWMA_ARRH = 0xFF;      // 设置自动重装载值
-  279   1          // PWMA_ARRL = 0xFF;      // 设置自动重装载值
-  280   1          // PWMA_SMCR = 0x02;    // 010:编码器模式2-根据TI2 的电平，计数器在TI1 的边沿向上/
+  277   1          // PWMA_SR2 = 0;            // 状态寄存器
+  278   1          // PWMA_ARRH = 0xFF;            // 设置自动重装载值
+  279   1          // PWMA_ARRL = 0xFF;            // 设置自动重装载值
+  280   1          // PWMA_SMCR = 0x02;                // 010:编码器模式2-根据TI2 的电平，计数器在TI1 的边沿向上/
              -向下计数
   281   1          // PWMA_CCER1 = 0x00;      // 关闭所有输出
   282   1          // PWMA_CCER2 = 0x00;      // 关闭所有输出
-  283   1          // PWMA_CCMR1 = 0x01;     // 01:CC2 通道被配置为输入，IC2 映射在TI2 上
+  283   1          // PWMA_CCMR1 = 0x01;           // 01:CC2 通道被配置为输入，IC2 映射在TI2 上
   284   1          // PWMA_CCMR2 = 0x01;      // 01:CC1 通道被配置为输入，IC1 映射在TI1 上
-  285   1          // PWMA_CR1 |= 0x01;    // 开启定时器，向上计数
+  285   1          // PWMA_CR1 |= 0x01;                // 开启定时器，向上计数
   286   1            
   287   1      }
   288          
@@ -338,7 +338,7 @@ stmt  level    source
   293          // 参数说明     phaseB          通道B以及引脚
   294          // 返回参数     void
   295          // 备注信息   
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  16/07/26  18:10:24  PAGE 6   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  20/07/26  23:08:27  PAGE 6   
 
   296          // 使用示例     encoder_init_dir(PWMA_ENCODER, PWMA_ENCODER_CH1P_P60, PWMA_ENCODER_CH2P_P62)
   297          //             // 使用PWMA 做正交解码使用， 通道1方向信号引脚P60，通道2脉冲信号�

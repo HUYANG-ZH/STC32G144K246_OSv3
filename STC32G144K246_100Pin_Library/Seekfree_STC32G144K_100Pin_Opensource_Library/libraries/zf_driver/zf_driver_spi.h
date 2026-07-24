@@ -49,6 +49,8 @@ typedef enum
     //其中SS引脚由软件控制
 } spi_index_enum;
 
+typedef void (*spi_dma_async_callback)(spi_index_enum spi_n, uint8 success);
+
 
 // 该枚举体禁止用户修改
 typedef enum
@@ -227,6 +229,14 @@ void        spi_dma_transfer_8bit               (spi_index_enum spi_n, const uin
 void        spi_dma_transfer_16bit              (spi_index_enum spi_n, const uint16 *write_buffer, uint16 *read_buffer, uint32 len);
 
 void        spi_dma_init                        (spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_pin_enum sck_pin, spi_pin_enum mosi_pin, spi_pin_enum miso_pin, gpio_pin_enum cs_pin);
+
+// Runtime DMA API. Unlike the legacy spi_dma_* helpers, this interface only
+// arms DMA and completes from DMA_SPIx_VECTOR; it never polls for completion.
+// Buffers must remain valid until the callback runs.
+uint8       spi_dma_async_transfer              (spi_index_enum spi_n, const uint8 *write_buffer, uint8 *read_buffer, uint16 len, spi_dma_async_callback callback);
+uint8       spi_dma_async_is_busy               (spi_index_enum spi_n);
+uint8       spi_dma_async_abort                 (spi_index_enum spi_n);
+void        spi_dma_async_irq_handler           (spi_index_enum spi_n);
 // ======================================================== SPI_DMA传输 ======================================================== //
 
 

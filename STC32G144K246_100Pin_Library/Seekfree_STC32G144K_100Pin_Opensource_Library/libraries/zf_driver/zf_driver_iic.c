@@ -70,6 +70,36 @@ typedef struct
 
 static iic_info_struct iic_info[IIC_NUM];
 
+typedef enum
+{
+    IIC_ASYNC_STATE_IDLE = 0,
+    IIC_ASYNC_STATE_START_WRITE,
+    IIC_ASYNC_STATE_WRITE,
+    IIC_ASYNC_STATE_START_READ,
+    IIC_ASYNC_STATE_READ,
+    IIC_ASYNC_STATE_STOP_SUCCESS,
+    IIC_ASYNC_STATE_STOP_ERROR,
+} iic_async_state_enum;
+
+typedef struct
+{
+    volatile iic_async_state_enum state;
+    volatile iic_status_enum      status;
+    iic_status_enum               pending_status;
+    uint8                         addr;
+    const uint8                  *write_data;
+    uint32                        write_len;
+    uint32                        write_pos;
+    uint8                        *read_data;
+    uint32                        read_len;
+    uint32                        read_pos;
+    uint32                        last_progress_tick;
+    uint32                        service_count;
+    uint8                         timebase_valid;
+} iic_async_info_struct;
+
+static iic_async_info_struct iic_async_info[IIC_NUM];
+
 // IIC 总线在硬件初始化和恢复期间需要读取 SDA/SCL 实际电平。
 // 该配置属于 IIC 驱动自身，不能调用 GPIO 驱动文件内部的 static 函数。
 static void iic_set_digital_input(gpio_pin_enum pin, uint8 enable)
@@ -335,6 +365,269 @@ static void iic_unlock (iic_index_enum iic_n)
     EA = 0;
     iic_info[iic_n].locked = 0;
     EA = ea_backup;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 非阻塞硬件 IIC 状态机。每一次 iic_async_process 只观察一次状态位或下发一条硬件命令，
+// 从不在主循环、定时器或 DMA 中断里等待 SCL/SDA/IF。
+//-------------------------------------------------------------------------------------------------------------------
+static void iic_async_issue_command (iic_index_enum iic_n, uint8 command)
+{
+    iic_hw_clear_if(iic_n);
+    iic_hw_set_command(iic_n, command);
+}
+
+static void iic_async_finish (iic_index_enum iic_n, iic_status_enum status)
+{
+    iic_async_info[iic_n].state = IIC_ASYNC_STATE_IDLE;
+    iic_async_info[iic_n].status = status;
+    iic_async_info[iic_n].timebase_valid = 0U;
+    iic_set_last_status(iic_n, status);
+    iic_unlock(iic_n);
+}
+
+static void iic_async_begin_stop (iic_index_enum iic_n, iic_status_enum final_status)
+{
+    iic_async_info[iic_n].pending_status = final_status;
+    iic_async_info[iic_n].state = (IIC_SUCCESS == final_status) ?
+            IIC_ASYNC_STATE_STOP_SUCCESS : IIC_ASYNC_STATE_STOP_ERROR;
+    iic_async_issue_command(iic_n, IIC_CMD_STOP);
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     提交一个 7-bit IIC 异步读写事务。提交后由 iic_async_process 推进，调用点不阻塞。
+//-------------------------------------------------------------------------------------------------------------------
+iic_status_enum iic_async_transfer (iic_index_enum iic_n, uint8 addr,
+        const uint8 *write_data, uint32 write_len, uint8 *read_data, uint32 read_len)
+{
+    iic_async_info_struct *async_info;
+
+    if((0 == iic_index_is_valid(iic_n)) || (addr > 0x7FU) ||
+       ((write_len > 0U) && (NULL == write_data)) ||
+       ((read_len > 0U) && (NULL == read_data)))
+    {
+        iic_set_last_status(iic_n, IIC_ERROR_INVALID_PARAMETER);
+        return IIC_ERROR_INVALID_PARAMETER;
+    }
+
+    if(0U == iic_info[iic_n].initialized)
+    {
+        iic_set_last_status(iic_n, IIC_ERROR_NOT_INITIALIZED);
+        return IIC_ERROR_NOT_INITIALIZED;
+    }
+
+    if((0U == write_len) && (0U == read_len))
+    {
+        iic_set_last_status(iic_n, IIC_SUCCESS);
+        return IIC_SUCCESS;
+    }
+
+    if(0U == iic_try_lock(iic_n))
+    {
+        iic_set_last_status(iic_n, IIC_ERROR_BUSY);
+        return IIC_ERROR_BUSY;
+    }
+
+    EAXFR = 1;
+    if(0U != (iic_hw_get_status(iic_n) & IIC_STATUS_BUSY))
+    {
+        iic_unlock(iic_n);
+        iic_set_last_status(iic_n, IIC_ERROR_BUSY);
+        return IIC_ERROR_BUSY;
+    }
+
+    if((0U == gpio_get_level(iic_info[iic_n].scl_pin)) ||
+       (0U == gpio_get_level(iic_info[iic_n].sda_pin)))
+    {
+        iic_unlock(iic_n);
+        iic_set_last_status(iic_n, IIC_ERROR_BUS_STUCK);
+        return IIC_ERROR_BUS_STUCK;
+    }
+
+    async_info = &iic_async_info[iic_n];
+    async_info->addr = addr;
+    async_info->write_data = write_data;
+    async_info->write_len = write_len;
+    async_info->write_pos = 0U;
+    async_info->read_data = read_data;
+    async_info->read_len = read_len;
+    async_info->read_pos = 0U;
+    async_info->pending_status = IIC_SUCCESS;
+    async_info->last_progress_tick = 0U;
+    async_info->service_count = 0U;
+    async_info->timebase_valid = 0U;
+    async_info->status = IIC_ERROR_BUSY;
+    iic_set_last_status(iic_n, IIC_ERROR_BUSY);
+
+    if(write_len > 0U)
+    {
+        iic_hw_set_tx(iic_n, (uint8)((addr << 1) | 0U));
+        async_info->state = IIC_ASYNC_STATE_START_WRITE;
+    }
+    else
+    {
+        iic_hw_set_tx(iic_n, (uint8)((addr << 1) | 1U));
+        async_info->state = IIC_ASYNC_STATE_START_READ;
+    }
+    iic_async_issue_command(iic_n, IIC_CMD_START_SEND_ACK);
+    return IIC_SUCCESS;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     推进一步异步硬件 IIC 事务。必须仅在主循环或专用低优先级服务上下文调用。
+//-------------------------------------------------------------------------------------------------------------------
+static void iic_async_process_internal (iic_index_enum iic_n, uint8 timed, uint32 now_tick)
+{
+    iic_async_info_struct *async_info;
+    uint8 hw_status;
+
+    if((0 == iic_index_is_valid(iic_n)) ||
+       (IIC_ASYNC_STATE_IDLE == iic_async_info[iic_n].state))
+    {
+        return;
+    }
+
+    EAXFR = 1;
+    async_info = &iic_async_info[iic_n];
+    hw_status = iic_hw_get_status(iic_n);
+    if(0U == (hw_status & IIC_STATUS_IF))
+    {
+        async_info->service_count++;
+        if((0U != timed) && (0U == async_info->timebase_valid))
+        {
+            async_info->last_progress_tick = now_tick;
+            async_info->timebase_valid = 1U;
+        }
+        if(((0U != timed) && ((uint32)(now_tick - async_info->last_progress_tick) >= IIC_ASYNC_TIMEOUT_TICKS)) ||
+           ((0U == timed) && (async_info->service_count >= IIC_ASYNC_MAX_SERVICE_COUNT)))
+        {
+            /* 不执行 GPIO 位带恢复，避免把等待循环带入常规业务路径。 */
+            iic_hw_configure(iic_n);
+            iic_async_finish(iic_n, IIC_ERROR_TIMEOUT);
+        }
+        return;
+    }
+
+    async_info->service_count = 0U;
+    if(0U != timed)
+    {
+        async_info->last_progress_tick = now_tick;
+        async_info->timebase_valid = 1U;
+    }
+    iic_hw_clear_if(iic_n);
+
+    switch(async_info->state)
+    {
+        case IIC_ASYNC_STATE_START_WRITE:
+            if(0U != (hw_status & IIC_STATUS_ACK_IN))
+            {
+                iic_async_begin_stop(iic_n, IIC_ERROR_NACK);
+            }
+            else
+            {
+                iic_hw_set_tx(iic_n, async_info->write_data[async_info->write_pos++]);
+                async_info->state = IIC_ASYNC_STATE_WRITE;
+                iic_async_issue_command(iic_n, IIC_CMD_SEND_ACK_COMBINED);
+            }
+            break;
+
+        case IIC_ASYNC_STATE_WRITE:
+            if(0U != (hw_status & IIC_STATUS_ACK_IN))
+            {
+                iic_async_begin_stop(iic_n, IIC_ERROR_NACK);
+            }
+            else if(async_info->write_pos < async_info->write_len)
+            {
+                iic_hw_set_tx(iic_n, async_info->write_data[async_info->write_pos++]);
+                iic_async_issue_command(iic_n, IIC_CMD_SEND_ACK_COMBINED);
+            }
+            else if(async_info->read_len > 0U)
+            {
+                iic_hw_set_tx(iic_n, (uint8)((async_info->addr << 1) | 1U));
+                async_info->state = IIC_ASYNC_STATE_START_READ;
+                iic_async_issue_command(iic_n, IIC_CMD_START_SEND_ACK);
+            }
+            else
+            {
+                iic_async_begin_stop(iic_n, IIC_SUCCESS);
+            }
+            break;
+
+        case IIC_ASYNC_STATE_START_READ:
+            if(0U != (hw_status & IIC_STATUS_ACK_IN))
+            {
+                iic_async_begin_stop(iic_n, IIC_ERROR_NACK);
+            }
+            else
+            {
+                async_info->state = IIC_ASYNC_STATE_READ;
+                iic_async_issue_command(iic_n,
+                        (1U == async_info->read_len) ? IIC_CMD_RECV_SEND_NACK : IIC_CMD_RECV_SEND_ACK);
+            }
+            break;
+
+        case IIC_ASYNC_STATE_READ:
+            async_info->read_data[async_info->read_pos++] = iic_hw_get_rx(iic_n);
+            if(async_info->read_pos < async_info->read_len)
+            {
+                iic_async_issue_command(iic_n,
+                        ((async_info->read_pos + 1U) == async_info->read_len) ?
+                        IIC_CMD_RECV_SEND_NACK : IIC_CMD_RECV_SEND_ACK);
+            }
+            else
+            {
+                iic_async_begin_stop(iic_n, IIC_SUCCESS);
+            }
+            break;
+
+        case IIC_ASYNC_STATE_STOP_SUCCESS:
+        case IIC_ASYNC_STATE_STOP_ERROR:
+            iic_async_finish(iic_n, async_info->pending_status);
+            break;
+
+        case IIC_ASYNC_STATE_IDLE:
+        default:
+            iic_async_finish(iic_n, IIC_ERROR_TIMEOUT);
+            break;
+    }
+}
+
+void iic_async_process (iic_index_enum iic_n)
+{
+    iic_async_process_internal(iic_n, 0U, 0UL);
+}
+
+void iic_async_process_all (void)
+{
+    iic_async_process(IIC_1);
+    iic_async_process(IIC_2);
+}
+
+void iic_async_process_timed (iic_index_enum iic_n, uint32 now_tick)
+{
+    iic_async_process_internal(iic_n, 1U, now_tick);
+}
+
+void iic_async_process_all_timed (uint32 now_tick)
+{
+    iic_async_process_timed(IIC_1, now_tick);
+    iic_async_process_timed(IIC_2, now_tick);
+}
+
+uint8 iic_async_is_busy (iic_index_enum iic_n)
+{
+    return (iic_index_is_valid(iic_n) &&
+            (IIC_ASYNC_STATE_IDLE != iic_async_info[iic_n].state)) ? 1U : 0U;
+}
+
+iic_status_enum iic_async_get_status (iic_index_enum iic_n)
+{
+    if(0 == iic_index_is_valid(iic_n))
+    {
+        return IIC_ERROR_INVALID_PARAMETER;
+    }
+
+    return (0U != iic_async_is_busy(iic_n)) ? IIC_ERROR_BUSY : iic_async_info[iic_n].status;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -758,11 +1051,13 @@ iic_status_enum iic_init (iic_index_enum iic_n, uint8 addr, uint32 speed, iic_pi
     iic_hw_configure(iic_n);
     iic_info[iic_n].initialized = 1;
 
-    // 上电时若目标器件把 SDA 留在低电平，主动进行一次恢复。
+    /* Runtime initialization must be bounded.  Do not enter the legacy
+       GPIO-pulse recovery loop here: the active ToF path reports BUS_STUCK
+       and retries through its background state machine instead. */
     if((0 == gpio_get_level(iic_info[iic_n].scl_pin)) ||
        (0 == gpio_get_level(iic_info[iic_n].sda_pin)))
     {
-        iic_info[iic_n].last_status = iic_recover_bus_internal(iic_n);
+        iic_info[iic_n].last_status = IIC_ERROR_BUS_STUCK;
     }
 
     iic_unlock(iic_n);

@@ -1,104 +1,179 @@
-C251 COMPILER V5.60.0,  app_battery_guard                                                  17/07/26  04:05:58  PAGE 1   
+C251 COMPILER V5.60.0,  app_battery_guard                                                  22/07/26  22:25:56  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_battery_guard
 OBJECT MODULE PLACED IN .\out_file\app_battery_guard.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_battery_guard.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMI
-                    -ZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
-                    -ies\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compone
-                    -nts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_battery_guard.lst) TABS(
-                    -2) OBJECT(.\out_file\app_battery_guard.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe ..\L3_APP\app_battery_guard.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZ
+                    -E(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -es\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_componen
+                    -ts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_battery_guard.lst) OBJECT
+                    -(.\out_file\app_battery_guard.obj) 
 
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
     2          #include "service_batterycheck.h"
-    3          #include "service_negative_pressure.h"
-    4          #include "service_timetick.h"
-    5          #include "app_feedforward.h"
-    6          #include "app_log.h"
-    7          #include "app_motion_postprocess.h"
-    8          #include "app_scheduler.h"
-    9          #include "app_speedout.h"
-   10          #include "app_battery_guard.h"
-   11          
-   12          #define APP_BATTERY_GUARD_TASK_ID              (3U)
-   13          #define APP_BATTERY_GUARD_TASK_PRIORITY        (9U)
-   14          #define APP_BATTERY_GUARD_PERIOD_MS            (10U)
-   15          #define APP_BATTERY_GUARD_LOW_VOLTAGE          (11.0f)
+    3          #include "service_timetick.h"
+    4          #include "app_feedforward.h"
+    5          #include "app_log.h"
+    6          #include "app_motion_postprocess.h"
+    7          #include "app_speedout.h"
+    8          #include "app_battery_guard.h"
+    9          
+   10          #define APP_BATTERY_GUARD_PIT                  TIM8_PIT
+   11          #define APP_BATTERY_GUARD_PERIOD_MS            (10U)
+   12          /* ceil(11.0 V * 4096 / 36.4737); compare raw ADC data in the timer. */
+   13          #define APP_BATTERY_GUARD_LOW_RAW              (1236U)
+   14          #define APP_BATTERY_GUARD_STARTUP_GRACE_TICK    (3000UL)
+   15          #define APP_BATTERY_GUARD_MAX_SAMPLE_AGE_TICK   (1500UL)
    16          
-   17          static uint8 battery_guard_triggered = 0U;
-   18          
-   19          static void app_battery_guard_task(void)
-   20          {
-   21   1          float voltage;
-   22   1          uint32 timestamp;
-   23   1          app_motion_postprocess_data_t motion_post;
-   24   1          app_speedout_data_t speedout;
-   25   1          app_feedforward_data_t feedforward;
-   26   1      
-   27   1          if(0U != battery_guard_triggered)
-   28   1          {
-   29   2              return;
-   30   2          }
-   31   1      
-   32   1          service_batterycheck_get_voltage(&voltage);
-   33   1          if(voltage >= APP_BATTERY_GUARD_LOW_VOLTAGE)
-   34   1          {
-   35   2              return;
-   36   2          }
-   37   1      
-   38   1          battery_guard_triggered = 1U;
-   39   1          timestamp = service_timetick_what();
-   40   1          app_motion_postprocess_get_data(&motion_post);
-   41   1          app_speedout_get_data(&speedout);
-   42   1          app_feedforward_get_data(&feedforward);
-   43   1      
-   44   1          Wlog("UV,tick_0p1ms=%lu,v=%.3f\r\n", timestamp, voltage);
-   45   1          Wlog("MP,raw=%.3f,tar_y=%.3f,act_y=%.3f,diff=%.3f\r\n",
-   46   1                  motion_post.raw_error,
-   47   1                  motion_post.target_yaw_rate_radps,
-   48   1                  motion_post.actual_yaw_rate_radps,
-   49   1                  motion_post.target_differential_speed);
-   50   1          Wlog("SO,lt=%.3f,la=%.3f,lp=%.3f,rt=%.3f,ra=%.3f,rp=%.3f\r\n",
-   51   1                  speedout.left_target_mps,
-   52   1                  speedout.left_actual_mps,
-   53   1                  speedout.left_pwm,
-   54   1                  speedout.right_target_mps,
-   55   1                  speedout.right_actual_mps,
-C251 COMPILER V5.60.0,  app_battery_guard                                                  17/07/26  04:05:58  PAGE 2   
+   17          #define APP_BATTERY_GUARD_REASON_LOW_VOLTAGE    (1U)
+   18          #define APP_BATTERY_GUARD_REASON_STALE_SAMPLE   (2U)
+   19          
+   20          static volatile uint8 battery_guard_triggered = 0U;
+   21          static volatile uint8 battery_guard_report_pending = 0U;
+   22          static volatile uint16 battery_guard_trip_raw = 0U;
+   23          static volatile uint8 battery_guard_reason = 0U;
+   24          static uint32 battery_guard_last_sequence = 0UL;
+   25          static uint32 battery_guard_last_fresh_tick = 0UL;
+   26          static uint32 battery_guard_start_tick = 0UL;
+   27          static uint8 battery_guard_sample_seen = 0U;
+   28          
+   29          static void app_battery_guard_trip(uint16 rawdata, uint8 reason)
+   30          {
+   31   1          if(0U != battery_guard_triggered)
+   32   1          {
+   33   2              return;
+   34   2          }
+   35   1      
+   36   1          battery_guard_triggered = 1U;
+   37   1          battery_guard_trip_raw = rawdata;
+   38   1          battery_guard_reason = reason;
+   39   1          battery_guard_report_pending = 1U;
+   40   1          /* An interlock cannot be overridden by a concurrent START command. */
+   41   1          app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_BATTERY);
+   42   1      }
+   43          
+   44          /* The only safety decision and motor stop request live in a high-priority timer. */
+   45          static void app_battery_guard_tick(void)
+   46          {
+   47   1          uint16 rawdata = 0U;
+   48   1          uint32 sequence;
+   49   1          uint32 now;
+   50   1      
+   51   1          if(0U != battery_guard_triggered)
+   52   1          {
+   53   2              return;
+   54   2          }
+   55   1      
+C251 COMPILER V5.60.0,  app_battery_guard                                                  22/07/26  22:25:56  PAGE 2   
 
-   56   1                  speedout.right_pwm);
-   57   1          Wlog("FF,kff=%.3f,kd=%.3f,cur=%.3f,rate=%.3f,out=%.3f,post=%.3f\r\n",
-   58   1                  app_feedforward_config.kff,
-   59   1                  app_feedforward_config.kd,
-   60   1                  feedforward.curvature,
-   61   1                  feedforward.curvature_rate,
-   62   1                  feedforward.feedforward,
-   63   1                  motion_post.feedforward);
-   64   1      
-   65   1          app_speedout_stop();
-   66   1          service_negative_pressure_set_percent(0U);
-   67   1      }
-   68          
-   69          void app_battery_guard_init(void)
-   70          {
-   71   1          battery_guard_triggered = 0U;
-   72   1          (void)app_scheduler_add(APP_BATTERY_GUARD_TASK_ID,
-   73   1                  app_battery_guard_task,
-   74   1                  APP_BATTERY_GUARD_TASK_PRIORITY,
-   75   1                  APP_BATTERY_GUARD_PERIOD_MS);
-   76   1      }
+   56   1          now = service_timetick_what();
+   57   1          if(0U != service_batterycheck_get_raw_snapshot(&rawdata, &sequence))
+   58   1          {
+   59   2              if((0U == battery_guard_sample_seen) || (sequence != battery_guard_last_sequence))
+   60   2              {
+   61   3                  battery_guard_last_sequence = sequence;
+   62   3                  battery_guard_last_fresh_tick = now;
+   63   3                  battery_guard_sample_seen = 1U;
+   64   3                  if(rawdata < APP_BATTERY_GUARD_LOW_RAW)
+   65   3                  {
+   66   4                      app_battery_guard_trip(rawdata, APP_BATTERY_GUARD_REASON_LOW_VOLTAGE);
+   67   4                  }
+   68   3                  return;
+   69   3              }
+   70   2          }
+   71   1      
+   72   1          if((0U == battery_guard_sample_seen) &&
+   73   1                  ((uint32)(now - battery_guard_start_tick) >= APP_BATTERY_GUARD_STARTUP_GRACE_TICK))
+   74   1          {
+   75   2              app_battery_guard_trip(0U, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
+   76   2          }
+   77   1          else if((0U != battery_guard_sample_seen) &&
+   78   1                  ((uint32)(now - battery_guard_last_fresh_tick) >= APP_BATTERY_GUARD_MAX_SAMPLE_AGE_TICK))
+   79   1          {
+   80   2              app_battery_guard_trip(rawdata, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
+   81   2          }
+   82   1      }
+   83          
+   84          void app_battery_guard_init(void)
+   85          {
+   86   1          battery_guard_triggered = 0U;
+   87   1          battery_guard_report_pending = 0U;
+   88   1          battery_guard_trip_raw = 0U;
+   89   1          battery_guard_reason = 0U;
+   90   1          battery_guard_last_sequence = 0UL;
+   91   1          battery_guard_last_fresh_tick = service_timetick_what();
+   92   1          battery_guard_start_tick = battery_guard_last_fresh_tick;
+   93   1          battery_guard_sample_seen = 0U;
+   94   1          pit_ms_init(APP_BATTERY_GUARD_PIT, APP_BATTERY_GUARD_PERIOD_MS, app_battery_guard_tick);
+   95   1          interrupt_set_priority(TIM8_IRQn, 3U);
+   96   1      }
+   97          
+   98          /* Formatting and telemetry are deliberately kept out of the safety ISR. */
+   99          void app_battery_guard_pump_events(void)
+  100          {
+  101   1          uint8 ea_backup;
+  102   1          uint8 report_pending;
+  103   1          uint8 reason;
+  104   1          uint16 trip_raw;
+  105   1          float voltage;
+  106   1          uint32 timestamp;
+  107   1          app_motion_postprocess_data_t motion_post;
+  108   1          app_speedout_data_t speedout;
+  109   1          app_feedforward_data_t feedforward;
+  110   1      
+  111   1          ea_backup = EA;
+  112   1          EA = 0;
+  113   1          report_pending = battery_guard_report_pending;
+  114   1          trip_raw = battery_guard_trip_raw;
+  115   1          reason = battery_guard_reason;
+  116   1          battery_guard_report_pending = 0U;
+  117   1          EA = ea_backup;
+  118   1          if(0U == report_pending)
+  119   1          {
+  120   2              return;
+  121   2          }
+C251 COMPILER V5.60.0,  app_battery_guard                                                  22/07/26  22:25:56  PAGE 3   
+
+  122   1      
+  123   1          service_batterycheck_get_voltage(&voltage);
+  124   1          timestamp = service_timetick_what();
+  125   1          app_motion_postprocess_get_data(&motion_post);
+  126   1          app_speedout_get_data(&speedout);
+  127   1          app_feedforward_get_data(&feedforward);
+  128   1      
+  129   1          Wlog("UV,tick_0p1ms=%lu,reason=%u,raw=%u,v=%.3f\r\n", timestamp, reason, trip_raw, voltage);
+  130   1          Wlog("MP,raw=%.3f,tar_y=%.3f,act_y=%.3f,diff=%.3f\r\n",
+  131   1                  motion_post.raw_error,
+  132   1                  motion_post.target_yaw_rate_radps,
+  133   1                  motion_post.actual_yaw_rate_radps,
+  134   1                  motion_post.target_differential_speed);
+  135   1          Wlog("SO,lt=%.3f,la=%.3f,lp=%.3f,rt=%.3f,ra=%.3f,rp=%.3f\r\n",
+  136   1                  speedout.left_target_mps,
+  137   1                  speedout.left_actual_mps,
+  138   1                  speedout.left_pwm,
+  139   1                  speedout.right_target_mps,
+  140   1                  speedout.right_actual_mps,
+  141   1                  speedout.right_pwm);
+  142   1          Wlog("FF,kff=%.3f,kd=%.3f,cur=%.3f,rate=%.3f,out=%.3f,post=%.3f\r\n",
+  143   1                  app_feedforward_config.kff,
+  144   1                  app_feedforward_config.kd,
+  145   1                  feedforward.curvature,
+  146   1                  feedforward.curvature_rate,
+  147   1                  feedforward.feedforward,
+  148   1                  motion_post.feedforward);
+  149   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       550     ------
+  ecode size           =      1020     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        97     ------
+  xdata size           =       132     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -108,7 +183,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       192     ------
+  hconst size          =       261     ------
 End of Module Information.
 
 

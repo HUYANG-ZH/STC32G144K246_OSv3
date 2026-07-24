@@ -2,6 +2,8 @@
 #include "service_timetick.h"
 #include "service_function_queue.h"
 
+#pragma warning disable = 150
+
 #define SERVICE_FUNCTION_QUEUE_TICK_PER_MS     (10UL)
 #define SERVICE_FUNCTION_QUEUE_PRIORITY_MIN    (1U)
 #define SERVICE_FUNCTION_QUEUE_PRIORITY_MAX    (4U)
@@ -98,6 +100,7 @@ void service_function_queue_update(void)
     uint32 update_order_limit;
     uint32 selected_order;
     service_function_queue_func_t selected_func;
+    uint8 executed = 0U;
 
     now = service_timetick_what();
 
@@ -145,6 +148,11 @@ void service_function_queue_update(void)
             }
 
             selected_func();
+            executed++;
+            if(executed >= SERVICE_FUNCTION_QUEUE_MAX_EXECUTE_PER_UPDATE)
+            {
+                return;
+            }
         }
     }
 }

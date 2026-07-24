@@ -1,101 +1,97 @@
-C251 COMPILER V5.60.0,  service_buzzer                                                     16/07/26  18:10:30  PAGE 1   
+C251 COMPILER V5.60.0,  service_buzzer                                                     22/07/26  20:48:18  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_buzzer
 OBJECT MODULE PLACED IN .\out_file\service_buzzer.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_buzzer.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIM
-                    -IZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libra
-                    -ries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compon
-                    -ents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_buzzer.lst) TABS(2)
-                    - OBJECT(.\out_file\service_buzzer.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe ..\L2_SERVICE\service_buzzer.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMI
+                    -ZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
+                    -ies\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compone
+                    -nts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_buzzer.lst) OBJECT(.
+                    -\out_file\service_buzzer.obj) 
 
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
     2          #include "bsp_include.h"
     3          #include "service_buzzer.h"
-    4          #include "service_delay.h"
-    5          #include "service_timetick.h"
-    6          
-    7          #define SERVICE_BUZZER_TICKS_PER_MS        (10UL)
-    8          #define SERVICE_BUZZER_TIME_HALF_RANGE     (0x80000000UL)
-    9          
-   10          static uint8 buzzer_is_on = 0U;
-   11          static uint8 buzzer_timing = 0U;
-   12          static uint32 buzzer_deadline_tick = 0UL;
-   13          
-   14          static uint8 service_buzzer_time_reached(uint32 now, uint32 deadline)
-   15          {
-   16   1          return ((uint32)(now - deadline) < SERVICE_BUZZER_TIME_HALF_RANGE);
-   17   1      }
-   18          
-   19          void service_buzzer_init(void)
-   20          {
-   21   1          bsp_buzzer_init();
-   22   1          buzzer_is_on = 1U;
-   23   1          buzzer_timing = 0U;
-   24   1          buzzer_deadline_tick = 0UL;
-   25   1      }
-   26          
-   27          void service_buzzer_debug(void)
-   28          {
-   29   1          printf("[buzzer:start500ms]\r\n");
-   30   1          service_buzzer_beep_ms(500);
-   31   1          service_delay_ms(500U);
-   32   1          service_buzzer_stop();
-   33   1          printf("[buzzer:stop]\r\n");
-   34   1      }
-   35          
-   36          void service_buzzer_beep_ms(uint32 duration_ms)
-   37          {
-   38   1          if(0UL == duration_ms)
-   39   1          {
-   40   2              service_buzzer_stop();
-   41   2              return;
-   42   2          }
-   43   1      
-   44   1          bsp_buzzer_on();
-   45   1          buzzer_is_on = 1U;
-   46   1          buzzer_timing = 1U;
-   47   1          buzzer_deadline_tick = service_timetick_what() + duration_ms * SERVICE_BUZZER_TICKS_PER_MS;
-   48   1      }
-   49          
-   50          void service_buzzer_task(void)
-   51          {
-   52   1          uint32 now;
-   53   1      
-   54   1          if(0U == buzzer_timing)
-   55   1          {
-C251 COMPILER V5.60.0,  service_buzzer                                                     16/07/26  18:10:30  PAGE 2   
+    4          #include "service_timetick.h"
+    5          
+    6          #define SERVICE_BUZZER_TICKS_PER_MS        (10UL)
+    7          #define SERVICE_BUZZER_TIME_HALF_RANGE     (0x80000000UL)
+    8          
+    9          static uint8 buzzer_is_on = 0U;
+   10          static uint8 buzzer_timing = 0U;
+   11          static uint32 buzzer_deadline_tick = 0UL;
+   12          
+   13          static uint8 service_buzzer_time_reached(uint32 now, uint32 deadline)
+   14          {
+   15   1          return ((uint32)(now - deadline) < SERVICE_BUZZER_TIME_HALF_RANGE);
+   16   1      }
+   17          
+   18          void service_buzzer_init(void)
+   19          {
+   20   1          bsp_buzzer_init();
+   21   1          buzzer_is_on = 1U;
+   22   1          buzzer_timing = 0U;
+   23   1          buzzer_deadline_tick = 0UL;
+   24   1      }
+   25          
+   26          void service_buzzer_debug(void)
+   27          {
+   28   1          printf("[buzzer:scheduled500ms]\r\n");
+   29   1          service_buzzer_beep_ms(500);
+   30   1      }
+   31          
+   32          void service_buzzer_beep_ms(uint32 duration_ms)
+   33          {
+   34   1          if(0UL == duration_ms)
+   35   1          {
+   36   2              service_buzzer_stop();
+   37   2              return;
+   38   2          }
+   39   1      
+   40   1          bsp_buzzer_on();
+   41   1          buzzer_is_on = 1U;
+   42   1          buzzer_timing = 1U;
+   43   1          buzzer_deadline_tick = service_timetick_what() + duration_ms * SERVICE_BUZZER_TICKS_PER_MS;
+   44   1      }
+   45          
+   46          void service_buzzer_task(void)
+   47          {
+   48   1          uint32 now;
+   49   1      
+   50   1          if(0U == buzzer_timing)
+   51   1          {
+   52   2              return;
+   53   2          }
+   54   1      
+   55   1          now = service_timetick_what();
+C251 COMPILER V5.60.0,  service_buzzer                                                     22/07/26  20:48:18  PAGE 2   
 
-   56   2              return;
-   57   2          }
-   58   1      
-   59   1          now = service_timetick_what();
-   60   1          if(0U != service_buzzer_time_reached(now, buzzer_deadline_tick))
-   61   1          {
-   62   2              service_buzzer_stop();
-   63   2          }
-   64   1      }
-   65          
-   66          void service_buzzer_stop(void)
-   67          {
-   68   1          bsp_buzzer_off();
-   69   1          buzzer_is_on = 0U;
-   70   1          buzzer_timing = 0U;
-   71   1      }
-   72          
-   73          uint8 service_buzzer_is_on(void)
-   74          {
-   75   1          service_buzzer_task();
-   76   1          return buzzer_is_on;
-   77   1      }
+   56   1          if(0U != service_buzzer_time_reached(now, buzzer_deadline_tick))
+   57   1          {
+   58   2              service_buzzer_stop();
+   59   2          }
+   60   1      }
+   61          
+   62          void service_buzzer_stop(void)
+   63          {
+   64   1          bsp_buzzer_off();
+   65   1          buzzer_is_on = 0U;
+   66   1          buzzer_timing = 0U;
+   67   1      }
+   68          
+   69          uint8 service_buzzer_is_on(void)
+   70          {
+   71   1          service_buzzer_task();
+   72   1          return buzzer_is_on;
+   73   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       294     ------
+  ecode size           =       270     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -109,7 +105,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        59     ------
+  hconst size          =        47     ------
 End of Module Information.
 
 

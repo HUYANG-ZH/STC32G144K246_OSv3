@@ -1,0 +1,88 @@
+C251 COMPILER V5.60.0,  service_tof                                                        24/07/26  14:58:32  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_tof
+OBJECT MODULE PLACED IN project\mdk\out_file\service_tof.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe project\L2_SERVICE\service_tof.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTI
+                    -MIZE(0,SPEED) INCDIR(project\..\libraries\zf_common;project\..\libraries\zf_components;project\..\libraries\zf_device;pr
+                    -oject\..\libraries\zf_driver;project\user;project\code;project\L0_SYS;project\L1_BSP;project\L2_SERVICE;project\L3_APP;p
+                    -roject\LL_Shared_Source) OBJECT(project\mdk\out_file\service_tof.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+*** ERROR C318 IN LINE 108 OF project\..\libraries\zf_common\zf_common_headfile.h: can't open file 'seekfree_assistant.h
+             -'
+*** ERROR C318 IN LINE 110 OF project\..\libraries\zf_common\zf_common_headfile.h: can't open file 'seekfree_assistant_i
+             -nterface.h'
+    2          #include "bsp_include.h"
+    3          #include "service_tof.h"
+    4          #include "service_timetick.h"
+    5          
+    6          #define SERVICE_TOF_SAMPLE_PERIOD_TICK      (500UL)
+    7          
+    8          static uint32 service_tof_last_request_tick = 0UL;
+    9          
+   10          void service_tof_init(void)
+   11          {
+   12   1      #if SERVICE_TOF_ENABLE
+                   (void)bsp_tof_init();
+                   service_tof_last_request_tick = service_timetick_what();
+               #else
+   16   1          service_tof_last_request_tick = 0UL;
+   17   1      #endif
+   18   1      }
+   19          
+   20          void service_tof_task(void)
+   21          {
+   22   1      #if SERVICE_TOF_ENABLE
+                   uint32 now;
+               
+                   bsp_tof_process();
+                   if(0U == bsp_tof_is_ready())
+                   {
+                       return;
+                   }
+               
+                   now = service_timetick_what();
+                   if((uint32)(now - service_tof_last_request_tick) >= SERVICE_TOF_SAMPLE_PERIOD_TICK)
+                   {
+                       if(0U != bsp_tof_request_sample())
+                       {
+                           service_tof_last_request_tick = now;
+                       }
+                   }
+               #endif
+   40   1      }
+   41          
+   42          uint8 service_tof_is_ready(void)
+   43          {
+   44   1      #if SERVICE_TOF_ENABLE
+                   return bsp_tof_is_ready();
+               #else
+   47   1          return 0U;
+   48   1      #endif
+   49   1      }
+   50          
+   51          uint8 service_tof_get_last_error(void)
+   52          {
+C251 COMPILER V5.60.0,  service_tof                                                        24/07/26  14:58:32  PAGE 2   
+
+   53   1      #if SERVICE_TOF_ENABLE
+                   return bsp_tof_get_last_error();
+               #else
+   56   1          return 0U;
+   57   1      #endif
+   58   1      }
+   59          
+   60          uint16 service_tof_get_distance_mm(void)
+   61          {
+   62   1      #if SERVICE_TOF_ENABLE
+                   (void)bsp_tof_request_sample();
+                   return bsp_tof_get_distance_mm();
+               #else
+   66   1          return BSP_TOF_INVALID_DISTANCE_MM;
+   67   1      #endif
+   68   1      }
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  2 ERROR(S)

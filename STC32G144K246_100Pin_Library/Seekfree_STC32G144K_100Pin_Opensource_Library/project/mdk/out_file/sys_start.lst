@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  sys_start                                                          16/07/26  18:10:28  PAGE 1   
+C251 COMPILER V5.60.0,  sys_start                                                          21/07/26  15:57:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE sys_start
 OBJECT MODULE PLACED IN .\out_file\sys_start.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L0_SYS\sys_start.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPE
-                    -ED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_d
-                    -river;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc3
-                    -2g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\sys_start.lst) TABS(2) OBJECT(.\out_
-                    -file\sys_start.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L0_SYS\sys_start.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEE
+                    -D) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_dr
+                    -iver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32
+                    -g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\sys_start.lst) OBJECT(.\out_file\sys_
+                    -start.obj) 
 
 stmt  level    source
 
@@ -18,8 +18,8 @@ stmt  level    source
     5          
     6          void SystemStart(void)
     7          {
-    8   1          clock_init(SYSTEM_CLOCK_124M);        // 时钟配置及系统初始化<务必保留>
-    9   1          debug_init();                           // 调试串口信息初始化
+    8   1          clock_init(SYSTEM_CLOCK_124M);                              // 时钟配置及系统初始化<务必保留>
+    9   1          debug_init();                                       // 调试串口信息初始化
    10   1          tfpu_start();
    11   1      }
    12          

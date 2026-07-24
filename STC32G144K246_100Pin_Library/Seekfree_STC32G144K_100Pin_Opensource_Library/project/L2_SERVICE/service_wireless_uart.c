@@ -7,9 +7,10 @@
 #define WPRINT_BUFFER_SIZE              (128U)
 #define WPRINT_FLOAT_DEFAULT_PRECISION  (3U)
 #define WPRINT_FLOAT_MAX_PRECISION      (6U)
-#define SERVICE_WIRELESS_UART_DMA_PRIORITY (3U)
+#define SERVICE_WIRELESS_UART_DMA_PRIORITY (0U)
 
-static char wprint_buffer[WPRINT_BUFFER_SIZE];
+static char xdata wprint_buffer[WPRINT_BUFFER_SIZE];
+static volatile uint8 wprint_busy = 0U;
 
 static void wprint_put_char(char *buffer, uint16 *index, char value)
 {
@@ -67,7 +68,8 @@ static void wprint_put_signed(char *buffer, uint16 *index, int32 value)
     if(0 > value)
     {
         wprint_put_char(buffer, index, '-');
-        abs_value = (uint32)(0 - value);
+        abs_value = (uint32)(-(value + 1));
+        abs_value++;
     }
     else
     {
@@ -284,6 +286,8 @@ uint32 service_wireless_uart_read_buffer(uint8 *buff, uint32 len)
 uint32 wprint(const char *format, ...)
 {
     uint16 length;
+    uint32 unsent;
+    uint8 ea_backup;
     va_list args;
 
     if(NULL == format)
@@ -291,9 +295,27 @@ uint32 wprint(const char *format, ...)
         return 0U;
     }
 
+    // Logging must never wait.  A re-entrant call (for example an accidental
+    // ISR log) is discarded rather than corrupting the shared formatter.
+    ea_backup = EA;
+    EA = 0;
+    if(0U != wprint_busy)
+    {
+        EA = ea_backup;
+        return 0U;
+    }
+    wprint_busy = 1U;
+    EA = ea_backup;
+
     va_start(args, format);
     length = wprint_format(wprint_buffer, format, args);
     va_end(args);
 
-    return service_wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
+    unsent = service_wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
+
+    ea_backup = EA;
+    EA = 0;
+    wprint_busy = 0U;
+    EA = ea_backup;
+    return unsent;
 }

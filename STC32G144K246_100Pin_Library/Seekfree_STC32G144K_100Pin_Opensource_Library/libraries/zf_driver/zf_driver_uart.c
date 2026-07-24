@@ -50,6 +50,24 @@ uart_callback_function uart_rx_handlers[8] = {0};
 
 uint8 xdata uart_rx_buff[UART_RESERVE][1] = {0};
 
+#if ((UART_TX_QUEUE_SIZE & (UART_TX_QUEUE_SIZE - 1U)) != 0U)
+    #error "UART_TX_QUEUE_SIZE must be a power of two."
+#endif
+
+#define UART_TX_QUEUE_MASK             (UART_TX_QUEUE_SIZE - 1U)
+
+typedef struct
+{
+    uint8           buffer[UART_TX_QUEUE_SIZE];
+    volatile uint16 head;
+    volatile uint16 tail;
+    volatile uint16 in_flight;
+    volatile uint32 dropped;
+    volatile uint8  active;
+} uart_tx_dma_state_t;
+
+static uart_tx_dma_state_t xdata uart_tx_dma_state[UART_RESERVE];
+
 
 // UR1~UR8 通用寄存器宏定义（自动区分范围）
 #define DMA_URXT_CFG(uart_n)  \
@@ -187,33 +205,178 @@ uint8 xdata uart_rx_buff[UART_RESERVE][1] = {0};
 // 返回参数     void
 // 使用示例     uart_write_buffer(UART_1, buff, 10);     //串口1发送10个buff数组。
 //-------------------------------------------------------------------------------------------------------------------
+static uint8 uart_index_is_valid(uart_index_enum uart_n)
+{
+    return (uart_n < UART_RESERVE) ? 1U : 0U;
+}
+
+// Called with global interrupts masked.  It only arms one contiguous DMA
+// segment and never waits for completion.
+static void uart_tx_start_next_locked(uart_index_enum uart_n)
+{
+    uart_tx_dma_state_t xdata *state;
+    uint16 available;
+    uint16 contiguous;
+
+    state = &uart_tx_dma_state[uart_n];
+    if(0U != state->active)
+    {
+        return;
+    }
+
+    if(state->head == state->tail)
+    {
+        state->in_flight = 0U;
+        DMA_URXT_CR(uart_n) = 0x00U;
+        return;
+    }
+
+    available = (uint16)((state->head - state->tail) & UART_TX_QUEUE_MASK);
+    contiguous = (state->head > state->tail) ? available : (uint16)(UART_TX_QUEUE_SIZE - state->tail);
+    if(0U == contiguous)
+    {
+        return;
+    }
+
+    DMA_URXT_CR(uart_n) = 0x00U;
+    DMA_URXT_STA(uart_n) = 0x00U;
+    DMA_URXT_AMT(uart_n) = (uint8)((contiguous - 1U) & 0xFFU);
+    DMA_URXT_AMTH(uart_n) = (uint8)((contiguous - 1U) >> 8);
+    DMA_URXT_TXAH(uart_n) = (uint8)((uint16)&state->buffer[state->tail] >> 8);
+    DMA_URXT_TXAL(uart_n) = (uint8)((uint16)&state->buffer[state->tail]);
+    DMA_URXT_CFG(uart_n) = 0x80U;       // DMA completion IRQ, lowest DMA priority
+    state->in_flight = contiguous;
+    state->active = 1U;
+    DMA_URXT_CR(uart_n) = 0xC1U;         // enable master TX DMA and clear FIFO
+}
+
+uint16 uart_write_buffer_async(uart_index_enum uart_n, const uint8 *buff, uint16 len)
+{
+    uart_tx_dma_state_t xdata *state;
+    uint16 accepted = 0U;
+    uint16 start_head;
+    uint16 next_head;
+    uint16 tail_snapshot;
+    uint16 candidate_head;
+    uint8 ea_backup;
+
+    if((0U == uart_index_is_valid(uart_n)) || (NULL == buff) || (0U == len))
+    {
+        return 0U;
+    }
+
+    ea_backup = EA;
+    EA = 0;
+    state = &uart_tx_dma_state[uart_n];
+    start_head = state->head;
+    next_head = start_head;
+    tail_snapshot = state->tail;
+    EA = ea_backup;
+
+    /*
+     * DMA consumes only bytes below head.  Copy first and publish head only
+     * after the complete fragment is in xdata, so control IRQs stay enabled
+     * for the potentially long memory copy.
+     */
+    while(accepted < len)
+    {
+        candidate_head = (uint16)((next_head + 1U) & UART_TX_QUEUE_MASK);
+        if(candidate_head == tail_snapshot)
+        {
+            break;
+        }
+        state->buffer[next_head] = buff[accepted];
+        next_head = candidate_head;
+        accepted++;
+    }
+
+    EA = 0;
+    /* A second producer is forbidden; fail safely instead of corrupting DMA. */
+    if(state->head == start_head)
+    {
+        state->head = next_head;
+    }
+    else
+    {
+        accepted = 0U;
+    }
+    if(accepted < len)
+    {
+        state->dropped += (uint32)(len - accepted);
+    }
+    uart_tx_start_next_locked(uart_n);
+    EA = ea_backup;
+    return accepted;
+}
+
 void uart_write_buffer(uart_index_enum uart_n, const uint8 *buff, uint16 len)
 {
-    #define BUFF_LEN 64
-	
-	// 因UART_DMA只能操作xdata区域的数据，所以，这里新建一个数组，搬移。
-	uint8 xdata tmp_buff[BUFF_LEN] = {0};
-    uint16 tmp_len = 0;
-	while(len)
-	{
-        tmp_len = (len > BUFF_LEN) ? BUFF_LEN : len;        // 计算长度
-        memcpy(tmp_buff, buff, tmp_len);                    // 拷贝
-        len -= tmp_len;                                     // 去掉已经发送的长度
-        buff += tmp_len;                                    // 指针指向后面
-        
-        DMA_URXT_CFG(uart_n)  = 0x00; 		                // DMA优先级低
-        DMA_URXT_STA(uart_n)  = 0;				            // 清空标志位
+    (void)uart_write_buffer_async(uart_n, buff, len);
+}
 
-        DMA_URXT_AMT(uart_n)  = (tmp_len - 1) & 0xff;		// 设置传输总字节数(低8位)：n+1
-        DMA_URXT_AMTH(uart_n) = (tmp_len - 1) >> 8;		    // 设置传输总字节数(高8位)：n+1
-        DMA_URXT_TXAH(uart_n) = (uint8)((uint16)tmp_buff >> 8);
-        DMA_URXT_TXAL(uart_n) = (uint8)((uint16)tmp_buff);
-        DMA_URXT_CR(uart_n) = 0xC0; 			            // 使能DMA TX功能
+uint8 uart_tx_is_busy(uart_index_enum uart_n)
+{
+    uint8 result;
+    uint8 ea_backup;
 
-        while(!(DMA_URXT_STA(uart_n) & 0x01));	            // 等待发送完成
+    if(0U == uart_index_is_valid(uart_n))
+    {
+        return 0U;
+    }
 
-        DMA_URXT_CR(uart_n) = 0x00;				            // 关闭DMA TX
-	}
+    ea_backup = EA;
+    EA = 0;
+    result = ((0U != uart_tx_dma_state[uart_n].active) ||
+              (uart_tx_dma_state[uart_n].head != uart_tx_dma_state[uart_n].tail)) ? 1U : 0U;
+    EA = ea_backup;
+    return result;
+}
+
+uint32 uart_tx_get_drop_count(uart_index_enum uart_n)
+{
+    uint32 result;
+    uint8 ea_backup;
+
+    if(0U == uart_index_is_valid(uart_n))
+    {
+        return 0U;
+    }
+
+    ea_backup = EA;
+    EA = 0;
+    result = uart_tx_dma_state[uart_n].dropped;
+    EA = ea_backup;
+    return result;
+}
+
+void uart_tx_dma_irq_handler(uart_index_enum uart_n)
+{
+    uart_tx_dma_state_t xdata *state;
+
+    if(0U == uart_index_is_valid(uart_n))
+    {
+        return;
+    }
+
+    state = &uart_tx_dma_state[uart_n];
+    if(0U != (DMA_URXT_STA(uart_n) & 0x01U))
+    {
+        DMA_URXT_STA(uart_n) &= (uint8)(~0x01U);
+        state->tail = (uint16)((state->tail + state->in_flight) & UART_TX_QUEUE_MASK);
+        state->in_flight = 0U;
+        state->active = 0U;
+        uart_tx_start_next_locked(uart_n);
+    }
+
+    if(0U != (DMA_URXT_STA(uart_n) & 0x02U))
+    {
+        DMA_URXT_STA(uart_n) &= (uint8)(~0x02U);
+        state->tail = (uint16)((state->tail + state->in_flight) & UART_TX_QUEUE_MASK);
+        state->dropped += state->in_flight;
+        state->in_flight = 0U;
+        state->active = 0U;
+        uart_tx_start_next_locked(uart_n);
+    }
 }
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     串口发送字符串
@@ -301,6 +464,21 @@ uint8 uart_read_byte(uart_index_enum uart_n)
 	return dat;
 }
 
+uint8 uart_rx_take_byte(uart_index_enum uart_n)
+{
+    uint8 dat;
+
+    if(0U == uart_index_is_valid(uart_n))
+    {
+        return 0U;
+    }
+
+    dat = uart_rx_buff[uart_n][0];
+    DMA_URXR_STA(uart_n) &= (uint8)(~0x03U);
+    uart_rx_start_buff(uart_n);
+    return dat;
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     读取串口接收的数据（查询接收）
 // 参数说明     uart_n           串口模块号(UART_1 - UART_8)
@@ -340,6 +518,22 @@ uint8 uart_query_byte(uart_index_enum uart_n, uint8 *dat)
 //-------------------------------------------------------------------------------------------------------------------
 void uart_dma_init(uart_index_enum uart_n)
 {
+	uint8 ea_backup;
+
+	if(0U == uart_index_is_valid(uart_n))
+	{
+		return;
+	}
+
+	ea_backup = EA;
+	EA = 0;
+	uart_tx_dma_state[uart_n].head = 0U;
+	uart_tx_dma_state[uart_n].tail = 0U;
+	uart_tx_dma_state[uart_n].in_flight = 0U;
+	uart_tx_dma_state[uart_n].dropped = 0U;
+	uart_tx_dma_state[uart_n].active = 0U;
+	EA = ea_backup;
+
 	DMA_URXT_CFG(uart_n)  = 0x00;	// DMA TX数据访问优先级最低，关闭DMA发送中断，
 	DMA_URXT_STA(uart_n)  = 0x00;	// 清除DMA TX状态
 	DMA_URXT_CR(uart_n)   = 0x00;	// 关闭DMA TX
@@ -352,7 +546,7 @@ void uart_dma_init(uart_index_enum uart_n)
 	DMA_URXR_AMTH(uart_n) = (1 - 1)>>8;									// 设置接收的字节数
 	DMA_URXR_RXAL(uart_n) = (uint8)((uint16)uart_rx_buff[uart_n]);		// 设置接收缓冲地址
 	DMA_URXR_RXAH(uart_n) = (uint8)((uint16)uart_rx_buff[uart_n] >> 8);	// 设置接收缓冲地址
-	DMA_URXR_CFG(uart_n)  = 0x0F;										// 中断优先级最高，DMA优先级最高
+	DMA_URXR_CFG(uart_n)  = 0x00;										// RX DMA访问优先级最低；CPU中断优先级由应用统一设置
 	DMA_URXR_CR(uart_n)   = 0xA1;										// 开启DMA RX，清空FIFO
  
 }

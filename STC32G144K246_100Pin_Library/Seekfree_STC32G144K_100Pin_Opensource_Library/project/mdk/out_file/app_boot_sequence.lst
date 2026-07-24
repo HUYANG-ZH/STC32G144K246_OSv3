@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  17/07/26  07:41:01  PAGE 1   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  22/07/26  20:39:24  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_boot_sequence
 OBJECT MODULE PLACED IN .\out_file\app_boot_sequence.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_boot_sequence.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMI
-                    -ZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
-                    -ies\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compone
-                    -nts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_boot_sequence.lst) TABS(
-                    -2) OBJECT(.\out_file\app_boot_sequence.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe ..\L3_APP\app_boot_sequence.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZ
+                    -E(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -es\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_componen
+                    -ts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_boot_sequence.lst) OBJECT
+                    -(.\out_file\app_boot_sequence.obj) 
 
 stmt  level    source
 
@@ -57,122 +57,120 @@ stmt  level    source
    44          
    45          static void app_boot_stop_handler(void)
    46          {
-   47   1          app_speedout_stop();
-   48   1          service_negative_pressure_set_percent(0U);
-   49   1          boot_stop_received = 1U;
-   50   1          wprint("stop,0.000\r\n");
-   51   1      }
-   52          
-   53          static void app_boot_start_handler(void)
-   54          {
-   55   1          app_speedout_stop();
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  17/07/26  07:41:01  PAGE 2   
+   47   1          app_speedout_request_stop_all();
+   48   1          boot_stop_received = 1U;
+   49   1          wprint("stop,0.000\r\n");
+   50   1      }
+   51          
+   52          static void app_boot_start_handler(void)
+   53          {
+   54   1          app_speedout_request_stop_all();
+   55   1          boot_stop_received = 0U;
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  22/07/26  20:39:24  PAGE 2   
 
-   56   1          service_negative_pressure_set_percent(0U);
-   57   1          boot_stop_received = 0U;
-   58   1          boot_state = APP_BOOT_STATE_START_WAIT;
-   59   1          boot_state_tick = service_timetick_what();
-   60   1          service_buzzer_beep_ms(200U);
-   61   1          wprint("start_delay,1.000\r\n");
-   62   1      }
-   63          
-   64          static void app_boot_task(void)
-   65          {
-   66   1          uint32 now;
-   67   1      
-   68   1          if((APP_BOOT_STATE_DONE == boot_state) || (APP_BOOT_STATE_ABORTED == boot_state))
-   69   1          {
-   70   2              return;
-   71   2          }
-   72   1      
-   73   1          if(0U != boot_stop_received)
-   74   1          {
-   75   2              boot_state = APP_BOOT_STATE_ABORTED;
-   76   2              wprint("boot_abort,1.000\r\n");
-   77   2              return;
-   78   2          }
+   56   1          boot_state = APP_BOOT_STATE_START_WAIT;
+   57   1          boot_state_tick = service_timetick_what();
+   58   1          service_buzzer_beep_ms(200U);
+   59   1          wprint("start_delay,1.000\r\n");
+   60   1      }
+   61          
+   62          static void app_boot_task(void)
+   63          {
+   64   1          uint32 now;
+   65   1      
+   66   1          if((APP_BOOT_STATE_DONE == boot_state) || (APP_BOOT_STATE_ABORTED == boot_state))
+   67   1          {
+   68   2              return;
+   69   2          }
+   70   1      
+   71   1          if(0U != boot_stop_received)
+   72   1          {
+   73   2              boot_state = APP_BOOT_STATE_ABORTED;
+   74   2              wprint("boot_abort,1.000\r\n");
+   75   2              return;
+   76   2          }
+   77   1      
+   78   1          now = service_timetick_what();
    79   1      
-   80   1          now = service_timetick_what();
-   81   1      
-   82   1          switch(boot_state)
-   83   1          {
-   84   2              case APP_BOOT_STATE_BEEP:
-   85   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_BEEP_TICKS)
-   86   2                  {
-   87   3                      boot_state = APP_BOOT_STATE_WAIT;
-   88   3                      boot_state_tick = now;
-   89   3                      wprint("boot_wait,1.000\r\n");
-   90   3                  }
-   91   2                  break;
-   92   2      
-   93   2              case APP_BOOT_STATE_WAIT:
-   94   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_WAIT_TICKS)
-   95   2                  {
-   96   3                      service_negative_pressure_set_percent(APP_BOOT_PRESSURE_PERCENT);
-   97   3                      boot_state = APP_BOOT_STATE_PRESSURE;
-   98   3                      boot_state_tick = now;
-   99   3                      wprint("boot_pressure,1.000\r\n");
-  100   3                  }
-  101   2                  break;
-  102   2      
-  103   2              case APP_BOOT_STATE_PRESSURE:
-  104   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_PRESSURE_DELAY_TICKS)
-  105   2                  {
-  106   3                      app_speedout_start();
-  107   3                      boot_state = APP_BOOT_STATE_DONE;
-  108   3                      wprint("boot_drive,1.000\r\n");
-  109   3                  }
-  110   2                  break;
-  111   2      
-  112   2              case APP_BOOT_STATE_START_WAIT:
-  113   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_START_WAIT_TICKS)
-  114   2                  {
-  115   3                      service_negative_pressure_set_percent(APP_BOOT_PRESSURE_PERCENT);
-  116   3                      boot_state = APP_BOOT_STATE_START_PRESSURE;
-  117   3                      boot_state_tick = now;
-  118   3                      wprint("start_pressure,1.000\r\n");
-  119   3                  }
-  120   2                  break;
-  121   2      
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  17/07/26  07:41:01  PAGE 3   
+   80   1          switch(boot_state)
+   81   1          {
+   82   2              case APP_BOOT_STATE_BEEP:
+   83   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_BEEP_TICKS)
+   84   2                  {
+   85   3                      boot_state = APP_BOOT_STATE_WAIT;
+   86   3                      boot_state_tick = now;
+   87   3                      wprint("boot_wait,1.000\r\n");
+   88   3                  }
+   89   2                  break;
+   90   2      
+   91   2              case APP_BOOT_STATE_WAIT:
+   92   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_WAIT_TICKS)
+   93   2                  {
+   94   3                      service_negative_pressure_set_percent(APP_BOOT_PRESSURE_PERCENT);
+   95   3                      boot_state = APP_BOOT_STATE_PRESSURE;
+   96   3                      boot_state_tick = now;
+   97   3                      wprint("boot_pressure,1.000\r\n");
+   98   3                  }
+   99   2                  break;
+  100   2      
+  101   2              case APP_BOOT_STATE_PRESSURE:
+  102   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_PRESSURE_DELAY_TICKS)
+  103   2                  {
+  104   3                      app_speedout_request_start();
+  105   3                      boot_state = APP_BOOT_STATE_DONE;
+  106   3                      wprint("boot_drive,1.000\r\n");
+  107   3                  }
+  108   2                  break;
+  109   2      
+  110   2              case APP_BOOT_STATE_START_WAIT:
+  111   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_START_WAIT_TICKS)
+  112   2                  {
+  113   3                      service_negative_pressure_set_percent(APP_BOOT_PRESSURE_PERCENT);
+  114   3                      boot_state = APP_BOOT_STATE_START_PRESSURE;
+  115   3                      boot_state_tick = now;
+  116   3                      wprint("start_pressure,1.000\r\n");
+  117   3                  }
+  118   2                  break;
+  119   2      
+  120   2              case APP_BOOT_STATE_START_PRESSURE:
+  121   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_START_PRESSURE_BUILD_TICKS)
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  22/07/26  20:39:24  PAGE 3   
 
-  122   2              case APP_BOOT_STATE_START_PRESSURE:
-  123   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_START_PRESSURE_BUILD_TICKS)
-  124   2                  {
-  125   3                      app_speedout_start();
-  126   3                      boot_state = APP_BOOT_STATE_DONE;
-  127   3                      wprint("start_drive,1.000\r\n");
-  128   3                  }
-  129   2                  break;
-  130   2      
-  131   2              default:
-  132   2                  break;
-  133   2          }
-  134   1      }
-  135          
-  136          void app_boot_sequence_init(void)
-  137          {
-  138   1          service_negative_pressure_set_percent(0U);
-  139   1          service_buzzer_beep_ms(APP_BOOT_BEEP_MS);
-  140   1      
-  141   1          boot_stop_received = 0U;
-  142   1          boot_state = APP_BOOT_STATE_BEEP;
-  143   1          boot_state_tick = service_timetick_what();
-  144   1      
-  145   1          (void)service_packet_add_action("stop", app_boot_stop_handler, 0UL);
-  146   1          (void)service_packet_add_action("start", app_boot_start_handler, 0UL);
+  122   2                  {
+  123   3                      app_speedout_request_start();
+  124   3                      boot_state = APP_BOOT_STATE_DONE;
+  125   3                      wprint("start_drive,1.000\r\n");
+  126   3                  }
+  127   2                  break;
+  128   2      
+  129   2              default:
+  130   2                  break;
+  131   2          }
+  132   1      }
+  133          
+  134          void app_boot_sequence_init(void)
+  135          {
+  136   1          service_negative_pressure_set_percent(0U);
+  137   1          service_buzzer_beep_ms(APP_BOOT_BEEP_MS);
+  138   1      
+  139   1          boot_stop_received = 0U;
+  140   1          boot_state = APP_BOOT_STATE_BEEP;
+  141   1          boot_state_tick = service_timetick_what();
+  142   1      
+  143   1          (void)service_packet_add_action("stop", app_boot_stop_handler, 0UL);
+  144   1          (void)service_packet_add_action("start", app_boot_start_handler, 0UL);
+  145   1      
+  146   1          wprint("boot_beep,1.000\r\n");
   147   1      
-  148   1          wprint("boot_beep,1.000\r\n");
-  149   1      
-  150   1          (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
-  151   1                  APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
-  152   1      }
+  148   1          (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
+  149   1                  APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
+  150   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       658     ------
+  ecode size           =       648     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

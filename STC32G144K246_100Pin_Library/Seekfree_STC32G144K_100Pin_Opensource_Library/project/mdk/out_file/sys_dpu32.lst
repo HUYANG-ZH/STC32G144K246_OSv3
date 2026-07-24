@@ -1,0 +1,57 @@
+A251 MACRO ASSEMBLER  sys_dpu32                                                             22/07/26 19:57:46 PAGE     1
+
+
+MACRO ASSEMBLER A251 V4.69.13.0
+OBJECT MODULE PLACED IN .\out_file\sys_dpu32.obj
+ASSEMBLER INVOKED BY: D:\C251keil\C251\BIN\A251.EXE ..\L0_SYS\sys_dpu32.asm MODSRC INCDIR(..\..\libraries\zf_common) SET
+                      (LARGE,ROMHUGE) DEBUG PRINT(.\out_file\sys_dpu32.lst) OBJECT(.\out_file\sys_dpu32.obj) EP
+
+LOC    OBJ             LINE     SOURCE
+
+                          1     $nomod51 
+                          2     NAME STC_DPU32
+                          3     ; STC32 DPU32 hardware implementation of the C251 runtime 32-bit divide helpers.
+                          4     ; This source is intentionally compiled by the current LARGE/HUGE target instead of
+                          5     ; linking the donor prebuilt library, whose memory model differs from this project.
+ 00D8                     6     DPUOP   DATA 0D8H
+------                    7     ?PR?STC_DPU32  SEGMENT ECODE
+------                    8     RSEG    ?PR?STC_DPU32
+                          9     PUBLIC  ?C?ULDIV?
+000000                   10     ?C?ULDIV?:
+000000 75D89F            11             MOV     DPUOP,#09FH
+000003 AA                12             ERET
+                         13     PUBLIC  ?C?ULIDIV?
+000004                   14     ?C?ULIDIV?:
+000004 6D00              15             XRL     WR0,WR0
+000006 75D89F            16             MOV     DPUOP,#09FH
+000009 AA                17             ERET
+                         18     PUBLIC  ?C?SLDIV?
+00000A                   19     ?C?SLDIV?:
+00000A 75D8A0            20             MOV     DPUOP,#0A0H
+00000D AA                21             ERET
+                         22     PUBLIC  ?C?SIDIV?
+00000E                   23     ?C?SIDIV?:
+00000E 75D8A4            24             MOV     DPUOP,#0A4H
+000011 AA                25             ERET
+                         26     END
+A251 MACRO ASSEMBLER  sys_dpu32                                                             22/07/26 19:57:46 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E        T Y P E  V A L U E     ATTRIBUTES
+
+?C?SIDIV?. . . . .  EC ADDR  000EH     R   SEG=?PR?STC_DPU32
+?C?SLDIV?. . . . .  EC ADDR  000AH     R   SEG=?PR?STC_DPU32
+?C?ULDIV?. . . . .  EC ADDR  0000H     R   SEG=?PR?STC_DPU32
+?C?ULIDIV? . . . .  EC ADDR  0004H     R   SEG=?PR?STC_DPU32
+?PR?STC_DPU32. . .  EC SEG   000012H       REL=UNIT, ALN=BYTE
+DPUOP. . . . . . .  D  ADDR  00D8H     A   
+STC_DPU32. . . . .  -- ----  -------       
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S).

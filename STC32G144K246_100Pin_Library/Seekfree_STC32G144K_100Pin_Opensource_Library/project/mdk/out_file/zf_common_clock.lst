@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_common_clock                                                    16/07/26  18:10:23  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    20/07/26  23:08:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_clock
 OBJECT MODULE PLACED IN .\out_file\zf_common_clock.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_clock.c LARGE ROM(HUGE) WARNINGL
-                    -EVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
-                    -e;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librar
-                    -ies\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_cloc
-                    -k.lst) TABS(2) OBJECT(.\out_file\zf_common_clock.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_clock.c LARGE ROM(HUGE) WARNINGLE
+                    -VEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
+                    -;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librari
+                    -es\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_clock
+                    -.lst) OBJECT(.\out_file\zf_common_clock.obj) 
 
 stmt  level    source
 
@@ -66,13 +66,13 @@ stmt  level    source
    47          
    48          
    49          void clock_init (uint32 clock)                                              // 核心时钟初始化
-C251 COMPILER V5.60.0,  zf_common_clock                                                    16/07/26  18:10:23  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    20/07/26  23:08:26  PAGE 2   
 
    50          {
    51   1          uint8 pll_div = ((clock / 1000000UL - 78) / 3);
    52   1          interrupt_global_disable();
-   53   1          EAXFR = 1;            // 使能访问XFR
-   54   1        // CKCON = 0;
+   53   1          EAXFR = 1;                              // 使能访问XFR
+   54   1              // CKCON = 0;
    55   1          if((120*1000*1000UL) <= clock)
    56   1          {
    57   2              WTST = 4;
@@ -94,27 +94,27 @@ stmt  level    source
    73   1          CLKDIV = 2;                 // 设置系统时钟=xxxMhz/2/2=clock，（因为CLKSEL选择时，已�
              -�将HPLL/2了）
    74   1      
-   75   1        //以下为超过60MHz时，系统时钟使用HPLL方式提供
-   76   1        VRTRIM = CHIPID22;        // 载入27MHz频段的VRTRIM值
-   77   1        IRTRIM = CHIPID12;        // 指定当前HIRC为24MHz，此时会覆盖掉ISP设置的时钟频率
-   78   1        IRCBAND &= ~0x03;     // 清空频段选择
-   79   1        IRCBAND |= 0x01;      // 选择27Mhz频段
-   80   1        HPLLCR &= ~0x10;          // 选择HPLL输入时钟源为HIRC
-   81   1        HPLLPDIV = 4;       // 24MHz/4=6MHz,需要保证输入HPLL的时钟在6MHz附近
+   75   1              //以下为超过60MHz时，系统时钟使用HPLL方式提供
+   76   1              VRTRIM = CHIPID22;                  // 载入27MHz频段的VRTRIM值
+   77   1              IRTRIM = CHIPID12;                  // 指定当前HIRC为24MHz，此时会覆盖掉ISP设置的时钟频率
+   78   1              IRCBAND &= ~0x03;                       // 清空频段选择
+   79   1              IRCBAND |= 0x01;                        // 选择27Mhz频段
+   80   1              HPLLCR &= ~0x10;            // 选择HPLL输入时钟源为HIRC
+   81   1              HPLLPDIV = 4;                           // 24MHz/4=6MHz,需要保证输入HPLL的时钟在6MHz附近
    82   1          HPLLCR |= pll_div & 0x0F;   // 设置PLL1倍频系数
-   83   1        HPLLCR |= 0x80;           // 使能HPLL
+   83   1              HPLLCR |= 0x80;             // 使能HPLL
    84   1          soft_delay(50000);
-   85   1        CLKSEL &= ~0x03;      // BASE_CLK选择为HIRC，用以提供给HPLL
-   86   1        CLKSEL &= ~0x0c;      // 清空主时钟源选择
-   87   1        CLKSEL |= 1<<2;       // 设置主时钟源为内部 HPLL1 输出/2
+   85   1              CLKSEL &= ~0x03;                        // BASE_CLK选择为HIRC，用以提供给HPLL
+   86   1              CLKSEL &= ~0x0c;                        // 清空主时钟源选择
+   87   1              CLKSEL |= 1<<2;                         // 设置主时钟源为内部 HPLL1 输出/2
    88   1         
    89   1      #elif(EXTERNAL_CRYSTAL == USER_CRTSTAL)
                
                    CLKDIV = 2;                 // 设置系统时钟=xxxMhz/2/2=clock，（因为CLKSEL选择时，已�
              -�将HPLL/2了）
                
-                   CLKSEL &= ~0x03;      //BASE_CLK选择为HIRC，用以提供给HPLL
-                 CLKSEL &= ~0x0c;      //清空主时钟源选择
+                   CLKSEL &= ~0x03;                    //BASE_CLK选择为HIRC，用以提供给HPLL
+                       CLKSEL &= ~0x0c;                        //清空主时钟源选择
                
                    XOSCCR = 3<<6 | 1 << 2 | 1<<5;    // 选择外部晶振,24M晶振
                    soft_delay(50000);
@@ -134,7 +134,7 @@ stmt  level    source
                
                #endif
   113   1      
-C251 COMPILER V5.60.0,  zf_common_clock                                                    16/07/26  18:10:23  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    20/07/26  23:08:26  PAGE 3   
 
   114   1      
   115   1          ADCCFG = 0;
@@ -162,7 +162,7 @@ stmt  level    source
                #endif
   138   1      
   139   1      
-  140   1        interrupt_global_enable();
+  140   1              interrupt_global_enable();
   141   1      }
 
 

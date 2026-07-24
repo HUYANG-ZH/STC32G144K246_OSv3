@@ -12,7 +12,6 @@
 #include "service_negative_pressure.h"
 #include "app_feedforward.h"
 #include "app_motion_preprocess.h"
-#include "service_function_queue.h"
 #include "roundabout_priority_tree.h"
 #include "app_element.h"
 
@@ -113,6 +112,7 @@ static float element_cylinder_bucket_angle_pos[APP_ELEMENT_CYLINDER_BUCKET_COUNT
 static float element_cylinder_bucket_angle_neg[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
 static uint32 element_cylinder_bucket_tick[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
 static uint32 element_last_tick = 0U;
+static uint32 element_imu_last_sequence = 0U;
 static uint32 element_cylinder_dead_start_tick = 0U;
 static uint32 element_cylinder_yaw_limit_start_tick = 0U;
 static uint8 element_cylinder_yaw_limit_active = 0U;
@@ -136,6 +136,8 @@ static uint32 element_seesaw_active_start_tick = 0U;
 static float element_seesaw_event = 0.0f;
 static volatile uint8 element_seesaw_slowdown_active = 0U;
 static volatile uint32 element_seesaw_slowdown_start_tick = 0U;
+static volatile uint8 element_cylinder_slowdown_pending = 0U;
+static volatile uint32 element_cylinder_slowdown_deadline_tick = 0U;
 static uint8 element_roundabout_confirm = 0U;
 static uint32 element_roundabout_dead_start_tick = 0U;
 static uint8 element_roundabout_dead = 0U;
@@ -164,17 +166,22 @@ static uint32 element_roundabout_bias_start_tick = 0U;
 static uint32 element_roundabout_bias_duration_tick = 0U;
 
 /* —— 环岛硬实时中断改造：主循环写、TIM7中断读的共享数据 —— */
-static volatile service_imu_gyro_t element_gyro_snapshot = {0.0f, 0.0f, 0.0f};
+static volatile service_imu_gyro_t element_gyro_snapshot = {0.0f, 0.0f, 0.0f, 0U};
 static volatile uint32 element_roundabout_last_tick = 0U;
 static volatile uint8 element_roundabout_event_flags = 0U;
 static volatile uint16 element_roundabout_event_count = 0U;   /* FOUND 事件携带的 count */
+static volatile uint8 element_realtime_event_flags = 0U;
 #define ELEMENT_RB_EVENT_FOUND    (0x01U)
 #define ELEMENT_RB_EVENT_EXIT     (0x02U)
 #define ELEMENT_RB_EVENT_READY    (0x04U)
 #define ELEMENT_RB_EVENT_FINISH   (0x08U)
+#define ELEMENT_EVENT_CYLINDER_FOUND       (0x01U)
+#define ELEMENT_EVENT_CYLINDER_SLOWDOWN    (0x02U)
+#define ELEMENT_EVENT_SEESAW_FOUND         (0x04U)
 
 static void app_element_cylinder_state_reply(void);
-static void app_element_roundabout_imu_step(void);
+static void app_element_roundabout_imu_step(uint8 sample_fresh);
+static void app_element_process_control_events(uint32 now);
 
 static float app_element_roundabout_get_ff_scale(void)
 {
@@ -243,6 +250,7 @@ static void app_element_reset(void)
     element_data.gyro_y = 0.0f;
     element_data.gyro_z = 0.0f;
     element_last_tick = service_timetick_what();
+    element_imu_last_sequence = 0U;
     element_cylinder_dead_start_tick = 0U;
     element_cylinder_angle_pos_deg = 0.0f;
     element_cylinder_angle_neg_deg = 0.0f;
@@ -261,6 +269,8 @@ static void app_element_reset(void)
     element_seesaw_event = 0.0f;
     element_seesaw_slowdown_active = 0U;
     element_seesaw_slowdown_start_tick = 0U;
+    element_cylinder_slowdown_pending = 0U;
+    element_cylinder_slowdown_deadline_tick = 0U;
     element_roundabout_confirm = 0U;
     element_roundabout_dead = 0U;
     element_roundabout_count = 0U;
@@ -273,6 +283,9 @@ static void app_element_reset(void)
     app_element_roundabout_bias_yaw_radps = 0.0f;
     app_element_roundabout_bias_active = 0U;
     app_element_roundabout_feedforward_scale = 1.0f;
+    element_roundabout_event_flags = 0U;
+    element_roundabout_event_count = 0U;
+    element_realtime_event_flags = 0U;
     for(i = 0U; i < APP_ELEMENT_CYLINDER_BUCKET_COUNT; i++)
     {
         element_cylinder_bucket_angle_pos[i] = 0.0f;
@@ -417,7 +430,7 @@ static void app_element_cylinder_slowdown(void)
     {
         service_negative_pressure_set_percent(APP_ELEMENT_CYLINDER_SLOWDOWN_PRESSURE);
     }
-    wprint("cylinder_slowdown,1.000\r\n");
+    element_realtime_event_flags |= ELEMENT_EVENT_CYLINDER_SLOWDOWN;
 }
 
 static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
@@ -440,16 +453,25 @@ static void app_element_cylinder_found(int8 dir, float gyro_x, uint32 now)
     element_cylinder_event = (0 < dir) ? 1.0f : -1.0f;
     element_cylinder_count++;
     element_cylinder_count_float = (float)element_cylinder_count;
-    wprint("cylinder_count,%u\r\n", (uint16)element_cylinder_count);
     if(APP_ELEMENT_CYLINDER_SLOWDOWN_TRIGGER == element_cylinder_count)
     {
-        (void)service_function_queue_add(app_element_cylinder_slowdown,
-                APP_ELEMENT_CYLINDER_SLOWDOWN_DELAY_MS, 1U);
+        element_cylinder_slowdown_pending = 1U;
+        element_cylinder_slowdown_deadline_tick = now +
+                (uint32)APP_ELEMENT_CYLINDER_SLOWDOWN_DELAY_MS * APP_ELEMENT_TICK_PER_MS;
     }
     app_element_cylinder_clear();
 
-    wprint("cylinder,1.000\r\n");
-    service_buzzer_beep_ms(300U);
+    element_realtime_event_flags |= ELEMENT_EVENT_CYLINDER_FOUND;
+}
+
+static void app_element_process_control_events(uint32 now)
+{
+    if((0U != element_cylinder_slowdown_pending) &&
+            ((int32)(now - element_cylinder_slowdown_deadline_tick) >= 0))
+    {
+        element_cylinder_slowdown_pending = 0U;
+        app_element_cylinder_slowdown();
+    }
 }
 
 static void app_element_cylinder_update(float gyro_x, uint32 delta_tick, uint32 now)
@@ -521,7 +543,7 @@ static void app_element_roundabout_found(uint32 now)
     element_roundabout_gz_angle_deg = 0.0f;
 }
 
-static void app_element_roundabout_task(void)
+void app_element_control_step(void)
 {
     app_inductor_preprocess_data_t inductor;
     uint32 now;
@@ -538,14 +560,12 @@ static void app_element_roundabout_task(void)
 
     if(0U != element_roundabout_dead)
     {
-        app_element_roundabout_imu_step();
         return;
     }
 
     /* FSM非空闲态不检测 */
     if(APP_ELEMENT_ROUNDABOUT_FSM_IDLE != element_roundabout_fsm)
     {
-        app_element_roundabout_imu_step();
         return;
     }
 
@@ -573,7 +593,6 @@ static void app_element_roundabout_task(void)
         element_roundabout_confirm = 0U;
     }
 
-    app_element_roundabout_imu_step();
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -583,7 +602,7 @@ static void app_element_roundabout_task(void)
 // 使用示例     app_element_roundabout_imu_step();
 // 备注信息     从主循环 imu_task 移植而来，使用 element_gyro_snapshot 共享数据，时基独立
 //-------------------------------------------------------------------------------------------------------------------
-static void app_element_roundabout_imu_step(void)
+static void app_element_roundabout_imu_step(uint8 sample_fresh)
 {
     service_imu_gyro_t gyro;
     uint8 ea_backup;
@@ -602,7 +621,7 @@ static void app_element_roundabout_imu_step(void)
     element_roundabout_last_tick = now;
 
     /* 追踪gx是否在20ms内超过200°/s（环岛检测阻挡条件） */
-    if((gyro.gyro_x > 200.0f) || (gyro.gyro_x < -200.0f))
+    if((0U != sample_fresh) && ((gyro.gyro_x > 200.0f) || (gyro.gyro_x < -200.0f)))
     {
         element_roundabout_gz_high = 1U;
         element_roundabout_gz_high_tick = now;
@@ -614,7 +633,7 @@ static void app_element_roundabout_imu_step(void)
     }
 
     /* 环岛gz积分：达到当前环岛配置角度后退出，第三次环岛直接停车 */
-    if(0U != element_roundabout_gz_integrate)
+    if((0U != element_roundabout_gz_integrate) && (0U != sample_fresh))
     {
         float target_angle_deg;
         float delta_angle = tfpu_mul(gyro.gyro_z,
@@ -639,8 +658,7 @@ static void app_element_roundabout_imu_step(void)
             if(3U == element_roundabout_count)
             {
                 /* 第3环岛：停车+关负压在中断内即时执行（非阻塞寄存器写） */
-                app_speedout_stop();
-                service_negative_pressure_set_percent(0U);
+                app_speedout_request_stop_all();
                 element_roundabout_event_flags |= ELEMENT_RB_EVENT_FINISH;
             }
             else
@@ -694,11 +712,17 @@ static void app_element_roundabout_imu_step(void)
 
 static void app_element_roundabout_clear_count(void)
 {
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
     element_roundabout_count = 0U;
     element_roundabout_count_float = 0.0f;
     app_element_roundabout_bias_active = 0U;
     app_element_roundabout_bias_yaw_radps = 0.0f;
     app_element_roundabout_feedforward_scale = 1.0f;
+    EA = ea_backup;
+
     wprint("roundabout_count,0.000\r\n");
 }
 
@@ -712,6 +736,7 @@ static void app_element_roundabout_clear_count(void)
 void app_element_pump_events(void)
 {
     uint8 flags;
+    uint8 realtime_flags;
     uint16 count_snapshot;
     uint8 ea_backup;
 
@@ -719,12 +744,17 @@ void app_element_pump_events(void)
     EA = 0;
     flags = element_roundabout_event_flags;
     element_roundabout_event_flags = 0U;
+    realtime_flags = element_realtime_event_flags;
+    element_realtime_event_flags = 0U;
     count_snapshot = element_roundabout_event_count;
     EA = ea_backup;
 
     if(0U == flags)
     {
-        return;
+        if(0U == realtime_flags)
+        {
+            return;
+        }
     }
 
     if(0U != (flags & ELEMENT_RB_EVENT_FOUND))
@@ -743,6 +773,21 @@ void app_element_pump_events(void)
     if(0U != (flags & ELEMENT_RB_EVENT_FINISH))
     {
         wprint("roundabout_finish,1.000\r\n");
+    }
+    if(0U != (realtime_flags & ELEMENT_EVENT_CYLINDER_FOUND))
+    {
+        wprint("cylinder_count,%u\r\n", (uint16)element_cylinder_count);
+        wprint("cylinder,1.000\r\n");
+        service_buzzer_beep_ms(300U);
+    }
+    if(0U != (realtime_flags & ELEMENT_EVENT_CYLINDER_SLOWDOWN))
+    {
+        wprint("cylinder_slowdown,1.000\r\n");
+    }
+    if(0U != (realtime_flags & ELEMENT_EVENT_SEESAW_FOUND))
+    {
+        wprint("seesaw,1.000\r\n");
+        service_buzzer_beep_ms(300U);
     }
 }
 
@@ -770,8 +815,14 @@ float app_element_seesaw_slowdown_speed_mps(void)
 
 static void app_element_cylinder_clear_count(void)
 {
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
     element_cylinder_count = 0U;
     element_cylinder_count_float = 0.0f;
+    EA = ea_backup;
+
     wprint("cylinder_count,0.000\r\n");
 }
 
@@ -798,8 +849,7 @@ static void app_element_seesaw_found(uint32 now)
     element_seesaw_slowdown_active = 1U;
     element_seesaw_slowdown_start_tick = now;
 
-    wprint("seesaw,1.000\r\n");
-    service_buzzer_beep_ms(300U);
+    element_realtime_event_flags |= ELEMENT_EVENT_SEESAW_FOUND;
 }
 
 static void app_element_seesaw_update(uint32 now)
@@ -859,7 +909,6 @@ void app_element_init(void)
     (void)service_packet_add_action("reset_cylinder", app_element_cylinder_clear_count, 0UL);
     (void)service_packet_add_variable("seesaw_event",
             &element_seesaw_event, APP_ELEMENT_PACKET_SINGLE_COUNT);
-    pit_ms_init(APP_ELEMENT_ROUNDABOUT_PIT, APP_ELEMENT_ROUNDABOUT_PERIOD_MS, app_element_roundabout_task);
     (void)service_packet_add_action("reset_round", app_element_roundabout_clear_count, 0UL);
     (void)service_packet_add_variable("roundabout_count",
             &element_roundabout_count_float, APP_ELEMENT_PACKET_SINGLE_COUNT);
@@ -914,6 +963,7 @@ void app_element_get_data(app_element_data_t *out_data)
 void app_element_imu_task(const service_imu_gyro_t *gyro)
 {
     uint8 ea_backup;
+    uint8 sample_fresh;
     uint32 now;
     uint32 delta_tick;
     float gyro_x;
@@ -924,28 +974,41 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
     }
 
     /* 提供 gyro 快照供 TIM7 环岛中断读取（volatile 写） */
-    element_gyro_snapshot = *gyro;
+    sample_fresh = ((0U != gyro->sequence) && (gyro->sequence != element_imu_last_sequence)) ? 1U : 0U;
+    if(0U != sample_fresh)
+    {
+        element_imu_last_sequence = gyro->sequence;
+        ea_backup = EA;
+        EA = 0;
+        element_gyro_snapshot = *gyro;
+        EA = ea_backup;
+    }
 
     now = service_timetick_what();
+    app_element_process_control_events(now);
     delta_tick = now - element_last_tick;
     element_last_tick = now;
 
-    if(0U == element_gyro_x_lpf_ready)
+    gyro_x = element_cylinder_gyro_x;
+    if(0U != sample_fresh)
     {
-        shared_lpf_reset(&element_gyro_x_lpf, gyro->gyro_x);
-        element_gyro_x_lpf_ready = 1U;
-    }
-    gyro_x = shared_lpf_update(&element_gyro_x_lpf, gyro->gyro_x);
+        if(0U == element_gyro_x_lpf_ready)
+        {
+            shared_lpf_reset(&element_gyro_x_lpf, gyro->gyro_x);
+            element_gyro_x_lpf_ready = 1U;
+        }
+        gyro_x = shared_lpf_update(&element_gyro_x_lpf, gyro->gyro_x);
 
-    ea_backup = EA;
-    EA = 0;
-    element_data.gyro_x = gyro_x;
-    element_data.gyro_y = gyro->gyro_y;
-    element_data.gyro_z = gyro->gyro_z;
-    EA = ea_backup;
+        ea_backup = EA;
+        EA = 0;
+        element_data.gyro_x = gyro_x;
+        element_data.gyro_y = gyro->gyro_y;
+        element_data.gyro_z = gyro->gyro_z;
+        EA = ea_backup;
+    }
 
     /* 追踪gz是否在50ms内出现过>120°/s（供跷跷板检测） */
-    if((gyro->gyro_z > 120.0f) || (gyro->gyro_z < -120.0f))
+    if((0U != sample_fresh) && ((gyro->gyro_z > 120.0f) || (gyro->gyro_z < -120.0f)))
     {
         element_seesaw_gz_high = 1U;
         element_seesaw_gz_high_tick = now;
@@ -963,7 +1026,7 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
     {
         app_element_cylinder_clear();
     }
-    else if(0U != delta_tick)
+    else if((0U != sample_fresh) && (0U != delta_tick))
     {
         app_element_cylinder_update(gyro_x, delta_tick, now);
     }
@@ -1008,4 +1071,8 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
         element_data.active = 0.0f;
         EA = ea_backup;
     }
+
+    /* Integrate the roundabout state from each fresh IMU tick.  It used to
+     * run from the 5 ms TIM6 control step despite being an IMU-rate task. */
+    app_element_roundabout_imu_step(sample_fresh);
 }

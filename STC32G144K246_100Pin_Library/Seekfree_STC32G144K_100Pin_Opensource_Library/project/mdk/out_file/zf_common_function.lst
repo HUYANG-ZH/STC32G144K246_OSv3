@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_function
 OBJECT MODULE PLACED IN .\out_file\zf_common_function.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_function.c LARGE ROM(HUGE) WARNI
-                    -NGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_de
-                    -vice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\lib
-                    -raries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_f
-                    -unction.lst) TABS(2) OBJECT(.\out_file\zf_common_function.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_function.c LARGE ROM(HUGE) WARNIN
+                    -GLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
+                    -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
+                    -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_fu
+                    -nction.lst) OBJECT(.\out_file\zf_common_function.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    46          // 使用示例     return func_get_greatest_common_divisor(144, 36);               // 获取 144 与 36 
              -的最大公约数
    47          // 备注信息     
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 2   
 
    48          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -114,8 +114,8 @@ stmt  level    source
    86   1          uint8 sign = 0;                                                             // 标记符号 0-正数 
              -1-负数
    87   1          int32 temp = 0;                                                             // 临时计算变量
-   88   1        zf_assert(str != NULL);
-   89   1        do
+   88   1              zf_assert(str != NULL);
+   89   1              do
    90   1          {
    91   2              if(NULL == str)
    92   2              {
@@ -134,7 +134,7 @@ stmt  level    source
   103   3                  str ++;
   104   3              }
   105   2      
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 3   
 
   106   2              while(('0' <= *str) && ('9' >= *str))                                   // 确定这是个数字
   107   2              {
@@ -202,7 +202,7 @@ stmt  level    source
   162   3              }
   163   2          }while(0);
   164   1      }
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 4   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 4   
 
   165          
   166          //-------------------------------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ stmt  level    source
              -------------
   173          uint32 func_str_to_uint (char *str)
   174          {
-  175   1        uint32 temp = 0;                                                            // 临时计算变量
+  175   1              uint32 temp = 0;                                                            // 临时计算变量
   176   1          zf_assert(str != NULL);
   177   1      
   178   1          do
@@ -251,9 +251,9 @@ stmt  level    source
   205   1          int8 data_temp[16];                                                         // 缓冲区
   206   1          uint8 temp_bit = 0;                                                              // 数字位数
   207   1          
-  208   1        zf_assert(str != NULL);
+  208   1              zf_assert(str != NULL);
   209   1          
-  210   1        do
+  210   1              do
   211   1          {
   212   2              if(NULL == str)
   213   2              {
@@ -270,7 +270,7 @@ stmt  level    source
              -��
   224   2              {
   225   3                  data_temp[temp_bit ++] = (number % 10);                                  // 倒序将数值�
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 5   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 5   
 
              -�取出来
   226   3                  number /= 10;                                                       // 削减被提取的个�
@@ -305,9 +305,9 @@ stmt  level    source
              -数部分
   248   1          float point_bit = 1;                                                        // 小数累计除数
   249   1          
-  250   1        zf_assert(str != NULL);
+  250   1              zf_assert(str != NULL);
   251   1          
-  252   1        do
+  252   1              do
   253   1          {
   254   2              if(NULL == str)
   255   2              {
@@ -338,7 +338,7 @@ stmt  level    source
              -并且精度控制还没到六位
   279   3                  {
   280   4                      temp_point = temp_point * 10 + ((uint8)(*str) - 0x30);          // 提取小数部分数�
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 6   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 6   
 
              -��
   281   4                      point_bit *= 10;                                                // 计算这部分小数�
@@ -378,9 +378,9 @@ stmt  level    source
   311   1          uint8 temp_bit = point_bit;                                                      // 转换精度位�
              -�
   312   1          
-  313   1        zf_assert(str != NULL);
+  313   1              zf_assert(str != NULL);
   314   1          
-  315   1        do
+  315   1              do
   316   1          {
   317   2              if(NULL == str)
   318   2              {
@@ -406,7 +406,7 @@ stmt  level    source
   336   2              // 提取小数部分
   337   2              number = number - data_int;                                             // 减去整数部分即�
              -��
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 7   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 7   
 
   338   2              while(temp_bit --)
   339   2              {
@@ -474,15 +474,15 @@ stmt  level    source
              -1-负数
   394   1          double temp = 0.0;                                                          // 临时计算变量 整
              -数部分
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 8   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 8   
 
   395   1          double temp_point = 0.0;                                                    // 临时计算变量 小
              -数部分
   396   1          double point_bit = 1;                                                       // 小数累计除数
   397   1          
-  398   1        zf_assert(str != NULL);
+  398   1              zf_assert(str != NULL);
   399   1          
-  400   1        do
+  400   1              do
   401   1          {
   402   2              if(NULL == str)
   403   2              {
@@ -542,7 +542,7 @@ stmt  level    source
              -buffer = "3.14"
   452          // 备注信息     
   453          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 9   
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 9   
 
              -------------
   454          void func_double_to_str (char *str, double number, uint8 point_bit)
@@ -554,9 +554,9 @@ stmt  level    source
   460   1          uint8 temp_bit = point_bit;                                                      // 转换精度位�
              -�
   461   1          
-  462   1        zf_assert(str != NULL);
+  462   1              zf_assert(str != NULL);
   463   1          
-  464   1        do
+  464   1              do
   465   1          {
   466   2              if(NULL == str)
   467   2              {
@@ -610,7 +610,7 @@ stmt  level    source
   509   3                  temp_bit = 0;
   510   3                  *str ++ = '.';
   511   3                  if(0 == data_float)
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 10  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 10  
 
   512   3                      *str = '0';
   513   3                  else
@@ -649,8 +649,8 @@ stmt  level    source
   542   1          uint8 temp = 0;                                                             // 计算变量
   543   1          uint8 flag = 0;                                                             // 标志位
   544   1      
-  545   1        zf_assert(str != NULL);
-  546   1        
+  545   1              zf_assert(str != NULL);
+  546   1              
   547   1          do
   548   1          {
   549   2              if(NULL == str)
@@ -678,7 +678,7 @@ stmt  level    source
   571   4                  }
   572   3                  result_data = ((result_data << 4) | (temp & 0x0F));
   573   3              }
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 11  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 11  
 
   574   2              else
   575   2              {
@@ -717,7 +717,7 @@ stmt  level    source
   605   1          uint8 temp_bit = 0;                                                              // 数字位数
   606   1      
   607   1          zf_assert(str != NULL);
-  608   1          
+  608   1                      
   609   1          *str++ = '0';
   610   1          *str++ = 'x';
   611   1          do
@@ -746,7 +746,7 @@ stmt  level    source
   630   2              {
   631   3                  *str ++ = hex_index[data_temp[temp_bit - 1]];                            // 将数字从倒�
              -�数组中倒序取出 变成正序放入字符串
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 12  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 12  
 
   632   3                  temp_bit --;
   633   3              }
@@ -814,7 +814,7 @@ stmt  level    source
   693   3      
   694   3                  if(!pos_dat)
   695   3                  {
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 13  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 13  
 
   696   4                      break;
   697   4                  }
@@ -852,7 +852,7 @@ stmt  level    source
              -------------
   727          // 函数简介     sprintf 函数实现
   728          // 参数说明     *buffer         缓冲区
-  729          // 参数说明   siz       大小
+  729          // 参数说明         siz                             大小
   730          // 参数说明     *format         源字符串
   731          // 参数说明     args            可变参数列表
   732          // 返回参数     int32          处理后数据长
@@ -878,16 +878,16 @@ stmt  level    source
   751   1          ptr = buffer;
   752   1          
   753   1          if (buffer == NULL || format == NULL || siz == 0)
-  754   1        {
+  754   1              {
   755   2              return 0;
   756   2          }
-  757   1          
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 14  
+  757   1                      
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 14  
 
   758   1          while (*format != '\0' && i < siz - 1) 
-  759   1        {
+  759   1              {
   760   2              if (*format != '%') 
-  761   2          {
+  761   2                      {
   762   3                  *ptr++ = *format++;
   763   3                  i++;
   764   3                  continue;
@@ -896,14 +896,14 @@ stmt  level    source
   767   2              /* 处理格式符 */
   768   2              format++;
   769   2              switch (*format) 
-  770   2          {
+  770   2                      {
   771   3                  case 'd':
   772   3                      num = va_arg(args, int);
   773   3                      len = 0;
   774   3                      is_negative = 0;
   775   3      
   776   3                      if (num < 0) 
-  777   3              {
+  777   3                                      {
   778   4                          is_negative = 1;
   779   4                          num = -num;
   780   4                      }
@@ -916,13 +916,13 @@ stmt  level    source
   787   3      
   788   3                      /* 添加负号 */
   789   3                      if (is_negative) 
-  790   3              {
+  790   3                                      {
   791   4                          temp[len++] = '-';
   792   4                      }
   793   3      
   794   3                      /* 反转字符串 */
   795   3                      for (j = 0; j < len / 2; j++) 
-  796   3              {
+  796   3                                      {
   797   4                          char t = temp[j];
   798   4                          temp[j] = temp[len - j - 1];
   799   4                          temp[len - j - 1] = t;
@@ -930,7 +930,7 @@ stmt  level    source
   801   3      
   802   3                      /* 复制到缓冲区 */
   803   3                      for (j = 0; j < len && i < siz - 1; j++) 
-  804   3              {
+  804   3                                      {
   805   4                          *ptr++ = temp[j];
   806   4                          i++;
   807   4                      }
@@ -939,18 +939,18 @@ stmt  level    source
   810   3                  case 's':
   811   3                      str = va_arg(args, char*);
   812   3                      if (str == NULL) 
-  813   3              {
+  813   3                                      {
   814   4                          str = "(null)";
   815   4                      }
   816   3                      
   817   3                      while (*str != '\0' && i < siz - 1) 
-  818   3              {
+  818   3                                      {
   819   4                          *ptr++ = *str++;
   820   4                          i++;
   821   4                      }
   822   3                      break;
   823   3      
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 15  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 15  
 
   824   3                  case 'c':
   825   3                      *ptr++ = (char)va_arg(args, int);
@@ -968,7 +968,7 @@ stmt  level    source
   837   3      
   838   3                      /* 反转字符串 */
   839   3                      for (j = 0; j < len / 2; j++) 
-  840   3              {
+  840   3                                      {
   841   4                          char t = temp_x[j];
   842   4                          temp_x[j] = temp_x[len - j - 1];
   843   4                          temp_x[len - j - 1] = t;
@@ -976,7 +976,7 @@ stmt  level    source
   845   3      
   846   3                      /* 复制到缓冲区 */
   847   3                      for (j = 0; j < len && i < siz - 1; j++) 
-  848   3              {
+  848   3                                      {
   849   4                          *ptr++ = temp_x[j];
   850   4                          i++;
   851   4                      }
@@ -1008,8 +1008,8 @@ stmt  level    source
   875          uint32 zf_sprintf (int8 *buff, const int8 *format, ...)
   876          {
   877   1          uint32 buff_len = 0;
-  878   1        va_list arg;
-  879   1        va_start(arg, format);
+  878   1              va_list arg;
+  879   1              va_start(arg, format);
   880   1      
   881   1          while (*format)
   882   1          {
@@ -1018,7 +1018,7 @@ stmt  level    source
   885   2              {
   886   3                  switch (*++ format)
   887   3                  {
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 16  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 16  
 
   888   4                      case 'a':// 十六进制p计数法输出浮点数 暂未实现
   889   4                          {
@@ -1086,7 +1086,7 @@ stmt  level    source
   951   6                              vstr[vlen] = '0';
   952   6                              vlen ++;
   953   6                          }
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 17  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 17  
 
   954   5      
   955   5                          vstr[vlen] = '.';
@@ -1154,7 +1154,7 @@ stmt  level    source
  1017   4                          break;
  1018   4      
  1019   4                      case 'p':// 以16进制形式输出指针
-C251 COMPILER V5.60.0,  zf_common_function                                                 16/07/26  18:10:23  PAGE 18  
+C251 COMPILER V5.60.0,  zf_common_function                                                 20/07/26  19:25:30  PAGE 18  
 
  1020   4                          {
  1021   5                              int8 vstr[33];

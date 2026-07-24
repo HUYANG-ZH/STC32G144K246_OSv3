@@ -3,12 +3,10 @@
 #include "service_packet.h"
 #include "app_feedforward.h"
 #include "app_motion_preprocess.h"
-#include "app_scheduler.h"
 #include "app_speed_plan.h"
 #include "app_element.h"
 
 #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
-#define APP_SPEED_PLAN_TASK_PRIORITY            (6U)
 #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (0.9f)
 #define APP_SPEED_PLAN_ACCEL_LIMIT_MPS2         (80.0f)
 #define APP_SPEED_PLAN_DECEL_LIMIT_MPS2         (80.0f)
@@ -18,7 +16,7 @@
 static float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
 static volatile float speed_plan_linear_mps = 0.0f;
 
-static void app_speed_plan_task(void);
+void app_speed_plan_control_step(void);
 
 static float app_speed_plan_abs(float value)
 {
@@ -56,6 +54,11 @@ static float app_speed_plan_norm_abs(float value, float max_value)
 
     abs_value = app_speed_plan_abs(value);
     abs_value = app_speed_plan_limit(abs_value, 0.0f, max_value);
+
+    if(1.0f == max_value)
+    {
+        return abs_value;
+    }
 
     return tfpu_div(abs_value, max_value);
 }
@@ -97,9 +100,8 @@ void app_speed_plan_init(void)
     speed_plan_linear_mps = motion_preprocess.linear_mps;
 
     app_speed_plan_register_packet();
-    app_speed_plan_task();
-    (void)app_scheduler_add(APP_SPEED_PLAN_TASK_ID, app_speed_plan_task,
-            APP_SPEED_PLAN_TASK_PRIORITY, APP_SPEED_PLAN_PERIOD_MS);
+    app_speed_plan_control_step();
+    /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定。 */
 }
 
 float app_speed_plan_get_linear_mps(void)
@@ -107,7 +109,7 @@ float app_speed_plan_get_linear_mps(void)
     return speed_plan_linear_mps;
 }
 
-static void app_speed_plan_task(void)
+void app_speed_plan_control_step(void)
 {
     float line_error_rate;
     float curvature_rate;

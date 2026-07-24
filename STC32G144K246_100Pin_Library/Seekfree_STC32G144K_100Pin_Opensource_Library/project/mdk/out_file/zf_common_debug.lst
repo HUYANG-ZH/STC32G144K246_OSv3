@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    20/07/26  23:08:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_debug
 OBJECT MODULE PLACED IN .\out_file\zf_common_debug.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_debug.c LARGE ROM(HUGE) WARNINGL
-                    -EVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
-                    -e;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librar
-                    -ies\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_debu
-                    -g.lst) TABS(2) OBJECT(.\out_file\zf_common_debug.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_debug.c LARGE ROM(HUGE) WARNINGLE
+                    -VEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
+                    -;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librari
+                    -es\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_debug
+                    -.lst) OBJECT(.\out_file\zf_common_debug.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    47          #pragma warning disable = 183
    48          #pragma warning disable = 177
    49          
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    20/07/26  23:08:26  PAGE 2   
 
    50          
    51          #if DEBUG_UART_USE_INTERRUPT                                                    // 如果启用 debug uar
@@ -94,25 +94,25 @@ stmt  level    source
    70   1          
    71   1      #if(USER_USB_CDC)
                    if(len > 0xFFFF)
-                 {
-                   usb_cdc_write_buffer(buff, 0xFFFF);
-                   return  len - 0xFFFF;
-                 }
-                 else
-                 {
-                   usb_cdc_write_buffer(buff, (uint16)len);
-                 }
+                       {
+                               usb_cdc_write_buffer(buff, 0xFFFF);
+                               return  len - 0xFFFF;
+                       }
+                       else
+                       {
+                               usb_cdc_write_buffer(buff, (uint16)len);
+                       }
                    return 0;
                #else
    83   1          if(len > 0xFFFF)
-   84   1        {
-   85   2          uart_write_buffer(DEBUG_UART_INDEX, buff, 0xFFFF);
-   86   2          return  len - 0xFFFF;
-   87   2        }
-   88   1        else
-   89   1        {
-   90   2          uart_write_buffer(DEBUG_UART_INDEX, buff, (uint16)len);
-   91   2        }
+   84   1              {
+   85   2                      uart_write_buffer(DEBUG_UART_INDEX, buff, 0xFFFF);
+   86   2                      return  len - 0xFFFF;
+   87   2              }
+   88   1              else
+   89   1              {
+   90   2                      uart_write_buffer(DEBUG_UART_INDEX, buff, (uint16)len);
+   91   2              }
    92   1          
    93   1          return 0;
    94   1      #endif
@@ -134,7 +134,7 @@ stmt  level    source
   108   1          fifo_read_buffer(&debug_uart_fifo, buff, &len, FIFO_READ_AND_CLEAN);
   109   1          return len;
   110   1      }
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    20/07/26  23:08:26  PAGE 3   
 
   111          extern uint8 test_count ;
   112          //-------------------------------------------------------------------------------------------------------
@@ -202,7 +202,7 @@ stmt  level    source
   168              {
   169   1              #if(USER_USB_CDC)
                            usb_cdc_write_byte(c);
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 4   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    20/07/26  23:08:26  PAGE 4   
 
                            return c;
                        #else
@@ -230,29 +230,29 @@ stmt  level    source
              -------------
   191          void debug_assert_handler (uint8 pass, char *file, int line)
   192          {
-  193   1        uint8 log_str[] = "Assert error";
+  193   1              uint8 log_str[] = "Assert error";
   194   1      
-  195   1        while(!pass)
-  196   1        {
-  197   2          // 如果代码跳转到这里停住了
-  198   2          // 一般你的函数参数传递出错了
-  199   2          // 或者你自己调用的 zf_assert(x) 接口处报错了
+  195   1              while(!pass)
+  196   1              {
+  197   2                      // 如果代码跳转到这里停住了
+  198   2                      // 一般你的函数参数传递出错了
+  199   2                      // 或者你自己调用的 zf_assert(x) 接口处报错了
   200   2      
-  201   2          // 如果调用了 debug_init 初始化了 log 输出
-  202   2          // 就在对应串口输出去查看是哪个文件的哪一行报错
+  201   2                      // 如果调用了 debug_init 初始化了 log 输出
+  202   2                      // 就在对应串口输出去查看是哪个文件的哪一行报错
   203   2      
-  204   2          // 如果没有初始化 debug
-  205   2          // 那就看看这个 file 的字符串值和 line 的行数
-  206   2          // 那代表报错的文件路径名称和对应报错行数
+  204   2                      // 如果没有初始化 debug
+  205   2                      // 那就看看这个 file 的字符串值和 line 的行数
+  206   2                      // 那代表报错的文件路径名称和对应报错行数
   207   2      
-  208   2          // 再去调试看看是为什么参数出错
+  208   2                      // 再去调试看看是为什么参数出错
   209   2      
   210   2      
-  211   2          printf("\r\n %s file %s line %d\r\n", log_str, file, line);
+  211   2                      printf("\r\n %s file %s line %d\r\n", log_str, file, line);
   212   2      
   213   2      
-  214   2          system_delay_ms(500);
-  215   2        }
+  214   2                      system_delay_ms(500);
+  215   2              }
   216   1      }
   217          
   218          
@@ -270,7 +270,7 @@ stmt  level    source
   228   1      #if(USER_USB_CDC)
                    usb_cdc_init();
                    #if DEBUG_UART_USE_INTERRUPT                                               // 条件编译 只有在�
-C251 COMPILER V5.60.0,  zf_common_debug                                                    16/07/26  18:10:23  PAGE 5   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    20/07/26  23:08:26  PAGE 5   
 
              -��用串口中断才编译
                        fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);

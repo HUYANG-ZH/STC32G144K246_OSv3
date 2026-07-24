@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       17/07/26  04:06:00  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
 OBJECT MODULE PLACED IN .\out_file\app_speedout.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L3_APP\app_speedout.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,
-                    -SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\z
-                    -f_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\s
-                    -tc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_speedout.lst) TABS(2) OBJECT(
-                    -.\out_file\app_speedout.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe ..\L3_APP\app_speedout.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,S
+                    -PEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf
+                    -_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\st
+                    -c32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_speedout.lst) OBJECT(.\out_fil
+                    -e\app_speedout.obj) 
 
 stmt  level    source
 
@@ -51,287 +51,500 @@ stmt  level    source
    36          static shared_pos_pid_t speedout_right_pid;
    37          static uint8 speedout_last_enabled = 0U;
    38          
-   39          static void app_speedout_tick(void);
-   40          static void app_speedout_restart_left_pid(void);
-   41          static void app_speedout_restart_right_pid(void);
-   42          static void app_speedout_stop_all(void);
-   43          void app_speedout_start(void);
-   44          
-   45          static float app_speedout_output_limit(app_speedout_pid_config_t *config)
-   46          {
-   47   1          float real_limit;
-   48   1      
-   49   1          real_limit = (0.0f < config->output_limit) ? config->output_limit : (float)PWM_DUTY_MAX;
-   50   1          if(real_limit > (float)PWM_DUTY_MAX)
-   51   1          {
-   52   2              real_limit = (float)PWM_DUTY_MAX;
-   53   2          }
-C251 COMPILER V5.60.0,  app_speedout                                                       17/07/26  04:06:00  PAGE 2   
+   39          typedef enum
+   40          {
+   41              APP_SPEEDOUT_COMMAND_NONE = 0,
+   42              APP_SPEEDOUT_COMMAND_STOP,
+   43              APP_SPEEDOUT_COMMAND_STOP_ALL,
+   44              APP_SPEEDOUT_COMMAND_START,
+   45          } app_speedout_command_enum;
+   46          
+   47          typedef struct
+   48          {
+   49              float left_mps;
+   50              float right_mps;
+   51              uint32 sequence;
+   52              uint8 owner;
+   53          } app_speedout_target_mailbox_t;
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 2   
 
-   54   1      
-   55   1          return real_limit;
-   56   1      }
-   57          
-   58          static float app_speedout_limit_target(float target)
-   59          {
-   60   1          if(target > APP_SPEEDOUT_TARGET_LIMIT_MPS)
-   61   1          {
-   62   2              return APP_SPEEDOUT_TARGET_LIMIT_MPS;
-   63   2          }
-   64   1      
-   65   1          if(target < -APP_SPEEDOUT_TARGET_LIMIT_MPS)
-   66   1          {
-   67   2              return -APP_SPEEDOUT_TARGET_LIMIT_MPS;
-   68   2          }
-   69   1      
-   70   1          return target;
-   71   1      }
-   72          
-   73          static void app_speedout_sync_pid(shared_pos_pid_t *pid, app_speedout_pid_config_t *config,
-   74                  shared_pos_pid_direction_enum direction)
-   75          {
-   76   1          float output_limit;
-   77   1      
-   78   1          output_limit = app_speedout_output_limit(config);
-   79   1      
-   80   1          pid->kp = config->kp;
-   81   1          pid->ki = config->ki;
-   82   1          pid->kd = config->kd;
-   83   1          pid->output_limit_enable = ZF_ENABLE;
-   84   1          pid->output_min = -output_limit;
-   85   1          pid->output_max = output_limit;
-   86   1          pid->integral_limit_enable = (0.0f < config->integral_limit) ? ZF_ENABLE : ZF_DISABLE;
-   87   1          pid->integral_min = -config->integral_limit;
-   88   1          pid->integral_max = config->integral_limit;
-   89   1          pid->delta_limit_enable = ZF_DISABLE;
-   90   1          pid->delta_min = 0.0f;
-   91   1          pid->delta_max = 0.0f;
-   92   1          pid->deadband = 0.0f;
-   93   1          pid->setpoint_rate = 0.0f;
-   94   1          pid->integral_separation = 0.0f;
-   95   1          pid->conditional_integral_enable = ZF_ENABLE;
-   96   1          pid->direction = direction;
-   97   1          pid->derivative_mode = SHARED_POS_PID_DERIVATIVE_ON_ERROR;
-   98   1      }
-   99          
-  100          static void app_speedout_clear_pid(void)
-  101          {
-  102   1          app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION)
-             -;
-  103   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTI
-             -ON);
-  104   1          shared_pos_pid_reset(&speedout_left_pid, 0.0f);
-  105   1          shared_pos_pid_reset(&speedout_right_pid, 0.0f);
-  106   1      }
-  107          
-  108          static void app_speedout_restart_left_pid(void)
+   54          
+   55          #define APP_SPEEDOUT_TARGET_OWNER_NONE        (0U)
+   56          #define APP_SPEEDOUT_TARGET_OWNER_CONTROL     (1U)
+   57          #define APP_SPEEDOUT_TARGET_OWNER_PACKET      (2U)
+   58          
+   59          static volatile app_speedout_command_enum speedout_command = APP_SPEEDOUT_COMMAND_NONE;
+   60          static volatile app_speedout_target_mailbox_t xdata speedout_target_mailbox;
+   61          static float speedout_active_left_target = 0.0f;
+   62          static float speedout_active_right_target = 0.0f;
+   63          static uint32 speedout_target_applied_sequence = 0UL;
+   64          static uint8 speedout_target_active_owner = APP_SPEEDOUT_TARGET_OWNER_NONE;
+   65          static volatile uint8 speedout_safety_inhibit = 0U;
+   66          
+   67          static void app_speedout_tick(void);
+   68          static void app_speedout_restart_left_pid(void);
+   69          static void app_speedout_restart_right_pid(void);
+   70          static void app_speedout_stop_all_action(void);
+   71          static void app_speedout_start_action(void);
+   72          static void app_speedout_apply_command(void);
+   73          static void app_speedout_start(void);
+   74          static void app_speedout_stop(void);
+   75          static void app_speedout_publish_target(float left_mps, float right_mps, uint8 owner);
+   76          static void app_speedout_packet_target_changed(void);
+   77          static void app_speedout_consume_target(void);
+   78          
+   79          static float app_speedout_output_limit(app_speedout_pid_config_t *config)
+   80          {
+   81   1          float real_limit;
+   82   1      
+   83   1          real_limit = (0.0f < config->output_limit) ? config->output_limit : (float)PWM_DUTY_MAX;
+   84   1          if(real_limit > (float)PWM_DUTY_MAX)
+   85   1          {
+   86   2              real_limit = (float)PWM_DUTY_MAX;
+   87   2          }
+   88   1      
+   89   1          return real_limit;
+   90   1      }
+   91          
+   92          static float app_speedout_limit_target(float target)
+   93          {
+   94   1          if(target > APP_SPEEDOUT_TARGET_LIMIT_MPS)
+   95   1          {
+   96   2              return APP_SPEEDOUT_TARGET_LIMIT_MPS;
+   97   2          }
+   98   1      
+   99   1          if(target < -APP_SPEEDOUT_TARGET_LIMIT_MPS)
+  100   1          {
+  101   2              return -APP_SPEEDOUT_TARGET_LIMIT_MPS;
+  102   2          }
+  103   1      
+  104   1          return target;
+  105   1      }
+  106          
+  107          static void app_speedout_sync_pid(shared_pos_pid_t *pid, app_speedout_pid_config_t *config,
+  108                  shared_pos_pid_direction_enum direction)
   109          {
-  110   1          uint8 ea_backup;
+  110   1          float output_limit;
   111   1      
-  112   1          ea_backup = EA;
-  113   1          EA = 0;
-  114   1          app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION)
+  112   1          output_limit = app_speedout_output_limit(config);
+  113   1      
+  114   1          pid->kp = config->kp;
+  115   1          pid->ki = config->ki;
+  116   1          pid->kd = config->kd;
+  117   1          pid->output_limit_enable = ZF_ENABLE;
+  118   1          pid->output_min = -output_limit;
+  119   1          pid->output_max = output_limit;
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 3   
+
+  120   1          pid->integral_limit_enable = (0.0f < config->integral_limit) ? ZF_ENABLE : ZF_DISABLE;
+  121   1          pid->integral_min = -config->integral_limit;
+  122   1          pid->integral_max = config->integral_limit;
+  123   1          pid->delta_limit_enable = ZF_DISABLE;
+  124   1          pid->delta_min = 0.0f;
+  125   1          pid->delta_max = 0.0f;
+  126   1          pid->deadband = 0.0f;
+  127   1          pid->setpoint_rate = 0.0f;
+  128   1          pid->integral_separation = 0.0f;
+  129   1          pid->conditional_integral_enable = ZF_ENABLE;
+  130   1          pid->direction = direction;
+  131   1          pid->derivative_mode = SHARED_POS_PID_DERIVATIVE_ON_ERROR;
+  132   1      }
+  133          
+  134          static void app_speedout_clear_pid(void)
+  135          {
+  136   1          app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION)
              -;
-  115   1          shared_pos_pid_restart(&speedout_left_pid);
-  116   1          EA = ea_backup;
-C251 COMPILER V5.60.0,  app_speedout                                                       17/07/26  04:06:00  PAGE 3   
-
-  117   1      }
-  118          
-  119          static void app_speedout_restart_right_pid(void)
-  120          {
-  121   1          uint8 ea_backup;
-  122   1      
-  123   1          ea_backup = EA;
-  124   1          EA = 0;
-  125   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTI
+  137   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTI
              -ON);
-  126   1          shared_pos_pid_restart(&speedout_right_pid);
-  127   1          EA = ea_backup;
-  128   1      }
-  129          
-  130          static void app_speedout_register_packet(void)
-  131          {
-  132   1          (void)service_packet_add_variable("speed_left_target", &app_speedout_config.left.target_mps, APP_SPEE
-             -DOUT_PACKET_SINGLE_COUNT);
-  133   1          (void)service_packet_add_variable_with_callback("speed_left_kp", &app_speedout_config.left.kp,
-  134   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
-  135   1          (void)service_packet_add_variable_with_callback("speed_left_ki", &app_speedout_config.left.ki,
-  136   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
-  137   1          (void)service_packet_add_variable("speed_right_target", &app_speedout_config.right.target_mps, APP_SP
-             -EEDOUT_PACKET_SINGLE_COUNT);
-  138   1          (void)service_packet_add_variable_with_callback("speed_right_kp", &app_speedout_config.right.kp,
-  139   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
-  140   1          (void)service_packet_add_variable_with_callback("speed_right_ki", &app_speedout_config.right.ki,
-  141   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
-  142   1          (void)service_packet_add_action("speed_stop", app_speedout_stop, 0UL);
-  143   1          (void)service_packet_add_action("stop", app_speedout_stop_all, 0UL);
-  144   1          (void)service_packet_add_action("start", app_speedout_start, 0UL);
-  145   1      }
-  146          
-  147          void app_speedout_init(void)
-  148          {
-  149   1          app_speedout_config.left.kd = APP_SPEEDOUT_DEFAULT_KD;
-  150   1          app_speedout_config.right.kd = APP_SPEEDOUT_DEFAULT_KD;
-  151   1          app_speedout_config.left.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
-  152   1          app_speedout_config.right.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
-  153   1          app_speedout_config.left.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
-  154   1          app_speedout_config.right.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
-  155   1          app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION)
+  138   1          shared_pos_pid_reset(&speedout_left_pid, 0.0f);
+  139   1          shared_pos_pid_reset(&speedout_right_pid, 0.0f);
+  140   1      }
+  141          
+  142          static void app_speedout_restart_left_pid(void)
+  143          {
+  144   1          uint8 ea_backup;
+  145   1      
+  146   1          ea_backup = EA;
+  147   1          EA = 0;
+  148   1          app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION)
              -;
-  156   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTI
+  149   1          shared_pos_pid_restart(&speedout_left_pid);
+  150   1          EA = ea_backup;
+  151   1      }
+  152          
+  153          static void app_speedout_restart_right_pid(void)
+  154          {
+  155   1          uint8 ea_backup;
+  156   1      
+  157   1          ea_backup = EA;
+  158   1          EA = 0;
+  159   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTI
              -ON);
-  157   1          shared_pos_pid_init(&speedout_left_pid);
-  158   1          shared_pos_pid_init(&speedout_right_pid);
-  159   1      
-  160   1          app_speedout_config.left.target_mps = 0.0f;
-  161   1          app_speedout_config.right.target_mps = 0.0f;
-  162   1          app_speedout_data.left_target_mps = 0.0f;
-  163   1          app_speedout_data.right_target_mps = 0.0f;
-  164   1          app_speedout_data.left_actual_mps = 0.0f;
-  165   1          app_speedout_data.right_actual_mps = 0.0f;
-  166   1          app_speedout_data.left_pwm = 0.0f;
-  167   1          app_speedout_data.right_pwm = 0.0f;
-  168   1          app_speedout_data.enabled = 0.0f;
-  169   1          speedout_last_enabled = 0U;
-  170   1      
-  171   1          app_speedout_register_packet();
-  172   1          pit_ms_init(APP_SPEEDOUT_PIT, APP_SPEEDOUT_PERIOD_MS, app_speedout_tick);
-  173   1      }
-  174          
-  175          void app_speedout_debug(void)
-  176          {
-  177   1          app_speedout_data_t datas;
-C251 COMPILER V5.60.0,  app_speedout                                                       17/07/26  04:06:00  PAGE 4   
+  160   1          shared_pos_pid_restart(&speedout_right_pid);
+  161   1          EA = ea_backup;
+  162   1      }
+  163          
+  164          static void app_speedout_register_packet(void)
+  165          {
+  166   1          (void)service_packet_add_variable_with_callback("speed_left_target", &app_speedout_config.left.target
+             -_mps,
+  167   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_packet_target_changed);
+  168   1          (void)service_packet_add_variable_with_callback("speed_left_kp", &app_speedout_config.left.kp,
+  169   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
+  170   1          (void)service_packet_add_variable_with_callback("speed_left_ki", &app_speedout_config.left.ki,
+  171   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
+  172   1          (void)service_packet_add_variable_with_callback("speed_right_target", &app_speedout_config.right.targ
+             -et_mps,
+  173   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_packet_target_changed);
+  174   1          (void)service_packet_add_variable_with_callback("speed_right_kp", &app_speedout_config.right.kp,
+  175   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
+  176   1          (void)service_packet_add_variable_with_callback("speed_right_ki", &app_speedout_config.right.ki,
+  177   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
+  178   1          (void)service_packet_add_action("speed_stop", app_speedout_request_stop, 0UL);
+  179   1          (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 4   
 
-  178   1      
-  179   1          app_speedout_get_data(&datas);
-  180   1          printf("%.3f,%.3f,%.3f,%.3f\r\n",
-  181   1                  datas.left_target_mps, datas.right_target_mps,
-  182   1                  datas.left_actual_mps, datas.right_actual_mps);
-  183   1      }
-  184          
-  185          void app_speedout_stop(void)
-  186          {
-  187   1          app_speedout_config.left.target_mps = 0.0f;
-  188   1          app_speedout_config.right.target_mps = 0.0f;
-  189   1          app_speedout_data.left_target_mps = 0.0f;
-  190   1          app_speedout_data.right_target_mps = 0.0f;
-  191   1          app_speedout_data.left_pwm = 0.0f;
-  192   1          app_speedout_data.right_pwm = 0.0f;
-  193   1          app_speedout_data.enabled = 0.0f;
-  194   1          speedout_last_enabled = 0U;
-  195   1          app_speedout_clear_pid();
-  196   1      
-  197   1          service_motor_stop();
-  198   1      }
-  199          
-  200          static void app_speedout_stop_all(void)
-  201          {
-  202   1          app_speedout_stop();
-  203   1          service_negative_pressure_set_percent(0U);
-  204   1          wprint("stop,0.000\r\n");
-  205   1      }
-  206          
-  207          void app_speedout_start(void)
-  208          {
-  209   1          app_speedout_config.left.target_mps = 0.0f;
-  210   1          app_speedout_config.right.target_mps = 0.0f;
-  211   1          app_speedout_data.left_target_mps = 0.0f;
-  212   1          app_speedout_data.right_target_mps = 0.0f;
-  213   1          app_speedout_data.left_pwm = 0.0f;
-  214   1          app_speedout_data.right_pwm = 0.0f;
-  215   1          app_speedout_data.enabled = 1.0f;
-  216   1          speedout_last_enabled = 1U;
-  217   1          app_speedout_clear_pid();
-  218   1      
-  219   1          service_motor_stop();
-  220   1          wprint("start,0.000\r\n");
-  221   1      }
-  222          
-  223          void app_speedout_set_target(float left_mps, float right_mps)
-  224          {
-  225   1          app_speedout_config.left.target_mps = left_mps;
-  226   1          app_speedout_config.right.target_mps = right_mps;
-  227   1          app_speedout_data.left_target_mps = left_mps;
-  228   1          app_speedout_data.right_target_mps = right_mps * APP_SPEEDOUT_RIGHT_TARGET_SIGN;
-  229   1      }
-  230          
-  231          void app_speedout_get_data(app_speedout_data_t *out_data)
-  232          {
-  233   1          if(NULL == out_data)
-  234   1          {
-  235   2              return;
-  236   2          }
-  237   1      
-  238   1          *out_data = app_speedout_data;
-  239   1      }
-  240          
-  241          static void app_speedout_tick(void)
-  242          {
-  243   1          uint8 enabled;
-C251 COMPILER V5.60.0,  app_speedout                                                       17/07/26  04:06:00  PAGE 5   
+  180   1          (void)service_packet_add_action("start", app_speedout_start_action, 0UL);
+  181   1      }
+  182          
+  183          void app_speedout_init(void)
+  184          {
+  185   1          app_speedout_config.left.kd = APP_SPEEDOUT_DEFAULT_KD;
+  186   1          app_speedout_config.right.kd = APP_SPEEDOUT_DEFAULT_KD;
+  187   1          app_speedout_config.left.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
+  188   1          app_speedout_config.right.integral_limit = APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT;
+  189   1          app_speedout_config.left.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
+  190   1          app_speedout_config.right.output_limit = APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT;
+  191   1          app_speedout_sync_pid(&speedout_left_pid, &app_speedout_config.left, APP_SPEEDOUT_LEFT_PID_DIRECTION)
+             -;
+  192   1          app_speedout_sync_pid(&speedout_right_pid, &app_speedout_config.right, APP_SPEEDOUT_RIGHT_PID_DIRECTI
+             -ON);
+  193   1          shared_pos_pid_init(&speedout_left_pid);
+  194   1          shared_pos_pid_init(&speedout_right_pid);
+  195   1      
+  196   1          app_speedout_config.left.target_mps = 0.0f;
+  197   1          app_speedout_config.right.target_mps = 0.0f;
+  198   1          app_speedout_data.left_target_mps = 0.0f;
+  199   1          app_speedout_data.right_target_mps = 0.0f;
+  200   1          app_speedout_data.left_actual_mps = 0.0f;
+  201   1          app_speedout_data.right_actual_mps = 0.0f;
+  202   1          app_speedout_data.left_pwm = 0.0f;
+  203   1          app_speedout_data.right_pwm = 0.0f;
+  204   1          app_speedout_data.enabled = 0.0f;
+  205   1          speedout_last_enabled = 0U;
+  206   1          speedout_command = APP_SPEEDOUT_COMMAND_NONE;
+  207   1          speedout_target_mailbox.left_mps = 0.0f;
+  208   1          speedout_target_mailbox.right_mps = 0.0f;
+  209   1          speedout_target_mailbox.sequence = 0UL;
+  210   1          speedout_target_mailbox.owner = APP_SPEEDOUT_TARGET_OWNER_NONE;
+  211   1          speedout_active_left_target = 0.0f;
+  212   1          speedout_active_right_target = 0.0f;
+  213   1          speedout_target_applied_sequence = 0UL;
+  214   1          speedout_target_active_owner = APP_SPEEDOUT_TARGET_OWNER_NONE;
+  215   1          speedout_safety_inhibit = 0U;
+  216   1      
+  217   1          app_speedout_register_packet();
+  218   1          pit_ms_init(APP_SPEEDOUT_PIT, APP_SPEEDOUT_PERIOD_MS, app_speedout_tick);
+  219   1          interrupt_set_priority(TIM5_IRQn, 3U);
+  220   1      }
+  221          
+  222          void app_speedout_debug(void)
+  223          {
+  224   1          app_speedout_data_t datas;
+  225   1      
+  226   1          app_speedout_get_data(&datas);
+  227   1          printf("%.3f,%.3f,%.3f,%.3f\r\n",
+  228   1                  datas.left_target_mps, datas.right_target_mps,
+  229   1                  datas.left_actual_mps, datas.right_actual_mps);
+  230   1      }
+  231          
+  232          static void app_speedout_stop(void)
+  233          {
+  234   1          speedout_active_left_target = 0.0f;
+  235   1          speedout_active_right_target = 0.0f;
+  236   1          app_speedout_data.left_target_mps = 0.0f;
+  237   1          app_speedout_data.right_target_mps = 0.0f;
+  238   1          app_speedout_data.left_pwm = 0.0f;
+  239   1          app_speedout_data.right_pwm = 0.0f;
+  240   1          app_speedout_data.enabled = 0.0f;
+  241   1          speedout_last_enabled = 0U;
+  242   1          app_speedout_clear_pid();
+  243   1      
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 5   
 
-  244   1          int32 left_pwm;
-  245   1          int32 right_pwm;
-  246   1          float left_target;
-  247   1          float right_target;
-  248   1          service_speed_data_t speed;
-  249   1      
-  250   1          service_speed_get(&speed);
-  251   1          app_speedout_config.left.target_mps = app_speedout_limit_target(app_speedout_config.left.target_mps);
-  252   1          app_speedout_config.right.target_mps = app_speedout_limit_target(app_speedout_config.right.target_mps
-             -);
-  253   1          left_target = app_speedout_config.left.target_mps;
-  254   1          right_target = app_speedout_config.right.target_mps * APP_SPEEDOUT_RIGHT_TARGET_SIGN;
-  255   1      
-  256   1          enabled = (app_speedout_data.enabled >= APP_SPEEDOUT_ENABLE_THRESHOLD) ? 1U : 0U;
-  257   1          if(0U == enabled)
-  258   1          {
-  259   2              if(0U != speedout_last_enabled)
-  260   2              {
-  261   3                  app_speedout_clear_pid();
-  262   3                  service_motor_stop();
-  263   3              }
-  264   2      
-  265   2              speedout_last_enabled = 0U;
-  266   2              app_speedout_data.left_actual_mps = speed.left_mps;
-  267   2              app_speedout_data.right_actual_mps = speed.right_mps;
-  268   2              app_speedout_data.left_target_mps = left_target;
-  269   2              app_speedout_data.right_target_mps = right_target;
-  270   2              app_speedout_data.left_pwm = 0.0f;
-  271   2              app_speedout_data.right_pwm = 0.0f;
-  272   2              app_speedout_data.enabled = 0.0f;
-  273   2              return;
-  274   2          }
-  275   1      
-  276   1          left_pwm = (int32)shared_pos_pid_update(&speedout_left_pid,
-  277   1                  left_target, speed.left_mps, APP_SPEEDOUT_DT_SECOND);
-  278   1          right_pwm = (int32)shared_pos_pid_update(&speedout_right_pid,
-  279   1                  right_target, speed.right_mps, APP_SPEEDOUT_DT_SECOND);
+  244   1          service_motor_stop();
+  245   1      }
+  246          
+  247          void app_speedout_request_stop(void)
+  248          {
+  249   1          uint8 ea_backup;
+  250   1      
+  251   1          ea_backup = EA;
+  252   1          EA = 0;
+  253   1          speedout_command = APP_SPEEDOUT_COMMAND_STOP;
+  254   1          EA = ea_backup;
+  255   1      }
+  256          
+  257          void app_speedout_request_stop_all(void)
+  258          {
+  259   1          uint8 ea_backup;
+  260   1      
+  261   1          ea_backup = EA;
+  262   1          EA = 0;
+  263   1          speedout_command = APP_SPEEDOUT_COMMAND_STOP_ALL;
+  264   1          EA = ea_backup;
+  265   1      }
+  266          
+  267          void app_speedout_request_start(void)
+  268          {
+  269   1          uint8 ea_backup;
+  270   1      
+  271   1          ea_backup = EA;
+  272   1          EA = 0;
+  273   1          speedout_command = APP_SPEEDOUT_COMMAND_START;
+  274   1          EA = ea_backup;
+  275   1      }
+  276          
+  277          void app_speedout_set_safety_inhibit(uint8 mask)
+  278          {
+  279   1          uint8 ea_backup;
   280   1      
-  281   1          service_motor_set_pwm(left_pwm, right_pwm);
-  282   1      
-  283   1          speedout_last_enabled = 1U;
-  284   1          app_speedout_data.left_target_mps = left_target;
-  285   1          app_speedout_data.right_target_mps = right_target;
-  286   1          app_speedout_data.left_actual_mps = speed.left_mps;
-  287   1          app_speedout_data.right_actual_mps = speed.right_mps;
-  288   1          app_speedout_data.left_pwm = (float)left_pwm;
-  289   1          app_speedout_data.right_pwm = (float)right_pwm;
-  290   1          app_speedout_data.enabled = 1.0f;
-  291   1      }
+  281   1          ea_backup = EA;
+  282   1          EA = 0;
+  283   1          speedout_safety_inhibit |= mask;
+  284   1          EA = ea_backup;
+  285   1      }
+  286          
+  287          void app_speedout_clear_safety_inhibit(uint8 mask)
+  288          {
+  289   1          uint8 ea_backup;
+  290   1      
+  291   1          ea_backup = EA;
+  292   1          EA = 0;
+  293   1          speedout_safety_inhibit &= (uint8)(~mask);
+  294   1          EA = ea_backup;
+  295   1      }
+  296          
+  297          uint8 app_speedout_get_safety_inhibit(void)
+  298          {
+  299   1          uint8 ea_backup;
+  300   1          uint8 result;
+  301   1      
+  302   1          ea_backup = EA;
+  303   1          EA = 0;
+  304   1          result = speedout_safety_inhibit;
+  305   1          EA = ea_backup;
+  306   1          return result;
+  307   1      }
+  308          
+  309          static void app_speedout_stop_all_action(void)
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 6   
+
+  310          {
+  311   1          app_speedout_request_stop_all();
+  312   1          wprint("stop,0.000\r\n");
+  313   1      }
+  314          
+  315          static void app_speedout_start_action(void)
+  316          {
+  317   1          app_speedout_request_start();
+  318   1          wprint("start,0.000\r\n");
+  319   1      }
+  320          
+  321          static void app_speedout_start(void)
+  322          {
+  323   1          speedout_active_left_target = 0.0f;
+  324   1          speedout_active_right_target = 0.0f;
+  325   1          app_speedout_data.left_target_mps = 0.0f;
+  326   1          app_speedout_data.right_target_mps = 0.0f;
+  327   1          app_speedout_data.left_pwm = 0.0f;
+  328   1          app_speedout_data.right_pwm = 0.0f;
+  329   1          app_speedout_data.enabled = 1.0f;
+  330   1          speedout_last_enabled = 1U;
+  331   1          app_speedout_clear_pid();
+  332   1      
+  333   1          service_motor_stop();
+  334   1      }
+  335          
+  336          void app_speedout_set_target(float left_mps, float right_mps)
+  337          {
+  338   1          app_speedout_publish_target(left_mps, right_mps, APP_SPEEDOUT_TARGET_OWNER_CONTROL);
+  339   1      }
+  340          
+  341          static void app_speedout_publish_target(float left_mps, float right_mps, uint8 owner)
+  342          {
+  343   1          uint8 ea_backup;
+  344   1      
+  345   1          ea_backup = EA;
+  346   1          EA = 0;
+  347   1          speedout_target_mailbox.left_mps = left_mps;
+  348   1          speedout_target_mailbox.right_mps = right_mps;
+  349   1          speedout_target_mailbox.owner = owner;
+  350   1          speedout_target_mailbox.sequence++;
+  351   1          EA = ea_backup;
+  352   1      }
+  353          
+  354          static void app_speedout_packet_target_changed(void)
+  355          {
+  356   1          float left_mps;
+  357   1          float right_mps;
+  358   1          uint8 ea_backup;
+  359   1      
+  360   1          /* A packet may update either field independently, but TIM5 receives one
+  361   1             coherent pair rather than observing two in-place float stores. */
+  362   1          ea_backup = EA;
+  363   1          EA = 0;
+  364   1          left_mps = app_speedout_config.left.target_mps;
+  365   1          right_mps = app_speedout_config.right.target_mps;
+  366   1          EA = ea_backup;
+  367   1          app_speedout_publish_target(left_mps, right_mps, APP_SPEEDOUT_TARGET_OWNER_PACKET);
+  368   1      }
+  369          
+  370          static void app_speedout_consume_target(void)
+  371          {
+  372   1          app_speedout_target_mailbox_t snapshot;
+  373   1          uint8 ea_backup;
+  374   1      
+  375   1          ea_backup = EA;
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 7   
+
+  376   1          EA = 0;
+  377   1          snapshot.left_mps = speedout_target_mailbox.left_mps;
+  378   1          snapshot.right_mps = speedout_target_mailbox.right_mps;
+  379   1          snapshot.sequence = speedout_target_mailbox.sequence;
+  380   1          snapshot.owner = speedout_target_mailbox.owner;
+  381   1          EA = ea_backup;
+  382   1      
+  383   1          if(snapshot.sequence != speedout_target_applied_sequence)
+  384   1          {
+  385   2              speedout_active_left_target = app_speedout_limit_target(snapshot.left_mps);
+  386   2              speedout_active_right_target = app_speedout_limit_target(snapshot.right_mps);
+  387   2              speedout_target_applied_sequence = snapshot.sequence;
+  388   2              speedout_target_active_owner = snapshot.owner;
+  389   2          }
+  390   1      }
+  391          
+  392          void app_speedout_get_data(app_speedout_data_t *out_data)
+  393          {
+  394   1          uint8 ea_backup;
+  395   1      
+  396   1          if(NULL == out_data)
+  397   1          {
+  398   2              return;
+  399   2          }
+  400   1      
+  401   1          ea_backup = EA;
+  402   1          EA = 0;
+  403   1          *out_data = app_speedout_data;
+  404   1          EA = ea_backup;
+  405   1      }
+  406          
+  407          static void app_speedout_tick(void)
+  408          {
+  409   1          uint8 enabled;
+  410   1          int32 left_pwm;
+  411   1          int32 right_pwm;
+  412   1          float left_target;
+  413   1          float right_target;
+  414   1          service_speed_data_t speed;
+  415   1      
+  416   1          app_speedout_consume_target();
+  417   1          app_speedout_apply_command();
+  418   1          /* All runtime pressure PWM updates share TIM5 with motor actuation. */
+  419   1          service_negative_pressure_apply_request();
+  420   1      
+  421   1          service_speed_get(&speed);
+  422   1          left_target = speedout_active_left_target;
+  423   1          right_target = speedout_active_right_target * APP_SPEEDOUT_RIGHT_TARGET_SIGN;
+  424   1      
+  425   1          enabled = (app_speedout_data.enabled >= APP_SPEEDOUT_ENABLE_THRESHOLD) ? 1U : 0U;
+  426   1          if(0U == enabled)
+  427   1          {
+  428   2              if(0U != speedout_last_enabled)
+  429   2              {
+  430   3                  app_speedout_clear_pid();
+  431   3                  service_motor_stop();
+  432   3              }
+  433   2      
+  434   2              speedout_last_enabled = 0U;
+  435   2              app_speedout_data.left_actual_mps = speed.left_mps;
+  436   2              app_speedout_data.right_actual_mps = speed.right_mps;
+  437   2              app_speedout_data.left_target_mps = left_target;
+  438   2              app_speedout_data.right_target_mps = right_target;
+  439   2              app_speedout_data.left_pwm = 0.0f;
+  440   2              app_speedout_data.right_pwm = 0.0f;
+  441   2              app_speedout_data.enabled = 0.0f;
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 8   
+
+  442   2              return;
+  443   2          }
+  444   1      
+  445   1          left_pwm = (int32)shared_pos_pid_update(&speedout_left_pid,
+  446   1                  left_target, speed.left_mps, APP_SPEEDOUT_DT_SECOND);
+  447   1          right_pwm = (int32)shared_pos_pid_update(&speedout_right_pid,
+  448   1                  right_target, speed.right_mps, APP_SPEEDOUT_DT_SECOND);
+  449   1      
+  450   1          service_motor_set_pwm(left_pwm, right_pwm);
+  451   1      
+  452   1          speedout_last_enabled = 1U;
+  453   1          app_speedout_data.left_target_mps = left_target;
+  454   1          app_speedout_data.right_target_mps = right_target;
+  455   1          app_speedout_data.left_actual_mps = speed.left_mps;
+  456   1          app_speedout_data.right_actual_mps = speed.right_mps;
+  457   1          app_speedout_data.left_pwm = (float)left_pwm;
+  458   1          app_speedout_data.right_pwm = (float)right_pwm;
+  459   1          app_speedout_data.enabled = 1.0f;
+  460   1      }
+  461          
+  462          static void app_speedout_apply_command(void)
+  463          {
+  464   1          app_speedout_command_enum command;
+  465   1          uint8 ea_backup;
+  466   1          uint8 safety_inhibit;
+  467   1      
+  468   1          ea_backup = EA;
+  469   1          EA = 0;
+  470   1          command = speedout_command;
+  471   1          speedout_command = APP_SPEEDOUT_COMMAND_NONE;
+  472   1          safety_inhibit = speedout_safety_inhibit;
+  473   1          EA = ea_backup;
+  474   1      
+  475   1          if(0U != safety_inhibit)
+  476   1          {
+  477   2              /* Safety faults dominate START and remain active until their owner
+  478   2                 explicitly clears the relevant interlock bit. */
+  479   2              app_speedout_stop();
+  480   2              service_negative_pressure_set_percent(0U);
+  481   2              service_negative_pressure_apply_request();
+  482   2          }
+  483   1          else if(APP_SPEEDOUT_COMMAND_STOP == command)
+  484   1          {
+  485   2              app_speedout_stop();
+  486   2          }
+  487   1          else if(APP_SPEEDOUT_COMMAND_STOP_ALL == command)
+  488   1          {
+  489   2              app_speedout_stop();
+  490   2              service_negative_pressure_set_percent(0U);
+  491   2              service_negative_pressure_apply_request();
+  492   2          }
+  493   1          else if(APP_SPEEDOUT_COMMAND_START == command)
+  494   1          {
+  495   2              app_speedout_start();
+  496   2          }
+  497   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2761     ------
+  ecode size           =      3540     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       328     ------
+  xdata size           =       404     ------
   xdata-const size     =    ------     ------
+C251 COMPILER V5.60.0,  app_speedout                                                       22/07/26  22:39:21  PAGE 9   
+
   edata size           =    ------     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------
@@ -339,10 +552,8 @@ Module Information          Static   Overlayable
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
-C251 COMPILER V5.60.0,  app_speedout                                                       17/07/26  04:06:00  PAGE 6   
-
   const size           =    ------     ------
-  hconst size          =       258     ------
+  hconst size          =       304     ------
 End of Module Information.
 
 

@@ -58,8 +58,19 @@ void interrupt_set_priority (irqn_type_enum irqn, uint8 priority)
 	}
 	else if((irqn >> 4) == 2)
 	{
-//		IP3  |= (priority & 0x01) << (irqn & 0x0F);
-//		IP3H |= ((priority >> 1) & 0x01) << (irqn & 0x0F);
+		switch (irqn)
+		{
+			case TIM3_IRQn:
+				IP3  = (IP3  & (uint8)~0x01U) | (priority & 0x01U);
+				IP3H = (IP3H & (uint8)~0x01U) | ((priority >> 1) & 0x01U);
+				break;
+			case TIM4_IRQn:
+				IP3  = (IP3  & (uint8)~0x02U) | ((priority & 0x01U) << 1);
+				IP3H = (IP3H & (uint8)~0x02U) | (((priority >> 1) & 0x01U) << 1);
+				break;
+			default:
+				break;
+		}
 	}
 	else 
 	{

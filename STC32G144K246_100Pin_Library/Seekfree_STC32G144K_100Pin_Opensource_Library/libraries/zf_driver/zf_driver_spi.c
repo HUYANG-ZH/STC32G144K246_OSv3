@@ -195,6 +195,118 @@ const vuint32 SPIX_CLKDIV_ADDR[] =
 #define HSSPIX_CFG2(pin)        (*(vuint8 far *)(HSSPIX_CFG2_ADDR[pin]))
 #define SPIX_CLKDIV(pin)        (*(vuint8 far *)(SPIX_CLKDIV_ADDR[pin]))
 
+typedef struct
+{
+    volatile uint8 active;
+    spi_dma_async_callback callback;
+} spi_dma_async_state_t;
+
+#define SPI_DMA_ASYNC_IRQ_PRIORITY    (2U)
+
+static spi_dma_async_state_t spi_dma_async_state[3];
+
+static uint8 spi_dma_index_is_valid(spi_index_enum spi_n)
+{
+    return ((SPI_1 == spi_n) || (SPI_2 == spi_n) || (SPI_3 == spi_n)) ? 1U : 0U;
+}
+
+uint8 spi_dma_async_transfer(spi_index_enum spi_n, const uint8 *write_buffer,
+        uint8 *read_buffer, uint16 len, spi_dma_async_callback callback)
+{
+    uint8 ea_backup;
+
+    if((0U == spi_dma_index_is_valid(spi_n)) || (NULL == write_buffer) ||
+            (NULL == read_buffer) || (0U == len))
+    {
+        return 0U;
+    }
+
+    ea_backup = EA;
+    EA = 0;
+    if(0U != spi_dma_async_state[spi_n].active)
+    {
+        EA = ea_backup;
+        return 0U;
+    }
+
+    DMA_SPIX_CR(spi_n) = 0x00U;
+    DMA_SPIX_STA(spi_n) = 0x00U;
+    DMA_SPIX_AMT(spi_n) = (uint8)((len - 1U) & 0xFFU);
+    DMA_SPIX_AMTH(spi_n) = (uint8)((len - 1U) >> 8);
+    DMA_SPIX_TXAH(spi_n) = (uint8)((uint16)write_buffer >> 8);
+    DMA_SPIX_TXAL(spi_n) = (uint8)((uint16)write_buffer);
+    DMA_SPIX_RXAH(spi_n) = (uint8)((uint16)read_buffer >> 8);
+    DMA_SPIX_RXAL(spi_n) = (uint8)((uint16)read_buffer);
+    spi_dma_async_state[spi_n].callback = callback;
+    spi_dma_async_state[spi_n].active = 1U;
+    /* SPI completion is below level-3 control timers but not left at level 0. */
+    DMA_SPIX_CFG(spi_n) = (uint8)(0xE0U | (SPI_DMA_ASYNC_IRQ_PRIORITY << 2));
+    DMA_SPIX_CR(spi_n) = 0xC1U;       // enable master DMA and clear FIFO
+    EA = ea_backup;
+    return 1U;
+}
+
+uint8 spi_dma_async_is_busy(spi_index_enum spi_n)
+{
+    return (0U != spi_dma_index_is_valid(spi_n)) ? spi_dma_async_state[spi_n].active : 0U;
+}
+
+uint8 spi_dma_async_abort(spi_index_enum spi_n)
+{
+    uint8 ea_backup;
+    uint8 aborted = 0U;
+
+    if(0U == spi_dma_index_is_valid(spi_n))
+    {
+        return 0U;
+    }
+
+    ea_backup = EA;
+    EA = 0;
+    if(0U != spi_dma_async_state[spi_n].active)
+    {
+        DMA_SPIX_CR(spi_n) = 0x00U;
+        DMA_SPIX_STA(spi_n) = 0x00U;
+        spi_dma_async_state[spi_n].callback = 0;
+        spi_dma_async_state[spi_n].active = 0U;
+        aborted = 1U;
+    }
+    EA = ea_backup;
+
+    return aborted;
+}
+
+void spi_dma_async_irq_handler(spi_index_enum spi_n)
+{
+    spi_dma_async_callback callback;
+    uint8 state;
+    uint8 success;
+
+    if(0U == spi_dma_index_is_valid(spi_n))
+    {
+        return;
+    }
+
+    state = DMA_SPIX_STA(spi_n);
+    if(0U == (state & 0x07U))
+    {
+        return;
+    }
+
+    // bit0: transfer complete; bit1/bit2: RX loss / TX overwrite.
+    success = ((0U != (state & 0x01U)) && (0U == (state & 0x06U))) ? 1U : 0U;
+    DMA_SPIX_STA(spi_n) = 0x00U;
+    DMA_SPIX_CR(spi_n) = 0x00U;
+    callback = spi_dma_async_state[spi_n].callback;
+    spi_dma_async_state[spi_n].callback = 0;
+    spi_dma_async_state[spi_n].active = 0U;
+
+    if(NULL != callback)
+    {
+        callback(spi_n, success);
+    }
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     SPI传输接口
 // 返回参数     void
@@ -203,11 +315,16 @@ const vuint32 SPIX_CLKDIV_ADDR[] =
 void spi_dma_transfer(spi_index_enum spi_n, uint8 *write_buffer, uint8 *read_buffer, uint32 len)
 {
 	#define BUFF_LEN 64
-	
-	// 因DMA只能操作xdata区域的数据，所以，这里新建一个数组，搬移。
 	uint8 xdata tmp_buff[BUFF_LEN] = {0};
     uint16 tmp_len = 0;
     uint16 read_idx = 0;
+
+	if((0U == len) || (NULL == write_buffer) || (NULL == read_buffer))
+	{
+		return;
+	}
+
+	// 因DMA只能操作xdata区域的数据，所以，这里新建一个数组，搬移。
     // 指针地址大于0x800000的时候，为FLASH地址
     // FLASH地址，不支持DMA搬移。
 	if((uint32)write_buffer >= 0x800000)
@@ -225,8 +342,8 @@ void spi_dma_transfer(spi_index_enum spi_n, uint8 *write_buffer, uint8 *read_buf
             DMA_SPIX_TXAH(spi_n) = (uint8)((uint16)&tmp_buff[0] >> 8);	    		// SPI发送数据存储地址
             DMA_SPIX_TXAL(spi_n) = (uint8)((uint16)&tmp_buff[0]);
 			
-			DMA_SPIX_TXAH(spi_n) = (uint8)((uint16)&read_buffer[read_idx] >> 8);	// SPI接收数据存储地址
-            DMA_SPIX_TXAL(spi_n) = (uint8)((uint16)&read_buffer[read_idx]);
+			DMA_SPIX_RXAH(spi_n) = (uint8)((uint16)&read_buffer[read_idx] >> 8);	// SPI接收数据存储地址
+            DMA_SPIX_RXAL(spi_n) = (uint8)((uint16)&read_buffer[read_idx]);
 			
             DMA_SPIX_CFG(spi_n)  = 1 << 6;                                  		// 发送数据
             DMA_SPIX_CR(spi_n)   = 0xC1;                                    		// 使能SPI_DMA 设置为主机模式 清空FIFO
@@ -732,7 +849,9 @@ void spi_dma_init(spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_pin
     DMA_SPIX_ITVH(spi_n) = 0;
     DMA_SPIX_ITVL(spi_n) = 0;
 
-	DMA_SPIX_CR(spi_n)   = 0xc1;		//bit7 1:使能 SPI_DMA, bit6 1:开始 SPI_DMA 主机模式,  bit5 1:开始 SPI_DMA 从机模式, bit0 1:清除 SPI_DMA FIFO
+    spi_dma_async_state[spi_n].active = 0U;
+    spi_dma_async_state[spi_n].callback = 0;
+	DMA_SPIX_CR(spi_n)   = 0x00U;      // transfer starts only when an API explicitly arms DMA
 }
 
 #define SPI_WRITE_DAT(spi_n, dat) spi_write_dat(spi_n, dat)

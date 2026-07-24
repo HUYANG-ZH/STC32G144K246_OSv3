@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  16/07/26  18:10:26  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  20/07/26  23:08:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_ble6a20
 OBJECT MODULE PLACED IN .\out_file\zf_device_ble6a20.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_ble6a20.c LARGE ROM(HUGE) WARNIN
-                    -GLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
-                    -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
-                    -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_bl
-                    -e6a20.lst) TABS(2) OBJECT(.\out_file\zf_device_ble6a20.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_ble6a20.c LARGE ROM(HUGE) WARNING
+                    -LEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
+                    -ce;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libra
+                    -ries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_ble
+                    -6a20.lst) OBJECT(.\out_file\zf_device_ble6a20.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   ------------------------------------
    47          *********************************************************************************************************
              -************/
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  16/07/26  18:10:26  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  20/07/26  23:08:29  PAGE 2   
 
    48          
    49          #include "zf_device_ble6a20.h"
@@ -98,13 +98,13 @@ stmt  level    source
    73   1          uint16 time_cnt = BLE6A20_TIMEOUT_COUNT;
    74   1          
    75   1          while (time_cnt && gpio_get_level(BLE6A20_RTS_PIN)) 
-   76   1        {
+   76   1              {
    77   2              system_delay_ms(1);
    78   2              time_cnt--;
    79   2          }
    80   1          
    81   1          if (time_cnt) 
-   82   1        {
+   82   1              {
    83   2              uart_write_byte(BLE6A20_INDEX, dat);
    84   2          }
    85   1          
@@ -127,26 +127,26 @@ stmt  level    source
   100   1          #define DELAY_MS 1
   101   1          
   102   1          uint16 time_cnt = 0;
-  103   1        uint16 send_len = 0;
+  103   1              uint16 send_len = 0;
   104   1          zf_assert(NULL != buff);  // 确保缓冲区非空
   105   1          
   106   1          while(len && time_cnt < BLE6A20_TIMEOUT_COUNT)
   107   1          {
-  108   2              if(!gpio_get_level(BLE6A20_RTS_PIN))  // RTS低电平，可发送
+  108   2              if(!gpio_get_level(BLE6A20_RTS_PIN))    // RTS低电平，可发送
   109   2              {
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  16/07/26  18:10:26  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  20/07/26  23:08:29  PAGE 3   
 
   110   3                  send_len = len < PKT_SIZE ? len : PKT_SIZE;
   111   3                  uart_write_buffer(BLE6A20_INDEX, buff, send_len);
   112   3                  buff += send_len;
   113   3                  len -= send_len;
-  114   3                  time_cnt = 0;  // 重置超时计数
+  114   3                  time_cnt = 0;        // 重置超时计数
   115   3              }
-  116   2          else  // RTS高电平，模块忙
-  117   2          {
-  118   3            system_delay_ms(DELAY_MS);
-  119   3            time_cnt++;
-  120   3          }
+  116   2                      else    // RTS高电平，模块忙
+  117   2                      {
+  118   3                              system_delay_ms(DELAY_MS);
+  119   3                              time_cnt++;
+  120   3                      }
   121   2          }
   122   1          
   123   1          return len;
@@ -165,7 +165,7 @@ stmt  level    source
   134          {
   135   1          uint32 len = strlen(str);
   136   1          zf_assert(NULL != str);
-  137   1        
+  137   1              
   138   1          return  ble6a20_send_buffer(str, len);
   139   1      }
   140          
@@ -202,7 +202,7 @@ stmt  level    source
   167          void ble6a20_callback (uint8 uart_dat)
   168          {
   169   1      //    uart_query_byte(BLE6A20_INDEX, &ble6a20_data);
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  16/07/26  18:10:26  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  20/07/26  23:08:29  PAGE 4   
 
   170   1          fifo_write_buffer(&ble6a20_fifo, &uart_dat, 1);
   171   1      }

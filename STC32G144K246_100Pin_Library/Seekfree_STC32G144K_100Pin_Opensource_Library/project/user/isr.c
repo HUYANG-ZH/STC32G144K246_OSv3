@@ -34,6 +34,8 @@
  ********************************************************************************************************************/
 
 #include "zf_common_headfile.h"
+#include "bsp_battery.h"
+#include "bsp_inductor.h"
 
 
 void P0_IRQHandler() interrupt P0INT_VECTOR
@@ -45,7 +47,7 @@ void P0_IRQHandler() interrupt P0INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x00][i]))
         {
             gpio_int_irq_handlers[0x00][i]();
         }
@@ -61,7 +63,7 @@ void P1_IRQHandler() interrupt P1INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x01][i]))
         {
             gpio_int_irq_handlers[0x01][i]();
         }
@@ -77,7 +79,7 @@ void P2_IRQHandler() interrupt P2INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x02][i]))
         {
             gpio_int_irq_handlers[0x02][i]();
         }
@@ -93,7 +95,7 @@ void P3_IRQHandler() interrupt P3INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x03][i]))
         {
             gpio_int_irq_handlers[0x03][i]();
         }
@@ -109,7 +111,7 @@ void P4_IRQHandler() interrupt P4INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x04][i]))
         {
             gpio_int_irq_handlers[0x04][i]();
         }
@@ -125,7 +127,7 @@ void P5_IRQHandler() interrupt P5INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x05][i]))
         {
             gpio_int_irq_handlers[0x05][i]();
         }
@@ -141,7 +143,7 @@ void P6_IRQHandler() interrupt P6INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x06][i]))
         {
             gpio_int_irq_handlers[0x06][i]();
         }
@@ -157,7 +159,7 @@ void P7_IRQHandler() interrupt P7INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x07][i]))
         {
             gpio_int_irq_handlers[0x07][i]();
         }
@@ -173,7 +175,7 @@ void P8_IRQHandler() interrupt P8INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x08][i]))
         {
             gpio_int_irq_handlers[0x08][i]();
         }
@@ -189,7 +191,7 @@ void P9_IRQHandler() interrupt P9INT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x09][i]))
         {
             gpio_int_irq_handlers[0x09][i]();
         }
@@ -205,7 +207,7 @@ void PA_IRQHandler() interrupt PAINT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x0a][i]))
         {
             gpio_int_irq_handlers[0x0a][i]();
         }
@@ -221,7 +223,7 @@ void PB_IRQHandler() interrupt PBINT_VECTOR
 
 	for(i=0; i<8; i++)//查找中断
     {
-        if(flags & (0x01 << i))
+        if((flags & (0x01 << i)) && (NULL != gpio_int_irq_handlers[0x0b][i]))
         {
             gpio_int_irq_handlers[0x0b][i]();
         }
@@ -263,17 +265,57 @@ void INT4_IRQHandler(void) interrupt INT4_VECTOR
     }
 }
 
+void DMA_UART1_TX_IRQHandler(void) interrupt DMA_UR1T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_1);
+}
+
+void DMA_UART2_TX_IRQHandler(void) interrupt DMA_UR2T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_2);
+}
+
+void DMA_UART3_TX_IRQHandler(void) interrupt DMA_UR3T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_3);
+}
+
+void DMA_UART4_TX_IRQHandler(void) interrupt DMA_UR4T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_4);
+}
+
+void DMA_UART5_TX_IRQHandler(void) interrupt DMA_UR5T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_5);
+}
+
+void DMA_UART6_TX_IRQHandler(void) interrupt DMA_UR6T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_6);
+}
+
+void DMA_UART7_TX_IRQHandler(void) interrupt DMA_UR7T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_7);
+}
+
+void DMA_UART8_TX_IRQHandler(void) interrupt DMA_UR8T_VECTOR
+{
+    uart_tx_dma_irq_handler(UART_8);
+}
+
 void DMA_UART1_IRQHandler(void) interrupt DMA_UR1R_VECTOR
 {
     static vuint8 dwon_count = 0;
+    uint8 uart_dat;
 
     if (DMA_UR1R_STA & 0x01) // 接收完成
     {
-        DMA_UR1R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_1); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_1);
 
         // 程序自动下载
-        if (uart_rx_buff[UART_1][0] == 0x7F)
+        if (uart_dat == 0x7F)
         {
             if (dwon_count++ > 20)
             {
@@ -287,7 +329,7 @@ void DMA_UART1_IRQHandler(void) interrupt DMA_UR1R_VECTOR
 
         if (uart_rx_handlers[UART_1] != NULL)
         {
-            uart_rx_handlers[UART_1](uart_rx_buff[UART_1][0]);
+            uart_rx_handlers[UART_1](uart_dat);
         }
     }
 
@@ -303,14 +345,15 @@ void DMA_UART1_IRQHandler(void) interrupt DMA_UR1R_VECTOR
 
 void DMA_UART2_IRQHandler(void) interrupt DMA_UR2R_VECTOR
 {
+    uint8 uart_dat;
+
     if (DMA_UR2R_STA & 0x01) // 接收完成
     {
-        DMA_UR2R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_2); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_2);
 
         if (uart_rx_handlers[UART_2] != NULL)
         {
-            uart_rx_handlers[UART_2](uart_rx_buff[UART_2][0]);
+            uart_rx_handlers[UART_2](uart_dat);
         }
     }
 
@@ -326,14 +369,15 @@ void DMA_UART2_IRQHandler(void) interrupt DMA_UR2R_VECTOR
 
 void DMA_UART3_IRQHandler(void) interrupt DMA_UR3R_VECTOR
 {
+    uint8 uart_dat;
+
     if (DMA_UR3R_STA & 0x01) // 接收完成
     {
-        DMA_UR3R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_3); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_3);
 
         if (uart_rx_handlers[UART_3] != NULL)
         {
-            uart_rx_handlers[UART_3](uart_rx_buff[UART_3][0]);
+            uart_rx_handlers[UART_3](uart_dat);
         }
     }
 
@@ -349,14 +393,15 @@ void DMA_UART3_IRQHandler(void) interrupt DMA_UR3R_VECTOR
 
 void DMA_UART4_IRQHandler(void) interrupt DMA_UR4R_VECTOR
 {
+    uint8 uart_dat;
+
     if (DMA_UR4R_STA & 0x01) // 接收完成
     {
-        DMA_UR4R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_4); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_4);
 
         if (uart_rx_handlers[UART_4] != NULL)
         {
-            uart_rx_handlers[UART_4](uart_rx_buff[UART_4][0]);
+            uart_rx_handlers[UART_4](uart_dat);
         }
     }
 
@@ -373,14 +418,15 @@ void DMA_UART4_IRQHandler(void) interrupt DMA_UR4R_VECTOR
 
 void DMA_UART5_IRQHandler(void) interrupt DMA_UR5R_VECTOR
 {
+    uint8 uart_dat;
+
     if (DMA_UR5R_STA & 0x01) // 接收完成
     {
-        DMA_UR5R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_5); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_5);
 
         if (uart_rx_handlers[UART_5] != NULL)
         {
-            uart_rx_handlers[UART_5](uart_rx_buff[UART_5][0]);
+            uart_rx_handlers[UART_5](uart_dat);
         }
     }
 
@@ -396,14 +442,15 @@ void DMA_UART5_IRQHandler(void) interrupt DMA_UR5R_VECTOR
 
 void DMA_UART6_IRQHandler(void) interrupt DMA_UR6R_VECTOR
 {
+    uint8 uart_dat;
+
     if (DMA_UR6R_STA & 0x01) // 接收完成
     {
-        DMA_UR6R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_6); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_6);
 
         if (uart_rx_handlers[UART_6] != NULL)
         {
-            uart_rx_handlers[UART_6](uart_rx_buff[UART_6][0]);
+            uart_rx_handlers[UART_6](uart_dat);
         }
     }
 
@@ -419,14 +466,15 @@ void DMA_UART6_IRQHandler(void) interrupt DMA_UR6R_VECTOR
 
 void DMA_UART7_IRQHandler(void) interrupt DMA_UR7R_VECTOR
 {
+    uint8 uart_dat;
+
     if (DMA_UR7R_STA & 0x01) // 接收完成
     {
-        DMA_UR7R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_7); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_7);
 
         if (uart_rx_handlers[UART_7] != NULL)
         {
-            uart_rx_handlers[UART_7](uart_rx_buff[UART_7][0]);
+            uart_rx_handlers[UART_7](uart_dat);
         }
     }
 
@@ -442,14 +490,15 @@ void DMA_UART7_IRQHandler(void) interrupt DMA_UR7R_VECTOR
 
 void DMA_UART8_IRQHandler(void) interrupt DMA_UR8R_VECTOR
 {
+    uint8 uart_dat;
+
     if (DMA_UR8R_STA & 0x01) // 接收完成
     {
-        DMA_UR8R_STA &= ~0x01;      // 清标志位
-        uart_rx_start_buff(UART_8); // 设置下一次接收，务必保留
+        uart_dat = uart_rx_take_byte(UART_8);
 
         if (uart_rx_handlers[UART_8] != NULL)
         {
-            uart_rx_handlers[UART_8](uart_rx_buff[UART_8][0]);
+            uart_rx_handlers[UART_8](uart_dat);
         }
     }
 
@@ -461,6 +510,21 @@ void DMA_UART8_IRQHandler(void) interrupt DMA_UR8R_VECTOR
         // 如果进入了这个中断，则代表UART的数据在没有取走之前被覆盖!
         // 如果进入了这个中断，则代表UART的数据在没有取走之前被覆盖!
     }
+}
+
+void DMA_SPI3_IRQHandler(void) interrupt DMA_SPI3_VECTOR
+{
+    spi_dma_async_irq_handler(SPI_3);
+}
+
+void DMA_ADC2_IRQHandler(void) interrupt DMA_ADC2_VECTOR
+{
+    bsp_inductor_dma_irq_handler();
+}
+
+void DMA_ADC_IRQHandler(void) interrupt DMA_ADC_VECTOR
+{
+    bsp_battery_dma_irq_handler();
 }
 
 

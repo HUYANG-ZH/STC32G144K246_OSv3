@@ -92,6 +92,11 @@ typedef enum //枚举串口号
 	UART_RESERVE,	// 仅占位使用
 } uart_index_enum;
 
+// Every UART owns an xdata DMA queue.  Producers never wait for the wire;
+// when a queue is full the async API reports the accepted length and records
+// the overflow count instead of extending the caller's critical path.
+#define UART_TX_QUEUE_SIZE             (512U)
+
 
 
 
@@ -152,9 +157,14 @@ void 	uart_rx_start_buff		(uart_index_enum uart_n);
 void    uart_write_byte         (uart_index_enum uart_n, const uint8 dat);
 void    uart_write_buffer       (uart_index_enum uart_n, const uint8 *buff, uint16 len);
 void    uart_write_string       (uart_index_enum uart_n, const char *str);
+uint16  uart_write_buffer_async (uart_index_enum uart_n, const uint8 *buff, uint16 len);
+uint8   uart_tx_is_busy         (uart_index_enum uart_n);
+uint32  uart_tx_get_drop_count  (uart_index_enum uart_n);
+void    uart_tx_dma_irq_handler (uart_index_enum uart_n);
 
 uint8   uart_read_byte          (uart_index_enum uart_n);
 uint8   uart_query_byte         (uart_index_enum uart_n, uint8 *dat);
+uint8   uart_rx_take_byte       (uart_index_enum uart_n);
 
 //void    uart_tx_interrupt       (uart_index_enum uart_n, uint8 status); 暂不支持TX中断
 void    uart_rx_interrupt       (uart_index_enum uart_n, uint8 status, uart_callback_function callback_handler);

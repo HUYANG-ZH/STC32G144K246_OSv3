@@ -4,12 +4,15 @@
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 #include "service_packet.h"
+#include "app_speedout.h"
 #include "app_inductor_preprocess.h"
 
 #define APP_INDUCTOR_CHANNEL_COUNT             APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT
-#define APP_INDUCTOR_MEDIAN_SAMPLE_COUNT       (3U)
 #define APP_INDUCTOR_HISTORY_COUNT             (7U)
 #define APP_INDUCTOR_AVERAGE_COUNT             (5U)
+#define APP_INDUCTOR_AVERAGE_INV               (0.2f)
+#define APP_INDUCTOR_STARTUP_GRACE_TICK         (1000UL)
+#define APP_INDUCTOR_MAX_SAMPLE_AGE_TICK        (500UL)
 // [4]is middle inductor
 uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {850U, 1000U, 1000U, 750U, 100U};
 uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 3000U, 3100U, 4095U, 4095U};
@@ -52,77 +55,67 @@ static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
 
 static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
 static uint8 inductor_history_index = 0U;
+static uint8 inductor_history_valid = 0U;
 static volatile app_inductor_preprocess_data_t inductor_data;
+static uint32 inductor_last_sequence = 0UL;
+static uint32 inductor_last_fresh_tick = 0UL;
+static uint32 inductor_start_tick = 0UL;
+static uint8 inductor_sensor_seen = 0U;
+static uint8 inductor_sensor_fault = 0U;
 
 static void app_inductor_preprocess_tick(void);
 
-static uint16 app_inductor_median3(uint16 a, uint16 b, uint16 c)
+static uint8 app_inductor_sample(uint16 sample[APP_INDUCTOR_CHANNEL_COUNT], uint32 *sequence)
 {
-    uint16 temp;
-
-    if(a > b)
-    {
-        temp = a;
-        a = b;
-        b = temp;
-    }
-    if(b > c)
-    {
-        temp = b;
-        b = c;
-        c = temp;
-    }
-    if(a > b)
-    {
-        temp = a;
-        a = b;
-        b = temp;
-    }
-
-    return b;
-}
-
-static void app_inductor_sample_median(uint16 median[APP_INDUCTOR_CHANNEL_COUNT])
-{
-    uint8 i;
     service_inductor_data_t raw;
-    uint16 sample[APP_INDUCTOR_MEDIAN_SAMPLE_COUNT][APP_INDUCTOR_CHANNEL_COUNT];
 
-    for(i = 0; i < APP_INDUCTOR_MEDIAN_SAMPLE_COUNT; i++)
+    if(0U == service_inductor_get_snapshot(&raw, sequence))
     {
-        service_inductor_get_data(&raw);
-        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH1] = raw.channel_1;
-        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH2] = raw.channel_2;
-        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH3] = raw.channel_3;
-        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_CH4] = raw.channel_4;
-        sample[i][APP_INDUCTOR_PREPROCESS_INDEX_M] = raw.channel_m;
+        return 0U;
     }
 
-    for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-    {
-        median[i] = app_inductor_median3(sample[0][i], sample[1][i], sample[2][i]);
-    }
+    sample[APP_INDUCTOR_PREPROCESS_INDEX_CH1] = raw.channel_1;
+    sample[APP_INDUCTOR_PREPROCESS_INDEX_CH2] = raw.channel_2;
+    sample[APP_INDUCTOR_PREPROCESS_INDEX_CH3] = raw.channel_3;
+    sample[APP_INDUCTOR_PREPROCESS_INDEX_CH4] = raw.channel_4;
+    sample[APP_INDUCTOR_PREPROCESS_INDEX_M] = raw.channel_m;
+    return 1U;
 }
 
 static void app_inductor_update_precomputed(void)
 {
     uint8 i;
+    uint8 ea_backup;
     uint16 range;
+    float next_min[APP_INDUCTOR_CHANNEL_COUNT];
+    float next_max[APP_INDUCTOR_CHANNEL_COUNT];
+    float next_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
 
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
-        inductor_min_float[i] = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
-        inductor_max_float[i] = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
-        range = app_inductor_preprocess_max_value[i] - app_inductor_preprocess_min_value[i];
-        if(0U < range)
+        next_min[i] = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
+        next_max[i] = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
+        if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_min_value[i])
         {
-            inductor_range_inv[i] = tfpu_div(100.0f, tfpu_int2float((long)range));
+            range = app_inductor_preprocess_max_value[i] - app_inductor_preprocess_min_value[i];
+            next_range_inv[i] = tfpu_div(100.0f, tfpu_int2float((long)range));
         }
         else
         {
-            inductor_range_inv[i] = 0.0f;
+            next_range_inv[i] = 0.0f;
         }
     }
+
+    /* TIM4 only observes fully published calibration triples. */
+    ea_backup = EA;
+    EA = 0;
+    for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+    {
+        inductor_min_float[i] = next_min[i];
+        inductor_max_float[i] = next_max[i];
+        inductor_range_inv[i] = next_range_inv[i];
+    }
+    EA = ea_backup;
 }
 
 static void app_inductor_update_output(void)
@@ -160,7 +153,8 @@ static void app_inductor_update_output(void)
             }
         }
 
-        filtered[i] = tfpu_div(tfpu_int2float((long)(sum - min_val - max_val)), tfpu_int2float((long)APP_INDUCTOR_AVERAGE_COUNT));
+        filtered[i] = tfpu_mul(tfpu_int2float((long)(sum - min_val - max_val)),
+                APP_INDUCTOR_AVERAGE_INV);
 
         if(0.0f >= inductor_range_inv[i])
         {
@@ -193,22 +187,77 @@ static void app_inductor_update_output(void)
 static void app_inductor_preprocess_tick(void)
 {
     uint8 i;
-    uint16 median[APP_INDUCTOR_CHANNEL_COUNT];
+    uint8 j;
+    uint16 sample[APP_INDUCTOR_CHANNEL_COUNT];
+    uint32 sequence;
+    uint32 now;
 
-    app_inductor_sample_median(median);
-
-    for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+    now = service_timetick_what();
+    if(0U == app_inductor_sample(sample, &sequence))
     {
-        inductor_history[i][inductor_history_index] = median[i];
+        if((uint32)(now - inductor_start_tick) >= APP_INDUCTOR_STARTUP_GRACE_TICK)
+        {
+            if(0U == inductor_sensor_fault)
+            {
+                inductor_sensor_fault = 1U;
+                app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
+            }
+        }
+        (void)service_inductor_request_sample();
+        return;
     }
 
-    inductor_history_index++;
-    if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
+    if((0U != inductor_sensor_seen) && (sequence == inductor_last_sequence))
     {
+        if((uint32)(now - inductor_last_fresh_tick) >= APP_INDUCTOR_MAX_SAMPLE_AGE_TICK)
+        {
+            if(0U == inductor_sensor_fault)
+            {
+                inductor_sensor_fault = 1U;
+                app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
+            }
+        }
+        (void)service_inductor_request_sample();
+        return;
+    }
+
+    inductor_last_sequence = sequence;
+    inductor_last_fresh_tick = now;
+    inductor_sensor_seen = 1U;
+    if(0U != inductor_sensor_fault)
+    {
+        inductor_sensor_fault = 0U;
+        app_speedout_clear_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
+    }
+
+    if(0U == inductor_history_valid)
+    {
+        for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+        {
+            for(j = 0U; j < APP_INDUCTOR_HISTORY_COUNT; j++)
+            {
+                inductor_history[i][j] = sample[i];
+            }
+        }
         inductor_history_index = 0U;
+        inductor_history_valid = 1U;
+    }
+    else
+    {
+        for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+        {
+            inductor_history[i][inductor_history_index] = sample[i];
+        }
+
+        inductor_history_index++;
+        if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
+        {
+            inductor_history_index = 0U;
+        }
     }
 
     app_inductor_update_output();
+    (void)service_inductor_request_sample();
 }
 
 void app_inductor_preprocess_update_calibration(void)
@@ -220,21 +269,31 @@ void app_inductor_preprocess_init(void)
 {
     uint8 i;
     uint8 j;
-    uint16 median[APP_INDUCTOR_CHANNEL_COUNT];
+    uint16 sample[APP_INDUCTOR_CHANNEL_COUNT];
 
     service_inductor_init();
 
-    app_inductor_sample_median(median);
+    for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+    {
+        sample[i] = 0U;
+    }
+    (void)app_inductor_sample(sample, NULL);
 
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
         for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
         {
-            inductor_history[i][j] = median[i];
+            inductor_history[i][j] = sample[i];
         }
     }
 
     inductor_history_index = 0U;
+    inductor_history_valid = 0U;
+    inductor_last_sequence = 0UL;
+    inductor_last_fresh_tick = service_timetick_what();
+    inductor_start_tick = inductor_last_fresh_tick;
+    inductor_sensor_seen = 0U;
+    inductor_sensor_fault = 0U;
     app_inductor_update_precomputed();
     app_inductor_update_output();
 
@@ -257,6 +316,7 @@ void app_inductor_preprocess_init(void)
     (void)service_packet_add_action("ind_read", app_inductor_preprocess_print_calibration, 0UL);
 
     pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_tick);
+    interrupt_set_priority(TIM4_IRQn, 3U);
 }
 
 void app_inductor_preprocess_debug(void)

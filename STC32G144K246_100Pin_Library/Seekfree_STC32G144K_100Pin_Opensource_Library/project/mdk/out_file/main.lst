@@ -1,13 +1,12 @@
-C251 COMPILER V5.60.0,  main                                                               17/07/26  06:24:56  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               22/07/26  22:25:57  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
 OBJECT MODULE PLACED IN .\out_file\main.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\user\main.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEED) BRO
-                    -WSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;.
-                    -.\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32g_usb_
-                    -lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\main.lst) TABS(2) OBJECT(.\out_file\main.ob
-                    -j) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe ..\user\main.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROW
+                    -SE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..
+                    -\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32g_usb_l
+                    -ib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\main.lst) OBJECT(.\out_file\main.obj) 
 
 stmt  level    source
 
@@ -60,83 +59,90 @@ stmt  level    source
    41          #include "service_batterycheck.h"
    42          #include "service_buzzer.h"
    43          #include "service_imu.h"
-   44          #include "service_motor.h"
-   45          #include "service_negative_pressure.h"
-   46          #include "service_speed.h"
-   47          #include "service_delay.h"
-   48          // #include "app_battery_guard.h"
-   49          #include "app_element.h"
-C251 COMPILER V5.60.0,  main                                                               17/07/26  06:24:56  PAGE 2   
+   44          #include "service_inductor.h"
+   45          #include "service_motor.h"
+   46          #include "service_negative_pressure.h"
+   47          #include "service_speed.h"
+   48          #include "service_tof.h"
+   49          #include "app_battery_guard.h"
+   50          #include "app_element.h"
+C251 COMPILER V5.60.0,  main                                                               22/07/26  22:25:57  PAGE 2   
 
-   50          #include "app_feedforward.h"
-   51          #include "app_inductor_preprocess.h"
-   52          // #include "app_log.h"
-   53          #include "app_motion_preprocess.h"
-   54          #include "app_motion_postprocess.h"
-   55          #include "app_scheduler.h"
-   56          #include "app_speed_plan.h"
-   57          #include "app_speedout.h"
-   58          #include "app_boot_sequence.h"
-   59          
-   60          void main(void)
-   61          {
-   62   1          SystemStart();
-   63   1      
-   64   1          service_timetick_init();
-   65   1          service_function_queue_init();
-   66   1          app_scheduler_init();
-   67   1          service_wireless_uart_init();
-   68   1          service_packet_init();
-   69   1          // app_log_init();
-   70   1          service_batterycheck_init();
-   71   1          service_buzzer_init();
-   72   1          service_buzzer_stop();
-   73   1          service_imu_init();
-   74   1          service_delay_ms(2000U);
-   75   1          service_imu_calibrate_gyro_z();
-   76   1          service_imu_calibrate_gyro_x();
-   77   1          service_motor_init();
-   78   1          service_negative_pressure_init();
-   79   1          service_speed_init();
-   80   1          app_inductor_preprocess_init();
-   81   1          app_motion_preprocess_init();
-   82   1          app_feedforward_init();
-   83   1          app_speed_plan_init();
-   84   1          app_element_init();
-   85   1          app_speedout_init();
-   86   1          app_motion_postprocess_init();
-   87   1          // app_battery_guard_init();
-   88   1          app_boot_sequence_init();
-   89   1      
-   90   1          while(1)
-   91   1          {
-   92   2              service_function_queue_update();
-   93   2              service_packet_update();
-   94   2              app_scheduler_run();
-   95   2              service_negative_pressure_task();
-   96   2              service_buzzer_task();
-   97   2          }
-   98   1      }
+   51          #include "app_feedforward.h"
+   52          #include "app_inductor_preprocess.h"
+   53          // #include "app_log.h"
+   54          #include "app_motion_preprocess.h"
+   55          #include "app_motion_postprocess.h"
+   56          #include "app_scheduler.h"
+   57          #include "app_speed_plan.h"
+   58          #include "app_speedout.h"
+   59          #include "app_boot_sequence.h"
+   60          
+   61          void main(void)
+   62          {
+   63   1          SystemStart();
+   64   1      
+   65   1          service_timetick_init();
+   66   1          service_function_queue_init();
+   67   1          app_scheduler_init();
+   68   1          service_wireless_uart_init();
+   69   1          service_packet_init();
+   70   1          // app_log_init();
+   71   1          service_batterycheck_init();
+   72   1          service_buzzer_init();
+   73   1          service_buzzer_stop();
+   74   1          service_imu_init();
+   75   1          service_tof_init();
+   76   1          service_motor_init();
+   77   1          service_negative_pressure_init();
+   78   1          service_speed_init();
+   79   1          app_inductor_preprocess_init();
+   80   1          app_motion_preprocess_init();
+   81   1          app_feedforward_init();
+   82   1          app_speed_plan_init();
+   83   1          app_element_init();
+   84   1          app_speedout_init();
+   85   1          app_motion_postprocess_init();
+   86   1          app_battery_guard_init();
+   87   1          app_boot_sequence_init();
+   88   1      
+   89   1          while(1)
+   90   1          {
+   91   2              /* IIC 异步状态机只在后台推进；控制中断从不等待总线。 */
+   92   2              iic_async_process_all_timed(service_timetick_what());
+   93   2              service_imu_task();
+   94   2              service_tof_task();
+   95   2              service_batterycheck_task();
+   96   2              service_inductor_task();
+   97   2              service_function_queue_update();
+   98   2              service_packet_update();
+   99   2              app_scheduler_run();
+  100   2              app_element_pump_events();
+  101   2              app_battery_guard_pump_events();
+  102   2              service_negative_pressure_task();
+  103   2              service_buzzer_task();
+  104   2          }
+  105   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       169     ------
+  ecode size           =       193     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =    ------     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
+C251 COMPILER V5.60.0,  main                                                               22/07/26  22:25:57  PAGE 3   
+
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
-C251 COMPILER V5.60.0,  main                                                               17/07/26  06:24:56  PAGE 3   
-
   const size           =    ------     ------
   hconst size          =         2     ------
 End of Module Information.

@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   16/07/26  18:10:24  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   20/07/26  19:25:31  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_eeprom
 OBJECT MODULE PLACED IN .\out_file\zf_driver_eeprom.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_eeprom.c LARGE ROM(HUGE) WARNING
-                    -LEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
-                    -ce;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libra
-                    -ries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_eep
-                    -rom.lst) TABS(2) OBJECT(.\out_file\zf_driver_eeprom.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_eeprom.c LARGE ROM(HUGE) WARNINGL
+                    -EVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
+                    -e;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librar
+                    -ies\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_eepr
+                    -om.lst) OBJECT(.\out_file\zf_driver_eeprom.obj) 
 
 stmt  level    source
 
@@ -63,10 +63,10 @@ stmt  level    source
    43          // 参数说明     void      
    44          // 返回参数     void
    45          // 备注信息
-   46          // 使用示例     内部使用用户无需关心
+   46          // 使用示例         内部使用用户无需关心
    47          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   16/07/26  18:10:24  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   20/07/26  19:25:31  PAGE 2   
 
    48          void eeprom_trig(void)
    49          {
@@ -90,13 +90,13 @@ stmt  level    source
    64          // 参数说明     void      
    65          // 返回参数     void
    66          // 备注信息
-   67          // 使用示例     
+   67          // 使用示例         
    68          //-------------------------------------------------------------------------------------------------------
              -------------
    69          void iap_init(void)
    70          {
-   71   1          IAP_CONTR = 0x80;   //使能EEPROM操作
-   72   1          iap_set_tps();      //设置擦除等待时间
+   71   1          IAP_CONTR = 0x80;           //使能EEPROM操作
+   72   1          iap_set_tps();                      //设置擦除等待时间
    73   1      }
    74          
    75          //-------------------------------------------------------------------------------------------------------
@@ -105,12 +105,12 @@ stmt  level    source
    77          // 参数说明     void      
    78          // 返回参数     void
    79          // 备注信息
-   80          // 使用示例     
+   80          // 使用示例         
    81          //-------------------------------------------------------------------------------------------------------
              -------------
    82          void iap_idle(void)
    83          {
-   84   1          IAP_CONTR = 0;      //失能EEPROM操作
+   84   1          IAP_CONTR = 0;                      //失能EEPROM操作
    85   1      }
    86          
    87          //-------------------------------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ stmt  level    source
    89          // 参数说明     void      
    90          // 返回参数     void
    91          // 备注信息
-   92          // 使用示例     
+   92          // 使用示例         
    93          //-------------------------------------------------------------------------------------------------------
              -------------
    94          uint8 iap_get_cmd_state(void)
@@ -133,8 +133,8 @@ stmt  level    source
   101          // 参数说明     void      
   102          // 返回参数     void
   103          // 备注信息
-  104          // 使用示例     内部使用用户无需关心
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   16/07/26  18:10:24  PAGE 3   
+  104          // 使用示例         内部使用用户无需关心
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   20/07/26  19:25:31  PAGE 3   
 
   105          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -148,76 +148,76 @@ stmt  level    source
   113          //-------------------------------------------------------------------------------------------------------
              -------------
   114          // 函数简介     EEPROM读一个字节，
-  115          // 参数说明     addr    需要读的地址
-  116          // 返回参数     uint8   读取到的值
+  115          // 参数说明     addr                需要读的地址
+  116          // 返回参数     uint8               读取到的值
   117          // 备注信息
-  118          // 使用示例     dat = iap_read_byte(0); // 向0地址读取一个数据到dat
+  118          // 使用示例         dat = iap_read_byte(0); // 向0地址读取一个数据到dat
   119          //-------------------------------------------------------------------------------------------------------
              -------------
   120          uint8 iap_read_byte(uint32 addr)
   121          {
-  122   1        uint8 temp;
-  123   1        bit flag = 0;
-  124   1        flag = EA;
-  125   1        EA = 0;
-  126   1        
-  127   1          IAP_CMD = 1;        //设置 IAP 读命令
+  122   1              uint8 temp;
+  123   1              bit flag = 0;
+  124   1              flag = EA;
+  125   1              EA = 0;
+  126   1              
+  127   1          IAP_CMD = 1;                                //设置 IAP 读命令
   128   1      
-  129   1        IAP_ADDRL = addr;     //设置 IAP 低地址
-  130   1        IAP_ADDRH = addr >> 8;  //设置 IAP 高地址
-  131   1        IAP_ADDRE = addr >> 16; //设置 IAP 最高地址
-  132   1        eeprom_trig();
-  133   1        temp = IAP_DATA;    //读 IAP 数据
+  129   1              IAP_ADDRL = addr;               //设置 IAP 低地址
+  130   1              IAP_ADDRH = addr >> 8;  //设置 IAP 高地址
+  131   1              IAP_ADDRE = addr >> 16; //设置 IAP 最高地址
+  132   1              eeprom_trig();
+  133   1              temp = IAP_DATA;                //读 IAP 数据
   134   1      
   135   1          EA = flag;
-  136   1        return temp;
+  136   1              return temp;
   137   1      }
   138          
   139          
   140          //-------------------------------------------------------------------------------------------------------
              -------------
   141          // 函数简介     EEPROM写一个字节
-  142          // 参数说明     addr    需要读的地址
-  143          // 返回参数     uint8   读取到的值
-  144          // 使用示例     iap_write_byte(0x00, 0x33); // 向0地址写入一个0x33
+  142          // 参数说明     addr                需要读的地址
+  143          // 返回参数     uint8               读取到的值
+  144          // 使用示例         iap_write_byte(0x00, 0x33);     // 向0地址写入一个0x33
   145          //-------------------------------------------------------------------------------------------------------
              -------------
   146          void iap_write_byte(uint32 addr, uint8 byte)
   147          {
-  148   1        bit flag = 0;
+  148   1              bit flag = 0;
   149   1      
-  150   1        flag = EA;
-  151   1        EA = 0;
+  150   1              flag = EA;
+  151   1              EA = 0;
   152   1      
-  153   1        IAP_CMD = 2;      // 设置 IAP 写命令
+  153   1              IAP_CMD = 2;                    // 设置 IAP 写命令
   154   1      
-  155   1        IAP_ADDRL = addr;     // 设置 IAP 低地址
-  156   1        IAP_ADDRH = addr >> 8;  // 设置 IAP 高地址
-  157   1        IAP_ADDRE = addr >> 16; // 设置 IAP 最高地址
-  158   1        IAP_DATA = byte;    // 写 IAP 数据
+  155   1              IAP_ADDRL = addr;               // 设置 IAP 低地址
+  156   1              IAP_ADDRH = addr >> 8;  // 设置 IAP 高地址
+  157   1              IAP_ADDRE = addr >> 16; // 设置 IAP 最高地址
+  158   1              IAP_DATA = byte;                // 写 IAP 数据
   159   1      
-  160   1        eeprom_trig();
+  160   1              eeprom_trig();
   161   1      
-  162   1        EA = flag;
+  162   1              EA = flag;
   163   1      }
-  164            
+  164                  
   165          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   16/07/26  18:10:24  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   20/07/26  19:25:31  PAGE 4   
 
              -------------
   166          // 函数简介     EEPROM读取多个字节，
-  167          // 参数说明     addr      需要读取的eeprom地址
-  168          // 参数说明     *buf      需要读取的数据地址
+  167          // 参数说明     addr                        需要读取的eeprom地址
+  168          // 参数说明     *buf                        需要读取的数据地址
   169          // 返回参数     void
   170          // 备注信息
-  171          // 使用示例     iap_read_buff(0x00, buff, 10);  // 向0地址读取一个数组，数组长度为10
+  171          // 使用示例         iap_read_buff(0x00, buff, 10);  // 向0地址读取一个数组，数组长度为10
   172          //-------------------------------------------------------------------------------------------------------
              -------------
   173          void iap_read_buff(uint32 addr, uint8 *buf, uint16 len)
   174          {
   175   1          while(len--)
   176   1          {
-  177   2              *buf++ = iap_read_byte(addr);     //读 IAP 数据
+  177   2              *buf++ = iap_read_byte(addr);           //读 IAP 数据
   178   2              addr++;
   179   2          }
   180   1      }
@@ -225,63 +225,63 @@ stmt  level    source
   182          //-------------------------------------------------------------------------------------------------------
              -------------
   183          // 函数简介     EEPROM写多个字节，
-  184          // 参数说明     addr      需要写的eeprom地址      、
-  185          // 参数说明     *buf      需要写的数据地址
-  186          // 参数说明     len       需要写的数据长度
+  184          // 参数说明     addr                        需要写的eeprom地址      、
+  185          // 参数说明     *buf                        需要写的数据地址
+  186          // 参数说明     len                         需要写的数据长度
   187          // 返回参数     void
   188          // 备注信息
-  189          // 使用示例     iap_read_buff(0x00, buff, 10);  // 向0地址写入一个数组，数组长度为10
+  189          // 使用示例         iap_read_buff(0x00, buff, 10);  // 向0地址写入一个数组，数组长度为10
   190          //-------------------------------------------------------------------------------------------------------
              -------------
   191          void iap_write_buff(uint32 addr, uint8 *buf, uint16 len)
   192          {
-  193   1        while(len--)
+  193   1              while(len--)
   194   1          {
-  195   2              iap_write_byte(addr, *buf);     //读 IAP 数据
+  195   2              iap_write_byte(addr, *buf);             //读 IAP 数据
   196   2              addr++;
-  197   2          buf++;
+  197   2                      buf++;
   198   2          }
   199   1      }
   200          
   201          //-------------------------------------------------------------------------------------------------------
              -------------
   202          // 函数简介     EEPROM擦除目标地址所在的一页（1扇区/512字节），
-  203          // 参数说明     addr      需要写的eeprom地址      
+  203          // 参数说明     addr                        需要写的eeprom地址      
   204          // 返回参数     void
   205          // 备注信息
-  206          // 使用示例     iap_erase_page(0); // 擦除0x00到0x100区域
+  206          // 使用示例         iap_erase_page(0); // 擦除0x00到0x100区域
   207          //-------------------------------------------------------------------------------------------------------
              -------------
   208          void iap_erase_page(uint32 addr)
   209          {
-  210   1        bit flag = 0;
+  210   1              bit flag = 0;
   211   1      
-  212   1        flag = EA;
-  213   1        EA = 0;
-  214   1          IAP_CMD = 3;        //设置 IAP 擦除命令
-  215   1          IAP_ADDRL = addr;       //设置 IAP 低地址
-  216   1          IAP_ADDRH = addr >> 8;    //设置 IAP 高地址
-  217   1          IAP_ADDRE = addr >> 16;   //设置 IAP 最高地址
+  212   1              flag = EA;
+  213   1              EA = 0;
+  214   1          IAP_CMD = 3;                                //设置 IAP 擦除命令
+  215   1          IAP_ADDRL = addr;                   //设置 IAP 低地址
+  216   1          IAP_ADDRH = addr >> 8;      //设置 IAP 高地址
+  217   1          IAP_ADDRE = addr >> 16;             //设置 IAP 最高地址
   218   1          eeprom_trig();
   219   1          
-  220   1          EA = flag;
-  221   1          system_delay_ms(10);    //擦除1扇区(512字节)：约4-6ms
+  220   1              EA = flag;
+  221   1          system_delay_ms(10);                //擦除1扇区(512字节)：约4-6ms
   222   1      }
   223          
   224          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   16/07/26  18:10:24  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   20/07/26  19:25:31  PAGE 5   
 
   225          // 函数简介     扩展EEPROM写多个字节(无需擦除)，
-  226          // 参数说明     addr      需要写的eeprom地址   
-  227          // 参数说明     *buf      需要写的数据地址
-  228          // 参数说明     len       需要写的数据长度
+  226          // 参数说明     addr                        需要写的eeprom地址   
+  227          // 参数说明     *buf                        需要写的数据地址
+  228          // 参数说明     len                         需要写的数据长度
   229          // 返回参数     void
   230          // 备注信息
-  231          // 使用示例             extern_iap_write_bytes(0x0000,(uint8 *)"0123456789",10);
-  232          //                将"0123456789"写入0x00-0x0A地址中;
-  233          // 注意事项           不要跨扇区使用。
-  234          //                addr地址：0-511为一个扇区,512-1023为一个扇区，1024-1535为一个扇区，依次�
+  231          // 使用示例                                         extern_iap_write_bytes(0x0000,(uint8 *)"0123456789",10);
+  232          //                                                              将"0123456789"写入0x00-0x0A地址中;
+  233          // 注意事项                                         不要跨扇区使用。
+  234          //                                                              addr地址：0-511为一个扇区,512-1023为一个扇区，1024-1535为一个扇区，依次�
              -�推
   235          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -290,14 +290,14 @@ stmt  level    source
   238   1          uint8 temp[512] = {0};
   239   1          uint16 i;
   240   1          
-  241   1          for(i = 0; i < 512 ; i++) temp[i] = 0;            //清0
+  241   1          for(i = 0; i < 512 ; i++)   temp[i] = 0;                                            //清0
   242   1          
-  243   1          iap_read_buff(addr & 0xFE00, temp, 512);            //读取
+  243   1          iap_read_buff(addr & 0xFE00, temp, 512);                                            //读取
   244   1          
-  245   1          for(i = 0; i < len; i++)  temp[(addr & 0x1FF) + i] = buf[i];  //改
+  245   1          for(i = 0; i < len; i++)    temp[(addr & 0x1FF) + i] = buf[i];      //改
   246   1          
-  247   1          iap_erase_page(addr);                     //擦除
-  248   1          iap_write_buff(addr & 0xFE00, temp, 512);         //写入
+  247   1          iap_erase_page(addr);                                                                                       //擦除
+  248   1          iap_write_buff(addr & 0xFE00, temp, 512);                                   //写入
   249   1      }
   250          
   251          

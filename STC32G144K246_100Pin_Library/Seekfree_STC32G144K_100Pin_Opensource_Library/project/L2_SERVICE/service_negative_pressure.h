@@ -15,6 +15,9 @@
 void service_negative_pressure_init(void);
 void service_negative_pressure_debug(void);
 void service_negative_pressure_task(void);
+void service_negative_pressure_request_percent(uint8 percent);
+/* Call only from the deterministic actuator timer (TIM5 in this project). */
+void service_negative_pressure_apply_request(void);
 void service_negative_pressure_set_percent(uint8 percent);
 uint8 service_negative_pressure_get_percent(void);
 

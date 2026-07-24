@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_soft_iic
 OBJECT MODULE PLACED IN .\out_file\zf_driver_soft_iic.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_soft_iic.c LARGE ROM(HUGE) WARNI
-                    -NGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_de
-                    -vice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\lib
-                    -raries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_s
-                    -oft_iic.lst) TABS(2) OBJECT(.\out_file\zf_driver_soft_iic.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_soft_iic.c LARGE ROM(HUGE) WARNIN
+                    -GLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
+                    -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
+                    -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_so
+                    -ft_iic.lst) OBJECT(.\out_file\zf_driver_soft_iic.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    45          // 函数简介     软件 IIC 延时
    46          // 参数说明     delay           延时次数
    47          // 返回参数     void
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 2   
 
    48          // 使用示例     soft_iic_delay(1);
    49          // 备注信息     内部调用
@@ -134,7 +134,7 @@ stmt  level    source
   102          // 使用示例     soft_iic_send_ack(soft_iic_obj, 1);
   103          // 备注信息     内部调用
   104          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 3   
 
              -------------
   105          void soft_iic_send_ack (soft_iic_info_struct *soft_iic_obj, uint8 ack)
@@ -170,7 +170,7 @@ stmt  level    source
              -------------
   133          uint8 soft_iic_wait_ack (soft_iic_info_struct *soft_iic_obj)
   134          {
-  135   1        uint8 temp = 0;
+  135   1              uint8 temp = 0;
   136   1          zf_assert(soft_iic_obj != NULL);
   137   1        
   138   1          gpio_low(soft_iic_obj->scl_pin);                                            // SCL 低电平
@@ -202,7 +202,7 @@ stmt  level    source
   162          // 函数简介     软件 IIC 发送 8bit 数据
   163          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 4   
 
   164          // 参数说明     dat            数据
   165          // 返回参数     uint8           ACK 状态
@@ -211,8 +211,8 @@ stmt  level    source
              -------------
   168          uint8 soft_iic_send_data (soft_iic_info_struct *soft_iic_obj, const uint8 dat)
   169          {
-  170   1        uint8 temp = 0x80;
-  171   1        
+  170   1              uint8 temp = 0x80;
+  171   1              
   172   1          zf_assert(soft_iic_obj != NULL);
   173   1      
   174   1          while(temp)
@@ -229,645 +229,678 @@ stmt  level    source
   185   1          return ((soft_iic_wait_ack(soft_iic_obj) == 1) ? 0 : 1 );
   186   1      }
   187          
-  188          //-------------------------------------------------------------------------------------------------------
+  188          static uint8 soft_iic_send_data_status (soft_iic_info_struct *soft_iic_obj, const uint8 dat)
+  189          {
+  190   1          return (0 == soft_iic_send_data(soft_iic_obj, dat)) ? 1 : 0;
+  191   1      }
+  192          
+  193          uint8 soft_iic_probe_7bit_address (soft_iic_info_struct *soft_iic_obj, uint8 addr)
+  194          {
+  195   1          uint8 old_addr;
+  196   1          uint8 error;
+  197   1      
+  198   1          zf_assert(soft_iic_obj != NULL);
+  199   1          old_addr = soft_iic_obj->addr;
+  200   1          soft_iic_obj->addr = addr;
+  201   1          soft_iic_start(soft_iic_obj);
+  202   1          error = soft_iic_send_data_status(soft_iic_obj, (uint8)(addr << 1));
+  203   1          soft_iic_stop(soft_iic_obj);
+  204   1          soft_iic_obj->addr = old_addr;
+  205   1          return error;
+  206   1      }
+  207          
+  208          //-------------------------------------------------------------------------------------------------------
              -------------
-  189          // 函数简介     软件 IIC 读取 8bit 数据
-  190          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  209          // 函数简介     软件 IIC 读取 8bit 数据
+  210          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  191          // 参数说明     ack             ACK 或 NACK
-  192          // 返回参数     uint8           数据
-  193          // 备注信息     内部调用
-  194          //-------------------------------------------------------------------------------------------------------
+  211          // 参数说明     ack             ACK 或 NACK
+  212          // 返回参数     uint8           数据
+  213          // 备注信息     内部调用
+  214          //-------------------------------------------------------------------------------------------------------
              -------------
-  195          uint8 soft_iic_read_data (soft_iic_info_struct *soft_iic_obj, uint8 ack)
-  196          {
-  197   1          uint8 dat = 0x00;
-  198   1          uint8 temp = 8;
-  199   1        zf_assert(soft_iic_obj != NULL);
-  200   1          gpio_low(soft_iic_obj->scl_pin);                                            // SCL 低电平
-  201   1          soft_iic_delay(soft_iic_obj->delay);
-  202   1          gpio_high(soft_iic_obj->sda_pin);                                           // SDA 高电平 释放 S
+  215          uint8 soft_iic_read_data (soft_iic_info_struct *soft_iic_obj, uint8 ack)
+  216          {
+  217   1          uint8 dat = 0x00;
+  218   1          uint8 temp = 8;
+  219   1              zf_assert(soft_iic_obj != NULL);
+  220   1          gpio_low(soft_iic_obj->scl_pin);                                            // SCL 低电平
+  221   1          soft_iic_delay(soft_iic_obj->delay);
+  222   1          gpio_high(soft_iic_obj->sda_pin);                                           // SDA 高电平 释放 S
              -DA
-  203   1      #if SOFT_IIC_SDA_IO_SWITCH
+  223   1      #if SOFT_IIC_SDA_IO_SWITCH
                    gpio_set_dir(soft_iic_obj->sda_pin, GPI, GPI_FLOATING_IN);
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 5   
+
                #endif
-  206   1      
-  207   1          while(temp --)
-  208   1          {
-  209   2              gpio_low(soft_iic_obj->scl_pin);                                        // SCL 拉低
-  210   2              soft_iic_delay(soft_iic_obj->delay);
-  211   2              gpio_high(soft_iic_obj->scl_pin);                                       // SCL 拉高
-  212   2              soft_iic_delay(soft_iic_obj->delay);
-  213   2              dat = ((dat << 1) | gpio_get_level((gpio_pin_enum)soft_iic_obj->sda_pin));
-  214   2          }
-  215   1          gpio_low(soft_iic_obj->scl_pin);                                            // SCL 低电平
-  216   1      #if SOFT_IIC_SDA_IO_SWITCH
+  226   1      
+  227   1          while(temp --)
+  228   1          {
+  229   2              gpio_low(soft_iic_obj->scl_pin);                                        // SCL 拉低
+  230   2              soft_iic_delay(soft_iic_obj->delay);
+  231   2              gpio_high(soft_iic_obj->scl_pin);                                       // SCL 拉高
+  232   2              soft_iic_delay(soft_iic_obj->delay);
+  233   2              dat = ((dat << 1) | gpio_get_level((gpio_pin_enum)soft_iic_obj->sda_pin));
+  234   2          }
+  235   1          gpio_low(soft_iic_obj->scl_pin);                                            // SCL 低电平
+  236   1      #if SOFT_IIC_SDA_IO_SWITCH
                    gpio_set_dir(soft_iic_obj->sda_pin, GPO, GPO_OPEN_DTAIN);
                #endif
-  219   1          soft_iic_delay(soft_iic_obj->delay);
-  220   1          soft_iic_send_ack(soft_iic_obj, ack);
-  221   1          return dat;
-  222   1      }
-  223          
-  224          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 5   
-
+  239   1          soft_iic_delay(soft_iic_obj->delay);
+  240   1          soft_iic_send_ack(soft_iic_obj, ack);
+  241   1          return dat;
+  242   1      }
+  243          
+  244          //-------------------------------------------------------------------------------------------------------
              -------------
-  225          // 函数简介     软件 IIC 接口写 8bit 数据
-  226          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  245          // 函数简介     软件 IIC 接口写 8bit 数据
+  246          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  227          // 参数说明     dat            要写入的数据
-  228          // 返回参数     void            
-  229          // 使用示例     soft_iic_write_8bit_register(soft_iic_obj, 0x01);
-  230          // 备注信息     
-  231          //-------------------------------------------------------------------------------------------------------
+  247          // 参数说明     dat            要写入的数据
+  248          // 返回参数     void            
+  249          // 使用示例     soft_iic_write_8bit_register(soft_iic_obj, 0x01);
+  250          // 备注信息     
+  251          //-------------------------------------------------------------------------------------------------------
              -------------
-  232          void soft_iic_write_8bit (soft_iic_info_struct *soft_iic_obj, const uint8 dat)
-  233          {
-  234   1          zf_assert(soft_iic_obj != NULL);
-  235   1          soft_iic_start(soft_iic_obj);
-  236   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  237   1          soft_iic_send_data(soft_iic_obj, dat);
-  238   1          soft_iic_stop(soft_iic_obj);
-  239   1      }
-  240          
-  241          //-------------------------------------------------------------------------------------------------------
+  252          void soft_iic_write_8bit (soft_iic_info_struct *soft_iic_obj, const uint8 dat)
+  253          {
+  254   1          zf_assert(soft_iic_obj != NULL);
+  255   1          soft_iic_start(soft_iic_obj);
+  256   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  257   1          soft_iic_send_data(soft_iic_obj, dat);
+  258   1          soft_iic_stop(soft_iic_obj);
+  259   1      }
+  260          
+  261          //-------------------------------------------------------------------------------------------------------
              -------------
-  242          // 函数简介     软件 IIC 接口写 8bit 数组
-  243          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  262          // 函数简介     软件 IIC 接口写 8bit 数组
+  263          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  244          // 参数说明     *dat           数据存放缓冲区
-  245          // 参数说明     len             缓冲区长度
-  246          // 返回参数     void            
-  247          // 使用示例     soft_iic_write_8bit_array(soft_iic_obj, dat, 6);
-  248          // 备注信息     
-  249          //-------------------------------------------------------------------------------------------------------
+  264          // 参数说明     *dat           数据存放缓冲区
+  265          // 参数说明     len             缓冲区长度
+  266          // 返回参数     void            
+  267          // 使用示例     soft_iic_write_8bit_array(soft_iic_obj, dat, 6);
+  268          // 备注信息     
+  269          //-------------------------------------------------------------------------------------------------------
              -------------
-  250          void soft_iic_write_8bit_array (soft_iic_info_struct *soft_iic_obj, const uint8 *dat, uint32 len)
-  251          {
-  252   1          zf_assert(soft_iic_obj != NULL);
-  253   1          zf_assert(dat != NULL);
-  254   1          soft_iic_start(soft_iic_obj);
-  255   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  256   1          while(len --)
-  257   1          {
-  258   2              soft_iic_send_data(soft_iic_obj, *dat ++);
-  259   2          }
-  260   1          soft_iic_stop(soft_iic_obj);
-  261   1      }
-  262          
-  263          //-------------------------------------------------------------------------------------------------------
-             -------------
-  264          // 函数简介     软件 IIC 接口器写 16bit 数据
-  265          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
-             -�看看
-  266          // 参数说明     dat            要写入的数据
-  267          // 返回参数     void            
-  268          // 使用示例     soft_iic_write_16bit(soft_iic_obj, 0x0101);
-  269          // 备注信息     
-  270          //-------------------------------------------------------------------------------------------------------
-             -------------
-  271          void soft_iic_write_16bit (soft_iic_info_struct *soft_iic_obj, const uint16 dat)
-  272          {
-  273   1          zf_assert(soft_iic_obj != NULL);
+  270          void soft_iic_write_8bit_array (soft_iic_info_struct *soft_iic_obj, const uint8 *dat, uint32 len)
+  271          {
+  272   1          zf_assert(soft_iic_obj != NULL);
+  273   1          zf_assert(dat != NULL);
   274   1          soft_iic_start(soft_iic_obj);
   275   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  276   1          soft_iic_send_data(soft_iic_obj, (uint8)((dat & 0xFF00) >> 8));
-  277   1          soft_iic_send_data(soft_iic_obj, (uint8)(dat & 0x00FF));
-  278   1          soft_iic_stop(soft_iic_obj);
-  279   1      }
-  280          
-  281          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 6   
+  276   1          while(len --)
+  277   1          {
+  278   2              soft_iic_send_data(soft_iic_obj, *dat ++);
+  279   2          }
+  280   1          soft_iic_stop(soft_iic_obj);
+  281   1      }
+  282          
+  283          //-------------------------------------------------------------------------------------------------------
+             -------------
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 6   
 
-             -------------
-  282          // 函数简介     软件 IIC 接口写 16bit 数组
-  283          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  284          // 函数简介     软件 IIC 接口器写 16bit 数据
+  285          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  284          // 参数说明     *dat           数据存放缓冲区
-  285          // 参数说明     len             缓冲区长度
-  286          // 返回参数     void            
-  287          // 使用示例     soft_iic_write_16bit_array(soft_iic_obj, dat, 6);
-  288          // 备注信息     
-  289          //-------------------------------------------------------------------------------------------------------
+  286          // 参数说明     dat            要写入的数据
+  287          // 返回参数     void            
+  288          // 使用示例     soft_iic_write_16bit(soft_iic_obj, 0x0101);
+  289          // 备注信息     
+  290          //-------------------------------------------------------------------------------------------------------
              -------------
-  290          void soft_iic_write_16bit_array (soft_iic_info_struct *soft_iic_obj, const uint16 *dat, uint32 len)
-  291          {
-  292   1          zf_assert(soft_iic_obj != NULL);
-  293   1          zf_assert(dat != NULL);
+  291          void soft_iic_write_16bit (soft_iic_info_struct *soft_iic_obj, const uint16 dat)
+  292          {
+  293   1          zf_assert(soft_iic_obj != NULL);
   294   1          soft_iic_start(soft_iic_obj);
   295   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  296   1          while(len --)
-  297   1          {
-  298   2              soft_iic_send_data(soft_iic_obj, (uint8)((*dat & 0xFF00) >> 8));
-  299   2              soft_iic_send_data(soft_iic_obj, (uint8)(*dat ++ & 0x00FF));
-  300   2          }
-  301   1          soft_iic_stop(soft_iic_obj);
-  302   1      }
-  303          
-  304          //-------------------------------------------------------------------------------------------------------
+  296   1          soft_iic_send_data(soft_iic_obj, (uint8)((dat & 0xFF00) >> 8));
+  297   1          soft_iic_send_data(soft_iic_obj, (uint8)(dat & 0x00FF));
+  298   1          soft_iic_stop(soft_iic_obj);
+  299   1      }
+  300          
+  301          //-------------------------------------------------------------------------------------------------------
              -------------
-  305          // 函数简介     软件 IIC 接口向传感器寄存器写 8bit 数据
-  306          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  302          // 函数简介     软件 IIC 接口写 16bit 数组
+  303          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  307          // 参数说明     register_name   传感器的寄存器地址
-  308          // 参数说明     dat            要写入的数据
-  309          // 返回参数     void            
-  310          // 使用示例     soft_iic_write_8bit_register(soft_iic_obj, 0x01, 0x01);
-  311          // 备注信息     
-  312          //-------------------------------------------------------------------------------------------------------
+  304          // 参数说明     *dat           数据存放缓冲区
+  305          // 参数说明     len             缓冲区长度
+  306          // 返回参数     void            
+  307          // 使用示例     soft_iic_write_16bit_array(soft_iic_obj, dat, 6);
+  308          // 备注信息     
+  309          //-------------------------------------------------------------------------------------------------------
              -------------
-  313          void soft_iic_write_8bit_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, const u
-             -int8 dat)
-  314          {
-  315   1          zf_assert(soft_iic_obj != NULL);
-  316   1          soft_iic_start(soft_iic_obj);
-  317   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  318   1          soft_iic_send_data(soft_iic_obj, register_name);
-  319   1          soft_iic_send_data(soft_iic_obj, dat);
-  320   1          soft_iic_stop(soft_iic_obj);
-  321   1      }
-  322          
-  323          //-------------------------------------------------------------------------------------------------------
+  310          void soft_iic_write_16bit_array (soft_iic_info_struct *soft_iic_obj, const uint16 *dat, uint32 len)
+  311          {
+  312   1          zf_assert(soft_iic_obj != NULL);
+  313   1          zf_assert(dat != NULL);
+  314   1          soft_iic_start(soft_iic_obj);
+  315   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  316   1          while(len --)
+  317   1          {
+  318   2              soft_iic_send_data(soft_iic_obj, (uint8)((*dat & 0xFF00) >> 8));
+  319   2              soft_iic_send_data(soft_iic_obj, (uint8)(*dat ++ & 0x00FF));
+  320   2          }
+  321   1          soft_iic_stop(soft_iic_obj);
+  322   1      }
+  323          
+  324          //-------------------------------------------------------------------------------------------------------
              -------------
-  324          // 函数简介     软件 IIC 接口向传感器寄存器写 8bit 数组
-  325          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  325          // 函数简介     软件 IIC 接口向传感器寄存器写 8bit 数据
+  326          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  326          // 参数说明     register_name   传感器的寄存器地址
-  327          // 参数说明     *dat           数据存放缓冲区
-  328          // 参数说明     len             缓冲区长度
+  327          // 参数说明     register_name   传感器的寄存器地址
+  328          // 参数说明     dat            要写入的数据
   329          // 返回参数     void            
-  330          // 使用示例     soft_iic_write_8bit_registers(soft_iic_obj, 0x01, dat, 6);
+  330          // 使用示例     soft_iic_write_8bit_register(soft_iic_obj, 0x01, 0x01);
   331          // 备注信息     
   332          //-------------------------------------------------------------------------------------------------------
              -------------
-  333          void soft_iic_write_8bit_registers (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, const 
-             -uint8 *dat, uint32 len)
+  333          void soft_iic_write_8bit_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, const u
+             -int8 dat)
   334          {
   335   1          zf_assert(soft_iic_obj != NULL);
-  336   1          zf_assert(dat != NULL);
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 7   
+  336   1          soft_iic_start(soft_iic_obj);
+  337   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  338   1          soft_iic_send_data(soft_iic_obj, register_name);
+  339   1          soft_iic_send_data(soft_iic_obj, dat);
+  340   1          soft_iic_stop(soft_iic_obj);
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 7   
 
-  337   1          soft_iic_start(soft_iic_obj);
-  338   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  339   1          soft_iic_send_data(soft_iic_obj, register_name);
-  340   1          while(len --)
-  341   1          {
-  342   2              soft_iic_send_data(soft_iic_obj, *dat ++);
-  343   2          }
-  344   1          soft_iic_stop(soft_iic_obj);
-  345   1      }
-  346          
-  347          //-------------------------------------------------------------------------------------------------------
+  341   1      }
+  342          
+  343          //-------------------------------------------------------------------------------------------------------
              -------------
-  348          // 函数简介     软件 IIC 接口向传感器寄存器写 16bit 数据
-  349          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  344          // 函数简介     软件 IIC 接口向传感器寄存器写 8bit 数组
+  345          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  350          // 参数说明     register_name   传感器的寄存器地址
-  351          // 参数说明     dat            要写入的数据
-  352          // 返回参数     void            
-  353          // 使用示例     soft_iic_write_16bit_register(soft_iic_obj, 0x0101, 0x0101);
-  354          // 备注信息     
-  355          //-------------------------------------------------------------------------------------------------------
+  346          // 参数说明     register_name   传感器的寄存器地址
+  347          // 参数说明     *dat           数据存放缓冲区
+  348          // 参数说明     len             缓冲区长度
+  349          // 返回参数     void            
+  350          // 使用示例     soft_iic_write_8bit_registers(soft_iic_obj, 0x01, dat, 6);
+  351          // 备注信息     
+  352          //-------------------------------------------------------------------------------------------------------
              -------------
-  356          void soft_iic_write_16bit_register (soft_iic_info_struct *soft_iic_obj, const uint16 register_name, const
+  353          void soft_iic_write_8bit_registers (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, const 
+             -uint8 *dat, uint32 len)
+  354          {
+  355   1          zf_assert(soft_iic_obj != NULL);
+  356   1          zf_assert(dat != NULL);
+  357   1          soft_iic_start(soft_iic_obj);
+  358   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  359   1          soft_iic_send_data(soft_iic_obj, register_name);
+  360   1          while(len --)
+  361   1          {
+  362   2              soft_iic_send_data(soft_iic_obj, *dat ++);
+  363   2          }
+  364   1          soft_iic_stop(soft_iic_obj);
+  365   1      }
+  366          
+  367          //-------------------------------------------------------------------------------------------------------
+             -------------
+  368          // 函数简介     软件 IIC 接口向传感器寄存器写 16bit 数据
+  369          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+             -�看看
+  370          // 参数说明     register_name   传感器的寄存器地址
+  371          // 参数说明     dat            要写入的数据
+  372          // 返回参数     void            
+  373          // 使用示例     soft_iic_write_16bit_register(soft_iic_obj, 0x0101, 0x0101);
+  374          // 备注信息     
+  375          //-------------------------------------------------------------------------------------------------------
+             -------------
+  376          void soft_iic_write_16bit_register (soft_iic_info_struct *soft_iic_obj, const uint16 register_name, const
              - uint16 dat)
-  357          {
-  358   1          zf_assert(soft_iic_obj != NULL);
-  359   1          soft_iic_start(soft_iic_obj);
-  360   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  361   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
-  362   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
-  363   1          soft_iic_send_data(soft_iic_obj, (uint8)((dat & 0xFF00) >> 8));
-  364   1          soft_iic_send_data(soft_iic_obj, (uint8)(dat & 0x00FF));
-  365   1          soft_iic_stop(soft_iic_obj);
-  366   1      }
-  367          
-  368          //-------------------------------------------------------------------------------------------------------
+  377          {
+  378   1          zf_assert(soft_iic_obj != NULL);
+  379   1          soft_iic_start(soft_iic_obj);
+  380   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  381   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
+  382   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
+  383   1          soft_iic_send_data(soft_iic_obj, (uint8)((dat & 0xFF00) >> 8));
+  384   1          soft_iic_send_data(soft_iic_obj, (uint8)(dat & 0x00FF));
+  385   1          soft_iic_stop(soft_iic_obj);
+  386   1      }
+  387          
+  388          //-------------------------------------------------------------------------------------------------------
              -------------
-  369          // 函数简介     软件 IIC 接口向传感器寄存器写 16bit 数组
-  370          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  389          // 函数简介     软件 IIC 接口向传感器寄存器写 16bit 数组
+  390          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  371          // 参数说明     register_name   传感器的寄存器地址
-  372          // 参数说明     *dat           数据存放缓冲区
-  373          // 参数说明     len             缓冲区长度
-  374          // 返回参数     void            
-  375          // 使用示例     soft_iic_write_16bit_registers(soft_iic_obj, 0x0101, dat, 6);
-  376          // 备注信息     
-  377          //-------------------------------------------------------------------------------------------------------
+  391          // 参数说明     register_name   传感器的寄存器地址
+  392          // 参数说明     *dat           数据存放缓冲区
+  393          // 参数说明     len             缓冲区长度
+  394          // 返回参数     void            
+  395          // 使用示例     soft_iic_write_16bit_registers(soft_iic_obj, 0x0101, dat, 6);
+  396          // 备注信息     
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 8   
+
+  397          //-------------------------------------------------------------------------------------------------------
              -------------
-  378          void soft_iic_write_16bit_registers (soft_iic_info_struct *soft_iic_obj, const uint16 register_name, cons
+  398          void soft_iic_write_16bit_registers (soft_iic_info_struct *soft_iic_obj, const uint16 register_name, cons
              -t uint16 *dat, uint32 len)
-  379          {
-  380   1          zf_assert(soft_iic_obj != NULL);
-  381   1          zf_assert(dat != NULL);
-  382   1          soft_iic_start(soft_iic_obj);
-  383   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  384   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
-  385   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
-  386   1          while(len--)
-  387   1          {
-  388   2              soft_iic_send_data(soft_iic_obj, (uint8)((*dat & 0xFF00) >> 8));
-  389   2              soft_iic_send_data(soft_iic_obj, (uint8)(*dat ++ & 0x00FF));
-  390   2          }
-  391   1          soft_iic_stop(soft_iic_obj);
-  392   1      }
-  393          
-  394          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 8   
-
+  399          {
+  400   1          zf_assert(soft_iic_obj != NULL);
+  401   1          zf_assert(dat != NULL);
+  402   1          soft_iic_start(soft_iic_obj);
+  403   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  404   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
+  405   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
+  406   1          while(len--)
+  407   1          {
+  408   2              soft_iic_send_data(soft_iic_obj, (uint8)((*dat & 0xFF00) >> 8));
+  409   2              soft_iic_send_data(soft_iic_obj, (uint8)(*dat ++ & 0x00FF));
+  410   2          }
+  411   1          soft_iic_stop(soft_iic_obj);
+  412   1      }
+  413          
+  414          //-------------------------------------------------------------------------------------------------------
              -------------
-  395          // 函数简介     软件 IIC 接口读取 8bit 数据
-  396          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  415          // 函数简介     软件 IIC 接口读取 8bit 数据
+  416          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  397          // 返回参数     uint8           返回读取的 8bit 数据
-  398          // 使用示例     soft_iic_read_8bit(soft_iic_obj);
-  399          // 备注信息     
-  400          //-------------------------------------------------------------------------------------------------------
+  417          // 返回参数     uint8           返回读取的 8bit 数据
+  418          // 使用示例     soft_iic_read_8bit(soft_iic_obj);
+  419          // 备注信息     
+  420          //-------------------------------------------------------------------------------------------------------
              -------------
-  401          uint8 soft_iic_read_8bit (soft_iic_info_struct *soft_iic_obj)
-  402          {
-  403   1          uint8 temp = 0;
-  404   1        zf_assert(soft_iic_obj != NULL);
-  405   1          soft_iic_start(soft_iic_obj);
-  406   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  407   1          temp = soft_iic_read_data(soft_iic_obj, 1);
-  408   1          soft_iic_stop(soft_iic_obj);
-  409   1          return temp;
-  410   1      }
-  411          
-  412          //-------------------------------------------------------------------------------------------------------
+  421          uint8 soft_iic_read_8bit (soft_iic_info_struct *soft_iic_obj)
+  422          {
+  423   1          uint8 temp = 0;
+  424   1              zf_assert(soft_iic_obj != NULL);
+  425   1          soft_iic_start(soft_iic_obj);
+  426   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  427   1          temp = soft_iic_read_data(soft_iic_obj, 1);
+  428   1          soft_iic_stop(soft_iic_obj);
+  429   1          return temp;
+  430   1      }
+  431          
+  432          //-------------------------------------------------------------------------------------------------------
              -------------
-  413          // 函数简介     软件 IIC 接口从传感器寄存器读取 8bit 数组
-  414          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  433          // 函数简介     软件 IIC 接口从传感器寄存器读取 8bit 数组
+  434          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  415          // 参数说明     register_name   传感器的寄存器地址
-  416          // 参数说明     *dat           要读取的数据的缓冲区指针
-  417          // 参数说明     len             要读取的数据长度
-  418          // 返回参数     void            
-  419          // 使用示例     soft_iic_read_8bit_array(soft_iic_obj, dat, 8);
-  420          // 备注信息     
-  421          //-------------------------------------------------------------------------------------------------------
+  435          // 参数说明     register_name   传感器的寄存器地址
+  436          // 参数说明     *dat           要读取的数据的缓冲区指针
+  437          // 参数说明     len             要读取的数据长度
+  438          // 返回参数     void            
+  439          // 使用示例     soft_iic_read_8bit_array(soft_iic_obj, dat, 8);
+  440          // 备注信息     
+  441          //-------------------------------------------------------------------------------------------------------
              -------------
-  422          void soft_iic_read_8bit_array (soft_iic_info_struct *soft_iic_obj, uint8 *dat, uint32 len)
-  423          {
-  424   1          zf_assert(soft_iic_obj != NULL);
-  425   1          zf_assert(dat != NULL);
-  426   1          soft_iic_start(soft_iic_obj);
-  427   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  428   1          while(len --)
-  429   1          {
-  430   2              *dat ++ = soft_iic_read_data(soft_iic_obj, len == 0);
-  431   2          }
-  432   1          soft_iic_stop(soft_iic_obj);
-  433   1      }
-  434          
-  435          //-------------------------------------------------------------------------------------------------------
-             -------------
-  436          // 函数简介     软件 IIC 接口读取 16bit 数据
-  437          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
-             -�看看
-  438          // 参数说明     register_name   传感器的寄存器地址
-  439          // 返回参数     uint16          返回读取的 16bit 数据
-  440          // 使用示例     soft_iic_read_16bit(soft_iic_obj);
-  441          // 备注信息     
-  442          //-------------------------------------------------------------------------------------------------------
-             -------------
-  443          uint16 soft_iic_read_16bit (soft_iic_info_struct *soft_iic_obj)
-  444          {
-  445   1          uint16 temp = 0;
-  446   1        zf_assert(soft_iic_obj != NULL);
-  447   1          soft_iic_start(soft_iic_obj);
-  448   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  449   1          temp = soft_iic_read_data(soft_iic_obj, 0);
-  450   1          temp = ((temp << 8)| soft_iic_read_data(soft_iic_obj, 1));
-  451   1          soft_iic_stop(soft_iic_obj);
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 9   
-
-  452   1          return temp;
+  442          void soft_iic_read_8bit_array (soft_iic_info_struct *soft_iic_obj, uint8 *dat, uint32 len)
+  443          {
+  444   1          zf_assert(soft_iic_obj != NULL);
+  445   1          zf_assert(dat != NULL);
+  446   1          soft_iic_start(soft_iic_obj);
+  447   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  448   1          while(len --)
+  449   1          {
+  450   2              *dat ++ = soft_iic_read_data(soft_iic_obj, len == 0);
+  451   2          }
+  452   1          soft_iic_stop(soft_iic_obj);
   453   1      }
   454          
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 9   
+
   455          //-------------------------------------------------------------------------------------------------------
              -------------
-  456          // 函数简介     软件 IIC 接口读取 16bit 数组
+  456          // 函数简介     软件 IIC 接口读取 16bit 数据
   457          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  458          // 参数说明     *dat           要读取的数据的缓冲区指针
-  459          // 参数说明     len             要读取的数据长度
-  460          // 返回参数     void            
-  461          // 使用示例     soft_iic_read_16bit_array(soft_iic_obj, dat, 8);
-  462          // 备注信息     
-  463          //-------------------------------------------------------------------------------------------------------
+  458          // 参数说明     register_name   传感器的寄存器地址
+  459          // 返回参数     uint16          返回读取的 16bit 数据
+  460          // 使用示例     soft_iic_read_16bit(soft_iic_obj);
+  461          // 备注信息     
+  462          //-------------------------------------------------------------------------------------------------------
              -------------
-  464          void soft_iic_read_16bit_array (soft_iic_info_struct *soft_iic_obj, uint16 *dat, uint32 len)
-  465          {
-  466   1          zf_assert(soft_iic_obj != NULL);
-  467   1          zf_assert(dat != NULL);
-  468   1          soft_iic_start(soft_iic_obj);
-  469   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  470   1          while(len --)
-  471   1          {
-  472   2              *dat = soft_iic_read_data(soft_iic_obj, 0);
-  473   2              *dat = ((*dat << 8)| soft_iic_read_data(soft_iic_obj, len == 0));
-  474   2              dat ++;
-  475   2          }
-  476   1          soft_iic_stop(soft_iic_obj);
-  477   1      }
-  478          
-  479          //-------------------------------------------------------------------------------------------------------
+  463          uint16 soft_iic_read_16bit (soft_iic_info_struct *soft_iic_obj)
+  464          {
+  465   1          uint16 temp = 0;
+  466   1              zf_assert(soft_iic_obj != NULL);
+  467   1          soft_iic_start(soft_iic_obj);
+  468   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  469   1          temp = soft_iic_read_data(soft_iic_obj, 0);
+  470   1          temp = ((temp << 8)| soft_iic_read_data(soft_iic_obj, 1));
+  471   1          soft_iic_stop(soft_iic_obj);
+  472   1          return temp;
+  473   1      }
+  474          
+  475          //-------------------------------------------------------------------------------------------------------
              -------------
-  480          // 函数简介     软件 IIC 接口从传感器寄存器读取 8bit 数据
-  481          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  476          // 函数简介     软件 IIC 接口读取 16bit 数组
+  477          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  482          // 参数说明     register_name   传感器的寄存器地址
-  483          // 返回参数     uint8           返回读取的 8bit 数据
-  484          // 使用示例     soft_iic_read_8bit_register(soft_iic_obj, 0x01);
-  485          // 备注信息     
-  486          //-------------------------------------------------------------------------------------------------------
+  478          // 参数说明     *dat           要读取的数据的缓冲区指针
+  479          // 参数说明     len             要读取的数据长度
+  480          // 返回参数     void            
+  481          // 使用示例     soft_iic_read_16bit_array(soft_iic_obj, dat, 8);
+  482          // 备注信息     
+  483          //-------------------------------------------------------------------------------------------------------
              -------------
-  487          uint8 soft_iic_read_8bit_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name)
-  488          {
-  489   1          uint8 temp = 0;
-  490   1        zf_assert(soft_iic_obj != NULL);
-  491   1          soft_iic_start(soft_iic_obj);
-  492   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  493   1          soft_iic_send_data(soft_iic_obj, register_name);
-  494   1          soft_iic_start(soft_iic_obj);
-  495   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  496   1          temp = soft_iic_read_data(soft_iic_obj, 1);
-  497   1          soft_iic_stop(soft_iic_obj);
-  498   1          return temp;
-  499   1      }
-  500          
-  501          //-------------------------------------------------------------------------------------------------------
+  484          void soft_iic_read_16bit_array (soft_iic_info_struct *soft_iic_obj, uint16 *dat, uint32 len)
+  485          {
+  486   1          zf_assert(soft_iic_obj != NULL);
+  487   1          zf_assert(dat != NULL);
+  488   1          soft_iic_start(soft_iic_obj);
+  489   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  490   1          while(len --)
+  491   1          {
+  492   2              *dat = soft_iic_read_data(soft_iic_obj, 0);
+  493   2              *dat = ((*dat << 8)| soft_iic_read_data(soft_iic_obj, len == 0));
+  494   2              dat ++;
+  495   2          }
+  496   1          soft_iic_stop(soft_iic_obj);
+  497   1      }
+  498          
+  499          //-------------------------------------------------------------------------------------------------------
              -------------
-  502          // 函数简介     软件 IIC 接口从传感器寄存器读取 8bit 数组
-  503          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  500          // 函数简介     软件 IIC 接口从传感器寄存器读取 8bit 数据
+  501          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  504          // 参数说明     register_name   传感器的寄存器地址
-  505          // 参数说明     *dat           要读取的数据的缓冲区指针
-  506          // 参数说明     len             要读取的数据长度
-  507          // 返回参数     void            
-  508          // 使用示例     soft_iic_read_8bit_registers(soft_iic_obj, 0x01, dat, 8);
-  509          // 备注信息     
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 10  
+  502          // 参数说明     register_name   传感器的寄存器地址
+  503          // 返回参数     uint8           返回读取的 8bit 数据
+  504          // 使用示例     soft_iic_read_8bit_register(soft_iic_obj, 0x01);
+  505          // 备注信息     
+  506          //-------------------------------------------------------------------------------------------------------
+             -------------
+  507          uint8 soft_iic_read_8bit_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name)
+  508          {
+  509   1          uint8 temp = 0;
+  510   1              zf_assert(soft_iic_obj != NULL);
+  511   1          soft_iic_start(soft_iic_obj);
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 10  
 
-  510          //-------------------------------------------------------------------------------------------------------
+  512   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  513   1          soft_iic_send_data(soft_iic_obj, register_name);
+  514   1          soft_iic_start(soft_iic_obj);
+  515   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  516   1          temp = soft_iic_read_data(soft_iic_obj, 1);
+  517   1          soft_iic_stop(soft_iic_obj);
+  518   1          return temp;
+  519   1      }
+  520          
+  521          //-------------------------------------------------------------------------------------------------------
              -------------
-  511          void soft_iic_read_8bit_registers (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, uint8 *
+  522          // 函数简介     软件 IIC 接口从传感器寄存器读取 8bit 数组
+  523          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+             -�看看
+  524          // 参数说明     register_name   传感器的寄存器地址
+  525          // 参数说明     *dat           要读取的数据的缓冲区指针
+  526          // 参数说明     len             要读取的数据长度
+  527          // 返回参数     void            
+  528          // 使用示例     soft_iic_read_8bit_registers(soft_iic_obj, 0x01, dat, 8);
+  529          // 备注信息     
+  530          //-------------------------------------------------------------------------------------------------------
+             -------------
+  531          void soft_iic_read_8bit_registers (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, uint8 *
              -dat, uint32 len)
-  512          {
-  513   1          zf_assert(soft_iic_obj != NULL);
-  514   1          zf_assert(dat != NULL);
-  515   1          soft_iic_start(soft_iic_obj);
-  516   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  517   1          soft_iic_send_data(soft_iic_obj, register_name);
-  518   1          soft_iic_start(soft_iic_obj);
-  519   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  520   1          while(len --)
-  521   1          {
-  522   2              *dat ++ = soft_iic_read_data(soft_iic_obj, len == 0);
-  523   2          }
-  524   1          soft_iic_stop(soft_iic_obj);
-  525   1      }
-  526          
-  527          //-------------------------------------------------------------------------------------------------------
+  532          {
+  533   1          zf_assert(soft_iic_obj != NULL);
+  534   1          zf_assert(dat != NULL);
+  535   1          soft_iic_start(soft_iic_obj);
+  536   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  537   1          soft_iic_send_data(soft_iic_obj, register_name);
+  538   1          soft_iic_start(soft_iic_obj);
+  539   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  540   1          while(len --)
+  541   1          {
+  542   2              *dat ++ = soft_iic_read_data(soft_iic_obj, len == 0);
+  543   2          }
+  544   1          soft_iic_stop(soft_iic_obj);
+  545   1      }
+  546          
+  547          //-------------------------------------------------------------------------------------------------------
              -------------
-  528          // 函数简介     软件 IIC 接口从传感器寄存器读取 16bit 数据
-  529          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  548          // 函数简介     软件 IIC 接口从传感器寄存器读取 16bit 数据
+  549          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  530          // 参数说明     register_name   传感器的寄存器地址
-  531          // 返回参数     uint16          返回读取的 16bit 数据
-  532          // 使用示例     soft_iic_read_16bit_register(soft_iic_obj, 0x0101);
-  533          // 备注信息     
-  534          //-------------------------------------------------------------------------------------------------------
+  550          // 参数说明     register_name   传感器的寄存器地址
+  551          // 返回参数     uint16          返回读取的 16bit 数据
+  552          // 使用示例     soft_iic_read_16bit_register(soft_iic_obj, 0x0101);
+  553          // 备注信息     
+  554          //-------------------------------------------------------------------------------------------------------
              -------------
-  535          uint16 soft_iic_read_16bit_register (soft_iic_info_struct *soft_iic_obj, const uint16 register_name)
-  536          {
-  537   1          uint16 temp = 0;
-  538   1        zf_assert(soft_iic_obj != NULL);
-  539   1          soft_iic_start(soft_iic_obj);
-  540   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  541   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
-  542   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
-  543   1          soft_iic_start(soft_iic_obj);
-  544   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  545   1          temp = soft_iic_read_data(soft_iic_obj, 0);
-  546   1          temp = ((temp << 8)| soft_iic_read_data(soft_iic_obj, 1));
-  547   1          soft_iic_stop(soft_iic_obj);
-  548   1          return temp;
-  549   1      }
-  550          
-  551          //-------------------------------------------------------------------------------------------------------
-             -------------
-  552          // 函数简介     软件 IIC 接口从传感器寄存器读取 16bit 数组
-  553          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
-             -�看看
-  554          // 参数说明     register_name   传感器的寄存器地址
-  555          // 参数说明     *dat           要读取的数据的缓冲区指针
-  556          // 参数说明     len             要读取的数据长度
-  557          // 返回参数     void            
-  558          // 使用示例     soft_iic_read_16bit_registers(soft_iic_obj, 0x0101, dat, 8);
-  559          // 备注信息     
-  560          //-------------------------------------------------------------------------------------------------------
-             -------------
-  561          void soft_iic_read_16bit_registers (soft_iic_info_struct *soft_iic_obj, const uint16 register_name, uint1
-             -6 *dat, uint32 len)
-  562          {
-  563   1          zf_assert(soft_iic_obj != NULL);
-  564   1          zf_assert(dat != NULL);
-  565   1          soft_iic_start(soft_iic_obj);
-  566   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 11  
+  555          uint16 soft_iic_read_16bit_register (soft_iic_info_struct *soft_iic_obj, const uint16 register_name)
+  556          {
+  557   1          uint16 temp = 0;
+  558   1              zf_assert(soft_iic_obj != NULL);
+  559   1          soft_iic_start(soft_iic_obj);
+  560   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  561   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
+  562   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
+  563   1          soft_iic_start(soft_iic_obj);
+  564   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  565   1          temp = soft_iic_read_data(soft_iic_obj, 0);
+  566   1          temp = ((temp << 8)| soft_iic_read_data(soft_iic_obj, 1));
+  567   1          soft_iic_stop(soft_iic_obj);
+  568   1          return temp;
+  569   1      }
+  570          
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 11  
 
-  567   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
-  568   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
-  569   1          soft_iic_start(soft_iic_obj);
-  570   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  571   1          while(len --)
-  572   1          {
-  573   2              *dat = soft_iic_read_data(soft_iic_obj, 0);
-  574   2              *dat = ((*dat << 8)| soft_iic_read_data(soft_iic_obj, len == 0));
-  575   2              dat ++;
-  576   2          }
-  577   1          soft_iic_stop(soft_iic_obj);
-  578   1      }
-  579          
+  571          //-------------------------------------------------------------------------------------------------------
+             -------------
+  572          // 函数简介     软件 IIC 接口从传感器寄存器读取 16bit 数组
+  573          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+             -�看看
+  574          // 参数说明     register_name   传感器的寄存器地址
+  575          // 参数说明     *dat           要读取的数据的缓冲区指针
+  576          // 参数说明     len             要读取的数据长度
+  577          // 返回参数     void            
+  578          // 使用示例     soft_iic_read_16bit_registers(soft_iic_obj, 0x0101, dat, 8);
+  579          // 备注信息     
   580          //-------------------------------------------------------------------------------------------------------
              -------------
-  581          // 函数简介     软件 IIC 接口传输 8bit 数组 先写后读取
-  582          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
-             -�看看
-  583          // 参数说明     *write_data     发送数据存放缓冲区
-  584          // 参数说明     write_len       发送缓冲区长度
-  585          // 参数说明     *read_data      读取数据存放缓冲区
-  586          // 参数说明     read_len        读取缓冲区长度
-  587          // 返回参数     void            
-  588          // 使用示例     iic_transfer_8bit_array(IIC_1, addr, dat, 64, dat, 64);
-  589          // 备注信息     
-  590          //-------------------------------------------------------------------------------------------------------
+  581          void soft_iic_read_16bit_registers (soft_iic_info_struct *soft_iic_obj, const uint16 register_name, uint1
+             -6 *dat, uint32 len)
+  582          {
+  583   1          zf_assert(soft_iic_obj != NULL);
+  584   1          zf_assert(dat != NULL);
+  585   1          soft_iic_start(soft_iic_obj);
+  586   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  587   1          soft_iic_send_data(soft_iic_obj, (uint8)((register_name & 0xFF00) >> 8));
+  588   1          soft_iic_send_data(soft_iic_obj, (uint8)(register_name & 0x00FF));
+  589   1          soft_iic_start(soft_iic_obj);
+  590   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  591   1          while(len --)
+  592   1          {
+  593   2              *dat = soft_iic_read_data(soft_iic_obj, 0);
+  594   2              *dat = ((*dat << 8)| soft_iic_read_data(soft_iic_obj, len == 0));
+  595   2              dat ++;
+  596   2          }
+  597   1          soft_iic_stop(soft_iic_obj);
+  598   1      }
+  599          
+  600          //-------------------------------------------------------------------------------------------------------
              -------------
-  591          void soft_iic_transfer_8bit_array (soft_iic_info_struct *soft_iic_obj, const uint8 *write_data, uint32 wr
+  601          // 函数简介     软件 IIC 接口传输 8bit 数组 先写后读取
+  602          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+             -�看看
+  603          // 参数说明     *write_data     发送数据存放缓冲区
+  604          // 参数说明     write_len       发送缓冲区长度
+  605          // 参数说明     *read_data      读取数据存放缓冲区
+  606          // 参数说明     read_len        读取缓冲区长度
+  607          // 返回参数     void            
+  608          // 使用示例     iic_transfer_8bit_array(IIC_1, addr, dat, 64, dat, 64);
+  609          // 备注信息     
+  610          //-------------------------------------------------------------------------------------------------------
+             -------------
+  611          uint8 soft_iic_transfer_8bit_array_status (soft_iic_info_struct *soft_iic_obj, const uint8 *write_data, u
+             -int32 write_len, uint8 *read_data, uint32 read_len)
+  612          {
+  613   1          uint8 error = 0;
+  614   1      
+  615   1          zf_assert(soft_iic_obj != NULL);
+  616   1          zf_assert(write_data != NULL);
+  617   1          zf_assert(read_data != NULL);
+  618   1          soft_iic_start(soft_iic_obj);
+  619   1          error |= soft_iic_send_data_status(soft_iic_obj, soft_iic_obj->addr << 1);
+  620   1          while(write_len --)
+  621   1          {
+  622   2              error |= soft_iic_send_data_status(soft_iic_obj, *write_data ++);
+  623   2          }
+  624   1      
+  625   1          if(read_len)
+  626   1          {
+  627   2              soft_iic_start(soft_iic_obj);
+  628   2              error |= soft_iic_send_data_status(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 12  
+
+  629   2              while(read_len --)
+  630   2              {
+  631   3                  *read_data ++ = soft_iic_read_data(soft_iic_obj, read_len == 0);
+  632   3              }
+  633   2          }
+  634   1          soft_iic_stop(soft_iic_obj);
+  635   1          return error;
+  636   1      }
+  637          
+  638          void soft_iic_transfer_8bit_array (soft_iic_info_struct *soft_iic_obj, const uint8 *write_data, uint32 wr
              -ite_len, uint8 *read_data, uint32 read_len)
-  592          {
-  593   1          zf_assert(soft_iic_obj != NULL);
-  594   1          zf_assert(write_data != NULL);
-  595   1          zf_assert(read_data != NULL);
-  596   1          soft_iic_start(soft_iic_obj);
-  597   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  598   1          while(write_len --)
-  599   1          {
-  600   2              soft_iic_send_data(soft_iic_obj, *write_data ++);
-  601   2          }
-  602   1      
-  603   1          if(read_len)
-  604   1          {
-  605   2              soft_iic_start(soft_iic_obj);
-  606   2              soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  607   2              while(read_len --)
-  608   2              {
-  609   3                  *read_data ++ = soft_iic_read_data(soft_iic_obj, read_len == 0);
-  610   3              }
-  611   2          }
-  612   1          soft_iic_stop(soft_iic_obj);
-  613   1      }
-  614          
-  615          //-------------------------------------------------------------------------------------------------------
+  639          {
+  640   1          (void)soft_iic_transfer_8bit_array_status(soft_iic_obj, write_data, write_len, read_data, read_len);
+  641   1      }
+  642          
+  643          //-------------------------------------------------------------------------------------------------------
              -------------
-  616          // 函数简介     软件 IIC 接口传输 16bit 数组 先写后读取
-  617          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  644          // 函数简介     软件 IIC 接口传输 16bit 数组 先写后读取
+  645          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  618          // 参数说明     *write_data     发送数据存放缓冲区
-  619          // 参数说明     write_len       发送缓冲区长度
-  620          // 参数说明     *read_data      读取数据存放缓冲区
-  621          // 参数说明     read_len        读取缓冲区长度
-  622          // 返回参数     void            
-  623          // 使用示例     iic_transfer_16bit_array(IIC_1, addr, dat, 64, dat, 64);
-  624          // 备注信息     
-  625          //-------------------------------------------------------------------------------------------------------
+  646          // 参数说明     *write_data     发送数据存放缓冲区
+  647          // 参数说明     write_len       发送缓冲区长度
+  648          // 参数说明     *read_data      读取数据存放缓冲区
+  649          // 参数说明     read_len        读取缓冲区长度
+  650          // 返回参数     void            
+  651          // 使用示例     iic_transfer_16bit_array(IIC_1, addr, dat, 64, dat, 64);
+  652          // 备注信息     
+  653          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 12  
-
-  626          void soft_iic_transfer_16bit_array (soft_iic_info_struct *soft_iic_obj, const uint16 *write_data, uint32 
+  654          void soft_iic_transfer_16bit_array (soft_iic_info_struct *soft_iic_obj, const uint16 *write_data, uint32 
              -write_len, uint16 *read_data, uint32 read_len)
-  627          {
-  628   1          zf_assert(soft_iic_obj != NULL);
-  629   1          zf_assert(write_data != NULL);
-  630   1          zf_assert(read_data != NULL);
-  631   1          soft_iic_start(soft_iic_obj);
-  632   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  633   1          while(write_len--)
-  634   1          {
-  635   2              soft_iic_send_data(soft_iic_obj, (uint8)((*write_data & 0xFF00) >> 8));
-  636   2              soft_iic_send_data(soft_iic_obj, (uint8)(*write_data ++ & 0x00FF));
-  637   2          }
-  638   1          if(read_len)
-  639   1          {
-  640   2              soft_iic_start(soft_iic_obj);
-  641   2              soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  642   2              while(read_len --)
-  643   2              {
-  644   3                  *read_data = soft_iic_read_data(soft_iic_obj, 0);
-  645   3                  *read_data = ((*read_data << 8)| soft_iic_read_data(soft_iic_obj, read_len == 0));
-  646   3                  read_data ++;
-  647   3              }
-  648   2          }
-  649   1          soft_iic_stop(soft_iic_obj);
-  650   1      }
-  651          
-  652          //-------------------------------------------------------------------------------------------------------
+  655          {
+  656   1          zf_assert(soft_iic_obj != NULL);
+  657   1          zf_assert(write_data != NULL);
+  658   1          zf_assert(read_data != NULL);
+  659   1          soft_iic_start(soft_iic_obj);
+  660   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  661   1          while(write_len--)
+  662   1          {
+  663   2              soft_iic_send_data(soft_iic_obj, (uint8)((*write_data & 0xFF00) >> 8));
+  664   2              soft_iic_send_data(soft_iic_obj, (uint8)(*write_data ++ & 0x00FF));
+  665   2          }
+  666   1          if(read_len)
+  667   1          {
+  668   2              soft_iic_start(soft_iic_obj);
+  669   2              soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  670   2              while(read_len --)
+  671   2              {
+  672   3                  *read_data = soft_iic_read_data(soft_iic_obj, 0);
+  673   3                  *read_data = ((*read_data << 8)| soft_iic_read_data(soft_iic_obj, read_len == 0));
+  674   3                  read_data ++;
+  675   3              }
+  676   2          }
+  677   1          soft_iic_stop(soft_iic_obj);
+  678   1      }
+  679          
+  680          //-------------------------------------------------------------------------------------------------------
              -------------
-  653          // 函数简介     软件 IIC 接口 SCCB 模式向传感器寄存器写 8bit 数据
-  654          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+  681          // 函数简介     软件 IIC 接口 SCCB 模式向传感器寄存器写 8bit 数据
+  682          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
              -�看看
-  655          // 参数说明     register_name   传感器的寄存器地址
-  656          // 参数说明     dat            要写入的数据
-  657          // 返回参数     void            
-  658          // 使用示例     soft_iic_sccb_write_register(soft_iic_obj, 0x01, 0x01);
-  659          // 备注信息     
-  660          //-------------------------------------------------------------------------------------------------------
-             -------------
-  661          void soft_iic_sccb_write_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, uint8 d
-             -at)
-  662          {
-  663   1          zf_assert(soft_iic_obj != NULL);
-  664   1          soft_iic_start(soft_iic_obj);
-  665   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  666   1          soft_iic_send_data(soft_iic_obj, register_name);
-  667   1          soft_iic_send_data(soft_iic_obj, dat);
-  668   1          soft_iic_stop(soft_iic_obj);
-  669   1      }
-  670          
-  671          //-------------------------------------------------------------------------------------------------------
-             -------------
-  672          // 函数简介     软件 IIC 接口 SCCB 模式从传感器寄存器读取 8bit 数据
-  673          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
-             -�看看
-  674          // 参数说明     register_name   传感器的寄存器地址
-  675          // 返回参数     uint8           返回读取的 8bit 数据
-  676          // 使用示例     soft_iic_sccb_read_register(soft_iic_obj, 0x01);
-  677          // 备注信息     
-  678          //-------------------------------------------------------------------------------------------------------
-             -------------
-  679          uint8 soft_iic_sccb_read_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name)
-  680          {
-  681   1          uint8 temp = 0;
-  682   1        zf_assert(soft_iic_obj != NULL);
-  683   1          soft_iic_start(soft_iic_obj);
-C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 16/07/26  18:10:24  PAGE 13  
+  683          // 参数说明     register_name   传感器的寄存器地址
+  684          // 参数说明     dat            要写入的数据
+  685          // 返回参数     void            
+  686          // 使用示例     soft_iic_sccb_write_register(soft_iic_obj, 0x01, 0x01);
+  687          // 备注信息     
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 13  
 
-  684   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
-  685   1          soft_iic_send_data(soft_iic_obj, register_name);
-  686   1          soft_iic_stop(soft_iic_obj);
-  687   1      
-  688   1          soft_iic_start(soft_iic_obj);
-  689   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-  690   1          temp = soft_iic_read_data(soft_iic_obj, 1);
-  691   1          soft_iic_stop(soft_iic_obj);
-  692   1          return temp;
-  693   1      }
-  694          
-  695          //-------------------------------------------------------------------------------------------------------
+  688          //-------------------------------------------------------------------------------------------------------
              -------------
-  696          // 函数简介     软件 IIC 接口初始化 默认 MASTER 模式 不提供 SLAVE 模式
-  697          // 参数说明     *soft_iic_obj   软件 IIC 指定信息存放结构体的指针
-  698          // 参数说明     addr            软件 IIC 地址 这里需要注意 标准七位地址 最高位忽�
+  689          void soft_iic_sccb_write_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, uint8 d
+             -at)
+  690          {
+  691   1          zf_assert(soft_iic_obj != NULL);
+  692   1          soft_iic_start(soft_iic_obj);
+  693   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  694   1          soft_iic_send_data(soft_iic_obj, register_name);
+  695   1          soft_iic_send_data(soft_iic_obj, dat);
+  696   1          soft_iic_stop(soft_iic_obj);
+  697   1      }
+  698          
+  699          //-------------------------------------------------------------------------------------------------------
+             -------------
+  700          // 函数简介     软件 IIC 接口 SCCB 模式从传感器寄存器读取 8bit 数据
+  701          // 参数说明     *soft_iic_obj   软件 IIC 指定信息 可以参照 zf_driver_soft_iic.h 里的格�
+             -�看看
+  702          // 参数说明     register_name   传感器的寄存器地址
+  703          // 返回参数     uint8           返回读取的 8bit 数据
+  704          // 使用示例     soft_iic_sccb_read_register(soft_iic_obj, 0x01);
+  705          // 备注信息     
+  706          //-------------------------------------------------------------------------------------------------------
+             -------------
+  707          uint8 soft_iic_sccb_read_register (soft_iic_info_struct *soft_iic_obj, const uint8 register_name)
+  708          {
+  709   1          uint8 temp = 0;
+  710   1              zf_assert(soft_iic_obj != NULL);
+  711   1          soft_iic_start(soft_iic_obj);
+  712   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1);
+  713   1          soft_iic_send_data(soft_iic_obj, register_name);
+  714   1          soft_iic_stop(soft_iic_obj);
+  715   1      
+  716   1          soft_iic_start(soft_iic_obj);
+  717   1          soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+  718   1          temp = soft_iic_read_data(soft_iic_obj, 1);
+  719   1          soft_iic_stop(soft_iic_obj);
+  720   1          return temp;
+  721   1      }
+  722          
+  723          //-------------------------------------------------------------------------------------------------------
+             -------------
+  724          // 函数简介     软件 IIC 接口初始化 默认 MASTER 模式 不提供 SLAVE 模式
+  725          // 参数说明     *soft_iic_obj   软件 IIC 指定信息存放结构体的指针
+  726          // 参数说明     addr            软件 IIC 地址 这里需要注意 标准七位地址 最高位忽�
              -�� 写入时请务必确认无误
-  699          // 参数说明     delay           软件 IIC 延时 就是时钟高电平时间 越短 IIC 速率越高
-  700          // 参数说明     scl_pin         软件 IIC 时钟引脚 参照 zf_driver_gpio.h 内 gpio_pin_enum 枚
+  727          // 参数说明     delay           软件 IIC 延时 就是时钟高电平时间 越短 IIC 速率越高
+  728          // 参数说明     scl_pin         软件 IIC 时钟引脚 参照 zf_driver_gpio.h 内 gpio_pin_enum 枚
              -举体定义
-  701          // 参数说明     sda_pin         软件 IIC 数据引脚 参照 zf_driver_gpio.h 内 gpio_pin_enum 枚
+  729          // 参数说明     sda_pin         软件 IIC 数据引脚 参照 zf_driver_gpio.h 内 gpio_pin_enum 枚
              -举体定义
-  702          // 返回参数     void            
-  703          // 使用示例     soft_iic_init(&soft_iic_obj, addr, 100, B6, B7);
-  704          // 备注信息     
-  705          //-------------------------------------------------------------------------------------------------------
+  730          // 返回参数     void            
+  731          // 使用示例     soft_iic_init(&soft_iic_obj, addr, 100, B6, B7);
+  732          // 备注信息     
+  733          //-------------------------------------------------------------------------------------------------------
              -------------
-  706          void soft_iic_init (soft_iic_info_struct *soft_iic_obj, uint8 addr, uint32 delay, gpio_pin_enum scl_pin, 
+  734          void soft_iic_init (soft_iic_info_struct *soft_iic_obj, uint8 addr, uint32 delay, gpio_pin_enum scl_pin, 
              -gpio_pin_enum sda_pin)
-  707          {
-  708   1          zf_assert(soft_iic_obj != NULL);
-  709   1          zf_assert(scl_pin != sda_pin);                                 // 醒醒！ scl_pin 与 sda_pin 怎�
+  735          {
+  736   1          zf_assert(soft_iic_obj != NULL);
+  737   1          zf_assert(scl_pin != sda_pin);                                 // 醒醒！ scl_pin 与 sda_pin 怎�
              -�能填同一个引脚？
-  710   1          soft_iic_obj->scl_pin = scl_pin;
-  711   1          soft_iic_obj->sda_pin = sda_pin;
-  712   1          soft_iic_obj->addr = addr;
-  713   1          soft_iic_obj->delay = delay;
-  714   1          gpio_init(scl_pin, GPO, 1, GPO_OPEN_DTAIN);                           // 提取对应IO索引 AF功�
+  738   1          soft_iic_obj->scl_pin = scl_pin;
+  739   1          soft_iic_obj->sda_pin = sda_pin;
+  740   1          soft_iic_obj->addr = addr;
+  741   1          soft_iic_obj->delay = delay;
+C251 COMPILER V5.60.0,  zf_driver_soft_iic                                                 22/07/26  20:00:26  PAGE 14  
+
+  742   1          gpio_init(scl_pin, GPO, 1, GPO_OPEN_DTAIN);                                 // 提取对应IO索引 AF功�
              -�编码
-  715   1          gpio_init(sda_pin, GPO, 1, GPO_OPEN_DTAIN);                           // 提取对应IO索引 AF功能
+  743   1          gpio_init(sda_pin, GPO, 1, GPO_OPEN_DTAIN);                                 // 提取对应IO索引 AF功能
              -编码
-  716   1      }
+  744   1          gpio_set_pull_up(scl_pin);
+  745   1          gpio_set_pull_up(sda_pin);
+  746   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      6802     ------
+  ecode size           =      7165     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       256     ------
+  xdata size           =       289     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

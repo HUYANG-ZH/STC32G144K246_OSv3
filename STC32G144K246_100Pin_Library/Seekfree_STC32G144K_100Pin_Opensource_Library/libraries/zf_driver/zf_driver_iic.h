@@ -99,6 +99,16 @@ typedef enum
 #define IIC_RECOVERY_PULSE_US           (5U)
 #endif
 
+/* 异步状态机等待单个硬件命令完成的最大 service 次数；每次 service 为 O(1)，绝不轮询等待。 */
+#ifndef IIC_ASYNC_TIMEOUT_TICKS
+#define IIC_ASYNC_TIMEOUT_TICKS          (100UL)
+#endif
+
+/* Compatibility-only no-timebase servicing; runtime must use the timed API. */
+#ifndef IIC_ASYNC_MAX_SERVICE_COUNT
+#define IIC_ASYNC_MAX_SERVICE_COUNT      (5000UL)
+#endif
+
 // ================================ 带状态返回的底层接口 ================================ //
 iic_status_enum iic_init                 (iic_index_enum iic_n, uint8 addr, uint32 speed, iic_pin_enum scl_pin, iic_pin_enum sda_pin);
 iic_status_enum iic_write                (iic_index_enum iic_n, uint8 addr, const uint8 *buffer, uint32 len);
@@ -108,6 +118,18 @@ iic_status_enum iic_recover_bus          (iic_index_enum iic_n);
 iic_status_enum iic_get_last_status      (iic_index_enum iic_n);
 uint32          iic_get_actual_speed     (iic_index_enum iic_n);
 void            iic_deinit               (iic_index_enum iic_n);
+
+// ================================ 非阻塞硬件 IIC 接口 ================================ //
+// 提交成功仅表示事务已被硬件状态机接管；完成状态请通过 iic_async_get_status 查询。
+iic_status_enum iic_async_transfer       (iic_index_enum iic_n, uint8 addr,
+                                           const uint8 *write_data, uint32 write_len,
+                                           uint8 *read_data, uint32 read_len);
+void            iic_async_process        (iic_index_enum iic_n);
+void            iic_async_process_all    (void);
+void            iic_async_process_timed  (iic_index_enum iic_n, uint32 now_tick);
+void            iic_async_process_all_timed(uint32 now_tick);
+uint8           iic_async_is_busy        (iic_index_enum iic_n);
+iic_status_enum iic_async_get_status     (iic_index_enum iic_n);
 
 // ================================ 与逐飞软件 IIC 风格一致的兼容接口 ================================ //
 void        iic_write_8bit               (iic_index_enum iic_n, uint8 addr, const uint8 dat);

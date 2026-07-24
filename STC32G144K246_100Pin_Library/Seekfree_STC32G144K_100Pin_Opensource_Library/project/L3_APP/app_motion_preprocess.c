@@ -19,7 +19,7 @@ app_motion_preprocess_config_t app_motion_preprocess_config =
 
 static volatile app_motion_preprocess_data_t motion_preprocess_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-static void app_motion_preprocess_tick(void);
+void app_motion_preprocess_control_step(void);
 
 static float app_motion_preprocess_diff_ratio(float left_value, float right_value)
 {
@@ -52,8 +52,8 @@ static void app_motion_preprocess_register_packet(void)
 void app_motion_preprocess_init(void)
 {
     app_motion_preprocess_register_packet();
-    app_motion_preprocess_tick();
-    pit_ms_init(APP_MOTION_PREPROCESS_PIT, APP_MOTION_PREPROCESS_PERIOD_MS, app_motion_preprocess_tick);
+    /* 首次仅发布当前快照；周期调度统一由 app_motion_postprocess 的 TIM6 控制链承担。 */
+    app_motion_preprocess_control_step();
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ void app_motion_preprocess_get_data(app_motion_preprocess_data_t *out_data)
     EA = ea_backup;
 }
 
-static void app_motion_preprocess_tick(void)
+void app_motion_preprocess_control_step(void)
 {
     app_inductor_preprocess_data_t inductor_data;
     app_motion_preprocess_data_t output;

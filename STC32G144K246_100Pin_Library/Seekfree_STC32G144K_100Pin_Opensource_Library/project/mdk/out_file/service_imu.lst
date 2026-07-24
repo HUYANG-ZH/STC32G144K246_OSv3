@@ -1,99 +1,232 @@
-C251 COMPILER V5.60.0,  service_imu                                                        17/07/26  04:05:57  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        22/07/26  22:39:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
 OBJECT MODULE PLACED IN .\out_file\service_imu.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_imu.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE
-                    -(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librarie
-                    -s\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_component
-                    -s\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_imu.lst) TABS(2) OBJEC
-                    -T(.\out_file\service_imu.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.exe ..\L2_SERVICE\service_imu.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(
+                    -0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries
+                    -\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components
+                    -\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_imu.lst) OBJECT(.\out_f
+                    -ile\service_imu.obj) 
 
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
     2          #include "sys_tfpu.h"
     3          #include "bsp_include.h"
-    4          #include "service_delay.h"
-    5          #include "service_wireless_uart.h"
-    6          #include "service_imu.h"
-    7          
-    8          #define SERVICE_IMU_CALIBRATE_COUNT     (200U)
-    9          #define SERVICE_IMU_CALIBRATE_INTERVAL  (10U)
-   10          
-   11          static float gyro_x_offset = 0.0f;
-   12          static float gyro_z_offset = 0.0f;
-   13          
-   14          void service_imu_init(void)
-   15          {
-   16   1          bsp_imu_init();
-   17   1      }
-   18          
-   19          void service_imu_calibrate_gyro_z(void)
-   20          {
-   21   1          uint16 i;
-   22   1          float sum = 0.0f;
-   23   1      
-   24   1          wprint("gz calibrating...\r\n");
-   25   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
-   26   1          {
-   27   2              sum += bsp_imu_read_gyro_z();
-   28   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
-   29   2          }
-   30   1      
-   31   1          gyro_z_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
-   32   1          wprint("gz offset=%.3f\r\n", gyro_z_offset);
-   33   1      }
-   34          
-   35          void service_imu_calibrate_gyro_x(void)
-   36          {
-   37   1          uint16 i;
-   38   1          float sum = 0.0f;
-   39   1          bsp_imu_gyro_t raw;
-   40   1      
-   41   1          wprint("gx calibrating...\r\n");
-   42   1          for(i = 0U; i < SERVICE_IMU_CALIBRATE_COUNT; i++)
-   43   1          {
-   44   2              bsp_imu_read_gyro(&raw);
-   45   2              sum += raw.gyro_x;
-   46   2              service_delay_ms(SERVICE_IMU_CALIBRATE_INTERVAL);
-   47   2          }
-   48   1      
-   49   1          gyro_x_offset = sum / (float)SERVICE_IMU_CALIBRATE_COUNT;
-   50   1          wprint("gx offset=%.3f\r\n", gyro_x_offset);
-   51   1      }
-   52          
-   53          void service_imu_read_gyro(service_imu_gyro_t *out_data)
-   54          {
-   55   1          bsp_imu_gyro_t raw;
-C251 COMPILER V5.60.0,  service_imu                                                        17/07/26  04:05:57  PAGE 2   
+    4          #include "service_imu.h"
+    5          
+    6          #define SERVICE_IMU_CALIBRATE_COUNT     (200U)
+    7          #define SERVICE_IMU_CALIBRATE_INV       (0.005f)
+    8          
+    9          typedef enum
+   10          {
+   11              SERVICE_IMU_CALIBRATION_IDLE = 0,
+   12              SERVICE_IMU_CALIBRATION_GYRO_Z,
+   13              SERVICE_IMU_CALIBRATION_GYRO_X,
+   14              SERVICE_IMU_CALIBRATION_COMPLETE,
+   15          } service_imu_calibration_state_enum;
+   16          
+   17          static volatile service_imu_sample_t service_imu_sample;
+   18          static uint32 service_imu_last_sequence = 0U;
+   19          static float gyro_x_offset = 0.0f;
+   20          static float gyro_z_offset = 0.0f;
+   21          /* Reciprocals are calculated once outside TIM7.  Each complete IMU frame
+   22           * therefore needs TFPU int-to-float + multiply, not six TFPU divisions. */
+   23          static float service_imu_acc_scale = 0.0f;
+   24          static float service_imu_gyro_scale = 0.0f;
+   25          static float service_imu_calibration_sum = 0.0f;
+   26          static uint16 service_imu_calibration_count = 0U;
+   27          static volatile service_imu_calibration_state_enum service_imu_calibration_state = SERVICE_IMU_CALIBRATIO
+             -N_IDLE;
+   28          
+   29          static void service_imu_begin_calibration(service_imu_calibration_state_enum state)
+   30          {
+   31   1          service_imu_calibration_sum = 0.0f;
+   32   1          service_imu_calibration_count = 0U;
+   33   1          service_imu_calibration_state = state;
+   34   1      }
+   35          
+   36          static void service_imu_update_calibration(const service_imu_sample_t *sample)
+   37          {
+   38   1          if(NULL == sample)
+   39   1          {
+   40   2              return;
+   41   2          }
+   42   1      
+   43   1          if(SERVICE_IMU_CALIBRATION_GYRO_Z == service_imu_calibration_state)
+   44   1          {
+   45   2              service_imu_calibration_sum = tfpu_add(service_imu_calibration_sum, sample->gyro_z);
+   46   2              service_imu_calibration_count++;
+   47   2              if(SERVICE_IMU_CALIBRATE_COUNT <= service_imu_calibration_count)
+   48   2              {
+   49   3                  gyro_z_offset = tfpu_mul(service_imu_calibration_sum, SERVICE_IMU_CALIBRATE_INV);
+   50   3                  service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_X);
+   51   3              }
+   52   2          }
+   53   1          else if(SERVICE_IMU_CALIBRATION_GYRO_X == service_imu_calibration_state)
+   54   1          {
+C251 COMPILER V5.60.0,  service_imu                                                        22/07/26  22:39:20  PAGE 2   
 
-   56   1      
-   57   1          if(NULL == out_data)
-   58   1          {
-   59   2              return;
-   60   2          }
-   61   1      
-   62   1          bsp_imu_read_gyro(&raw);
-   63   1          out_data->gyro_x = tfpu_sub(raw.gyro_x, gyro_x_offset);
-   64   1          out_data->gyro_y = raw.gyro_y;
-   65   1          out_data->gyro_z = tfpu_sub(raw.gyro_z, gyro_z_offset);
-   66   1      }
-   67          
-   68          float service_imu_read_gyro_z(void)
-   69          {
-   70   1          return tfpu_sub(bsp_imu_read_gyro_z(), gyro_z_offset);
-   71   1      }
+   55   2              service_imu_calibration_sum = tfpu_add(service_imu_calibration_sum, sample->gyro_x);
+   56   2              service_imu_calibration_count++;
+   57   2              if(SERVICE_IMU_CALIBRATE_COUNT <= service_imu_calibration_count)
+   58   2              {
+   59   3                  gyro_x_offset = tfpu_mul(service_imu_calibration_sum, SERVICE_IMU_CALIBRATE_INV);
+   60   3                  service_imu_calibration_state = SERVICE_IMU_CALIBRATION_COMPLETE;
+   61   3              }
+   62   2          }
+   63   1      }
+   64          
+   65          void service_imu_init(void)
+   66          {
+   67   1          service_imu_sample.valid = 0U;
+   68   1          service_imu_sample.sequence = 0U;
+   69   1          service_imu_last_sequence = 0U;
+   70   1          gyro_x_offset = 0.0f;
+   71   1          gyro_z_offset = 0.0f;
+   72   1          bsp_imu_init();
+   73   1          service_imu_acc_scale = tfpu_div(1.0f, imu660rc_transition_factor[0]);
+   74   1          service_imu_gyro_scale = tfpu_div(1.0f, imu660rc_transition_factor[1]);
+   75   1          service_imu_start_calibration();
+   76   1      }
+   77          
+   78          void service_imu_task(void)
+   79          {
+   80   1          bsp_imu_bootstrap_process();
+   81   1      }
+   82          
+   83          void service_imu_update(void)
+   84          {
+   85   1          bsp_imu_sample_t raw;
+   86   1          service_imu_sample_t sample;
+   87   1          uint8 ea_backup;
+   88   1      
+   89   1          if((0U != bsp_imu_get_latest_sample(&raw)) && (raw.sequence != service_imu_last_sequence))
+   90   1          {
+   91   2              sample.temperature_raw = raw.temperature_raw;
+   92   2              sample.gyro_x_raw = raw.gyro_x_raw;
+   93   2              sample.gyro_y_raw = raw.gyro_y_raw;
+   94   2              sample.gyro_z_raw = raw.gyro_z_raw;
+   95   2              sample.acc_x_raw = raw.acc_x_raw;
+   96   2              sample.acc_y_raw = raw.acc_y_raw;
+   97   2              sample.acc_z_raw = raw.acc_z_raw;
+   98   2              sample.gyro_x = tfpu_mul(tfpu_int2float((long)raw.gyro_x_raw), service_imu_gyro_scale);
+   99   2              sample.gyro_y = tfpu_mul(tfpu_int2float((long)raw.gyro_y_raw), service_imu_gyro_scale);
+  100   2              sample.gyro_z = tfpu_mul(tfpu_int2float((long)raw.gyro_z_raw), service_imu_gyro_scale);
+  101   2              sample.acc_x_g = tfpu_mul(tfpu_int2float((long)raw.acc_x_raw), service_imu_acc_scale);
+  102   2              sample.acc_y_g = tfpu_mul(tfpu_int2float((long)raw.acc_y_raw), service_imu_acc_scale);
+  103   2              sample.acc_z_g = tfpu_mul(tfpu_int2float((long)raw.acc_z_raw), service_imu_acc_scale);
+  104   2              sample.sequence = raw.sequence;
+  105   2              sample.valid = raw.valid;
+  106   2      
+  107   2              service_imu_update_calibration(&sample);
+  108   2              sample.gyro_x = tfpu_sub(sample.gyro_x, gyro_x_offset);
+  109   2              sample.gyro_z = tfpu_sub(sample.gyro_z, gyro_z_offset);
+  110   2      
+  111   2              ea_backup = EA;
+  112   2              EA = 0;
+  113   2              service_imu_sample = sample;
+  114   2              EA = ea_backup;
+  115   2              service_imu_last_sequence = raw.sequence;
+  116   2          }
+  117   1      
+  118   1          // Request the next full frame after consuming the previous one.  A busy
+  119   1          // SPI DMA channel simply keeps the current snapshot; it never stalls TIM.
+  120   1          (void)bsp_imu_request_sample();
+C251 COMPILER V5.60.0,  service_imu                                                        22/07/26  22:39:20  PAGE 3   
+
+  121   1      }
+  122          
+  123          void service_imu_start_calibration(void)
+  124          {
+  125   1          gyro_x_offset = 0.0f;
+  126   1          gyro_z_offset = 0.0f;
+  127   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_Z);
+  128   1      }
+  129          
+  130          uint8 service_imu_calibration_is_complete(void)
+  131          {
+  132   1          return (SERVICE_IMU_CALIBRATION_COMPLETE == service_imu_calibration_state) ? 1U : 0U;
+  133   1      }
+  134          
+  135          void service_imu_calibrate_gyro_z(void)
+  136          {
+  137   1          gyro_z_offset = 0.0f;
+  138   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_Z);
+  139   1      }
+  140          
+  141          void service_imu_calibrate_gyro_x(void)
+  142          {
+  143   1          gyro_x_offset = 0.0f;
+  144   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_X);
+  145   1      }
+  146          
+  147          void service_imu_read_gyro(service_imu_gyro_t *out_data)
+  148          {
+  149   1          service_imu_sample_t sample;
+  150   1      
+  151   1          if(NULL == out_data)
+  152   1          {
+  153   2              return;
+  154   2          }
+  155   1      
+  156   1          if(0U == service_imu_get_latest_sample(&sample))
+  157   1          {
+  158   2              out_data->gyro_x = 0.0f;
+  159   2              out_data->gyro_y = 0.0f;
+  160   2              out_data->gyro_z = 0.0f;
+  161   2              out_data->sequence = 0U;
+  162   2              return;
+  163   2          }
+  164   1      
+  165   1          out_data->gyro_x = sample.gyro_x;
+  166   1          out_data->gyro_y = sample.gyro_y;
+  167   1          out_data->gyro_z = sample.gyro_z;
+  168   1          out_data->sequence = sample.sequence;
+  169   1      }
+  170          
+  171          float service_imu_read_gyro_z(void)
+  172          {
+  173   1          service_imu_sample_t sample;
+  174   1      
+  175   1          if(0U == service_imu_get_latest_sample(&sample))
+  176   1          {
+  177   2              return 0.0f;
+  178   2          }
+  179   1      
+  180   1          return sample.gyro_z;
+  181   1      }
+  182          
+  183          uint8 service_imu_get_latest_sample(service_imu_sample_t *out_data)
+  184          {
+  185   1          uint8 result;
+  186   1          uint8 ea_backup;
+C251 COMPILER V5.60.0,  service_imu                                                        22/07/26  22:39:20  PAGE 4   
+
+  187   1      
+  188   1          if(NULL == out_data)
+  189   1          {
+  190   2              return 0U;
+  191   2          }
+  192   1      
+  193   1          ea_backup = EA;
+  194   1          EA = 0;
+  195   1          *out_data = service_imu_sample;
+  196   1          result = service_imu_sample.valid;
+  197   1          EA = ea_backup;
+  198   1          return result;
+  199   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       521     ------
+  ecode size           =      1447     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        48     ------
+  xdata size           =       236     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -103,7 +236,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        92     ------
+  hconst size          =        68     ------
 End of Module Information.
 
 

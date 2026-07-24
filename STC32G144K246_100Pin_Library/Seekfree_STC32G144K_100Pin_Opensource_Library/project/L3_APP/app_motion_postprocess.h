@@ -4,11 +4,19 @@
 #include "zf_common_typedef.h"
 
 #ifndef APP_MOTION_POSTPROCESS_PIT
-#define APP_MOTION_POSTPROCESS_PIT            TIM9_PIT
+#define APP_MOTION_POSTPROCESS_PIT            TIM6_PIT
 #endif
 
 #ifndef APP_MOTION_POSTPROCESS_PERIOD_MS
 #define APP_MOTION_POSTPROCESS_PERIOD_MS      (5U)
+#endif
+
+#ifndef APP_MOTION_POSTPROCESS_IMU_PIT
+#define APP_MOTION_POSTPROCESS_IMU_PIT        TIM7_PIT
+#endif
+
+#ifndef APP_MOTION_POSTPROCESS_IMU_PERIOD_MS
+#define APP_MOTION_POSTPROCESS_IMU_PERIOD_MS  (1U)
 #endif
 
 typedef struct
@@ -41,6 +49,8 @@ typedef struct
 extern app_motion_postprocess_config_t app_motion_postprocess_config;
 
 void app_motion_postprocess_init(void);
+void app_motion_postprocess_imu_step(void);
+void app_motion_postprocess_control_step(void);
 void app_motion_postprocess_get_data(app_motion_postprocess_data_t *out_data);
 
 #endif

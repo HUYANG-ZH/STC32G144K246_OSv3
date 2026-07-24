@@ -60,7 +60,10 @@ typedef enum
 	// IIC_IRQn,
 	// USB_IRQn,	//增强型 PWM2 异常检测中断 和 触摸按键中断
 
-	// UART3_IRQn = 0x20,
+	/* IP3/IP3H: timer 3 and timer 4 are the 1 ms control producers. */
+	TIM3_IRQn = 0x20,
+	TIM4_IRQn,
+	// UART3_IRQn = 0x22,
 	// UART4_IRQn,
 	
 	TIM5_IRQn = 0x30,

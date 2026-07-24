@@ -7,5 +7,6 @@
 #include "bsp_imu.h"
 #include "bsp_inductor.h"
 #include "bsp_motor.h"
+#include "bsp_tof.h"
 
 #endif

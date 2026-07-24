@@ -2,7 +2,6 @@
 #include "sys_tfpu.h"
 #include "shared_lpf.h"
 #include "bsp_include.h"
-#include "service_delay.h"
 #include "service_speed.h"
 
 #define SERVICE_SPEED_PI                     (3.1415926f)
@@ -37,12 +36,13 @@ void service_speed_init(void)
     shared_lpf_init(&speed_lpf_left, SERVICE_SPEED_LPF_ALPHA, 0.0f);
     shared_lpf_init(&speed_lpf_right, SERVICE_SPEED_LPF_ALPHA, 0.0f);
     pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
+    interrupt_set_priority(TIM3_IRQn, 3U);
 }
 
 void service_speed_debug(void)
 {
     service_speed_data_t testdata;
-    service_delay_ms(1000U);
+
     service_speed_get(&testdata);
     printf("[speed:] %f,%f\r\n",testdata.left_mps,testdata.right_mps);
 }
@@ -60,11 +60,15 @@ void service_speed_update(void)
 
 void service_speed_get(service_speed_data_t *out_speed)
 {
+    uint8 ea_backup;
+
     if(NULL == out_speed)
     {
         return;
     }
 
-    out_speed->left_mps = speed_data.left_mps;
-    out_speed->right_mps = speed_data.right_mps;
+    ea_backup = EA;
+    EA = 0;
+    *out_speed = speed_data;
+    EA = ea_backup;
 }

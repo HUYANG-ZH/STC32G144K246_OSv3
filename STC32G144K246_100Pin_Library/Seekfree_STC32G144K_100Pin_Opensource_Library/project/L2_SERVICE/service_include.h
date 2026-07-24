@@ -12,6 +12,7 @@
 #include "service_negative_pressure.h"
 #include "service_packet.h"
 #include "service_speed.h"
+#include "service_tof.h"
 #include "service_wireless_uart.h"
 
 #endif

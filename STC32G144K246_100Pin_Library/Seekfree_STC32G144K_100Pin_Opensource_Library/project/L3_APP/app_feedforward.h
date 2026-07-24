@@ -3,12 +3,12 @@
 
 #include "zf_common_typedef.h"
 
-#ifndef APP_FEEDFORWARD_TASK_ID
-#define APP_FEEDFORWARD_TASK_ID             (0U)
-#endif
-
 #ifndef APP_FEEDFORWARD_PERIOD_MS
 #define APP_FEEDFORWARD_PERIOD_MS           (5U)
+#endif
+
+#ifndef APP_FEEDFORWARD_PIT
+#define APP_FEEDFORWARD_PIT                 TIM10_PIT
 #endif
 
 typedef struct
@@ -28,6 +28,7 @@ typedef struct
 extern app_feedforward_config_t app_feedforward_config;
 
 void app_feedforward_init(void);
+void app_feedforward_control_step(void);
 void app_feedforward_get_data(app_feedforward_data_t *out_data);
 
 #endif

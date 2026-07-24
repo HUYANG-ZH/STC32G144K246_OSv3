@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_imu963ra
 OBJECT MODULE PLACED IN .\out_file\zf_device_imu963ra.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_imu963ra.c LARGE ROM(HUGE) WARNI
-                    -NGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_de
-                    -vice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\lib
-                    -raries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_i
-                    -mu963ra.lst) TABS(2) OBJECT(.\out_file\zf_device_imu963ra.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_imu963ra.c LARGE ROM(HUGE) WARNIN
+                    -GLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
+                    -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
+                    -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_im
+                    -u963ra.lst) OBJECT(.\out_file\zf_device_imu963ra.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   其余引脚悬空
    47          *
    48          *                   // 软件 IIC 引脚
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 2   
 
    49          *                   SCL/SPC             查看 zf_device_imu963ra.h 中 IMU963RA_SCL_PIN 宏定义
    50          *                   SDA/SDI             查看 zf_device_imu963ra.h 中 IMU963RA_SDA_PIN 宏定义
@@ -96,249 +96,249 @@ stmt  level    source
    73          
    74          
    75          #if (IMU963RA_USE_INTERFACE==HARDWARE_SPI)
-   76            //------------------------------------------------------------------------------------------------------
+   76                  //------------------------------------------------------------------------------------------------------
              --------------
-   77            // 函数简介     IMU963RA 写寄存器
-   78            // 参数说明     reg             寄存器地址
-   79            // 参数说明     dat            数据
-   80            // 返回参数     void
-   81            // 使用示例     imu963ra_write_acc_gyro_register(IMU963RA_SLV0_CONFIG, 0x00);
-   82            // 备注信息     内部调用
-   83            //------------------------------------------------------------------------------------------------------
+   77                  // 函数简介     IMU963RA 写寄存器
+   78                  // 参数说明     reg             寄存器地址
+   79                  // 参数说明     dat            数据
+   80                  // 返回参数     void
+   81                  // 使用示例     imu963ra_write_acc_gyro_register(IMU963RA_SLV0_CONFIG, 0x00);
+   82                  // 备注信息     内部调用
+   83                  //------------------------------------------------------------------------------------------------------
              --------------
-   84            static void imu963ra_write_acc_gyro_register(uint8 reg, uint8 dat)
-   85            {
-   86   1          IMU963RA_CS(0);
-   87   1          spi_write_8bit_register(IMU963RA_SPI, reg | IMU963RA_SPI_W, dat);
-   88   1          IMU963RA_CS(1);
-   89   1        }
+   84                  static void imu963ra_write_acc_gyro_register(uint8 reg, uint8 dat)
+   85                  {
+   86   1                      IMU963RA_CS(0);
+   87   1                      spi_write_8bit_register(IMU963RA_SPI, reg | IMU963RA_SPI_W, dat);
+   88   1                      IMU963RA_CS(1);
+   89   1              }
    90          
-   91            //------------------------------------------------------------------------------------------------------
+   91                  //------------------------------------------------------------------------------------------------------
              --------------
-   92            // 函数简介     IMU963RA 读寄存器
-   93            // 参数说明     reg             寄存器地址
-   94            // 返回参数     uint8           数据
-   95            // 使用示例     imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER);
-   96            // 备注信息     内部调用
-   97            //------------------------------------------------------------------------------------------------------
+   92                  // 函数简介     IMU963RA 读寄存器
+   93                  // 参数说明     reg             寄存器地址
+   94                  // 返回参数     uint8           数据
+   95                  // 使用示例     imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER);
+   96                  // 备注信息     内部调用
+   97                  //------------------------------------------------------------------------------------------------------
              --------------
-   98            static uint8 imu963ra_read_acc_gyro_register(uint8 reg)
-   99            {
-  100   1          uint8 dat = 0;
-  101   1          IMU963RA_CS(0);
-  102   1          dat = spi_read_8bit_register(IMU963RA_SPI, reg | IMU963RA_SPI_R);
-  103   1          IMU963RA_CS(1);
-  104   1          return dat;
-  105   1        }
+   98                  static uint8 imu963ra_read_acc_gyro_register(uint8 reg)
+   99                  {
+  100   1                      uint8 dat = 0;
+  101   1                      IMU963RA_CS(0);
+  102   1                      dat = spi_read_8bit_register(IMU963RA_SPI, reg | IMU963RA_SPI_R);
+  103   1                      IMU963RA_CS(1);
+  104   1                      return dat;
+  105   1              }
   106          
-  107            //------------------------------------------------------------------------------------------------------
+  107                  //------------------------------------------------------------------------------------------------------
              --------------
-  108            // 函数简介     IMU963RA 读数据 内部调用
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 3   
+  108                  // 函数简介     IMU963RA 读数据 内部调用
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 3   
 
-  109            // 参数说明     reg             寄存器地址
-  110            // 参数说明     dat            数据缓冲区
-  111            // 参数说明     len             数据长度
-  112            // 返回参数     void
-  113            // 使用示例     imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_A, dat, 6);
-  114            // 备注信息     内部调用
-  115            //------------------------------------------------------------------------------------------------------
+  109                  // 参数说明     reg             寄存器地址
+  110                  // 参数说明     dat            数据缓冲区
+  111                  // 参数说明     len             数据长度
+  112                  // 返回参数     void
+  113                  // 使用示例     imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_A, dat, 6);
+  114                  // 备注信息     内部调用
+  115                  //------------------------------------------------------------------------------------------------------
              --------------
-  116            static void imu963ra_read_acc_gyro_registers(uint8 reg, uint8 *dat, uint32 len)
-  117            {
-  118   1          IMU963RA_CS(0);
-  119   1          spi_read_8bit_registers(IMU963RA_SPI, reg | IMU963RA_SPI_R, dat, len);
-  120   1          IMU963RA_CS(1);
-  121   1        }
-  122            
+  116                  static void imu963ra_read_acc_gyro_registers(uint8 reg, uint8 *dat, uint32 len)
+  117                  {
+  118   1                      IMU963RA_CS(0);
+  119   1                      spi_read_8bit_registers(IMU963RA_SPI, reg | IMU963RA_SPI_R, dat, len);
+  120   1                      IMU963RA_CS(1);
+  121   1              }
+  122                  
   123          #elif (IMU963RA_USE_INTERFACE==SOFT_SPI)
-                 
-                 #define IMU963RA_SCK(x)       IMU963RA_SPC_PIN  = x
-                 #define IMU963RA_MOSI(x)      IMU963RA_SDI_PIN = x
-                 #define IMU963RA_CS(x)        IMU963RA_CS_PIN  = x
-                 #define IMU963RA_MISO         IMU963RA_SDO_PIN
+                       
+                       #define IMU963RA_SCK(x)                         IMU963RA_SPC_PIN  = x
+                       #define IMU963RA_MOSI(x)                        IMU963RA_SDI_PIN = x
+                       #define IMU963RA_CS(x)                          IMU963RA_CS_PIN  = x
+                       #define IMU963RA_MISO                           IMU963RA_SDO_PIN
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 //  @brief      模拟 SPI 全双工：移出 byte 的同时采样 MISO，返回移入的 8 位数据
-                 //  @param      byte        待移出的数据（高位先出）
-                 //  @return     uint8       MISO 上采样得到的 8 位数据（非总线 status 寄存器）
-                 //  @since      v1.0
-                 //  Sample usage:
-                 //------------------------------------------------------------------------------------------------------
+                       //  @brief      模拟 SPI 全双工：移出 byte 的同时采样 MISO，返回移入的 8 位数据
+                       //  @param      byte        待移出的数据（高位先出）
+                       //  @return     uint8       MISO 上采样得到的 8 位数据（非总线 status 寄存器）
+                       //  @since      v1.0
+                       //  Sample usage:
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 static uint8 imu963ra_simspi_wr_byte(uint8 byte)
-                 {
-                   uint8 i;
-                   for(i=0; i<8; i++)
-                   {
-                     IMU963RA_SCK (0);
-                     IMU963RA_MOSI(byte&0x80);
-                     byte <<= 1;
-                     IMU963RA_SCK (1);
-                     byte |= IMU963RA_MISO;
-                   }
-                   IMU963RA_SCK (0);
-                   return(byte);
-                 }
-                 
-                 
-                 //------------------------------------------------------------------------------------------------------
+                       static uint8 imu963ra_simspi_wr_byte(uint8 byte)
+                       {
+                               uint8 i;
+                               for(i=0; i<8; i++)
+                               {
+                                       IMU963RA_SCK (0);
+                                       IMU963RA_MOSI(byte&0x80);
+                                       byte <<= 1;
+                                       IMU963RA_SCK (1);
+                                       byte |= IMU963RA_MISO;
+                               }
+                               IMU963RA_SCK (0);
+                               return(byte);
+                       }
+                       
+                       
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 //  @brief      将 val 写入 cmd 指定的寄存器（片选内两次 simspi 字节交换）
-                 //  @param      cmd         命令字节（调用方已拼好读写位，如 reg|SPI_W）
-                 //  @param      val         待写入的数据
-                 //  @since      v1.0
-                 //  Sample usage:
-                 //------------------------------------------------------------------------------------------------------
+                       //  @brief      将 val 写入 cmd 指定的寄存器（片选内两次 simspi 字节交换）
+                       //  @param      cmd         命令字节（调用方已拼好读写位，如 reg|SPI_W）
+                       //  @param      val         待写入的数据
+                       //  @since      v1.0
+                       //  Sample usage:
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 static void imu963ra_simspi_w_reg_byte(uint8 cmd, uint8 val)
-                 {
-                   IMU963RA_CS(0);
-                   cmd |= IMU963RA_SPI_W;
-                   imu963ra_simspi_wr_byte(cmd);
-                   imu963ra_simspi_wr_byte(val);
-                   IMU963RA_CS(1);
-                 }
+                       static void imu963ra_simspi_w_reg_byte(uint8 cmd, uint8 val)
+                       {
+                               IMU963RA_CS(0);
+                               cmd |= IMU963RA_SPI_W;
+                               imu963ra_simspi_wr_byte(cmd);
+                               imu963ra_simspi_wr_byte(val);
+                               IMU963RA_CS(1);
+                       }
                
-                 //------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 4   
+                       //------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 4   
 
              --------------
-                 //  @brief      读取 cmd 指定寄存器的一个字节到 *val
-                 //  @param      cmd         命令字节
-                 //  @param      *val        输出：读回的数据
-                 //  @since      v1.0
-                 //  Sample usage:
-                 //------------------------------------------------------------------------------------------------------
+                       //  @brief      读取 cmd 指定寄存器的一个字节到 *val
+                       //  @param      cmd         命令字节
+                       //  @param      *val        输出：读回的数据
+                       //  @since      v1.0
+                       //  Sample usage:
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 static void imu963ra_simspi_r_reg_byte(uint8 cmd, uint8 *val)
-                 {
-                   IMU963RA_CS(0);
-                   cmd |= IMU963RA_SPI_R;
-                   imu963ra_simspi_wr_byte(cmd);
-                   *val = imu963ra_simspi_wr_byte(0);
-                   IMU963RA_CS(1);
-                 }
+                       static void imu963ra_simspi_r_reg_byte(uint8 cmd, uint8 *val)
+                       {
+                               IMU963RA_CS(0);
+                               cmd |= IMU963RA_SPI_R;
+                               imu963ra_simspi_wr_byte(cmd);
+                               *val = imu963ra_simspi_wr_byte(0);
+                               IMU963RA_CS(1);
+                       }
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 //  @brief      连续读取 cmd 起始寄存器的 num 个字节到缓冲区 *val（首字节为命令�
+                       //  @brief      连续读取 cmd 起始寄存器的 num 个字节到缓冲区 *val（首字节为命令�
              -��的第一字节数据）
-                 //  @param      cmd         命令字节
-                 //  @param      *val        输出缓冲区
-                 //  @param      num         读取字节数
-                 //  @since      v1.0
-                 //  Sample usage:
-                 //------------------------------------------------------------------------------------------------------
+                       //  @param      cmd         命令字节
+                       //  @param      *val        输出缓冲区
+                       //  @param      num         读取字节数
+                       //  @since      v1.0
+                       //  Sample usage:
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 static void imu963ra_simspi_r_reg_bytes(uint8 cmd, uint8 *val, uint32 num)
-                 {
-                   cmd |= IMU963RA_SPI_R;
-                   imu963ra_simspi_wr_byte(cmd);
-                   while(num--)
-                   {
-                     *val++ = imu963ra_simspi_wr_byte(0);
-                   }
-                 }
+                       static void imu963ra_simspi_r_reg_bytes(uint8 cmd, uint8 *val, uint32 num)
+                       {
+                               cmd |= IMU963RA_SPI_R;
+                               imu963ra_simspi_wr_byte(cmd);
+                               while(num--)
+                               {
+                                       *val++ = imu963ra_simspi_wr_byte(0);
+                               }
+                       }
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 // 函数简介     IMU963RA 写寄存器
-                 // 参数说明     reg             寄存器地址
-                 // 参数说明     dat            数据
-                 // 返回参数     void
-                 // 使用示例     imu963ra_write_acc_gyro_register(IMU963RA_SLV0_CONFIG, 0x00);
-                 // 备注信息     内部调用
-                 //------------------------------------------------------------------------------------------------------
+                       // 函数简介     IMU963RA 写寄存器
+                       // 参数说明     reg             寄存器地址
+                       // 参数说明     dat            数据
+                       // 返回参数     void
+                       // 使用示例     imu963ra_write_acc_gyro_register(IMU963RA_SLV0_CONFIG, 0x00);
+                       // 备注信息     内部调用
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 static void imu963ra_write_acc_gyro_register(uint8 reg, uint8 dat)
-                 {
-                   IMU963RA_CS(0);
-                   imu963ra_simspi_w_reg_byte(reg | IMU963RA_SPI_W, dat);
-                   IMU963RA_CS(1);
-                 }
+                       static void imu963ra_write_acc_gyro_register(uint8 reg, uint8 dat)
+                       {
+                               IMU963RA_CS(0);
+                               imu963ra_simspi_w_reg_byte(reg | IMU963RA_SPI_W, dat);
+                               IMU963RA_CS(1);
+                       }
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 // 函数简介     IMU963RA 读寄存器
-                 // 参数说明     reg             寄存器地址
-                 // 返回参数     uint8           读回的数据
-                 // 使用示例     imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER);
-                 // 备注信息     内部调用
-                 //------------------------------------------------------------------------------------------------------
+                       // 函数简介     IMU963RA 读寄存器
+                       // 参数说明     reg             寄存器地址
+                       // 返回参数     uint8           读回的数据
+                       // 使用示例     imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER);
+                       // 备注信息     内部调用
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 static uint8 imu963ra_read_acc_gyro_register(uint8 reg)
-                 {
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 5   
+                       static uint8 imu963ra_read_acc_gyro_register(uint8 reg)
+                       {
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 5   
 
-                   uint8 dat = 0;
-                   IMU963RA_CS(0);
-                   imu963ra_simspi_r_reg_byte(reg | IMU963RA_SPI_R, &dat);
-                   IMU963RA_CS(1);
-                   return dat;
-                 }
+                               uint8 dat = 0;
+                               IMU963RA_CS(0);
+                               imu963ra_simspi_r_reg_byte(reg | IMU963RA_SPI_R, &dat);
+                               IMU963RA_CS(1);
+                               return dat;
+                       }
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 // 函数简介     IMU963RA 读数据 内部调用
-                 // 参数说明     reg             寄存器地址
-                 // 参数说明     dat            数据缓冲区
-                 // 参数说明     len             数据长度
-                 // 返回参数     void
-                 // 使用示例     imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_A, dat, 6);
-                 // 备注信息     内部调用
-                 //------------------------------------------------------------------------------------------------------
+                       // 函数简介     IMU963RA 读数据 内部调用
+                       // 参数说明     reg             寄存器地址
+                       // 参数说明     dat            数据缓冲区
+                       // 参数说明     len             数据长度
+                       // 返回参数     void
+                       // 使用示例     imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_A, dat, 6);
+                       // 备注信息     内部调用
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 static void imu963ra_read_acc_gyro_registers(uint8 reg, uint8 *dat, uint32 len)
-                 {
-                   IMU963RA_CS(0);
-                   imu963ra_simspi_r_reg_bytes( reg | IMU963RA_SPI_R, dat, len);
-                   IMU963RA_CS(1);
-                 }
-                 
+                       static void imu963ra_read_acc_gyro_registers(uint8 reg, uint8 *dat, uint32 len)
+                       {
+                               IMU963RA_CS(0);
+                               imu963ra_simspi_r_reg_bytes( reg | IMU963RA_SPI_R, dat, len);
+                               IMU963RA_CS(1);
+                       }
+                       
                #elif (IMU963RA_USE_INTERFACE==SOFT_IIC)
-                 static soft_iic_info_struct imu963ra_iic_struct;
+                       static soft_iic_info_struct imu963ra_iic_struct;
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 // 函数简介     IMU963RA 写寄存器
-                 // 参数说明     reg             寄存器地址
-                 // 参数说明     dat            数据
-                 // 返回参数     void
-                 // 使用示例     imu963ra_write_acc_gyro_register(IMU963RA_SLV0_CONFIG, 0x00);
-                 // 备注信息     内部调用
-                 //------------------------------------------------------------------------------------------------------
+                       // 函数简介     IMU963RA 写寄存器
+                       // 参数说明     reg             寄存器地址
+                       // 参数说明     dat            数据
+                       // 返回参数     void
+                       // 使用示例     imu963ra_write_acc_gyro_register(IMU963RA_SLV0_CONFIG, 0x00);
+                       // 备注信息     内部调用
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 #define imu963ra_write_acc_gyro_register(reg,dat)       (soft_iic_write_8bit_register(&imu963ra_iic_stru
+                       #define imu963ra_write_acc_gyro_register(reg,dat)       (soft_iic_write_8bit_register(&imu963ra_iic_stru
              -ct,reg,dat))
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 // 函数简介     IMU963RA 读寄存器
-                 // 参数说明     reg             寄存器地址
-                 // 返回参数     uint8           数据
-                 // 使用示例     imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER);
-                 // 备注信息     内部调用
-                 //------------------------------------------------------------------------------------------------------
+                       // 函数简介     IMU963RA 读寄存器
+                       // 参数说明     reg             寄存器地址
+                       // 返回参数     uint8           数据
+                       // 使用示例     imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER);
+                       // 备注信息     内部调用
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 #define imu963ra_read_acc_gyro_register(reg)             (soft_iic_sccb_read_register(&imu963ra_iic_stru
+                       #define imu963ra_read_acc_gyro_register(reg)             (soft_iic_sccb_read_register(&imu963ra_iic_stru
              -ct,reg))
                
-                 //------------------------------------------------------------------------------------------------------
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 // 函数简介     IMU963RA 读数据 内部调用
-                 // 参数说明     reg             寄存器地址
-                 // 参数说明     dat            数据缓冲区
-                 // 参数说明     len             数据长度
-                 // 返回参数     void
-                 // 使用示例     imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_A, dat, 6);
-                 // 备注信息     内部调用
-                 //------------------------------------------------------------------------------------------------------
+                       // 函数简介     IMU963RA 读数据 内部调用
+                       // 参数说明     reg             寄存器地址
+                       // 参数说明     dat            数据缓冲区
+                       // 参数说明     len             数据长度
+                       // 返回参数     void
+                       // 使用示例     imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_A, dat, 6);
+                       // 备注信息     内部调用
+                       //------------------------------------------------------------------------------------------------------
              --------------
-                 #define imu963ra_read_acc_gyro_registers(reg,dat,len)   (soft_iic_read_8bit_registers(&imu963ra_iic_stru
+                       #define imu963ra_read_acc_gyro_registers(reg,dat,len)   (soft_iic_read_8bit_registers(&imu963ra_iic_stru
              -ct,reg,dat,len))
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 6   
 
                #endif
   283          
@@ -406,7 +406,7 @@ stmt  level    source
   336   1          imu963ra_write_acc_gyro_register(IMU963RA_MASTER_CONFIG, 0x4C);             // 仅在第一个周期�
              -��用通讯 开启上拉 I2C主机使能
   337   1          
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 7   
 
   338   1          // 等待通讯成功
   339   1          while(0 == (0x01 & imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER)))
@@ -471,10 +471,10 @@ stmt  level    source
   390   3              }
   391   2              
   392   2              dat = imu963ra_read_acc_gyro_register(IMU963RA_WHO_AM_I);
-  393   2          printf("dat = %d\r\n", dat);
+  393   2                      printf("dat = %d\r\n", dat);
   394   2              system_delay_ms(10);
   395   2          }
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 8   
 
   396   1          
   397   1          return return_state;
@@ -542,7 +542,7 @@ stmt  level    source
   453          void imu963ra_get_gyro (void)
   454          {
   455   1          uint8 dat[6];
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 9   
 
   456   1          
   457   1          imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_G, dat, 6);
@@ -595,26 +595,26 @@ stmt  level    source
   500   1          system_delay_ms(10);                                                        // 上电延时
   501   1          
   502   1      #if (IMU963RA_USE_INTERFACE==HARDWARE_SPI)
-  503   1        
-  504   1        spi_init(IMU963RA_SPI, SPI_MODE0, IMU963RA_SPI_SPEED, IMU963RA_SPC_PIN, IMU963RA_SDI_PIN, IMU963RA_SDO_P
+  503   1              
+  504   1              spi_init(IMU963RA_SPI, SPI_MODE0, IMU963RA_SPI_SPEED, IMU963RA_SPC_PIN, IMU963RA_SDI_PIN, IMU963RA_SDO_P
              -IN, SPI_CS_NULL);
   505   1          gpio_init(IMU963RA_CS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
-  506   1        
+  506   1              
   507   1      #elif (IMU963RA_USE_INTERFACE==SOFT_SPI)
-                 
+                       
                // 默认使用双向IO，不需要初始化。
-               //  soft_spi_init(IMU963RA_SPI, SPI_MODE0, 0, IMU963RA_SPC_PIN, IMU963RA_SDI_PIN, IMU963RA_SDO_PIN, IMU963
+               //      soft_spi_init(IMU963RA_SPI, SPI_MODE0, 0, IMU963RA_SPC_PIN, IMU963RA_SDI_PIN, IMU963RA_SDO_PIN, IMU963
              -RA_CS_PIN);
-                 
+                       
                #elif (IMU963RA_USE_INTERFACE==SOFT_IIC)
-                 
-                 soft_iic_init(&imu963ra_iic_struct, IMU963RA_DEV_ADDR, IMU963RA_SOFT_IIC_DELAY, IMU963RA_SCL_PIN, IMU963
+                       
+                       soft_iic_init(&imu963ra_iic_struct, IMU963RA_DEV_ADDR, IMU963RA_SOFT_IIC_DELAY, IMU963RA_SCL_PIN, IMU963
              -RA_SDA_PIN);
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 10  
 
-                 
+                       
                #endif
-  517   1        
+  517   1              
   518   1          do
   519   1          {
   520   2              imu963ra_write_acc_gyro_register(IMU963RA_FUNC_CFG_ACCESS, 0x00);       // 关闭HUB寄存器访�
@@ -678,7 +678,7 @@ stmt  level    source
   571   4                      imu963ra_write_acc_gyro_register(IMU963RA_CTRL1_XL, 0x34);
   572   4                      imu963ra_transition_factor[0] = 2049;
   573   4                  }
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 11  
 
   574   3                  break;
   575   3              }
@@ -746,7 +746,7 @@ stmt  level    source
   631   3                  break;
   632   3                  
   633   3                  case IMU963RA_GYRO_SAMPLE_SGN_4000DPS:
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 12  
 
   634   3                  {
   635   4                      imu963ra_write_acc_gyro_register(IMU963RA_CTRL2_G, 0x51);
@@ -814,7 +814,7 @@ stmt  level    source
   688   3                  break;
   689   3                  
   690   3                  case IMU963RA_MAG_SAMPLE_8G:
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 16/07/26  18:10:27  PAGE 13  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 20/07/26  23:08:30  PAGE 13  
 
   691   3                  {
   692   4                      imu963ra_write_mag_register(IMU963RA_MAG_ADDR, IMU963RA_MAG_CONTROL1, 0x19);

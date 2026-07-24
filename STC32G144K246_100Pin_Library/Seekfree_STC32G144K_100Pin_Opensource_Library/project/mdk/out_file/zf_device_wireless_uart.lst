@@ -1,13 +1,13 @@
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            16/07/26  18:10:26  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            22/07/26  20:00:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_wireless_uart
 OBJECT MODULE PLACED IN .\out_file\zf_device_wireless_uart.obj
-COMPILER INVOKED BY: D:\APPs\Keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_wireless_uart.c LARGE ROM(HUGE) 
-                    -WARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\
-                    -zf_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\.
-                    -.\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_dev
-                    -ice_wireless_uart.lst) TABS(2) OBJECT(.\out_file\zf_device_wireless_uart.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_wireless_uart.c LARGE ROM(HUGE) W
+                    -ARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
+                    -f_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..
+                    -\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_devi
+                    -ce_wireless_uart.lst) OBJECT(.\out_file\zf_device_wireless_uart.obj) 
 
 stmt  level    source
 
@@ -23,141 +23,176 @@ stmt  level    source
    10          #pragma warning disable = 183
    11          #pragma warning disable = 177
    12          
-   13          static fifo_struct wireless_uart_fifo;
-   14          static uint8 wireless_uart_buffer[WIRELESS_UART_BUFFER_SIZE];
-   15          
-   16          #define WIRELESS_PACKET_SIZE    (30U)
-   17          #define WIRELESS_SEND_DELAY_MS  (1U)
+   13          #if ((WIRELESS_UART_BUFFER_SIZE & (WIRELESS_UART_BUFFER_SIZE - 1U)) != 0U)
+                   #error "WIRELESS_UART_BUFFER_SIZE must be a power of two."
+               #endif
+   16          
+   17          #define WIRELESS_UART_BUFFER_MASK     (WIRELESS_UART_BUFFER_SIZE - 1U)
    18          
-   19          #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+   19          // UART DMA RX is a single-byte producer.  These uint8 indices form a
+   20          // lock-free single-producer/single-consumer queue: ISR writes head only and
+   21          // foreground reads tail only.  This removes the FIFO read/write race.
+   22          static uint8 xdata wireless_uart_buffer[WIRELESS_UART_BUFFER_SIZE];
+   23          static volatile uint8 wireless_uart_rx_head = 0U;
+   24          static volatile uint8 wireless_uart_rx_tail = 0U;
+   25          static volatile uint16 wireless_uart_rx_dropped = 0U;
+   26          
+   27          #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+               static fifo_struct wireless_uart_auto_baud_fifo;
+               static uint8 wireless_uart_auto_baud_buffer[WIRELESS_UART_BUFFER_SIZE];
+               #endif
+   31          
+   32          #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
                static volatile wireless_uart_auto_baudrate_state_enum wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_
              -RATE_INIT;
                static volatile uint8 wireless_auto_baud_data[3] = {0x00, 0x01, 0x03};
                #endif
-   23          
-   24          static uint32 wireless_uart_send_direct(const uint8 *buff, uint32 len)
-   25          {
-   26   1          uint16 send_len;
-   27   1      
-   28   1          while(0U != len)
-   29   1          {
-   30   2              send_len = (len < WIRELESS_PACKET_SIZE) ? (uint16)len : (uint16)WIRELESS_PACKET_SIZE;
-   31   2              uart_write_buffer(WIRELESS_UART_INDEX, buff, send_len);
-   32   2              buff += send_len;
-   33   2              len -= send_len;
-   34   2          }
-   35   1      
-   36   1          return 0U;
-   37   1      }
-   38          
-   39          uint32 wireless_uart_send_byte(const uint8 dat)
-   40          {
-   41   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
-                   uint16 time_cnt = WIRELESS_UART_TIMEOUT_COUNT;
-               
-                   while(time_cnt && gpio_get_level(WIRELESS_UART_RTS_PIN))
-                   {
-                       system_delay_ms(1);
-                       time_cnt--;
-                   }
-               
-                   uart_write_byte(WIRELESS_UART_INDEX, dat);
-                   return 0U;
-               #else
-   53   1          uart_write_byte(WIRELESS_UART_INDEX, dat);
-   54   1          return 0U;
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            16/07/26  18:10:26  PAGE 2   
+   36          
+   37          static uint32 wireless_uart_send_direct(const uint8 *buff, uint32 len)
+   38          {
+   39   1          uint16 request_len;
+   40   1          uint16 accepted_len;
+   41   1      
+   42   1          if(NULL == buff)
+   43   1          {
+   44   2              return len;
+   45   2          }
+   46   1      
+   47   1          // Copy only into the UART driver's xdata DMA queue.  The loop chunks a
+   48   1          // wide API request; it never waits for the physical transmission.
+   49   1          while(0U != len)
+   50   1          {
+   51   2              request_len = (len > 0xFFFFUL) ? 0xFFFFU : (uint16)len;
+   52   2              accepted_len = uart_write_buffer_async(WIRELESS_UART_INDEX, buff, request_len);
+   53   2              buff += accepted_len;
+   54   2              len -= accepted_len;
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            22/07/26  20:00:25  PAGE 2   
 
-   55   1      #endif
-   56   1      }
-   57          
-   58          uint32 wireless_uart_send_buffer(const uint8 *buff, uint32 len)
-   59          {
-   60   1          uint16 send_len;
-   61   1          uint16 time_cnt = 0U;
-   62   1      
-   63   1          zf_assert(NULL != buff);
-   64   1      
-   65   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
-                   while((0U != len) && (time_cnt < WIRELESS_UART_TIMEOUT_COUNT))
+   55   2              if(accepted_len != request_len)
+   56   2              {
+   57   3                  break;
+   58   3              }
+   59   2          }
+   60   1      
+   61   1          return len;
+   62   1      }
+   63          
+   64          uint32 wireless_uart_send_byte(const uint8 dat)
+   65          {
+   66   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
+                   if(gpio_get_level(WIRELESS_UART_RTS_PIN))
                    {
-                       if(!gpio_get_level(WIRELESS_UART_RTS_PIN))
-                       {
-                           send_len = (len < WIRELESS_PACKET_SIZE) ? (uint16)len : (uint16)WIRELESS_PACKET_SIZE;
-                           uart_write_buffer(WIRELESS_UART_INDEX, buff, send_len);
-                           buff += send_len;
-                           len -= send_len;
-                           time_cnt = 0U;
-                       }
-                       else
-                       {
-                           system_delay_ms(WIRELESS_SEND_DELAY_MS);
-                           time_cnt++;
-                       }
+                       return 1U;
                    }
-               
-                   return wireless_uart_send_direct(buff, len);
                #else
-   85   1          return wireless_uart_send_direct(buff, len);
-   86   1      #endif
-   87   1      }
-*** WARNING C47 IN LINE 60 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: 'send_len': unreferenced local variab
-             -le
-   88          
-   89          uint32 wireless_uart_send_string(const char *str)
-   90          {
-   91   1          uint32 len;
-   92   1      
-   93   1          zf_assert(NULL != str);
-   94   1          len = strlen(str);
+   72   1      #endif
+   73   1      
+   74   1          return (1U == uart_write_buffer_async(WIRELESS_UART_INDEX, &dat, 1U)) ? 0U : 1U;
+   75   1      }
+   76          
+   77          uint32 wireless_uart_send_buffer(const uint8 *buff, uint32 len)
+   78          {
+   79   1          zf_assert(NULL != buff);
+   80   1      
+   81   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
+                   if(gpio_get_level(WIRELESS_UART_RTS_PIN))
+                   {
+                       return len;
+                   }
+               #else
+   87   1      #endif
+   88   1      
+   89   1          return wireless_uart_send_direct(buff, len);
+   90   1      }
+   91          
+   92          uint32 wireless_uart_send_string(const char *str)
+   93          {
+   94   1          uint32 len;
    95   1      
-   96   1          return wireless_uart_send_buffer((const uint8 *)str, len);
-   97   1      }
-   98          
-   99          uint32 wireless_uart_read_buffer(uint8 *buff, uint32 len)
-  100          {
-  101   1          uint32 data_len = len;
-  102   1      
-  103   1          zf_assert(NULL != buff);
-  104   1          fifo_read_buffer(&wireless_uart_fifo, buff, &data_len, FIFO_READ_AND_CLEAN);
-  105   1      
-  106   1          return data_len;
-  107   1      }
-  108          
-  109          void wireless_uart_callback(uint8 uart_dat)
-  110          {
-  111   1          fifo_write_buffer(&wireless_uart_fifo, &uart_dat, 1U);
-  112   1      
-  113   1      #if WIRELESS_UART_AUTO_BAUD_RATE
-                   if((WIRELESS_UART_AUTO_BAUD_RATE_START == wireless_auto_baud_flag) &&
-                           (3U == fifo_used(&wireless_uart_fifo)))
-                   {
-                       uint32 wireless_auto_baud_count = 3U;
-               
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            16/07/26  18:10:26  PAGE 3   
+   96   1          zf_assert(NULL != str);
+   97   1          len = strlen(str);
+   98   1      
+   99   1          return wireless_uart_send_buffer((const uint8 *)str, len);
+  100   1      }
+  101          
+  102          uint32 wireless_uart_read_buffer(uint8 *buff, uint32 len)
+  103          {
+  104   1          uint32 data_len = 0U;
+  105   1          uint8 tail;
+  106   1      
+  107   1          zf_assert(NULL != buff);
+  108   1      
+  109   1          while(data_len < len)
+  110   1          {
+  111   2              tail = wireless_uart_rx_tail;
+  112   2              if(tail == wireless_uart_rx_head)
+  113   2              {
+  114   3                  break;
+  115   3              }
+  116   2      
+  117   2              buff[data_len] = wireless_uart_buffer[tail];
+  118   2              wireless_uart_rx_tail = (uint8)((tail + 1U) & WIRELESS_UART_BUFFER_MASK);
+  119   2              data_len++;
+  120   2          }
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            22/07/26  20:00:25  PAGE 3   
 
-                       wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_GET_ACK;
-                       fifo_read_buffer(&wireless_uart_fifo, (uint8 *)wireless_auto_baud_data,
-                               &wireless_auto_baud_count, FIFO_READ_AND_CLEAN);
+  121   1      
+  122   1          return data_len;
+  123   1      }
+  124          
+  125          void wireless_uart_callback(uint8 uart_dat)
+  126          {
+  127   1      #if WIRELESS_UART_AUTO_BAUD_RATE
+                   if(WIRELESS_UART_AUTO_BAUD_RATE_START == wireless_auto_baud_flag)
+                   {
+                       fifo_write_buffer(&wireless_uart_auto_baud_fifo, &uart_dat, 1U);
+                       if(3U == fifo_used(&wireless_uart_auto_baud_fifo))
+                       {
+                           uint32 wireless_auto_baud_count = 3U;
+               
+                           wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_GET_ACK;
+                           fifo_read_buffer(&wireless_uart_auto_baud_fifo, (uint8 *)wireless_auto_baud_data,
+                                   &wireless_auto_baud_count, FIFO_READ_AND_CLEAN);
+                       }
+                       return;
                    }
                #endif
-  124   1      }
-  125          
-  126          uint8 wireless_uart_init(void)
-  127          {
-  128   1          uint8 return_state = 0U;
-  129   1      
-  130   1          fifo_init(&wireless_uart_fifo, FIFO_DATA_8BIT, wireless_uart_buffer, WIRELESS_UART_BUFFER_SIZE);
-  131   1      
-  132   1      #if ((1 == WIRELESS_UART_AUTO_BAUD_RATE) || (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_R
+  142   1      
+  143   1          {
+  144   2              uint8 next_head = (uint8)((wireless_uart_rx_head + 1U) & WIRELESS_UART_BUFFER_MASK);
+  145   2              if(next_head == wireless_uart_rx_tail)
+  146   2              {
+  147   3                  wireless_uart_rx_dropped++;
+  148   3                  return;
+  149   3              }
+  150   2      
+  151   2              wireless_uart_buffer[wireless_uart_rx_head] = uart_dat;
+  152   2              wireless_uart_rx_head = next_head;
+  153   2          }
+  154   1      }
+  155          
+  156          uint8 wireless_uart_init(void)
+  157          {
+  158   1          uint8 return_state = 0U;
+  159   1      
+  160   1          wireless_uart_rx_head = 0U;
+  161   1          wireless_uart_rx_tail = 0U;
+  162   1          wireless_uart_rx_dropped = 0U;
+  163   1      
+  164   1      #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+                   fifo_init(&wireless_uart_auto_baud_fifo, FIFO_DATA_8BIT,
+                           wireless_uart_auto_baud_buffer, WIRELESS_UART_BUFFER_SIZE);
+               #endif
+  168   1      
+  169   1      #if ((1 == WIRELESS_UART_AUTO_BAUD_RATE) || (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_R
              -TS))
                    gpio_init(WIRELESS_UART_RTS_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
                #endif
-  135   1      
-  136   1      #if (0 == WIRELESS_UART_AUTO_BAUD_RATE)
-  137   1          uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
-  138   1          uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
-  139   1      #elif (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+  172   1      
+  173   1      #if (0 == WIRELESS_UART_AUTO_BAUD_RATE)
+  174   1          uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+  175   1          uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
+  176   1      #elif (1 == WIRELESS_UART_AUTO_BAUD_RATE)
                    uint8 rts_init_status;
                    uint16 time_count = 0U;
                
@@ -167,6 +202,8 @@ stmt  level    source
                    wireless_auto_baud_data[2] = 3U;
                
                    rts_init_status = gpio_get_level(WIRELESS_UART_RTS_PIN);
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            22/07/26  20:00:25  PAGE 4   
+
                    gpio_init(WIRELESS_UART_RTS_PIN, GPO, rts_init_status, GPO_PUSH_PULL);
                
                    uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
@@ -202,8 +239,6 @@ stmt  level    source
                        }
                
                        wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_SUCCESS;
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            16/07/26  18:10:26  PAGE 4   
-
                        gpio_init(WIRELESS_UART_RTS_PIN, GPI, 0, GPI_PULL_UP);
                        system_delay_ms(10);
                    }
@@ -211,19 +246,19 @@ stmt  level    source
                
                    (void)time_count;
                #endif
-  191   1      
-  192   1          return return_state;
-  193   1      }
+  228   1      
+  229   1          return return_state;
+  230   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       632     ------
+  ecode size           =       821     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       194     ------
+  xdata size           =       177     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -233,8 +268,8 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        52     ------
+  hconst size          =        71     ------
 End of Module Information.
 
 
-C251 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

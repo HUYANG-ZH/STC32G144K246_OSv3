@@ -136,6 +136,7 @@ void    gpio_set_level          (gpio_pin_enum pin, uint8 dat);
 uint8   gpio_get_level          (gpio_pin_enum pin);
 void    gpio_toggle_level       (gpio_pin_enum pin);
 void    gpio_init               (gpio_pin_enum pin, gpio_dir_enum dir, const uint8 dat, gpio_mode_enum mode);
+void    gpio_set_pull_up        (gpio_pin_enum pin);
 
 
 #endif

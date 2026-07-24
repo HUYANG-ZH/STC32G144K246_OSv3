@@ -2,18 +2,16 @@
 #include "sys_tfpu.h"
 #include "service_packet.h"
 #include "app_inductor_preprocess.h"
-#include "app_scheduler.h"
 #include "app_feedforward.h"
 #include "app_element.h"
 
 #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
-#define APP_FEEDFORWARD_TASK_PRIORITY            (5U)        // 前馈计算任务优先级
 #define APP_FEEDFORWARD_DEFAULT_KFF              (1.3f)   // 默认前馈增益
 #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
 #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
 #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
 #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (50.0f)     // CH1/CH2归一化强度达到该值时给满前馈
-#define APP_FEEDFORWARD_DT_SECOND                (APP_FEEDFORWARD_PERIOD_MS * 0.001f)
+#define APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV    (0.02f)
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
     (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
@@ -29,8 +27,9 @@ static volatile app_feedforward_data_t feedforward_data = {0.0f, 0.0f, 0.0f};
 static float feedforward_last_curvature = 0.0f;
 static uint8 feedforward_rate_ready = 0U;
 static float feedforward_scale = 1.0f;
+static float feedforward_dt_inv = 0.0f;
 
-static void app_feedforward_task(void);
+void app_feedforward_control_step(void);
 
 static void app_feedforward_register_packet(void)
 {
@@ -58,11 +57,12 @@ void app_feedforward_init(void)
     feedforward_last_curvature = 0.0f;
     feedforward_rate_ready = 0U;
     feedforward_scale = 1.0f;
+    feedforward_dt_inv = tfpu_div(1000.0f,
+            tfpu_int2float((long)APP_FEEDFORWARD_PERIOD_MS));
 
     app_feedforward_register_packet();
-    app_feedforward_task();
-    (void)app_scheduler_add(APP_FEEDFORWARD_TASK_ID, app_feedforward_task,
-            APP_FEEDFORWARD_TASK_PRIORITY, APP_FEEDFORWARD_PERIOD_MS);
+    app_feedforward_control_step();
+    /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定。 */
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -73,15 +73,20 @@ void app_feedforward_init(void)
 //-------------------------------------------------------------------------------------------------------------------
 void app_feedforward_get_data(app_feedforward_data_t *out_data)
 {
+    uint8 ea_backup;
+
     if(NULL == out_data)
     {
         return;
     }
 
+    ea_backup = EA;
+    EA = 0;
     *out_data = feedforward_data;
+    EA = ea_backup;
 }
 
-static void app_feedforward_task(void)
+void app_feedforward_control_step(void)
 {
     app_inductor_preprocess_data_t inductor_data;
     float numerator;
@@ -108,14 +113,14 @@ static void app_feedforward_task(void)
     }
     else
     {
-        curvature_rate = tfpu_div(tfpu_sub(curvature, feedforward_last_curvature),
-                APP_FEEDFORWARD_DT_SECOND);
+        curvature_rate = tfpu_mul(tfpu_sub(curvature, feedforward_last_curvature),
+                feedforward_dt_inv);
     }
     feedforward_last_curvature = curvature;
 
     strength = (inductor_data.normalized[1] > inductor_data.normalized[2]) ?
             inductor_data.normalized[1] : inductor_data.normalized[2];
-    strength_ratio = tfpu_div(strength, APP_FEEDFORWARD_DYNAMIC_FULL_NORM);
+    strength_ratio = tfpu_mul(strength, APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV);
     if(0.0f > strength_ratio)
     {
         strength_ratio = 0.0f;

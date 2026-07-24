@@ -44,16 +44,14 @@ static volatile uint8 boot_stop_received = 0U;
 
 static void app_boot_stop_handler(void)
 {
-    app_speedout_stop();
-    service_negative_pressure_set_percent(0U);
+    app_speedout_request_stop_all();
     boot_stop_received = 1U;
     wprint("stop,0.000\r\n");
 }
 
 static void app_boot_start_handler(void)
 {
-    app_speedout_stop();
-    service_negative_pressure_set_percent(0U);
+    app_speedout_request_stop_all();
     boot_stop_received = 0U;
     boot_state = APP_BOOT_STATE_START_WAIT;
     boot_state_tick = service_timetick_what();
@@ -103,7 +101,7 @@ static void app_boot_task(void)
         case APP_BOOT_STATE_PRESSURE:
             if((uint32)(now - boot_state_tick) >= APP_BOOT_PRESSURE_DELAY_TICKS)
             {
-                app_speedout_start();
+                app_speedout_request_start();
                 boot_state = APP_BOOT_STATE_DONE;
                 wprint("boot_drive,1.000\r\n");
             }
@@ -122,7 +120,7 @@ static void app_boot_task(void)
         case APP_BOOT_STATE_START_PRESSURE:
             if((uint32)(now - boot_state_tick) >= APP_BOOT_START_PRESSURE_BUILD_TICKS)
             {
-                app_speedout_start();
+                app_speedout_request_start();
                 boot_state = APP_BOOT_STATE_DONE;
                 wprint("start_drive,1.000\r\n");
             }

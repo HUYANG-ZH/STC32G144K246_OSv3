@@ -4,12 +4,12 @@
 #include "shared_pos_pid.h"
 #include "service_imu.h"
 #include "service_packet.h"
+#include "service_timetick.h"
 #include "app_element.h"
 #include "app_feedforward.h"
 #include "app_motion_preprocess.h"
 #include "app_speed_plan.h"
 #include "app_speedout.h"
-#include "app_scheduler.h"
 #include "app_motion_postprocess.h"
 
 #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
@@ -28,9 +28,8 @@
 #define APP_MOTION_POSTPROCESS_RIGHT_STRAIGHT_SIGN     (1.0f)
 #define APP_MOTION_POSTPROCESS_DIFF_HALF               (0.5f)
 #define APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN        (-1.0f)
-#define APP_MOTION_POSTPROCESS_GYRO_TASK_ID            (1U)
-#define APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY      (10U)
-#define APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS          (1U)
+#define APP_MOTION_POSTPROCESS_IMU_STARTUP_GRACE_TICK  (1000UL)
+#define APP_MOTION_POSTPROCESS_IMU_MAX_AGE_TICK        (500UL)
 
 app_motion_postprocess_config_t app_motion_postprocess_config =
 {
@@ -52,14 +51,20 @@ static volatile app_motion_postprocess_data_t motion_postprocess_data =
 static shared_pos_pid_t motion_postprocess_yaw_pid;
 static shared_lpf_t motion_postprocess_gyro_z_lpf;
 static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
+static uint32 motion_postprocess_imu_last_sequence = 0U;
+static uint32 motion_postprocess_imu_last_fresh_tick = 0UL;
+static uint32 motion_postprocess_imu_start_tick = 0UL;
+static uint8 motion_postprocess_imu_seen = 0U;
+static uint8 motion_postprocess_imu_fault = 0U;
 static uint8 motion_postprocess_last_enabled = 0U;
 static float motion_post_target_yaw_rate_override = 0.0f;
 static float motion_postprocess_rate_limited_yaw_rate = 0.0f;
 static uint8 motion_postprocess_rate_limit_ready = 0U;
 
-static void app_motion_postprocess_task(void);
+void app_motion_postprocess_control_step(void);
+static void app_motion_postprocess_compute_step(void);
 static void app_motion_postprocess_restart_pid(void);
-static void app_motion_postprocess_gyro_task(void);
+void app_motion_postprocess_imu_step(void);
 
 static float app_motion_postprocess_output_limit(void)
 {
@@ -156,32 +161,68 @@ static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output
     EA = ea_backup;
 }
 
-static void app_motion_postprocess_gyro_task(void)
+void app_motion_postprocess_imu_step(void)
 {
     service_imu_gyro_t gyro;
     uint8 ea_backup;
+    uint32 now;
 
+    service_imu_update();
     service_imu_read_gyro(&gyro);
+    now = service_timetick_what();
 
-    ea_backup = EA;
-    EA = 0;
-    motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, gyro.gyro_z);
-    EA = ea_backup;
+    /*
+     * SPI DMA may complete slower than the 1 ms control tick.  A stale frame
+     * must not be filtered repeatedly: doing so changes the LPF state without
+     * any new physical observation and obscures a stalled acquisition chain.
+     */
+    if((0U != gyro.sequence) && (gyro.sequence != motion_postprocess_imu_last_sequence))
+    {
+        ea_backup = EA;
+        EA = 0;
+        motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, gyro.gyro_z);
+        EA = ea_backup;
+        motion_postprocess_imu_last_sequence = gyro.sequence;
+        motion_postprocess_imu_last_fresh_tick = now;
+        motion_postprocess_imu_seen = 1U;
+        if(0U != motion_postprocess_imu_fault)
+        {
+            motion_postprocess_imu_fault = 0U;
+            app_speedout_clear_safety_inhibit(APP_SPEEDOUT_SAFETY_IMU);
+        }
+    }
+
+    if(((0U == motion_postprocess_imu_seen) &&
+            ((uint32)(now - motion_postprocess_imu_start_tick) >= APP_MOTION_POSTPROCESS_IMU_STARTUP_GRACE_TICK)) ||
+       ((0U != motion_postprocess_imu_seen) &&
+            ((uint32)(now - motion_postprocess_imu_last_fresh_tick) >= APP_MOTION_POSTPROCESS_IMU_MAX_AGE_TICK)))
+    {
+        if(0U == motion_postprocess_imu_fault)
+        {
+            motion_postprocess_imu_fault = 1U;
+            app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_IMU);
+        }
+    }
     app_element_imu_task(&gyro);
-    app_element_pump_events();
 }
 
 void app_motion_postprocess_init(void)
 {
     service_imu_gyro_t gyro;
     app_motion_postprocess_data_t output;
+    uint32 now;
 
     service_imu_read_gyro(&gyro);
+    now = service_timetick_what();
     shared_lpf_init(&motion_postprocess_gyro_z_lpf,
             APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT,
             gyro.gyro_z);
     motion_postprocess_gyro_z_filtered = gyro.gyro_z;
-    app_element_imu_task(&gyro);
+    motion_postprocess_imu_last_sequence = gyro.sequence;
+    motion_postprocess_imu_last_fresh_tick = now;
+    motion_postprocess_imu_start_tick = now;
+    motion_postprocess_imu_seen = (0U != gyro.sequence) ? 1U : 0U;
+    motion_postprocess_imu_fault = 0U;
     app_motion_postprocess_sync_pid();
     shared_pos_pid_init(&motion_postprocess_yaw_pid);
     motion_postprocess_last_enabled =
@@ -202,14 +243,14 @@ void app_motion_postprocess_init(void)
     app_motion_postprocess_publish(&output);
 
     app_motion_postprocess_register_packet();
-    (void)app_scheduler_add(APP_MOTION_POSTPROCESS_GYRO_TASK_ID,
-            app_motion_postprocess_gyro_task,
-            APP_MOTION_POSTPROCESS_GYRO_TASK_PRIORITY,
-            APP_MOTION_POSTPROCESS_GYRO_PERIOD_MS);
-    app_motion_postprocess_task();
     pit_ms_init(APP_MOTION_POSTPROCESS_PIT,
             APP_MOTION_POSTPROCESS_PERIOD_MS,
-            app_motion_postprocess_task);
+            app_motion_postprocess_control_step);
+    interrupt_set_priority(TIM6_IRQn, 3U);
+    pit_ms_init(APP_MOTION_POSTPROCESS_IMU_PIT,
+            APP_MOTION_POSTPROCESS_IMU_PERIOD_MS,
+            app_motion_postprocess_imu_step);
+    interrupt_set_priority(TIM7_IRQn, 3U);
 }
 
 void app_motion_postprocess_get_data(app_motion_postprocess_data_t *out_data)
@@ -227,7 +268,20 @@ void app_motion_postprocess_get_data(app_motion_postprocess_data_t *out_data)
     EA = ea_backup;
 }
 
-static void app_motion_postprocess_task(void)
+/*
+ * 单一 5 ms 控制链：按数据依赖顺序推进，禁止让这些控制计算经由主循环队列调度。
+ * TIM5 的 1 ms 速度环先使用上一帧目标，TIM6 随后生成下一帧目标，时序稳定且可分析。
+ */
+void app_motion_postprocess_control_step(void)
+{
+    app_motion_preprocess_control_step();
+    app_element_control_step();
+    app_feedforward_control_step();
+    app_speed_plan_control_step();
+    app_motion_postprocess_compute_step();
+}
+
+static void app_motion_postprocess_compute_step(void)
 {
     uint8 enabled;
     float raw_error;

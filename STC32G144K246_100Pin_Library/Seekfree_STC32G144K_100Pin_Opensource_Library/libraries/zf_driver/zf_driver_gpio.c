@@ -147,6 +147,11 @@ static void gpio_set_up(gpio_pin_enum pin)
     }
 }
 
+void gpio_set_pull_up(gpio_pin_enum pin)
+{
+    gpio_set_up(pin);
+}
+
 // 设置下拉电阻
 static void gpio_set_pd(gpio_pin_enum pin)
 {
