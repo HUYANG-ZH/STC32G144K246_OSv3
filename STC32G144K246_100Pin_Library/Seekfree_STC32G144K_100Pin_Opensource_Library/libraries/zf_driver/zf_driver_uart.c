@@ -924,13 +924,15 @@ void uart_tim_init(uart_index_enum uart_n, uint32 baud, uart_pin_enum tx_pin, ua
 
 void uart_init(uart_index_enum uart_n, uint32 baud, uart_pin_enum tx_pin, uart_pin_enum rx_pin)
 {
-    // 直接通过枚举值映射：UART_1~UART_8 对应 TIM_1~TIM_8（假设枚举值连续递增）
+    uint8 tim_index;
     const uint8 tim_index_map[] = {TIM_1, TIM_2, TIM_3, TIM_4, TIM_5, TIM_6, TIM_7, TIM_8};
-       
-    uint8 tim_index = tim_index_map[uart_n - UART_1];
 
-    // 合法性检查：仅处理 UART_1~UART_8，避免越界访问和非法配置
-    zf_assert(!(uart_n < UART_1 || uart_n > UART_8));
+    if (uart_n < UART_1 || uart_n > UART_8)
+    {
+        return;
+    }
+
+    tim_index = tim_index_map[uart_n - UART_1];
 
     uart_tim_init(uart_n, baud, tx_pin, rx_pin, tim_index);
 }

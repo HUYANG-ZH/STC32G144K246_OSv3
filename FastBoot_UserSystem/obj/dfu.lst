@@ -1,0 +1,280 @@
+C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE dfu
+OBJECT MODULE PLACED IN .\obj\dfu.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE src\dfu.c XSMALL INTR2 NOCASE BROWSE DEBUG PRINT(.\obj\dfu.lst) OBJEC
+                    -T(.\obj\dfu.obj) 
+
+stmt  level    source
+
+    1          #include "stc.h"
+    2          #include "uart.h"
+    3          #include "iap.h"
+    4          #include "update.h"
+    5          #include "dfu.h"
+    6          
+    7          long xdata DfuFlag _at_ 0xfffc;
+    8          bit bDfuHotEntry;
+    9          
+   10          /*
+   11           * P3.3 force-entry (low = DFU). Safe during cold boot because FastBoot
+   12           * runs with EA=0 (interrupts globally disabled), so the camera VSYNC
+   13           * (INT1 on P3.3) never fires. The pin is only sampled once before the
+   14           * APP ever executes.
+   15           */
+   16          static void dfu_delay(void)
+   17          {
+   18   1          volatile int i;
+   19   1          for (i = 0; i < 30000; i++);
+   20   1      }
+   21          
+   22          static DWORD get_dword(BYTE near *ptr)
+   23          {
+   24   1          DWORD value;
+   25   1          value = (DWORD)ptr[0] << 24;
+   26   1          value |= (DWORD)ptr[1] << 16;
+   27   1          value |= (DWORD)ptr[2] << 8;
+   28   1          value |= (DWORD)ptr[3];
+   29   1          return value;
+   30   1      }
+   31          
+   32          static void put_dword(BYTE near *ptr, DWORD value)
+   33          {
+   34   1          ptr[0] = BYTE3(value);
+   35   1          ptr[1] = BYTE2(value);
+   36   1          ptr[2] = BYTE1(value);
+   37   1          ptr[3] = BYTE0(value);
+   38   1      }
+   39          
+   40          void dfu_check(void)
+   41          {
+   42   1          long retained_flag;
+   43   1      
+   44   1          EAXFR = 1;
+   45   1          retained_flag = DfuFlag;
+   46   1          bDfuHotEntry = (retained_flag == DFU_TAG);
+   47   1      
+   48   1          P3M1 &= (BYTE)~0x08U;
+   49   1          P3PU |= 0x08U;
+   50   1          dfu_delay();
+   51   1      
+   52   1          /* Needed here so a persistent interrupted-update marker can be read. */
+   53   1          iap_init();
+   54   1      
+   55   1          /*
+   56   1           * Cold-boot force entry: hold P3.3 low at power-on.
+   57   1           * (EA=0 here, so the camera VSYNC on INT1/P3.3 never fires.)
+   58   1           * Hot entry: APP wrote DfuTag then IAP_CONTR=0x28.
+C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 2   
+
+   59   1           * Recovery: interrupted update with IN_PROGRESS/VERIFIED state.
+   60   1           */
+   61   1          if ((DFU_FORCEPIN != 0) && !bDfuHotEntry && !update_recovery_pending())
+   62   1          {
+   63   2              P3M1 |= 0x08U;
+   64   2              P3PU = 0x00U;
+   65   2              IAP_CONTR = 0x20U;
+   66   2              while (1);
+   67   2          }
+   68   1      
+   69   1          P3M1 |= 0x08U;
+   70   1          P3PU = 0x00U;
+   71   1          DfuFlag = 0;
+   72   1      }
+   73          
+   74          void dfu_events(void)
+   75          {
+   76   1          BYTE cmd;
+   77   1          DWORD addr;
+   78   1          DWORD value32;
+   79   1          DWORD image_size;
+   80   1          DWORD image_crc;
+   81   1          BYTE size;
+   82   1          BYTE ret;
+   83   1          BYTE near *ptr;
+   84   1          BYTE status;
+   85   1          BYTE update_state;
+   86   1      
+   87   1          if (!bUartRxReady)
+   88   1              return;
+   89   1      
+   90   1          cmd = UartRxBuffer[1];
+   91   1          addr = get_dword(&UartRxBuffer[2]);
+   92   1          size = UartRxBuffer[6];
+   93   1          ptr = &UartRxBuffer[7];
+   94   1          status = STATUS_OK;
+   95   1          ret = 0;
+   96   1      
+   97   1          switch (cmd)
+   98   1          {
+   99   2          case DFU_CMD_CONNECT:
+  100   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  101   2              UartTxBuffer[0] = LDR_VERSION >> 8;
+  102   2              UartTxBuffer[1] = LDR_VERSION;
+  103   2              ret = 2;
+  104   2              break;
+  105   2      
+  106   2          case DFU_CMD_READ:
+  107   2      #ifdef DEBUG
+                       ret = size;
+                       ptr = &UartInBuffer[0];
+                       while (size--)
+                           *ptr++ = iap_read_byte(addr++);
+               #else
+  113   2              status = STATUS_ERRORCMD;
+  114   2      #endif
+  115   2              break;
+  116   2      
+  117   2          case DFU_CMD_PROGRAM:
+  118   2              if (!update_write_allowed()) { status = STATUS_STATEERR; break; }
+  119   2              if (UartRxBuffer[0] != (BYTE)(6U + size))
+  120   2              {
+  121   3                  status = STATUS_ERRORWRAP;
+  122   3                  break;
+  123   3              }
+  124   2              /* Fast dense block programming; final whole-image CRC32 is authoritative. */
+C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 3   
+
+  125   2              if (!iap_program_block(addr, ptr, size))
+  126   2                  status = STATUS_PROGRAMERR;
+  127   2              break;
+  128   2      
+  129   2          case DFU_CMD_ERASE:
+  130   2              if (!update_write_allowed()) { status = STATUS_STATEERR; break; }
+  131   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  132   2              addr = APP_LOGICAL_BEGIN;
+  133   2              while (addr < AP_SIZE)
+  134   2              {
+  135   3                  if (!iap_erase_page(addr))
+  136   3                  {
+  137   4                      status = STATUS_ERASEERR;
+  138   4                      break;
+  139   4                  }
+  140   3                  addr += FLASH_PAGE_SIZE;
+  141   3              }
+  142   2              break;
+  143   2      
+  144   2          case DFU_CMD_ERASE_PAGE:
+  145   2              if (!update_write_allowed()) { status = STATUS_STATEERR; break; }
+  146   2              if (UartRxBuffer[0] != 6U) { status = STATUS_ERRORWRAP; break; }
+  147   2              if (!iap_erase_page(addr))
+  148   2                  status = STATUS_ERASEERR;
+  149   2              break;
+  150   2      
+  151   2          case DFU_CMD_CRC32:
+  152   2              if (UartRxBuffer[0] != 9U) { status = STATUS_ERRORWRAP; break; }
+  153   2              value32 = get_dword(&UartRxBuffer[6]);
+  154   2              if (!iap_crc32(addr, value32, &image_crc))
+  155   2              {
+  156   3                  status = STATUS_OUTOFRANGE;
+  157   3                  break;
+  158   3              }
+  159   2              put_dword(&UartTxBuffer[0], image_crc);
+  160   2              ret = 4;
+  161   2              break;
+  162   2      
+  163   2          case DFU_CMD_PAGE_CRC_TABLE:
+  164   2              if (UartRxBuffer[0] != 6U) { status = STATUS_ERRORWRAP; break; }
+  165   2              if ((size == 0U) || (size > 60U)) { status = STATUS_OUTOFRANGE; break; }
+  166   2              if (!iap_check_addr(addr)) { status = STATUS_OUTOFRANGE; break; }
+  167   2              if ((addr & (FLASH_PAGE_SIZE - 1UL)) != 0UL)
+  168   2              {
+  169   3                  status = STATUS_OUTOFRANGE;
+  170   3                  break;
+  171   3              }
+  172   2              if ((DWORD)size > ((AP_SIZE - addr) / FLASH_PAGE_SIZE))
+  173   2              {
+  174   3                  status = STATUS_OUTOFRANGE;
+  175   3                  break;
+  176   3              }
+  177   2              ret = 0U;
+  178   2              while (size--)
+  179   2              {
+  180   3                  if (!iap_crc32(addr, FLASH_PAGE_SIZE, &value32))
+  181   3                  {
+  182   4                      status = STATUS_OUTOFRANGE;
+  183   4                      ret = 0U;
+  184   4                      break;
+  185   4                  }
+  186   3                  put_dword(&UartTxBuffer[ret], value32);
+  187   3                  ret = (BYTE)(ret + 4U);
+  188   3                  addr += FLASH_PAGE_SIZE;
+  189   3              }
+  190   2              break;
+C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 4   
+
+  191   2      
+  192   2          case DFU_CMD_STATUS:
+  193   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  194   2              update_state = update_get_status(&image_size, &image_crc);
+  195   2              UartTxBuffer[0] = 1U;
+  196   2              UartTxBuffer[1] = update_state;
+  197   2              put_dword(&UartTxBuffer[2], image_size);
+  198   2              put_dword(&UartTxBuffer[6], image_crc);
+  199   2              ret = 10;
+  200   2              break;
+  201   2      
+  202   2          case DFU_CMD_UPDATE_BEGIN:
+  203   2              if (UartRxBuffer[0] != 9U) { status = STATUS_ERRORWRAP; break; }
+  204   2              image_size = get_dword(&UartRxBuffer[2]);
+  205   2              image_crc = get_dword(&UartRxBuffer[6]);
+  206   2              if (!update_begin(image_size, image_crc))
+  207   2                  status = STATUS_METAERR;
+  208   2              break;
+  209   2      
+  210   2          case DFU_CMD_UPDATE_VERIFY:
+  211   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  212   2              image_crc = 0UL;
+  213   2              if (!update_verify(&image_crc))
+  214   2                  status = STATUS_CRCERR;
+  215   2              put_dword(&UartTxBuffer[0], image_crc);
+  216   2              ret = 4;
+  217   2              break;
+  218   2      
+  219   2          case DFU_CMD_UPDATE_COMMIT:
+  220   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  221   2              if (!update_commit())
+  222   2                  status = STATUS_STATEERR;
+  223   2              break;
+  224   2      
+  225   2          case DFU_CMD_REBOOT:
+  226   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  227   2              IAP_CONTR = 0x20U;
+  228   2              while (1);
+  229   2              break;
+  230   2      
+  231   2          default:
+  232   2              status = STATUS_ERRORCMD;
+  233   2              break;
+  234   2          }
+  235   1      
+  236   1          uart_send(status, ret);
+  237   1          uart_recv_done();
+  238   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      1033     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =         4     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------         20
+  bit size             =         1     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 5   
+
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,181 @@
+C251 COMPILER V5.60.0,  update                                                             24/07/26  17:47:23  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE update
+OBJECT MODULE PLACED IN .\obj\update.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE src\update.c XSMALL INTR2 NOCASE BROWSE DEBUG PRINT(.\obj\update.lst)
+                    - OBJECT(.\obj\update.obj) 
+
+stmt  level    source
+
+    1          #include "stc.h"
+    2          #include "iap.h"
+    3          #include "update.h"
+    4          
+    5          #define META_MAGIC0          ((BYTE)'F')
+    6          #define META_MAGIC1          ((BYTE)'B')
+    7          #define META_MAGIC2          ((BYTE)'S')
+    8          #define META_MAGIC3          ((BYTE)'1')
+    9          #define META_FORMAT          1U
+   10          
+   11          #define META_OFF_MAGIC       0U
+   12          #define META_OFF_FORMAT      4U
+   13          #define META_OFF_STATE       5U
+   14          #define META_OFF_SIZE        8U
+   15          #define META_OFF_CRC         12U
+   16          
+   17          static DWORD read_dword(BYTE offset)
+   18          {
+   19   1          DWORD value;
+   20   1      
+   21   1          value = (DWORD)iap_meta_read(offset) << 24;
+   22   1          value |= (DWORD)iap_meta_read((BYTE)(offset + 1U)) << 16;
+   23   1          value |= (DWORD)iap_meta_read((BYTE)(offset + 2U)) << 8;
+   24   1          value |= (DWORD)iap_meta_read((BYTE)(offset + 3U));
+   25   1          return value;
+   26   1      }
+   27          
+   28          static BOOL write_dword(BYTE offset, DWORD value)
+   29          {
+   30   1          if (!iap_meta_write(offset, BYTE3(value))) return 0;
+   31   1          if (!iap_meta_write((BYTE)(offset + 1U), BYTE2(value))) return 0;
+   32   1          if (!iap_meta_write((BYTE)(offset + 2U), BYTE1(value))) return 0;
+   33   1          if (!iap_meta_write((BYTE)(offset + 3U), BYTE0(value))) return 0;
+   34   1          return 1;
+   35   1      }
+   36          
+   37          static BYTE metadata_state(void)
+   38          {
+   39   1          BYTE state;
+   40   1      
+   41   1          if (iap_meta_read((BYTE)(META_OFF_MAGIC + 0U)) != META_MAGIC0) return UPDATE_STATE_EMPTY;
+   42   1          if (iap_meta_read((BYTE)(META_OFF_MAGIC + 1U)) != META_MAGIC1) return UPDATE_STATE_EMPTY;
+   43   1          if (iap_meta_read((BYTE)(META_OFF_MAGIC + 2U)) != META_MAGIC2) return UPDATE_STATE_EMPTY;
+   44   1          if (iap_meta_read((BYTE)(META_OFF_MAGIC + 3U)) != META_MAGIC3) return UPDATE_STATE_EMPTY;
+   45   1          if (iap_meta_read((BYTE)META_OFF_FORMAT) != META_FORMAT) return UPDATE_STATE_EMPTY;
+   46   1          if (read_dword((BYTE)META_OFF_SIZE) != APP_SIZE) return UPDATE_STATE_EMPTY;
+   47   1      
+   48   1          state = iap_meta_read((BYTE)META_OFF_STATE);
+   49   1          if ((state != UPDATE_STATE_IN_PROGRESS) &&
+   50   1              (state != UPDATE_STATE_VERIFIED) &&
+   51   1              (state != UPDATE_STATE_COMMITTED))
+   52   1              return UPDATE_STATE_EMPTY;
+   53   1      
+   54   1          return state;
+   55   1      }
+   56          
+   57          BYTE update_get_status(DWORD *image_size, DWORD *image_crc)
+   58          {
+C251 COMPILER V5.60.0,  update                                                             24/07/26  17:47:23  PAGE 2   
+
+   59   1          BYTE state;
+   60   1      
+   61   1          state = metadata_state();
+   62   1          if (state == UPDATE_STATE_EMPTY)
+   63   1          {
+   64   2              *image_size = 0UL;
+   65   2              *image_crc = 0UL;
+   66   2              return state;
+   67   2          }
+   68   1      
+   69   1          *image_size = APP_SIZE;
+   70   1          *image_crc = read_dword((BYTE)META_OFF_CRC);
+   71   1          return state;
+   72   1      }
+   73          
+   74          BOOL update_recovery_pending(void)
+   75          {
+   76   1          BYTE state;
+   77   1      
+   78   1          state = metadata_state();
+   79   1          return ((state == UPDATE_STATE_IN_PROGRESS) ||
+   80   1                  (state == UPDATE_STATE_VERIFIED));
+   81   1      }
+   82          
+   83          BOOL update_write_allowed(void)
+   84          {
+   85   1          return (metadata_state() == UPDATE_STATE_IN_PROGRESS);
+   86   1      }
+   87          
+   88          BOOL update_begin(DWORD image_size, DWORD image_crc)
+   89          {
+   90   1          if (image_size != APP_SIZE)
+   91   1              return 0;
+   92   1          if (!iap_meta_erase())
+   93   1              return 0;
+   94   1      
+   95   1          /* Write all fields first and the magic last. A torn BEGIN is invalid. */
+   96   1          if (!iap_meta_write((BYTE)META_OFF_FORMAT, (BYTE)META_FORMAT)) return 0;
+   97   1          if (!iap_meta_write((BYTE)META_OFF_STATE, (BYTE)UPDATE_STATE_IN_PROGRESS)) return 0;
+   98   1          if (!write_dword((BYTE)META_OFF_SIZE, image_size)) return 0;
+   99   1          if (!write_dword((BYTE)META_OFF_CRC, image_crc)) return 0;
+  100   1          if (!iap_meta_write((BYTE)(META_OFF_MAGIC + 0U), META_MAGIC0)) return 0;
+  101   1          if (!iap_meta_write((BYTE)(META_OFF_MAGIC + 1U), META_MAGIC1)) return 0;
+  102   1          if (!iap_meta_write((BYTE)(META_OFF_MAGIC + 2U), META_MAGIC2)) return 0;
+  103   1          if (!iap_meta_write((BYTE)(META_OFF_MAGIC + 3U), META_MAGIC3)) return 0;
+  104   1      
+  105   1          return (metadata_state() == UPDATE_STATE_IN_PROGRESS);
+  106   1      }
+  107          
+  108          BOOL update_verify(DWORD *actual_crc)
+  109          {
+  110   1          DWORD expected_crc;
+  111   1          BYTE state;
+  112   1      
+  113   1          state = metadata_state();
+  114   1          if ((state != UPDATE_STATE_IN_PROGRESS) &&
+  115   1              (state != UPDATE_STATE_VERIFIED))
+  116   1              return 0;
+  117   1      
+  118   1          expected_crc = read_dword((BYTE)META_OFF_CRC);
+  119   1          if (!iap_crc32(APP_LOGICAL_BEGIN, APP_SIZE, actual_crc))
+  120   1              return 0;
+  121   1          if (*actual_crc != expected_crc)
+  122   1              return 0;
+  123   1      
+  124   1          if (state == UPDATE_STATE_IN_PROGRESS)
+C251 COMPILER V5.60.0,  update                                                             24/07/26  17:47:23  PAGE 3   
+
+  125   1          {
+  126   2              if (!iap_meta_write((BYTE)META_OFF_STATE, (BYTE)UPDATE_STATE_VERIFIED))
+  127   2                  return 0;
+  128   2          }
+  129   1          return 1;
+  130   1      }
+  131          
+  132          BOOL update_commit(void)
+  133          {
+  134   1          BYTE state;
+  135   1      
+  136   1          state = metadata_state();
+  137   1          if (state == UPDATE_STATE_COMMITTED)
+  138   1              return 1;
+  139   1          if (state != UPDATE_STATE_VERIFIED)
+  140   1              return 0;
+  141   1      
+  142   1          return iap_meta_write((BYTE)META_OFF_STATE, (BYTE)UPDATE_STATE_COMMITTED);
+  143   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       634     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------         19
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

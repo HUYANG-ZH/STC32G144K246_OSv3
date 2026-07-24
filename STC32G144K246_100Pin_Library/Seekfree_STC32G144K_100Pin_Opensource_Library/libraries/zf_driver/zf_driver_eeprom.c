@@ -147,6 +147,11 @@ void iap_write_byte(uint32 addr, uint8 byte)
 {
 	bit flag = 0;
 
+	if (0U == iap_is_addr_safe(addr))
+	{
+		return;
+	}
+
 	flag = EA;
 	EA = 0;
 
@@ -208,6 +213,11 @@ void iap_write_buff(uint32 addr, uint8 *buf, uint16 len)
 void iap_erase_page(uint32 addr)
 {
 	bit flag = 0;
+
+	if (0U == iap_is_addr_safe(addr))
+	{
+		return;
+	}
 
 	flag = EA;
 	EA = 0;

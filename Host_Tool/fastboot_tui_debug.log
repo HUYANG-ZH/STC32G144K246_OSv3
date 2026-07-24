@@ -1,0 +1,14 @@
+操作：Turbo 增量升级
+异常：用户取消操作
+
+Traceback (most recent call last):
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\tui.py", line 460, in worker_flash_image
+    actual = self.make_engine(port, cold, full_rewrite).flash(image, plan)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 762, in flash
+    self.enter_bootloader()
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 465, in enter_bootloader
+    self._check_cancel()
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 389, in _check_cancel
+    raise OperationCancelled("用户取消操作")
+stcfastboot.engine.OperationCancelled: 用户取消操作

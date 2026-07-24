@@ -10,6 +10,16 @@ void SystemStart(void)
     tfpu_start();
 }
 
+void wdt_init(void)
+{
+    WDT_CONTR = 0x37;                           // EN_WDT=1, CLR_WDT=1, prescaler=7(max)
+}
+
+void wdt_feed(void)
+{
+    WDT_CONTR |= 0x10;                          // Set CLR_WDT to reset counter
+}
+
 static void tfpu_start(void)
 {
     P_SW2 |= 0x80;

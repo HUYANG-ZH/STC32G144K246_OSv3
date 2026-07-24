@@ -1,0 +1,210 @@
+C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_boot_request
+OBJECT MODULE PLACED IN .\out_file\service_boot_request.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_boot_request.c LARGE ROM(HUGE) WARNINGLEVEL(3) 
+                    -OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\
+                    -libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_c
+                    -omponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_boot_request.l
+                    -st) OBJECT(.\out_file\service_boot_request.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_boot_request.h"
+    3          #include "service_motor.h"
+    4          #include "sys_start.h"
+    5          
+    6          #if SERVICE_BOOT_REQUEST_ENABLE
+    7          
+    8          #define BOOT_REQUEST_FRAME_SIZE     (12U)
+    9          #define BOOT_REQUEST_PREFIX_SIZE    (10U)
+   10          #define BOOT_REQUEST_DFU_TAG        (0x12ABCD34UL)
+   11          #define BOOT_REQUEST_ACK_SIZE       (10U)
+   12          #define BOOT_REQUEST_TX_TIMEOUT     (5000UL)
+   13          
+   14          static const uint8 boot_request_prefix[4] = {0x53U, 0x42U, 0x4CU, 0x52U};
+   15          static volatile uint8 service_boot_request_pending = 0U;
+   16          static uint8 boot_request_frame[BOOT_REQUEST_FRAME_SIZE];
+   17          static uint8 boot_request_index = 0U;
+   18          
+   19          unsigned long xdata boot_request_dfu_flag _at_ 0xfffc;
+   20          
+   21          static uint16 service_boot_request_crc16(const uint8 *buffer, uint8 length)
+   22          {
+   23   1          uint8 i;
+   24   1          uint8 bit_index;
+   25   1          uint16 crc = 0xFFFFU;
+   26   1      
+   27   1          for(i = 0U; i < length; i++)
+   28   1          {
+   29   2              crc ^= (uint16)buffer[i] << 8;
+   30   2              for(bit_index = 0U; bit_index < 8U; bit_index++)
+   31   2              {
+   32   3                  if(0U != (crc & 0x8000U))
+   33   3                  {
+   34   4                      crc = (uint16)((crc << 1) ^ 0x1021U);
+   35   4                  }
+   36   3                  else
+   37   3                  {
+   38   4                      crc <<= 1;
+   39   4                  }
+   40   3              }
+   41   2          }
+   42   1          return crc;
+   43   1      }
+   44          
+   45          static void service_boot_request_reset_parser(uint8 rx_byte)
+   46          {
+   47   1          boot_request_index = 0U;
+   48   1          if(rx_byte == boot_request_prefix[0])
+   49   1          {
+   50   2              boot_request_frame[0] = rx_byte;
+   51   2              boot_request_index = 1U;
+   52   2          }
+   53   1      }
+   54          
+   55          void service_boot_request_feed_byte(uint8 rx_byte)
+C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 2   
+
+   56          {
+   57   1          uint8 command;
+   58   1          uint16 expected_crc;
+   59   1          uint16 actual_crc;
+   60   1      
+   61   1          if(0U != service_boot_request_pending)
+   62   1          {
+   63   2              return;
+   64   2          }
+   65   1      
+   66   1          if(boot_request_index < 4U)
+   67   1          {
+   68   2              if(rx_byte != boot_request_prefix[boot_request_index])
+   69   2              {
+   70   3                  service_boot_request_reset_parser(rx_byte);
+   71   3                  return;
+   72   3              }
+   73   2          }
+   74   1      
+   75   1          boot_request_frame[boot_request_index++] = rx_byte;
+   76   1          if(boot_request_index < BOOT_REQUEST_FRAME_SIZE)
+   77   1          {
+   78   2              return;
+   79   2          }
+   80   1      
+   81   1          command = boot_request_frame[4];
+   82   1          expected_crc = (uint16)boot_request_frame[10]
+   83   1                  | ((uint16)boot_request_frame[11] << 8);
+   84   1          actual_crc = service_boot_request_crc16(boot_request_frame, BOOT_REQUEST_PREFIX_SIZE);
+   85   1      
+   86   1          if((boot_request_frame[5] == (uint8)(~command))
+   87   1                  && (0x32U == boot_request_frame[6])
+   88   1                  && (0x47U == boot_request_frame[7])
+   89   1                  && (0x14U == boot_request_frame[8])
+   90   1                  && (0x4BU == boot_request_frame[9])
+   91   1                  && (expected_crc == actual_crc)
+   92   1                  && ((BOOT_REQUEST_USER_SYSTEM == command)
+   93   1                      || (BOOT_REQUEST_FACTORY_ISP == command)))
+   94   1          {
+   95   2              service_boot_request_pending = command;
+   96   2          }
+   97   1      
+   98   1          boot_request_index = 0U;
+   99   1      }
+  100          
+  101          uint8 service_boot_request_is_pending(void)
+  102          {
+  103   1          return service_boot_request_pending;
+  104   1      }
+  105          
+  106          void service_boot_request_process(void)
+  107          {
+  108   1          uint8 command = service_boot_request_pending;
+  109   1          uint8 ack_frame[BOOT_REQUEST_ACK_SIZE];
+  110   1      
+  111   1          if(0U == command)
+  112   1          {
+  113   2              return;
+  114   2          }
+  115   1      
+  116   1          service_boot_request_pending = 0U;
+  117   1      
+  118   1          ack_frame[0] = 0xA5U;
+  119   1          ack_frame[1] = 0x5AU;
+  120   1          ack_frame[2] = 0x53U;
+  121   1          ack_frame[3] = 0x42U;
+C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 3   
+
+  122   1          ack_frame[4] = 0x4CU;
+  123   1          ack_frame[5] = 0x52U;
+  124   1          ack_frame[6] = command;
+  125   1          ack_frame[7] = (uint8)(~command);
+  126   1          ack_frame[8] = 0x0DU;
+  127   1          ack_frame[9] = 0x0AU;
+  128   1      
+  129   1          uart_write_buffer(DEBUG_UART_INDEX, ack_frame, BOOT_REQUEST_ACK_SIZE);
+  130   1      
+  131   1          {
+  132   2              uint32 tx_wait = BOOT_REQUEST_TX_TIMEOUT;
+  133   2              while (0U != uart_tx_is_busy(DEBUG_UART_INDEX) && (0UL != tx_wait))
+  134   2              {
+  135   3                  tx_wait--;
+  136   3                  wdt_feed();
+  137   3              }
+  138   2          }
+  139   1      
+  140   1          EAXFR = 1;
+  141   1          EA = 0;
+  142   1      
+  143   1          DMA_UR1R_CR = 0x00;
+  144   1          service_motor_stop();
+  145   1      
+  146   1          if(BOOT_REQUEST_USER_SYSTEM == command)
+  147   1          {
+  148   2              boot_request_dfu_flag = BOOT_REQUEST_DFU_TAG;
+  149   2              IAP_CONTR = 0x28;
+  150   2          }
+  151   1          else
+  152   1          {
+  153   2              IAP_CONTR = 0x60;
+  154   2          }
+  155   1      
+  156   1          while(1)
+  157   1          {
+  158   2          }
+  159   1      }
+  160          
+  161          void service_boot_request_init(void)
+  162          {
+  163   1          boot_request_dfu_flag = 0UL;
+  164   1          uart_rx_handlers[UART_1] = service_boot_request_feed_byte;
+  165   1      }
+  166          
+  167          #endif
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       773     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        49     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        16     ------
+End of Module Information.
+
+C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 4   
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,200 @@
+C251 COMPILER V5.60.0,  iap                                                                24/07/26  17:47:23  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE iap
+OBJECT MODULE PLACED IN .\obj\iap.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE src\iap.c XSMALL INTR2 NOCASE BROWSE DEBUG PRINT(.\obj\iap.lst) OBJEC
+                    -T(.\obj\iap.obj) 
+
+stmt  level    source
+
+    1          #include "stc.h"
+    2          #include "iap.h"
+    3          #include "dfu.h"
+    4          
+    5          /* Reflected CRC-32/ISO-HDLC nibble table, polynomial 0xEDB88320. */
+    6          static const DWORD crc32_nibble_table[16] =
+    7          {
+    8              0x00000000UL, 0x1db71064UL, 0x3b6e20c8UL, 0x26d930acUL,
+    9              0x76dc4190UL, 0x6b6b51f4UL, 0x4db26158UL, 0x5005713cUL,
+   10              0xedb88320UL, 0xf00f9344UL, 0xd6d6a3e8UL, 0xcb61b38cUL,
+   11              0x9b64c2b0UL, 0x86d3d2d4UL, 0xa00ae278UL, 0xbdbdf21cUL
+   12          };
+   13          
+   14          static void iap_program_physical(DWORD physical, BYTE value)
+   15          {
+   16   1          IAP_CMD = 2U;
+   17   1          IAP_ADDRE = BYTE2(physical);
+   18   1          IAP_ADDRH = BYTE1(physical);
+   19   1          IAP_ADDRL = BYTE0(physical);
+   20   1          IAP_DATA = value;
+   21   1          IAP_TRIG = 0x5aU;
+   22   1          IAP_TRIG = 0xa5U;
+   23   1          _nop_();
+   24   1          _nop_();
+   25   1          _nop_();
+   26   1          _nop_();
+   27   1      }
+   28          
+   29          static BOOL iap_write_physical_checked(DWORD physical, BYTE value)
+   30          {
+   31   1          iap_program_physical(physical, value);
+   32   1          return (iap_read_byte(physical) == value);
+   33   1      }
+   34          
+   35          static void iap_erase_physical(DWORD physical)
+   36          {
+   37   1          IAP_CMD = 3U;
+   38   1          IAP_ADDRE = BYTE2(physical);
+   39   1          IAP_ADDRH = BYTE1(physical);
+   40   1          IAP_ADDRL = BYTE0(physical);
+   41   1          IAP_TRIG = 0x5aU;
+   42   1          IAP_TRIG = 0xa5U;
+   43   1          _nop_();
+   44   1          _nop_();
+   45   1          _nop_();
+   46   1          _nop_();
+   47   1      }
+   48          
+   49          static BOOL iap_erase_physical_checked(DWORD physical)
+   50          {
+   51   1          WORD offset;
+   52   1      
+   53   1          iap_erase_physical(physical);
+   54   1          for (offset = 0U; offset < (WORD)FLASH_PAGE_SIZE; offset++)
+   55   1          {
+   56   2              if (iap_read_byte(physical + (DWORD)offset) != 0xffU)
+   57   2                  return 0;
+   58   2          }
+C251 COMPILER V5.60.0,  iap                                                                24/07/26  17:47:23  PAGE 2   
+
+   59   1          return 1;
+   60   1      }
+   61          
+   62          void iap_init(void)
+   63          {
+   64   1          IAP_CONTR = 0x80U;
+   65   1          IAP_TPS = bDfuHotEntry ? IAP_TPS_HOT : IAP_TPS_COLD;
+   66   1      }
+   67          
+   68          BOOL iap_check_addr(DWORD addr)
+   69          {
+   70   1          /* Protect FC:3800-FC:47FF, including the dedicated metadata page. */
+   71   1          return ((addr >= APP_LOGICAL_BEGIN) && (addr < AP_SIZE));
+   72   1      }
+   73          
+   74          BYTE iap_read_byte(DWORD physical_addr)
+   75          {
+   76   1          IAP_CMD = 1U;
+   77   1          IAP_ADDRE = BYTE2(physical_addr);
+   78   1          IAP_ADDRH = BYTE1(physical_addr);
+   79   1          IAP_ADDRL = BYTE0(physical_addr);
+   80   1          IAP_TRIG = 0x5aU;
+   81   1          IAP_TRIG = 0xa5U;
+   82   1          _nop_();
+   83   1          _nop_();
+   84   1          _nop_();
+   85   1          _nop_();
+   86   1      
+   87   1          return IAP_DATA;
+   88   1      }
+   89          
+   90          BOOL iap_program_block(DWORD addr, BYTE near *src_ptr, BYTE size)
+   91          {
+   92   1          DWORD physical;
+   93   1      
+   94   1          if ((size == 0U) || !iap_check_addr(addr))
+   95   1              return 0;
+   96   1          if ((DWORD)size > (AP_SIZE - addr))
+   97   1              return 0;
+   98   1      
+   99   1          physical = addr + IAP_BASE;
+  100   1          while (size--)
+  101   1          {
+  102   2              /* The page is already erased. Sending dense chunks is faster; FF is a no-op. */
+  103   2              if (*src_ptr != 0xffU)
+  104   2                  iap_program_physical(physical, *src_ptr);
+  105   2              physical++;
+  106   2              src_ptr++;
+  107   2          }
+  108   1          return 1;
+  109   1      }
+  110          
+  111          BOOL iap_erase_page(DWORD addr)
+  112          {
+  113   1          if (!iap_check_addr(addr))
+  114   1              return 0;
+  115   1          if ((addr & (FLASH_PAGE_SIZE - 1UL)) != 0UL)
+  116   1              return 0;
+  117   1          if (addr > (AP_SIZE - FLASH_PAGE_SIZE))
+  118   1              return 0;
+  119   1      
+  120   1          /* Final full-image CRC32 is the authoritative verification. */
+  121   1          iap_erase_physical(addr + IAP_BASE);
+  122   1          return 1;
+  123   1      }
+  124          
+C251 COMPILER V5.60.0,  iap                                                                24/07/26  17:47:23  PAGE 3   
+
+  125          BOOL iap_crc32(DWORD addr, DWORD length, DWORD *result)
+  126          {
+  127   1          DWORD crc;
+  128   1          BYTE value;
+  129   1      
+  130   1          if ((length == 0UL) || !iap_check_addr(addr))
+  131   1              return 0;
+  132   1          if (length > (AP_SIZE - addr))
+  133   1              return 0;
+  134   1      
+  135   1          crc = 0xffffffffUL;
+  136   1          addr += IAP_BASE;
+  137   1          while (length--)
+  138   1          {
+  139   2              value = iap_read_byte(addr++);
+  140   2              crc ^= (DWORD)value;
+  141   2              crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
+  142   2              crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
+  143   2          }
+  144   1          *result = crc ^ 0xffffffffUL;
+  145   1          return 1;
+  146   1      }
+  147          
+  148          BOOL iap_meta_erase(void)
+  149          {
+  150   1          /* Metadata is tiny and safety-critical, so retain full erase verification. */
+  151   1          return iap_erase_physical_checked(UPDATE_META_PHYSICAL);
+  152   1      }
+  153          
+  154          BOOL iap_meta_write(BYTE offset, BYTE value)
+  155          {
+  156   1          return iap_write_physical_checked(UPDATE_META_PHYSICAL + (DWORD)offset, value);
+  157   1      }
+  158          
+  159          BYTE iap_meta_read(BYTE offset)
+  160          {
+  161   1          return iap_read_byte(UPDATE_META_PHYSICAL + (DWORD)offset);
+  162   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       662     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------         27
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        64     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

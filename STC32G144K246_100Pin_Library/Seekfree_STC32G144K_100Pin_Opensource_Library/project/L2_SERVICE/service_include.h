@@ -14,5 +14,6 @@
 #include "service_speed.h"
 #include "service_tof.h"
 #include "service_wireless_uart.h"
+#include "service_boot_request.h"
 
 #endif

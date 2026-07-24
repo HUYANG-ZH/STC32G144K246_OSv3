@@ -39,14 +39,52 @@
 
 #include "zf_common_typedef.h"
 
+/*
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║   IAP ADDRESS GUARD — DO NOT BYPASS                         ║
+ * ║   Bootloader region [0xFC3800 – 0xFC47FF] is PROTECTED.    ║
+ * ║   Writing / erasing this range WILL BRICK the device.       ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ *
+ * Whitelist: only physical Flash [0xFC2800, 0xFFFFFF] is valid.
+ * The bootloader + metadata page [0xFC3800, 0xFC47FF] is excluded
+ * even within that range.
+ */
+#define IAP_FLASH_START         0xFC2800UL
+#define IAP_FLASH_END           0xFFFFFFUL
+#define IAP_BOOTLOADER_START    0xFC3800UL
+#define IAP_BOOTLOADER_END      0xFC47FFUL
+
+/* Returns 1 if addr is safe to write/erase, 0 otherwise. */
+#define iap_is_addr_safe(addr)  \
+    (((addr) >= IAP_FLASH_START && (addr) <= IAP_FLASH_END)  \
+     && !((addr) >= IAP_BOOTLOADER_START && (addr) <= IAP_BOOTLOADER_END))
 
 void iap_init(void);
 void iap_idle(void);
 void iap_set_tps(void);
 uint8 iap_get_cmd_state(void);
+
+/* Read — always safe, no guard needed. */
 uint8 iap_read_byte(uint32 addr);
-void iap_write_byte(uint32 addr, uint8 byte);
 void iap_read_buff(uint32 addr, uint8 *buf, uint16 len);
+
+/*
+ * ═══  WARNING: Write / Erase — IAP guard enforced  ═══
+ *
+ * iap_write_byte, iap_write_buff, iap_erase_page and
+ * extern_iap_write_buff all call iap_is_addr_safe(addr)
+ * internally and silently return if the address falls in the
+ * bootloader region [0xFC3800 – 0xFC47FF] or outside
+ * physical Flash [0xFC2800 – 0xFFFFFF].
+ *
+ * Callers SHOULD still pre-validate with iap_is_addr_safe()
+ * and treat a rejection as a fatal error.
+ *
+ *  DO NOT add new call sites that write/erase Flash without
+ *  first verifying the address against iap_is_addr_safe().
+ */
+void iap_write_byte(uint32 addr, uint8 byte);
 void iap_write_buff(uint32 addr, uint8 *buf, uint16 len);
 void iap_erase_page(uint32 addr);
 void extern_iap_write_buff(uint16 addr, uint8 *buf, uint16 len);

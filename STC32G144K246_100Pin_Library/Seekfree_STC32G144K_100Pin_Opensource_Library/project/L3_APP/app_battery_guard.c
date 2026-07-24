@@ -2,7 +2,6 @@
 #include "service_batterycheck.h"
 #include "service_timetick.h"
 #include "app_feedforward.h"
-#include "app_log.h"
 #include "app_motion_postprocess.h"
 #include "app_speedout.h"
 #include "app_battery_guard.h"
@@ -95,55 +94,6 @@ void app_battery_guard_init(void)
     interrupt_set_priority(TIM8_IRQn, 3U);
 }
 
-/* Formatting and telemetry are deliberately kept out of the safety ISR. */
 void app_battery_guard_pump_events(void)
 {
-    uint8 ea_backup;
-    uint8 report_pending;
-    uint8 reason;
-    uint16 trip_raw;
-    float voltage;
-    uint32 timestamp;
-    app_motion_postprocess_data_t motion_post;
-    app_speedout_data_t speedout;
-    app_feedforward_data_t feedforward;
-
-    ea_backup = EA;
-    EA = 0;
-    report_pending = battery_guard_report_pending;
-    trip_raw = battery_guard_trip_raw;
-    reason = battery_guard_reason;
-    battery_guard_report_pending = 0U;
-    EA = ea_backup;
-    if(0U == report_pending)
-    {
-        return;
-    }
-
-    service_batterycheck_get_voltage(&voltage);
-    timestamp = service_timetick_what();
-    app_motion_postprocess_get_data(&motion_post);
-    app_speedout_get_data(&speedout);
-    app_feedforward_get_data(&feedforward);
-
-    Wlog("UV,tick_0p1ms=%lu,reason=%u,raw=%u,v=%.3f\r\n", timestamp, reason, trip_raw, voltage);
-    Wlog("MP,raw=%.3f,tar_y=%.3f,act_y=%.3f,diff=%.3f\r\n",
-            motion_post.raw_error,
-            motion_post.target_yaw_rate_radps,
-            motion_post.actual_yaw_rate_radps,
-            motion_post.target_differential_speed);
-    Wlog("SO,lt=%.3f,la=%.3f,lp=%.3f,rt=%.3f,ra=%.3f,rp=%.3f\r\n",
-            speedout.left_target_mps,
-            speedout.left_actual_mps,
-            speedout.left_pwm,
-            speedout.right_target_mps,
-            speedout.right_actual_mps,
-            speedout.right_pwm);
-    Wlog("FF,kff=%.3f,kd=%.3f,cur=%.3f,rate=%.3f,out=%.3f,post=%.3f\r\n",
-            app_feedforward_config.kff,
-            app_feedforward_config.kd,
-            feedforward.curvature,
-            feedforward.curvature_rate,
-            feedforward.feedforward,
-            motion_post.feedforward);
 }
