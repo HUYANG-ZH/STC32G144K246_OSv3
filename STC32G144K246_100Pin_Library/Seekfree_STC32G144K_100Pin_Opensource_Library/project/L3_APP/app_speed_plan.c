@@ -102,6 +102,9 @@ void app_speed_plan_init(void)
     app_speed_plan_register_packet();
     app_speed_plan_control_step();
     /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定。 */
+    #if __DBGFLAG__
+    printf(">>[app_speed_plan_init]\r\n");
+    #endif
 }
 
 float app_speed_plan_get_linear_mps(void)

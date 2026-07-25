@@ -37,6 +37,9 @@ void app_scheduler_init(void)
     }
 
     pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
+    #if __DBGFLAG__
+    printf(">>[app_scheduler_init]\r\n");
+    #endif
 }
 
 void app_scheduler_debug(void)

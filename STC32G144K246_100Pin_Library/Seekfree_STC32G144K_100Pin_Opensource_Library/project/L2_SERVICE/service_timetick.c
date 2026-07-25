@@ -10,6 +10,9 @@ void service_timetick_init(void)
 {
     time = 0;
     pit_us_init(TIM0_PIT,100,timetick_new);
+    #if __DBGFLAG__
+    printf(">>[service_timetick_init]\r\n");
+    #endif
 }
 
 void service_timetick_debug(void)

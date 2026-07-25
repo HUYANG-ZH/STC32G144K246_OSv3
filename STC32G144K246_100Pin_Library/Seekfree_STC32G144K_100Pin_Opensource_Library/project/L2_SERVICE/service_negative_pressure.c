@@ -69,6 +69,9 @@ void service_negative_pressure_init(void)
     negative_pressure_control_override = 0U;
     (void)service_packet_add_variable_with_callback("negative_pressure", &negative_pressure_percent_config,
             NEGATIVE_PRESSURE_PACKET_COUNT, service_negative_pressure_config_updated);
+    #if __DBGFLAG__
+    printf(">>[service_negative_pressure_init]\r\n");
+    #endif
 }
 
 void service_negative_pressure_debug(void)

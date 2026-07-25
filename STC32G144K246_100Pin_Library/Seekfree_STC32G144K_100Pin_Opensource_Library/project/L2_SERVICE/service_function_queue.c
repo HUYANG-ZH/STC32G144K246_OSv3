@@ -47,6 +47,9 @@ void service_function_queue_init(void)
     function_queue_order = 0U;
 
     EA = ea_backup;
+    #if __DBGFLAG__
+    printf(">>[service_function_queue_init]\r\n");
+    #endif
 }
 
 void service_function_queue_debug(void)

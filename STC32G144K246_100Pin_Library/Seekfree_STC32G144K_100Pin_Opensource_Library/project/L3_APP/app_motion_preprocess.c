@@ -54,6 +54,9 @@ void app_motion_preprocess_init(void)
     app_motion_preprocess_register_packet();
     /* 首次仅发布当前快照；周期调度统一由 app_motion_postprocess 的 TIM6 控制链承担。 */
     app_motion_preprocess_control_step();
+    #if __DBGFLAG__
+    printf(">>[app_motion_preprocess_init]\r\n");
+    #endif
 }
 
 //-------------------------------------------------------------------------------------------------------------------

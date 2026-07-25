@@ -37,6 +37,9 @@ void service_speed_init(void)
     shared_lpf_init(&speed_lpf_right, SERVICE_SPEED_LPF_ALPHA, 0.0f);
     pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
     interrupt_set_priority(TIM3_IRQn, 3U);
+    #if __DBGFLAG__
+    printf(">>[service_speed_init]\r\n");
+    #endif
 }
 
 void service_speed_debug(void)

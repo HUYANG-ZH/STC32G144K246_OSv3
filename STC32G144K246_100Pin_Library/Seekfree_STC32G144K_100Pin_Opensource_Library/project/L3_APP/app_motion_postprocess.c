@@ -251,6 +251,9 @@ void app_motion_postprocess_init(void)
             APP_MOTION_POSTPROCESS_IMU_PERIOD_MS,
             app_motion_postprocess_imu_step);
     interrupt_set_priority(TIM7_IRQn, 3U);
+    #if __DBGFLAG__
+    printf(">>[app_motion_postprocess_init]\r\n");
+    #endif
 }
 
 void app_motion_postprocess_get_data(app_motion_postprocess_data_t *out_data)

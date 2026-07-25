@@ -147,4 +147,7 @@ void app_boot_sequence_init(void)
 
     (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
             APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
+    #if __DBGFLAG__
+    printf(">>[app_boot_sequence_init]\r\n");
+    #endif
 }

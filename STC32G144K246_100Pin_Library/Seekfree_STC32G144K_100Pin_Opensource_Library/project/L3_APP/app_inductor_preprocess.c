@@ -317,6 +317,9 @@ void app_inductor_preprocess_init(void)
 
     pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_tick);
     interrupt_set_priority(TIM4_IRQn, 3U);
+    #if __DBGFLAG__
+    printf(">>[app_inductor_preprocess_init]\r\n");
+    #endif
 }
 
 void app_inductor_preprocess_debug(void)

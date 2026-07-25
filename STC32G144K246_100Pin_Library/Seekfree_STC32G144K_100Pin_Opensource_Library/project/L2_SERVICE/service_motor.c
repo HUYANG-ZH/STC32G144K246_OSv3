@@ -60,6 +60,9 @@ void service_motor_init(void)
 {
     service_motor_init_bsp_once();
     service_motor_reset();
+    #if __DBGFLAG__
+    printf(">>[service_motor_init]\r\n");
+    #endif
 }
 
 void service_motor_debug(void)

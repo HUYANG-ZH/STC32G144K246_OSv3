@@ -264,6 +264,9 @@ void service_wireless_uart_init(void)
     {
         interrupt_set_priority(UART8_DMA_IRQn, SERVICE_WIRELESS_UART_DMA_PRIORITY);
     }
+    #if __DBGFLAG__
+    printf(">>[service_wireless_uart_init]\r\n");
+    #endif
 }
 
 void service_wireless_uart_debug(void)

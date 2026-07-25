@@ -21,6 +21,9 @@ void service_buzzer_init(void)
     buzzer_is_on = 1U;
     buzzer_timing = 0U;
     buzzer_deadline_tick = 0UL;
+    #if __DBGFLAG__
+    printf(">>[service_buzzer_init]\r\n");
+    #endif
 }
 
 void service_buzzer_debug(void)

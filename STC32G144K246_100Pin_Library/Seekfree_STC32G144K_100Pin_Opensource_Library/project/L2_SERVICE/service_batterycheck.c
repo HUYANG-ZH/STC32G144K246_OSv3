@@ -65,6 +65,9 @@ void service_batterycheck_init(void)
     batterycheck_last_sequence = 0UL;
     batterycheck_valid = 0U;
     (void)service_packet_add_action("battery_voltage", service_batterycheck_voltage_reply, 0UL);
+    #if __DBGFLAG__
+    printf(">>[service_batterycheck_init]\r\n");
+    #endif
 }
 
 void service_batterycheck_debug(void)

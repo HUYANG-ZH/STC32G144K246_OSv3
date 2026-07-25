@@ -217,6 +217,9 @@ void app_speedout_init(void)
     app_speedout_register_packet();
     pit_ms_init(APP_SPEEDOUT_PIT, APP_SPEEDOUT_PERIOD_MS, app_speedout_tick);
     interrupt_set_priority(TIM5_IRQn, 3U);
+    #if __DBGFLAG__
+    printf(">>[app_speedout_init]\r\n");
+    #endif
 }
 
 void app_speedout_debug(void)

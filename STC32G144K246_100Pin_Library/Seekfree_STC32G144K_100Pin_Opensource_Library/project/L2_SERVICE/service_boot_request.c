@@ -162,6 +162,9 @@ void service_boot_request_init(void)
 {
     boot_request_dfu_flag = 0UL;
     uart_rx_handlers[UART_1] = service_boot_request_feed_byte;
+    #if __DBGFLAG__
+    printf(">>[service_boot_request_init]\r\n");
+    #endif
 }
 
 #endif

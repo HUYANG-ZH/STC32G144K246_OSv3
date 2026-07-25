@@ -73,6 +73,9 @@ void service_imu_init(void)
     service_imu_acc_scale = tfpu_div(1.0f, imu660rc_transition_factor[0]);
     service_imu_gyro_scale = tfpu_div(1.0f, imu660rc_transition_factor[1]);
     service_imu_start_calibration();
+    #if __DBGFLAG__
+    printf(">>[service_imu_init]\r\n");
+    #endif
 }
 
 void service_imu_task(void)

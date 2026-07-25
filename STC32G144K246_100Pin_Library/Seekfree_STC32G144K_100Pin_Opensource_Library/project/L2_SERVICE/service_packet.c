@@ -686,6 +686,9 @@ void service_packet_init(void)
         packet_actions[i].func = (service_packet_action_func_t)0;
         packet_actions[i].delay_ms = 0U;
     }
+    #if __DBGFLAG__
+    printf(">>[service_packet_init]\r\n");
+    #endif
 }
 
 //-------------------------------------------------------------------------------------------------------------------

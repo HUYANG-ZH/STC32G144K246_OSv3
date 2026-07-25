@@ -12,6 +12,9 @@ void service_tof_init(void)
 #if SERVICE_TOF_ENABLE
     (void)bsp_tof_init();
     service_tof_last_request_tick = service_timetick_what();
+    #if __DBGFLAG__
+    printf(">>[service_tof_init]\r\n");
+    #endif
 #else
     service_tof_last_request_tick = 0UL;
 #endif
