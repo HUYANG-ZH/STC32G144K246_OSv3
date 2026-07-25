@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_scheduler                                                      24/07/26  19:08:32  PAGE 1   
+C251 COMPILER V5.60.0,  app_scheduler                                                      25/07/26  22:02:17  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_scheduler
@@ -53,132 +53,135 @@ stmt  level    source
    37   2          }
    38   1      
    39   1          pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
-   40   1      }
-   41          
-   42          void app_scheduler_debug(void)
-   43          {
-   44   1      }
-   45          
-   46          //-------------------------------------------------------------------------------------------------------
+   40   1          #if __DBGFLAG__
+   41   1          printf(">>[app_scheduler_init]\r\n");
+   42   1          #endif
+   43   1      }
+   44          
+   45          void app_scheduler_debug(void)
+   46          {
+   47   1      }
+   48          
+   49          //-------------------------------------------------------------------------------------------------------
              -------------
-   47          // 函数简介     app 层任务注册
-   48          // 参数说明     id              任务编号，范围 0 - APP_SCHEDULER_TASK_MAX-1
-   49          // 参数说明     task_func       任务函数指针，任务内部不允许死延时
-   50          // 参数说明     priority        任务优先级，数值越大优先级越高
-   51          // 参数说明     period_ms       任务执行周期，单位 ms
-C251 COMPILER V5.60.0,  app_scheduler                                                      24/07/26  19:08:32  PAGE 2   
+   50          // 函数简介     app 层任务注册
+   51          // 参数说明     id              任务编号，范围 0 - APP_SCHEDULER_TASK_MAX-1
+C251 COMPILER V5.60.0,  app_scheduler                                                      25/07/26  22:02:17  PAGE 2   
 
-   52          // 返回参数     uint8           1：注册成功 0：注册失败
-   53          // 使用示例     app_scheduler_add(0, task_fast, 10, 10);
-   54          // 备注信息     任务重复注册会覆盖原任务配置
-   55          //-------------------------------------------------------------------------------------------------------
+   52          // 参数说明     task_func       任务函数指针，任务内部不允许死延时
+   53          // 参数说明     priority        任务优先级，数值越大优先级越高
+   54          // 参数说明     period_ms       任务执行周期，单位 ms
+   55          // 返回参数     uint8           1：注册成功 0：注册失败
+   56          // 使用示例     app_scheduler_add(0, task_fast, 10, 10);
+   57          // 备注信息     任务重复注册会覆盖原任务配置
+   58          //-------------------------------------------------------------------------------------------------------
              -------------
-   56          uint8 app_scheduler_add(uint8 id, void (*task_func)(void), uint8 priority, uint16 period_ms)
-   57          {
-   58   1          uint8 ea_backup;
-   59   1      
-   60   1          if((APP_SCHEDULER_TASK_MAX <= id) || (NULL == task_func) || (0U == period_ms))
-   61   1          {
-   62   2              return 0;
-   63   2          }
-   64   1      
-   65   1          ea_backup = EA;
-   66   1          EA = 0;
+   59          uint8 app_scheduler_add(uint8 id, void (*task_func)(void), uint8 priority, uint16 period_ms)
+   60          {
+   61   1          uint8 ea_backup;
+   62   1      
+   63   1          if((APP_SCHEDULER_TASK_MAX <= id) || (NULL == task_func) || (0U == period_ms))
+   64   1          {
+   65   2              return 0;
+   66   2          }
    67   1      
-   68   1          app_scheduler_tasks[id].task_func = task_func;
-   69   1          app_scheduler_tasks[id].period_ms = period_ms;
-   70   1          app_scheduler_tasks[id].tick_count = 0;
-   71   1          app_scheduler_tasks[id].priority = priority;
-   72   1          app_scheduler_tasks[id].ready = 0;
-   73   1          app_scheduler_tasks[id].used = 1;
-   74   1      
-   75   1          EA = ea_backup;
-   76   1      
-   77   1          return 1;
-   78   1      }
-   79          
-   80          //-------------------------------------------------------------------------------------------------------
+   68   1          ea_backup = EA;
+   69   1          EA = 0;
+   70   1      
+   71   1          app_scheduler_tasks[id].task_func = task_func;
+   72   1          app_scheduler_tasks[id].period_ms = period_ms;
+   73   1          app_scheduler_tasks[id].tick_count = 0;
+   74   1          app_scheduler_tasks[id].priority = priority;
+   75   1          app_scheduler_tasks[id].ready = 0;
+   76   1          app_scheduler_tasks[id].used = 1;
+   77   1      
+   78   1          EA = ea_backup;
+   79   1      
+   80   1          return 1;
+   81   1      }
+   82          
+   83          //-------------------------------------------------------------------------------------------------------
              -------------
-   81          // 函数简介     app 层任务调度运行
-   82          // 参数说明     void
-   83          // 返回参数     void
-   84          // 使用示例     while(1) { app_scheduler_run(); }
-   85          // 备注信息     每次最多执行一个就绪任务，同优先级时任务编号小的先执行
-   86          //-------------------------------------------------------------------------------------------------------
+   84          // 函数简介     app 层任务调度运行
+   85          // 参数说明     void
+   86          // 返回参数     void
+   87          // 使用示例     while(1) { app_scheduler_run(); }
+   88          // 备注信息     每次最多执行一个就绪任务，同优先级时任务编号小的先执行
+   89          //-------------------------------------------------------------------------------------------------------
              -------------
-   87          void app_scheduler_run(void)
-   88          {
-   89   1          uint8 i;
-   90   1          uint8 selected = APP_SCHEDULER_TASK_MAX;
-   91   1          uint8 selected_priority = 0;
-   92   1          uint8 ea_backup;
-   93   1          void (*task_func)(void);
-   94   1      
-   95   1          for(i = 0; i < APP_SCHEDULER_TASK_MAX; i++)
-   96   1          {
-   97   2              if((0U != app_scheduler_tasks[i].used) && (0U != app_scheduler_tasks[i].ready))
-   98   2              {
-   99   3                  if((APP_SCHEDULER_TASK_MAX == selected) || (app_scheduler_tasks[i].priority > selected_priori
+   90          void app_scheduler_run(void)
+   91          {
+   92   1          uint8 i;
+   93   1          uint8 selected = APP_SCHEDULER_TASK_MAX;
+   94   1          uint8 selected_priority = 0;
+   95   1          uint8 ea_backup;
+   96   1          void (*task_func)(void);
+   97   1      
+   98   1          for(i = 0; i < APP_SCHEDULER_TASK_MAX; i++)
+   99   1          {
+  100   2              if((0U != app_scheduler_tasks[i].used) && (0U != app_scheduler_tasks[i].ready))
+  101   2              {
+  102   3                  if((APP_SCHEDULER_TASK_MAX == selected) || (app_scheduler_tasks[i].priority > selected_priori
              -ty))
-  100   3                  {
-  101   4                      selected = i;
-  102   4                      selected_priority = app_scheduler_tasks[i].priority;
-  103   4                  }
-  104   3              }
-  105   2          }
-  106   1      
-  107   1          if(APP_SCHEDULER_TASK_MAX == selected)
-  108   1          {
-  109   2              return;
-  110   2          }
-  111   1      
-  112   1          ea_backup = EA;
-  113   1          EA = 0;
-C251 COMPILER V5.60.0,  app_scheduler                                                      24/07/26  19:08:32  PAGE 3   
+  103   3                  {
+  104   4                      selected = i;
+  105   4                      selected_priority = app_scheduler_tasks[i].priority;
+  106   4                  }
+  107   3              }
+  108   2          }
+  109   1      
+  110   1          if(APP_SCHEDULER_TASK_MAX == selected)
+  111   1          {
+  112   2              return;
+  113   2          }
+C251 COMPILER V5.60.0,  app_scheduler                                                      25/07/26  22:02:17  PAGE 3   
 
-  114   1          app_scheduler_tasks[selected].ready = 0;
-  115   1          task_func = app_scheduler_tasks[selected].task_func;
-  116   1          EA = ea_backup;
-  117   1      
-  118   1          if(NULL != task_func)
-  119   1          {
-  120   2              task_func();
-  121   2          }
-  122   1      }
-  123          
-  124          //-------------------------------------------------------------------------------------------------------
+  114   1      
+  115   1          ea_backup = EA;
+  116   1          EA = 0;
+  117   1          app_scheduler_tasks[selected].ready = 0;
+  118   1          task_func = app_scheduler_tasks[selected].task_func;
+  119   1          EA = ea_backup;
+  120   1      
+  121   1          if(NULL != task_func)
+  122   1          {
+  123   2              task_func();
+  124   2          }
+  125   1      }
+  126          
+  127          //-------------------------------------------------------------------------------------------------------
              -------------
-  125          // 函数简介     app 层任务调度器 1ms 心跳
-  126          // 参数说明     void
-  127          // 返回参数     void
-  128          // 使用示例     pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
-  129          // 备注信息     此函数运行在 TIM2 中断中，只更新 tick_count 和 ready 标志
-  130          //-------------------------------------------------------------------------------------------------------
+  128          // 函数简介     app 层任务调度器 1ms 心跳
+  129          // 参数说明     void
+  130          // 返回参数     void
+  131          // 使用示例     pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
+  132          // 备注信息     此函数运行在 TIM2 中断中，只更新 tick_count 和 ready 标志
+  133          //-------------------------------------------------------------------------------------------------------
              -------------
-  131          static void app_scheduler_tick(void)
-  132          {
-  133   1          uint8 i;
-  134   1      
-  135   1          for(i = 0; i < APP_SCHEDULER_TASK_MAX; i++)
-  136   1          {
-  137   2              if((0U != app_scheduler_tasks[i].used) && (NULL != app_scheduler_tasks[i].task_func))
-  138   2              {
-  139   3                  app_scheduler_tasks[i].tick_count++;
-  140   3      
-  141   3                  if(app_scheduler_tasks[i].tick_count >= app_scheduler_tasks[i].period_ms)
-  142   3                  {
-  143   4                      app_scheduler_tasks[i].tick_count = 0;
-  144   4                      app_scheduler_tasks[i].ready = 1;
-  145   4                  }
-  146   3              }
-  147   2          }
-  148   1      }
+  134          static void app_scheduler_tick(void)
+  135          {
+  136   1          uint8 i;
+  137   1      
+  138   1          for(i = 0; i < APP_SCHEDULER_TASK_MAX; i++)
+  139   1          {
+  140   2              if((0U != app_scheduler_tasks[i].used) && (NULL != app_scheduler_tasks[i].task_func))
+  141   2              {
+  142   3                  app_scheduler_tasks[i].tick_count++;
+  143   3      
+  144   3                  if(app_scheduler_tasks[i].tick_count >= app_scheduler_tasks[i].period_ms)
+  145   3                  {
+  146   4                      app_scheduler_tasks[i].tick_count = 0;
+  147   4                      app_scheduler_tasks[i].ready = 1;
+  148   4                  }
+  149   3              }
+  150   2          }
+  151   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1075     ------
+  ecode size           =      1087     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -192,7 +195,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =    ------     ------
+  hconst size          =        25     ------
 End of Module Information.
 
 

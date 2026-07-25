@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speed_plan                                                     24/07/26  19:08:32  PAGE 1   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     25/07/26  22:02:18  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speed_plan
@@ -66,7 +66,7 @@ stmt  level    source
    53   2          }
    54   1      
    55   1          abs_value = app_speed_plan_abs(value);
-C251 COMPILER V5.60.0,  app_speed_plan                                                     24/07/26  19:08:32  PAGE 2   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     25/07/26  22:02:18  PAGE 2   
 
    56   1          abs_value = app_speed_plan_limit(abs_value, 0.0f, max_value);
    57   1      
@@ -118,51 +118,54 @@ stmt  level    source
   103   1          app_speed_plan_control_step();
   104   1          /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定�
              -� */
-  105   1      }
-  106          
-  107          float app_speed_plan_get_linear_mps(void)
-  108          {
-  109   1          return speed_plan_linear_mps;
-  110   1      }
-  111          
-  112          void app_speed_plan_control_step(void)
-  113          {
-  114   1          float line_error_rate;
-  115   1          float curvature_rate;
-  116   1          float brake_rate;
-  117   1          float ratio;
-  118   1          float target_raw_mps;
-  119   1          app_motion_preprocess_data_t motion_preprocess;
-  120   1          app_feedforward_data_t feedforward;
-C251 COMPILER V5.60.0,  app_speed_plan                                                     24/07/26  19:08:32  PAGE 3   
+  105   1          #if __DBGFLAG__
+  106   1          printf(">>[app_speed_plan_init]\r\n");
+  107   1          #endif
+  108   1      }
+  109          
+  110          float app_speed_plan_get_linear_mps(void)
+  111          {
+  112   1          return speed_plan_linear_mps;
+  113   1      }
+  114          
+  115          void app_speed_plan_control_step(void)
+  116          {
+  117   1          float line_error_rate;
+  118   1          float curvature_rate;
+  119   1          float brake_rate;
+  120   1          float ratio;
+C251 COMPILER V5.60.0,  app_speed_plan                                                     25/07/26  22:02:18  PAGE 3   
 
-  121   1      
-  122   1          app_motion_preprocess_get_data(&motion_preprocess);
-  123   1          app_feedforward_get_data(&feedforward);
+  121   1          float target_raw_mps;
+  122   1          app_motion_preprocess_data_t motion_preprocess;
+  123   1          app_feedforward_data_t feedforward;
   124   1      
-  125   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
-  126   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
-  127   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
-  128   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
-  129   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
-  130   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
-  131   1      
-  132   1          /* 跷跷板触发后立即降速到 0.8m/s，持续 160ms，跳过 ramp 实现硬立即 */
-  133   1          if(0U != app_element_seesaw_is_slowdown_active())
-  134   1          {
-  135   2              speed_plan_linear_mps = app_element_seesaw_slowdown_speed_mps();
-  136   2          }
-  137   1          else
-  138   1          {
-  139   2              speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
-  140   2          }
-  141   1      }
+  125   1          app_motion_preprocess_get_data(&motion_preprocess);
+  126   1          app_feedforward_get_data(&feedforward);
+  127   1      
+  128   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
+  129   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
+  130   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
+  131   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
+  132   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
+  133   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
+  134   1      
+  135   1          /* 跷跷板触发后立即降速到 0.8m/s，持续 160ms，跳过 ramp 实现硬立即 */
+  136   1          if(0U != app_element_seesaw_is_slowdown_active())
+  137   1          {
+  138   2              speed_plan_linear_mps = app_element_seesaw_slowdown_speed_mps();
+  139   2          }
+  140   1          else
+  141   1          {
+  142   2              speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
+  143   2          }
+  144   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1034     ------
+  ecode size           =      1046     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -176,7 +179,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        39     ------
+  hconst size          =        65     ------
 End of Module Information.
 
 

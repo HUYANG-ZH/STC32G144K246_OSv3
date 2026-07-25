@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  24/07/26  19:08:33  PAGE 1   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  25/07/26  22:02:18  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_boot_sequence
@@ -66,7 +66,7 @@ stmt  level    source
    53          {
    54   1          app_speedout_request_stop_all();
    55   1          boot_stop_received = 0U;
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  24/07/26  19:08:33  PAGE 2   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  25/07/26  22:02:18  PAGE 2   
 
    56   1          boot_state = APP_BOOT_STATE_START_WAIT;
    57   1          boot_state_tick = service_timetick_what();
@@ -134,7 +134,7 @@ stmt  level    source
   119   2      
   120   2              case APP_BOOT_STATE_START_PRESSURE:
   121   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_START_PRESSURE_BUILD_TICKS)
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  24/07/26  19:08:33  PAGE 3   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  25/07/26  22:02:18  PAGE 3   
 
   122   2                  {
   123   3                      app_speedout_request_start();
@@ -154,7 +154,7 @@ stmt  level    source
   137   1          service_buzzer_beep_ms(APP_BOOT_BEEP_MS);
   138   1      
   139   1          boot_stop_received = 0U;
-  140   1          boot_state = APP_BOOT_STATE_BEEP;
+  140   1          boot_state = APP_BOOT_STATE_IDLE;
   141   1          boot_state_tick = service_timetick_what();
   142   1      
   143   1          (void)service_packet_add_action("stop", app_boot_stop_handler, 0UL);
@@ -164,13 +164,16 @@ stmt  level    source
   147   1      
   148   1          (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
   149   1                  APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
-  150   1      }
+  150   1          #if __DBGFLAG__
+  151   1          printf(">>[app_boot_sequence_init]\r\n");
+  152   1          #endif
+  153   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       648     ------
+  ecode size           =       659     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -184,7 +187,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       204     ------
+  hconst size          =       233     ------
 End of Module Information.
 
 

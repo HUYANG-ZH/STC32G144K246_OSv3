@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            24/07/26  19:08:30  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            25/07/26  22:02:16  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    52          static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
    53          static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
    54          static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            24/07/26  19:08:30  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            25/07/26  22:02:16  PAGE 2   
 
    55          
    56          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
@@ -134,7 +134,7 @@ stmt  level    source
   118   1          EA = ea_backup;
   119   1      }
   120          
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            24/07/26  19:08:30  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            25/07/26  22:02:16  PAGE 3   
 
   121          static void app_inductor_update_output(void)
   122          {
@@ -202,7 +202,7 @@ stmt  level    source
   183   2          }
   184   1          EA = ea_backup;
   185   1      }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            24/07/26  19:08:30  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            25/07/26  22:02:16  PAGE 4   
 
   186          
   187          static void app_inductor_preprocess_tick(void)
@@ -270,7 +270,7 @@ stmt  level    source
   249   3                  inductor_history[i][inductor_history_index] = sample[i];
   250   3              }
   251   2      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            24/07/26  19:08:30  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            25/07/26  22:02:16  PAGE 5   
 
   252   2              inductor_history_index++;
   253   2              if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
@@ -338,7 +338,7 @@ stmt  level    source
              -eprocess_sync_calibration);
   311   1          (void)service_packet_add_variable_with_callback("ind_max0", &inductor_cal_max[0], 1U, app_inductor_pr
              -eprocess_sync_calibration);
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            24/07/26  19:08:30  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            25/07/26  22:02:16  PAGE 6   
 
   312   1          (void)service_packet_add_variable_with_callback("ind_max1", &inductor_cal_max[1], 1U, app_inductor_pr
              -eprocess_sync_calibration);
@@ -353,67 +353,70 @@ stmt  level    source
   318   1          pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_t
              -ick);
   319   1          interrupt_set_priority(TIM4_IRQn, 3U);
-  320   1      }
-  321          
-  322          void app_inductor_preprocess_debug(void)
-  323          {
-  324   1          static uint32 last_tick = 0U;
-  325   1          app_inductor_preprocess_data_t inductor;
-  326   1      
-  327   1          if((service_timetick_what() - last_tick) >= 33U)  // 30Hz
-  328   1          {
-  329   2              last_tick = service_timetick_what();
-  330   2              app_inductor_preprocess_get_data(&inductor);
-  331   2              wprint("%.1f,%.1f,%.1f,%.1f,%.1f\r\n",
-  332   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
-  333   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
-  334   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-  335   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
-  336   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
-  337   2          }
-  338   1      }
-  339          
-  340          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
-  341          {
-  342   1          uint8 i;
-  343   1          uint8 ea_backup;
-  344   1      
-  345   1          if(NULL == out_data)
-  346   1          {
-  347   2              return;
-  348   2          }
-  349   1      
-  350   1          ea_backup = EA;
-  351   1          EA = 0;
-  352   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  353   1          {
-  354   2              out_data->filtered[i] = inductor_data.filtered[i];
-  355   2              out_data->normalized[i] = inductor_data.normalized[i];
-  356   2          }
-  357   1          EA = ea_backup;
-  358   1      }
+  320   1          #if __DBGFLAG__
+  321   1          printf(">>[app_inductor_preprocess_init]\r\n");
+  322   1          #endif
+  323   1      }
+  324          
+  325          void app_inductor_preprocess_debug(void)
+  326          {
+  327   1          static uint32 last_tick = 0U;
+  328   1          app_inductor_preprocess_data_t inductor;
+  329   1      
+  330   1          if((service_timetick_what() - last_tick) >= 33U)  // 30Hz
+  331   1          {
+  332   2              last_tick = service_timetick_what();
+  333   2              app_inductor_preprocess_get_data(&inductor);
+  334   2              wprint("%.1f,%.1f,%.1f,%.1f,%.1f\r\n",
+  335   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+  336   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+  337   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+  338   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+  339   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
+  340   2          }
+  341   1      }
+  342          
+  343          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
+  344          {
+  345   1          uint8 i;
+  346   1          uint8 ea_backup;
+  347   1      
+  348   1          if(NULL == out_data)
+  349   1          {
+  350   2              return;
+  351   2          }
+  352   1      
+  353   1          ea_backup = EA;
+  354   1          EA = 0;
+  355   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  356   1          {
+  357   2              out_data->filtered[i] = inductor_data.filtered[i];
+  358   2              out_data->normalized[i] = inductor_data.normalized[i];
+  359   2          }
+  360   1          EA = ea_backup;
+  361   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      3830     ------
+  ecode size           =      3842     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =       476     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            25/07/26  22:02:16  PAGE 7   
+
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            24/07/26  19:08:30  PAGE 7   
-
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       256     ------
+  hconst size          =       291     ------
 End of Module Information.
 
 

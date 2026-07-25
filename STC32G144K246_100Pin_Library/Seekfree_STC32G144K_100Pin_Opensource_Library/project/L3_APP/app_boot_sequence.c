@@ -137,7 +137,7 @@ void app_boot_sequence_init(void)
     service_buzzer_beep_ms(APP_BOOT_BEEP_MS);
 
     boot_stop_received = 0U;
-    boot_state = APP_BOOT_STATE_BEEP;
+    boot_state = APP_BOOT_STATE_IDLE;
     boot_state_tick = service_timetick_what();
 
     (void)service_packet_add_action("stop", app_boot_stop_handler, 0UL);

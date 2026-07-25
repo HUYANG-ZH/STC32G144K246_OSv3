@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_function_queue                                             24/07/26  19:08:25  PAGE 1   
+C251 COMPILER V5.60.0,  service_function_queue                                             25/07/26  22:02:11  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_function_queue
@@ -60,126 +60,129 @@ stmt  level    source
    47   1          function_queue_order = 0U;
    48   1      
    49   1          EA = ea_backup;
-   50   1      }
-   51          
-   52          void service_function_queue_debug(void)
-   53          {
-   54   1      }
-   55          
-C251 COMPILER V5.60.0,  service_function_queue                                             24/07/26  19:08:25  PAGE 2   
+   50   1          #if __DBGFLAG__
+   51   1          printf(">>[service_function_queue_init]\r\n");
+   52   1          #endif
+   53   1      }
+   54          
+   55          void service_function_queue_debug(void)
+C251 COMPILER V5.60.0,  service_function_queue                                             25/07/26  22:02:11  PAGE 2   
 
-   56          uint8 service_function_queue_add(service_function_queue_func_t func, uint32 delay_ms, uint8 priority)
-   57          {
-   58   1          uint8 i;
-   59   1          uint8 ea_backup;
-   60   1          uint32 now;
-   61   1      
-   62   1          if((NULL == func) || (SERVICE_FUNCTION_QUEUE_PRIORITY_MIN > priority) ||
-   63   1                  (SERVICE_FUNCTION_QUEUE_PRIORITY_MAX < priority))
-   64   1          {
-   65   2              return 0U;
-   66   2          }
-   67   1      
-   68   1          now = service_timetick_what();
-   69   1      
-   70   1          ea_backup = EA;
-   71   1          EA = 0;
+   56          {
+   57   1      }
+   58          
+   59          uint8 service_function_queue_add(service_function_queue_func_t func, uint32 delay_ms, uint8 priority)
+   60          {
+   61   1          uint8 i;
+   62   1          uint8 ea_backup;
+   63   1          uint32 now;
+   64   1      
+   65   1          if((NULL == func) || (SERVICE_FUNCTION_QUEUE_PRIORITY_MIN > priority) ||
+   66   1                  (SERVICE_FUNCTION_QUEUE_PRIORITY_MAX < priority))
+   67   1          {
+   68   2              return 0U;
+   69   2          }
+   70   1      
+   71   1          now = service_timetick_what();
    72   1      
-   73   1          for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
-   74   1          {
-   75   2              if(0U == function_queue[i].used)
-   76   2              {
-   77   3                  function_queue[i].func = func;
-   78   3                  function_queue[i].start_tick = now;
-   79   3                  function_queue[i].delay_tick = delay_ms * SERVICE_FUNCTION_QUEUE_TICK_PER_MS;
-   80   3                  function_queue[i].order = function_queue_order++;
-   81   3                  function_queue[i].priority = priority;
-   82   3                  function_queue[i].used = 1U;
-   83   3      
-   84   3                  EA = ea_backup;
-   85   3                  return 1U;
-   86   3              }
-   87   2          }
-   88   1      
-   89   1          EA = ea_backup;
-   90   1          return 0U;
-   91   1      }
-   92          
-   93          void service_function_queue_update(void)
-   94          {
-   95   1          uint8 priority;
-   96   1          uint8 i;
-   97   1          uint8 selected;
-   98   1          uint8 ea_backup;
-   99   1          uint32 now;
-  100   1          uint32 update_order_limit;
-  101   1          uint32 selected_order;
-  102   1          service_function_queue_func_t selected_func;
-  103   1          uint8 executed = 0U;
-  104   1      
-  105   1          now = service_timetick_what();
-  106   1      
-  107   1          ea_backup = EA;
-  108   1          EA = 0;
-  109   1          update_order_limit = function_queue_order;
-  110   1          EA = ea_backup;
-  111   1      
-  112   1          for(priority = SERVICE_FUNCTION_QUEUE_PRIORITY_MAX; priority >= SERVICE_FUNCTION_QUEUE_PRIORITY_MIN; 
+   73   1          ea_backup = EA;
+   74   1          EA = 0;
+   75   1      
+   76   1          for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
+   77   1          {
+   78   2              if(0U == function_queue[i].used)
+   79   2              {
+   80   3                  function_queue[i].func = func;
+   81   3                  function_queue[i].start_tick = now;
+   82   3                  function_queue[i].delay_tick = delay_ms * SERVICE_FUNCTION_QUEUE_TICK_PER_MS;
+   83   3                  function_queue[i].order = function_queue_order++;
+   84   3                  function_queue[i].priority = priority;
+   85   3                  function_queue[i].used = 1U;
+   86   3      
+   87   3                  EA = ea_backup;
+   88   3                  return 1U;
+   89   3              }
+   90   2          }
+   91   1      
+   92   1          EA = ea_backup;
+   93   1          return 0U;
+   94   1      }
+   95          
+   96          void service_function_queue_update(void)
+   97          {
+   98   1          uint8 priority;
+   99   1          uint8 i;
+  100   1          uint8 selected;
+  101   1          uint8 ea_backup;
+  102   1          uint32 now;
+  103   1          uint32 update_order_limit;
+  104   1          uint32 selected_order;
+  105   1          service_function_queue_func_t selected_func;
+  106   1          uint8 executed = 0U;
+  107   1      
+  108   1          now = service_timetick_what();
+  109   1      
+  110   1          ea_backup = EA;
+  111   1          EA = 0;
+  112   1          update_order_limit = function_queue_order;
+  113   1          EA = ea_backup;
+  114   1      
+  115   1          for(priority = SERVICE_FUNCTION_QUEUE_PRIORITY_MAX; priority >= SERVICE_FUNCTION_QUEUE_PRIORITY_MIN; 
              -priority--)
-  113   1          {
-  114   2              while(1)
-  115   2              {
-  116   3                  selected = SERVICE_FUNCTION_QUEUE_MAX;
-  117   3                  selected_order = update_order_limit;
-  118   3                  selected_func = NULL;
-  119   3      
-  120   3                  ea_backup = EA;
-C251 COMPILER V5.60.0,  service_function_queue                                             24/07/26  19:08:25  PAGE 3   
+  116   1          {
+  117   2              while(1)
+  118   2              {
+  119   3                  selected = SERVICE_FUNCTION_QUEUE_MAX;
+  120   3                  selected_order = update_order_limit;
+C251 COMPILER V5.60.0,  service_function_queue                                             25/07/26  22:02:11  PAGE 3   
 
-  121   3                  EA = 0;
+  121   3                  selected_func = NULL;
   122   3      
-  123   3                  for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
-  124   3                  {
-  125   4                      if((0U != function_queue[i].used) &&
-  126   4                              (priority == function_queue[i].priority) &&
-  127   4                              (function_queue[i].order < update_order_limit) &&
-  128   4                              service_function_queue_time_ready(now, &function_queue[i]) &&
-  129   4                              (function_queue[i].order < selected_order))
-  130   4                      {
-  131   5                          selected = i;
-  132   5                          selected_order = function_queue[i].order;
-  133   5                          selected_func = function_queue[i].func;
-  134   5                      }
-  135   4                  }
-  136   3      
-  137   3                  if(SERVICE_FUNCTION_QUEUE_MAX != selected)
-  138   3                  {
-  139   4                      function_queue[selected].func = NULL;
-  140   4                      function_queue[selected].used = 0U;
-  141   4                  }
-  142   3      
-  143   3                  EA = ea_backup;
-  144   3      
-  145   3                  if(NULL == selected_func)
-  146   3                  {
-  147   4                      break;
-  148   4                  }
-  149   3      
-  150   3                  selected_func();
-  151   3                  executed++;
-  152   3                  if(executed >= SERVICE_FUNCTION_QUEUE_MAX_EXECUTE_PER_UPDATE)
-  153   3                  {
-  154   4                      return;
-  155   4                  }
-  156   3              }
-  157   2          }
-  158   1      }
+  123   3                  ea_backup = EA;
+  124   3                  EA = 0;
+  125   3      
+  126   3                  for(i = 0; i < SERVICE_FUNCTION_QUEUE_MAX; i++)
+  127   3                  {
+  128   4                      if((0U != function_queue[i].used) &&
+  129   4                              (priority == function_queue[i].priority) &&
+  130   4                              (function_queue[i].order < update_order_limit) &&
+  131   4                              service_function_queue_time_ready(now, &function_queue[i]) &&
+  132   4                              (function_queue[i].order < selected_order))
+  133   4                      {
+  134   5                          selected = i;
+  135   5                          selected_order = function_queue[i].order;
+  136   5                          selected_func = function_queue[i].func;
+  137   5                      }
+  138   4                  }
+  139   3      
+  140   3                  if(SERVICE_FUNCTION_QUEUE_MAX != selected)
+  141   3                  {
+  142   4                      function_queue[selected].func = NULL;
+  143   4                      function_queue[selected].used = 0U;
+  144   4                  }
+  145   3      
+  146   3                  EA = ea_backup;
+  147   3      
+  148   3                  if(NULL == selected_func)
+  149   3                  {
+  150   4                      break;
+  151   4                  }
+  152   3      
+  153   3                  selected_func();
+  154   3                  executed++;
+  155   3                  if(executed >= SERVICE_FUNCTION_QUEUE_MAX_EXECUTE_PER_UPDATE)
+  156   3                  {
+  157   4                      return;
+  158   4                  }
+  159   3              }
+  160   2          }
+  161   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1336     ------
+  ecode size           =      1348     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -193,7 +196,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =         9     ------
+  hconst size          =        43     ------
 End of Module Information.
 
 

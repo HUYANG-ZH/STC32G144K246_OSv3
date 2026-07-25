@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               24/07/26  22:41:55  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               25/07/26  22:32:36  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -13,47 +13,74 @@ stmt  level    source
     1          #include "zf_common_headfile.h"
     2          #include "sys_include.h"
     3          #include "bsp_buzzer.h"
-    4          #include "service_boot_request.h"
-    5          
-    6          #define BOOT_BUZZ_MS            (500UL)
-    7          #define PERIOD_BUZZ_MS          (500UL)
-    8          #define PERIOD_ON_MS            (20UL)
-    9          #define PERIOD_OFF_MS           (PERIOD_BUZZ_MS - PERIOD_ON_MS)
+    4          #include "service_timetick.h"
+    5          #include "service_imu.h"
+    6          #include "bsp_imu.h"
+    7          #include "service_boot_request.h"
+    8          #define BOOT_BUZZ_MS            (500UL)
+    9          #define IMU_DEBUG_INTERVAL_TICK (5000UL)
    10          
    11          void main(void)
    12          {
-   13   1          SystemStart();
+   13   1          uint32 imu_print_last_tick;
    14   1      
-   15   1          bsp_buzzer_init();
-   16   1          service_boot_request_init();
-   17   1      
-   18   1          wdt_init();
-   19   1      
-   20   1          bsp_buzzer_on();
-   21   1          system_delay_ms(BOOT_BUZZ_MS);
-   22   1          bsp_buzzer_off();
-   23   1      
-   24   1          while(1)
-   25   1          {
-   26   2              wdt_feed();
-   27   2              service_boot_request_process();
-   28   2      
-   29   2              bsp_buzzer_on();
-   30   2              system_delay_ms(PERIOD_ON_MS);
-   31   2              bsp_buzzer_off();
-   32   2              system_delay_ms(PERIOD_OFF_MS);
-   33   2          }
-   34   1      }
+   15   1          SystemStart();
+   16   1      
+   17   1          service_timetick_init();
+   18   1          service_imu_init();
+   19   1          service_boot_request_init();
+   20   1      
+   21   1          wdt_init();
+   22   1      
+   23   1          bsp_buzzer_init();
+   24   1          bsp_buzzer_on();
+   25   1          system_delay_ms(BOOT_BUZZ_MS);
+   26   1          bsp_buzzer_off();
+   27   1      
+   28   1          imu_print_last_tick = service_timetick_what();
+   29   1      
+   30   1          while(1)
+   31   1          {
+   32   2              wdt_feed();
+   33   2              service_imu_task();
+   34   2              service_imu_update();
+   35   2              service_boot_request_process();
+   36   2      
+   37   2              {
+   38   3                  uint32 now = service_timetick_what();
+   39   3                  if((uint32)(now - imu_print_last_tick) >= IMU_DEBUG_INTERVAL_TICK)
+   40   3                  {
+   41   4                      service_imu_sample_t imu;
+   42   4                      imu_print_last_tick = now;
+   43   4                      if((0U != service_imu_get_latest_sample(&imu)) && (0U != imu.valid))
+   44   4                      {
+   45   5                          printf("IMU gx=%.1f gy=%.1f gz=%.1f ax=%.2f ay=%.2f az=%.2f cal=%u\r\n",
+   46   5                              imu.gyro_x * 57.29578f, imu.gyro_y * 57.29578f, imu.gyro_z * 57.29578f,
+   47   5                              imu.acc_x_g, imu.acc_y_g, imu.acc_z_g,
+   48   5                              (uint8)service_imu_calibration_is_complete());
+   49   5                      }
+   50   4                      else
+   51   4                      {
+   52   5                          printf("IMU wait... ready=%d err=%lu cal=%d\r\n",
+   53   5                              (int)bsp_imu_is_ready(), bsp_imu_get_dma_error_count(),
+   54   5                              (int)service_imu_calibration_is_complete());
+   55   5                      }
+   56   4                  }
+C251 COMPILER V5.60.0,  main                                                               25/07/26  22:32:36  PAGE 2   
+
+   57   3              }
+   58   2          }
+   59   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       179     ------
+  ecode size           =       477     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =    ------     ------
+  xdata size           =        51     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -63,7 +90,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =         2     ------
+  hconst size          =       101     ------
 End of Module Information.
 
 

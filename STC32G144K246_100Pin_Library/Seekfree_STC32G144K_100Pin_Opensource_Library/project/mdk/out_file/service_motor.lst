@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_motor                                                      24/07/26  19:08:27  PAGE 1   
+C251 COMPILER V5.60.0,  service_motor                                                      25/07/26  22:02:12  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_motor
@@ -66,7 +66,7 @@ stmt  level    source
    53   2              return forward_level;
    54   2          }
    55   1      
-C251 COMPILER V5.60.0,  service_motor                                                      24/07/26  19:08:27  PAGE 2   
+C251 COMPILER V5.60.0,  service_motor                                                      25/07/26  22:02:12  PAGE 2   
 
    56   1          return service_motor_reverse_level(forward_level);
    57   1      }
@@ -75,87 +75,90 @@ stmt  level    source
    60          {
    61   1          service_motor_init_bsp_once();
    62   1          service_motor_reset();
-   63   1      }
-   64          
-   65          void service_motor_debug(void)
-   66          {
-   67   1          printf("[motor:30/100]\r\n");
-   68   1          service_motor_set_pwm(3000,3000);
-   69   1      }
-   70          
-   71          void service_motor_reset(void)
-   72          {
-   73   1          service_motor_init_bsp_once();
-   74   1      
-   75   1          motor_ready = 0U;
-   76   1          bsp_motor_set_pwm(0U, 0U);
+   63   1          #if __DBGFLAG__
+   64   1          printf(">>[service_motor_init]\r\n");
+   65   1          #endif
+   66   1      }
+   67          
+   68          void service_motor_debug(void)
+   69          {
+   70   1          printf("[motor:30/100]\r\n");
+   71   1          service_motor_set_pwm(3000,3000);
+   72   1      }
+   73          
+   74          void service_motor_reset(void)
+   75          {
+   76   1          service_motor_init_bsp_once();
    77   1      
-   78   1          bsp_motor_set_nsleep(1U);
-   79   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_PRE_HIGH_MS);
-   80   1          bsp_motor_set_nsleep(0U);
-   81   1          system_delay_us(SERVICE_MOTOR_NSLEEP_RESET_LOW_US);
-   82   1          bsp_motor_set_nsleep(1U);
-   83   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_POST_HIGH_MS);
-   84   1      
-   85   1          motor_ready = 1U;
-   86   1      }
-   87          
-   88          void service_motor_stop(void)
-   89          {
-   90   1          if(0U == motor_initialized)
-   91   1          {
-   92   2              return;
-   93   2          }
-   94   1      
-   95   1          bsp_motor_set_pwm(0U, 0U);
-   96   1      }
-   97          
-   98          void service_motor_set_left_pwm(int32 pwm)
-   99          {
-  100   1          if(0U == motor_ready)
-  101   1          {
-  102   2              return;
-  103   2          }
-  104   1      
-  105   1          bsp_motor_set_left_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL));
-  106   1          bsp_motor_set_left_pwm(service_motor_abs_duty(pwm));
-  107   1      }
-  108          
-  109          void service_motor_set_right_pwm(int32 pwm)
-  110          {
-  111   1          if(0U == motor_ready)
-  112   1          {
-  113   2              return;
-  114   2          }
-  115   1      
-  116   1          bsp_motor_set_right_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
-  117   1          bsp_motor_set_right_pwm(service_motor_abs_duty(pwm));
-  118   1      }
-  119          
-  120          void service_motor_set_pwm(int32 left_pwm, int32 right_pwm)
-  121          {
-C251 COMPILER V5.60.0,  service_motor                                                      24/07/26  19:08:27  PAGE 3   
+   78   1          motor_ready = 0U;
+   79   1          bsp_motor_set_pwm(0U, 0U);
+   80   1      
+   81   1          bsp_motor_set_nsleep(1U);
+   82   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_PRE_HIGH_MS);
+   83   1          bsp_motor_set_nsleep(0U);
+   84   1          system_delay_us(SERVICE_MOTOR_NSLEEP_RESET_LOW_US);
+   85   1          bsp_motor_set_nsleep(1U);
+   86   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_POST_HIGH_MS);
+   87   1      
+   88   1          motor_ready = 1U;
+   89   1      }
+   90          
+   91          void service_motor_stop(void)
+   92          {
+   93   1          if(0U == motor_initialized)
+   94   1          {
+   95   2              return;
+   96   2          }
+   97   1      
+   98   1          bsp_motor_set_pwm(0U, 0U);
+   99   1      }
+  100          
+  101          void service_motor_set_left_pwm(int32 pwm)
+  102          {
+  103   1          if(0U == motor_ready)
+  104   1          {
+  105   2              return;
+  106   2          }
+  107   1      
+  108   1          bsp_motor_set_left_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL));
+  109   1          bsp_motor_set_left_pwm(service_motor_abs_duty(pwm));
+  110   1      }
+  111          
+  112          void service_motor_set_right_pwm(int32 pwm)
+  113          {
+  114   1          if(0U == motor_ready)
+  115   1          {
+  116   2              return;
+  117   2          }
+  118   1      
+  119   1          bsp_motor_set_right_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
+  120   1          bsp_motor_set_right_pwm(service_motor_abs_duty(pwm));
+  121   1      }
+C251 COMPILER V5.60.0,  service_motor                                                      25/07/26  22:02:12  PAGE 3   
 
-  122   1          if(0U == motor_ready)
-  123   1          {
-  124   2              return;
-  125   2          }
-  126   1      
-  127   1          bsp_motor_set_dir(service_motor_dir_level(left_pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL),
-  128   1                  service_motor_dir_level(right_pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
-  129   1          bsp_motor_set_pwm(service_motor_abs_duty(left_pwm), service_motor_abs_duty(right_pwm));
-  130   1      }
-  131          
-  132          uint8 service_motor_is_ready(void)
-  133          {
-  134   1          return motor_ready;
-  135   1      }
+  122          
+  123          void service_motor_set_pwm(int32 left_pwm, int32 right_pwm)
+  124          {
+  125   1          if(0U == motor_ready)
+  126   1          {
+  127   2              return;
+  128   2          }
+  129   1      
+  130   1          bsp_motor_set_dir(service_motor_dir_level(left_pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL),
+  131   1                  service_motor_dir_level(right_pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
+  132   1          bsp_motor_set_pwm(service_motor_abs_duty(left_pwm), service_motor_abs_duty(right_pwm));
+  133   1      }
+  134          
+  135          uint8 service_motor_is_ready(void)
+  136          {
+  137   1          return motor_ready;
+  138   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       576     ------
+  ecode size           =       588     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -169,7 +172,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        29     ------
+  hconst size          =        54     ------
 End of Module Information.
 
 

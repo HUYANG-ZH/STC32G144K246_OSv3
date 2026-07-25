@@ -716,7 +716,7 @@ void spi_dma_init(spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_pin
     
     if(miso_pin != SPI_NULL_PIN)
     {
-        gpio_init(miso_pin & 0xFF, GPI, 1, GPI_PULL_UP);
+        gpio_init(miso_pin & 0xFF, GPI, 1, GPI_IMPEDANCE);
     }
     
     if(cs_pin != SPI_NULL_PIN)
@@ -835,7 +835,7 @@ void spi_dma_init(spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_pin
     HSSPIX_CFG(spi_n) = 0;
     // HSSPI2_CFG2 = 1<<5 | 1<<4 | 1<< 7; // 使能SPI高速模式， 使能FIFO
 
-    HSSPIX_CFG2(spi_n) = 0x10; // 使能SPI高速模式， 使能FIFO
+    HSSPIX_CFG2(spi_n) = 0x10; // 使能SPI高速模式，使能FIFO
 
     spi_psc = system_clock / baud + ((system_clock % baud) == 0? 0:1);
     if(spi_psc > 255) spi_psc = 255;

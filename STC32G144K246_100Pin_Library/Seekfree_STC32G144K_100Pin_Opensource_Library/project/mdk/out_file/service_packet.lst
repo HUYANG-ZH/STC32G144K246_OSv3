@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 1   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_packet
@@ -66,7 +66,7 @@ stmt  level    source
    53          static volatile uint32 packet_write_parse_fail_total = 0U;
    54          static char packet_last_miss_name[SERVICE_PACKET_NAME_SNAPSHOT_MAX];
    55          
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 2   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 2   
 
    56          static void service_packet_save_miss_name(const char *name);
    57          static void service_packet_append_char(char *buffer, uint8 *index, char value);
@@ -134,7 +134,7 @@ stmt  level    source
   111   1          while(('\0' != *text) && (0U != service_packet_is_value_separator(*text)))
   112   1          {
   113   2              text++;
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 3   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 3   
 
   114   2          }
   115   1      
@@ -202,7 +202,7 @@ stmt  level    source
   171   1      }
   172          
   173          static void service_packet_save_miss_name(const char *name)
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 4   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 4   
 
   174          {
   175   1          uint8 i = 0U;
@@ -270,7 +270,7 @@ stmt  level    source
   237   2          }
   238   1      }
   239          
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 5   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 5   
 
   240          static void service_packet_append_float3(char *buffer, uint8 *index, float value)
   241          {
@@ -338,7 +338,7 @@ stmt  level    source
   301   1          {
   302   2              text = service_packet_skip_value_separator(text);
   303   2              if('\0' == *text)
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 6   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 6   
 
   304   2              {
   305   3                  return 0U;
@@ -406,7 +406,7 @@ stmt  level    source
   366          // 使用示例     内部调用，用户无需关心
   367          // 备注信息     输出格式为 name,value0,value1...\r\n
   368          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 7   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 7   
 
              -------------
   369          static void service_packet_print_variable(service_packet_variable_t *variable)
@@ -474,7 +474,7 @@ stmt  level    source
              -------------
   428          static void service_packet_handle_write(char *name, char *value_text)
   429          {
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 8   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 8   
 
   430   1          uint8 i;
   431   1          uint8 changed;
@@ -542,7 +542,7 @@ stmt  level    source
   490   1          else
   491   1          {
   492   2              (void)service_function_queue_add(action->func, action->delay_ms, SERVICE_PACKET_TRIGGER_PRIORITY)
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 9   
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 9   
 
              -;
   493   2          }
@@ -610,7 +610,7 @@ stmt  level    source
   553          //-------------------------------------------------------------------------------------------------------
              -------------
   554          // 函数简介     复位接收状态机
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 10  
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 10  
 
   555          // 参数说明     void
   556          // 返回参数     void
@@ -678,7 +678,7 @@ stmt  level    source
   613   3              }
   614   2              return;
   615   2          }
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 11  
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 11  
 
   616   1      
   617   1          if(SERVICE_PACKET_RX_BODY == packet_rx_state)
@@ -746,7 +746,7 @@ stmt  level    source
   677   2              packet_variables[i].name = NULL;
   678   2              packet_variables[i].value = NULL;
   679   2              packet_variables[i].value_count = 0U;
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 12  
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 12  
 
   680   2              packet_variables[i].callback = (service_packet_write_callback_t)0;
   681   2          }
@@ -757,160 +757,163 @@ stmt  level    source
   686   2              packet_actions[i].func = (service_packet_action_func_t)0;
   687   2              packet_actions[i].delay_ms = 0U;
   688   2          }
-  689   1      }
-  690          
-  691          //-------------------------------------------------------------------------------------------------------
+  689   1          #if __DBGFLAG__
+  690   1          printf(">>[service_packet_init]\r\n");
+  691   1          #endif
+  692   1      }
+  693          
+  694          //-------------------------------------------------------------------------------------------------------
              -------------
-  692          // 函数简介     通讯包服务调试接口
-  693          // 参数说明     void
-  694          // 返回参数     void
-  695          // 使用示例     service_packet_debug();
-  696          //-------------------------------------------------------------------------------------------------------
+  695          // 函数简介     通讯包服务调试接口
+  696          // 参数说明     void
+  697          // 返回参数     void
+  698          // 使用示例     service_packet_debug();
+  699          //-------------------------------------------------------------------------------------------------------
              -------------
-  697          void service_packet_debug(void)
-  698          {
-  699   1          printf("[packet:byte=%ld,frame=%ld]\r\n", packet_rx_byte_total, packet_frame_total);
-  700   1          printf("[packet:R=%ld/%ld]\r\n", packet_read_total, packet_read_miss_total);
-  701   1          printf("[packet:W=%ld/%ld]\r\n", packet_write_total, packet_write_ok_total);
-  702   1          printf("[packet:miss=%ld,parse=%ld]\r\n", packet_write_miss_total, packet_write_parse_fail_total);
-  703   1          printf("[packet:var=%ld,state=%ld]\r\n", (uint32)packet_variable_count, (uint32)packet_rx_state);
-  704   1          printf("[packet:index=%ld,last=%s]\r\n", (uint32)packet_frame_index, packet_last_miss_name);
-  705   1      }
-  706          
-  707          //-------------------------------------------------------------------------------------------------------
+  700          void service_packet_debug(void)
+  701          {
+  702   1          printf("[packet:byte=%ld,frame=%ld]\r\n", packet_rx_byte_total, packet_frame_total);
+  703   1          printf("[packet:R=%ld/%ld]\r\n", packet_read_total, packet_read_miss_total);
+  704   1          printf("[packet:W=%ld/%ld]\r\n", packet_write_total, packet_write_ok_total);
+  705   1          printf("[packet:miss=%ld,parse=%ld]\r\n", packet_write_miss_total, packet_write_parse_fail_total);
+  706   1          printf("[packet:var=%ld,state=%ld]\r\n", (uint32)packet_variable_count, (uint32)packet_rx_state);
+  707   1          printf("[packet:index=%ld,last=%s]\r\n", (uint32)packet_frame_index, packet_last_miss_name);
+  708   1      }
+  709          
+  710          //-------------------------------------------------------------------------------------------------------
              -------------
-  708          // 函数简介     注册可读写变量
-  709          // 参数说明     name            变量名称
-  710          // 参数说明     value           变量数据地址
-  711          // 参数说明     value_count     变量包含的 float 数量
-  712          // 返回参数     uint8           1：注册成功 0：注册失败
-  713          // 使用示例     service_packet_add_variable("speed", speed_value, 2);
-  714          // 备注信息     相同名称重复注册时会更新变量地址和数量
-  715          //-------------------------------------------------------------------------------------------------------
+  711          // 函数简介     注册可读写变量
+  712          // 参数说明     name            变量名称
+  713          // 参数说明     value           变量数据地址
+  714          // 参数说明     value_count     变量包含的 float 数量
+  715          // 返回参数     uint8           1：注册成功 0：注册失败
+  716          // 使用示例     service_packet_add_variable("speed", speed_value, 2);
+  717          // 备注信息     相同名称重复注册时会更新变量地址和数量
+  718          //-------------------------------------------------------------------------------------------------------
              -------------
-  716          uint8 service_packet_add_variable(const char *name, float *value, uint8 value_count)
-  717          {
-  718   1          return service_packet_add_variable_with_callback(name, value, value_count, (service_packet_write_call
+  719          uint8 service_packet_add_variable(const char *name, float *value, uint8 value_count)
+  720          {
+  721   1          return service_packet_add_variable_with_callback(name, value, value_count, (service_packet_write_call
              -back_t)0);
-  719   1      }
-  720          
-  721          uint8 service_packet_add_variable_with_callback(const char *name, float *value, uint8 value_count,
-  722                  service_packet_write_callback_t callback)
-  723          {
-  724   1          service_packet_variable_t *variable;
-  725   1      
-  726   1          if((NULL == name) || (NULL == value) || (0U == value_count) ||
-  727   1                  (SERVICE_PACKET_VALUE_MAX < value_count))
-  728   1          {
-  729   2              return 0U;
-  730   2          }
-  731   1      
-  732   1          variable = service_packet_find_variable(name);
-  733   1          if(NULL != variable)
-  734   1          {
-  735   2              variable->value = value;
-  736   2              variable->value_count = value_count;
-  737   2              variable->callback = callback;
-  738   2              return 1U;
-  739   2          }
-  740   1      
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 13  
+  722   1      }
+  723          
+  724          uint8 service_packet_add_variable_with_callback(const char *name, float *value, uint8 value_count,
+  725                  service_packet_write_callback_t callback)
+  726          {
+  727   1          service_packet_variable_t *variable;
+  728   1      
+  729   1          if((NULL == name) || (NULL == value) || (0U == value_count) ||
+  730   1                  (SERVICE_PACKET_VALUE_MAX < value_count))
+  731   1          {
+  732   2              return 0U;
+  733   2          }
+  734   1      
+  735   1          variable = service_packet_find_variable(name);
+  736   1          if(NULL != variable)
+  737   1          {
+  738   2              variable->value = value;
+  739   2              variable->value_count = value_count;
+  740   2              variable->callback = callback;
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 13  
 
-  741   1          if(SERVICE_PACKET_VARIABLE_MAX <= packet_variable_count)
-  742   1          {
-  743   2              return 0U;
-  744   2          }
-  745   1      
-  746   1          packet_variables[packet_variable_count].name = name;
-  747   1          packet_variables[packet_variable_count].value = value;
-  748   1          packet_variables[packet_variable_count].value_count = value_count;
-  749   1          packet_variables[packet_variable_count].callback = callback;
-  750   1          packet_variable_count++;
-  751   1      
-  752   1          return 1U;
-  753   1      }
-  754          
-  755          //-------------------------------------------------------------------------------------------------------
+  741   2              return 1U;
+  742   2          }
+  743   1      
+  744   1          if(SERVICE_PACKET_VARIABLE_MAX <= packet_variable_count)
+  745   1          {
+  746   2              return 0U;
+  747   2          }
+  748   1      
+  749   1          packet_variables[packet_variable_count].name = name;
+  750   1          packet_variables[packet_variable_count].value = value;
+  751   1          packet_variables[packet_variable_count].value_count = value_count;
+  752   1          packet_variables[packet_variable_count].callback = callback;
+  753   1          packet_variable_count++;
+  754   1      
+  755   1          return 1U;
+  756   1      }
+  757          
+  758          //-------------------------------------------------------------------------------------------------------
              -------------
-  756          // 函数简介     注册触发动作
-  757          // 参数说明     name            操作名称
-  758          // 参数说明     func            触发动作函数
-  759          // 参数说明     delay_ms        触发后延迟执行时间 单位 ms
-  760          // 返回参数     uint8           1：注册成功 0：注册失败
-  761          // 使用示例     service_packet_add_action("reset", service_motor_reset, 0);
-  762          // 备注信息     相同名称重复注册时会更新函数和延迟时间
-  763          //-------------------------------------------------------------------------------------------------------
+  759          // 函数简介     注册触发动作
+  760          // 参数说明     name            操作名称
+  761          // 参数说明     func            触发动作函数
+  762          // 参数说明     delay_ms        触发后延迟执行时间 单位 ms
+  763          // 返回参数     uint8           1：注册成功 0：注册失败
+  764          // 使用示例     service_packet_add_action("reset", service_motor_reset, 0);
+  765          // 备注信息     相同名称重复注册时会更新函数和延迟时间
+  766          //-------------------------------------------------------------------------------------------------------
              -------------
-  764          uint8 service_packet_add_action(const char *name, service_packet_action_func_t func, uint32 delay_ms)
-  765          {
-  766   1          service_packet_action_t *action;
-  767   1      
-  768   1          if((NULL == name) || (NULL == func))
-  769   1          {
-  770   2              return 0U;
-  771   2          }
-  772   1      
-  773   1          action = service_packet_find_action(name);
-  774   1          if(NULL != action)
-  775   1          {
-  776   2              action->func = func;
-  777   2              action->delay_ms = delay_ms;
-  778   2              return 1U;
-  779   2          }
-  780   1      
-  781   1          if(SERVICE_PACKET_ACTION_MAX <= packet_action_count)
-  782   1          {
-  783   2              return 0U;
-  784   2          }
-  785   1      
-  786   1          packet_actions[packet_action_count].name = name;
-  787   1          packet_actions[packet_action_count].func = func;
-  788   1          packet_actions[packet_action_count].delay_ms = delay_ms;
-  789   1          packet_action_count++;
-  790   1      
-  791   1          return 1U;
-  792   1      }
-  793          
-  794          //-------------------------------------------------------------------------------------------------------
+  767          uint8 service_packet_add_action(const char *name, service_packet_action_func_t func, uint32 delay_ms)
+  768          {
+  769   1          service_packet_action_t *action;
+  770   1      
+  771   1          if((NULL == name) || (NULL == func))
+  772   1          {
+  773   2              return 0U;
+  774   2          }
+  775   1      
+  776   1          action = service_packet_find_action(name);
+  777   1          if(NULL != action)
+  778   1          {
+  779   2              action->func = func;
+  780   2              action->delay_ms = delay_ms;
+  781   2              return 1U;
+  782   2          }
+  783   1      
+  784   1          if(SERVICE_PACKET_ACTION_MAX <= packet_action_count)
+  785   1          {
+  786   2              return 0U;
+  787   2          }
+  788   1      
+  789   1          packet_actions[packet_action_count].name = name;
+  790   1          packet_actions[packet_action_count].func = func;
+  791   1          packet_actions[packet_action_count].delay_ms = delay_ms;
+  792   1          packet_action_count++;
+  793   1      
+  794   1          return 1U;
+  795   1      }
+  796          
+  797          //-------------------------------------------------------------------------------------------------------
              -------------
-  795          // 函数简介     通讯包服务周期更新
-  796          // 参数说明     void
-  797          // 返回参数     void
-  798          // 使用示例     service_packet_update();
-  799          // 备注信息     从无线串口读取数据并送入帧状态机，建议在主循环中周期调用
-  800          //-------------------------------------------------------------------------------------------------------
-             -------------
-  801          void service_packet_update(void)
-  802          {
-C251 COMPILER V5.60.0,  service_packet                                                     24/07/26  19:08:26  PAGE 14  
+  798          // 函数简介     通讯包服务周期更新
+  799          // 参数说明     void
+  800          // 返回参数     void
+  801          // 使用示例     service_packet_update();
+  802          // 备注信息     从无线串口读取数据并送入帧状态机，建议在主循环中周期调用
+  803          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  service_packet                                                     25/07/26  22:02:12  PAGE 14  
 
-  803   1          uint8 i;
-  804   1          uint8 chunk_count;
-  805   1          uint8 read_buffer[SERVICE_PACKET_RX_READ_SIZE];
-  806   1          uint8 read_length;
-  807   1      
-  808   1          for(chunk_count = 0U; chunk_count < SERVICE_PACKET_MAX_CHUNKS_PER_UPDATE; chunk_count++)
-  809   1          {
-  810   2              read_length = (uint8)service_wireless_uart_read_buffer(read_buffer, SERVICE_PACKET_RX_READ_SIZE);
-  811   2              packet_rx_byte_total += read_length;
-  812   2      
-  813   2              for(i = 0; i < read_length; i++)
-  814   2              {
-  815   3                  service_packet_input_char((char)read_buffer[i]);
-  816   3              }
-  817   2      
-  818   2              if(SERVICE_PACKET_RX_READ_SIZE != read_length)
-  819   2              {
-  820   3                  break;
-  821   3              }
-  822   2          }
-  823   1      }
+             -------------
+  804          void service_packet_update(void)
+  805          {
+  806   1          uint8 i;
+  807   1          uint8 chunk_count;
+  808   1          uint8 read_buffer[SERVICE_PACKET_RX_READ_SIZE];
+  809   1          uint8 read_length;
+  810   1      
+  811   1          for(chunk_count = 0U; chunk_count < SERVICE_PACKET_MAX_CHUNKS_PER_UPDATE; chunk_count++)
+  812   1          {
+  813   2              read_length = (uint8)service_wireless_uart_read_buffer(read_buffer, SERVICE_PACKET_RX_READ_SIZE);
+  814   2              packet_rx_byte_total += read_length;
+  815   2      
+  816   2              for(i = 0; i < read_length; i++)
+  817   2              {
+  818   3                  service_packet_input_char((char)read_buffer[i]);
+  819   3              }
+  820   2      
+  821   2              if(SERVICE_PACKET_RX_READ_SIZE != read_length)
+  822   2              {
+  823   3                  break;
+  824   3              }
+  825   2          }
+  826   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      5774     ------
+  ecode size           =      5786     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -924,7 +927,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       260     ------
+  hconst size          =       286     ------
 End of Module Information.
 
 

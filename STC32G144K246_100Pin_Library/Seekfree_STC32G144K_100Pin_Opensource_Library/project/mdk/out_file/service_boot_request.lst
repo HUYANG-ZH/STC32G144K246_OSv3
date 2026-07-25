@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 1   
+C251 COMPILER V5.60.0,  service_boot_request                                               25/07/26  22:02:14  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_boot_request
@@ -66,7 +66,7 @@ stmt  level    source
    53   1      }
    54          
    55          void service_boot_request_feed_byte(uint8 rx_byte)
-C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 2   
+C251 COMPILER V5.60.0,  service_boot_request                                               25/07/26  22:02:14  PAGE 2   
 
    56          {
    57   1          uint8 command;
@@ -134,7 +134,7 @@ stmt  level    source
   119   1          ack_frame[1] = 0x5AU;
   120   1          ack_frame[2] = 0x53U;
   121   1          ack_frame[3] = 0x42U;
-C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 3   
+C251 COMPILER V5.60.0,  service_boot_request                                               25/07/26  22:02:14  PAGE 3   
 
   122   1          ack_frame[4] = 0x4CU;
   123   1          ack_frame[5] = 0x52U;
@@ -179,15 +179,18 @@ stmt  level    source
   162          {
   163   1          boot_request_dfu_flag = 0UL;
   164   1          uart_rx_handlers[UART_1] = service_boot_request_feed_byte;
-  165   1      }
-  166          
-  167          #endif
+  165   1          #if __DBGFLAG__
+  166   1          printf(">>[service_boot_request_init]\r\n");
+  167   1          #endif
+  168   1      }
+  169          
+  170          #endif
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       773     ------
+  ecode size           =       785     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -200,11 +203,11 @@ Module Information          Static   Overlayable
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =        16     ------
-End of Module Information.
+C251 COMPILER V5.60.0,  service_boot_request                                               25/07/26  22:02:14  PAGE 4   
 
-C251 COMPILER V5.60.0,  service_boot_request                                               24/07/26  19:08:29  PAGE 4   
+  const size           =    ------     ------
+  hconst size          =        48     ------
+End of Module Information.
 
 
 C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

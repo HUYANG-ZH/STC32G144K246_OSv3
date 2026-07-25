@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              24/07/26  19:08:31  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              25/07/26  22:02:16  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_preprocess
@@ -66,77 +66,80 @@ stmt  level    source
    51          //-------------------------------------------------------------------------------------------------------
              -------------
    52          void app_motion_preprocess_init(void)
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              24/07/26  19:08:31  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              25/07/26  22:02:16  PAGE 2   
 
    53          {
    54   1          app_motion_preprocess_register_packet();
    55   1          /* 首次仅发布当前快照；周期调度统一由 app_motion_postprocess 的 TIM6 控制链承�
              -�。 */
    56   1          app_motion_preprocess_control_step();
-   57   1      }
-   58          
-   59          //-------------------------------------------------------------------------------------------------------
+   57   1          #if __DBGFLAG__
+   58   1          printf(">>[app_motion_preprocess_init]\r\n");
+   59   1          #endif
+   60   1      }
+   61          
+   62          //-------------------------------------------------------------------------------------------------------
              -------------
-   60          // 函数简介     获取运动前处理数据
-   61          // 参数说明     out_data        数据输出地址
-   62          // 返回参数     void
-   63          // 使用示例     app_motion_preprocess_get_data(&motion_data);
-   64          //-------------------------------------------------------------------------------------------------------
+   63          // 函数简介     获取运动前处理数据
+   64          // 参数说明     out_data        数据输出地址
+   65          // 返回参数     void
+   66          // 使用示例     app_motion_preprocess_get_data(&motion_data);
+   67          //-------------------------------------------------------------------------------------------------------
              -------------
-   65          void app_motion_preprocess_get_data(app_motion_preprocess_data_t *out_data)
-   66          {
-   67   1          uint8 ea_backup;
-   68   1      
-   69   1          if(NULL == out_data)
-   70   1          {
-   71   2              return;
-   72   2          }
-   73   1      
-   74   1          ea_backup = EA;
-   75   1          EA = 0;
-   76   1          out_data->x_error = motion_preprocess_data.x_error;
-   77   1          out_data->y_error = motion_preprocess_data.y_error;
-   78   1          out_data->line_error = motion_preprocess_data.line_error;
-   79   1          out_data->linear_mps = motion_preprocess_data.linear_mps;
-   80   1          out_data->target_yaw_rate_rps = motion_preprocess_data.target_yaw_rate_rps;
-   81   1          EA = ea_backup;
-   82   1      }
-   83          
-   84          void app_motion_preprocess_control_step(void)
-   85          {
-   86   1          app_inductor_preprocess_data_t inductor_data;
-   87   1          app_motion_preprocess_data_t output;
-   88   1      
-   89   1          app_inductor_preprocess_get_data(&inductor_data);
-   90   1      
-   91   1          output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normaliz
-             -ed[3]);
-   92   1          output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normaliz
-             -ed[2]);
+   68          void app_motion_preprocess_get_data(app_motion_preprocess_data_t *out_data)
+   69          {
+   70   1          uint8 ea_backup;
+   71   1      
+   72   1          if(NULL == out_data)
+   73   1          {
+   74   2              return;
+   75   2          }
+   76   1      
+   77   1          ea_backup = EA;
+   78   1          EA = 0;
+   79   1          out_data->x_error = motion_preprocess_data.x_error;
+   80   1          out_data->y_error = motion_preprocess_data.y_error;
+   81   1          out_data->line_error = motion_preprocess_data.line_error;
+   82   1          out_data->linear_mps = motion_preprocess_data.linear_mps;
+   83   1          out_data->target_yaw_rate_rps = motion_preprocess_data.target_yaw_rate_rps;
+   84   1          EA = ea_backup;
+   85   1      }
+   86          
+   87          void app_motion_preprocess_control_step(void)
+   88          {
+   89   1          app_inductor_preprocess_data_t inductor_data;
+   90   1          app_motion_preprocess_data_t output;
+   91   1      
+   92   1          app_inductor_preprocess_get_data(&inductor_data);
    93   1      
-   94   1          output.line_error = tfpu_add(tfpu_mul(output.y_error, APP_MOTION_PREPROCESS_Y_WEIGHT),
-   95   1                  tfpu_mul(output.x_error, APP_MOTION_PREPROCESS_X_WEIGHT));
-   96   1          output.linear_mps = app_motion_preprocess_config.linear_mps;
-   97   1          output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
-   98   1      
-   99   1          motion_preprocess_data.x_error = output.x_error;
-  100   1          motion_preprocess_data.y_error = output.y_error;
-  101   1          motion_preprocess_data.line_error = output.line_error;
-  102   1          motion_preprocess_data.linear_mps = output.linear_mps;
-  103   1          motion_preprocess_data.target_yaw_rate_rps = output.target_yaw_rate_rps;
-  104   1      }
+   94   1          output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normaliz
+             -ed[3]);
+   95   1          output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normaliz
+             -ed[2]);
+   96   1      
+   97   1          output.line_error = tfpu_add(tfpu_mul(output.y_error, APP_MOTION_PREPROCESS_Y_WEIGHT),
+   98   1                  tfpu_mul(output.x_error, APP_MOTION_PREPROCESS_X_WEIGHT));
+   99   1          output.linear_mps = app_motion_preprocess_config.linear_mps;
+  100   1          output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
+  101   1      
+  102   1          motion_preprocess_data.x_error = output.x_error;
+  103   1          motion_preprocess_data.y_error = output.y_error;
+  104   1          motion_preprocess_data.line_error = output.line_error;
+  105   1          motion_preprocess_data.linear_mps = output.linear_mps;
+  106   1          motion_preprocess_data.target_yaw_rate_rps = output.target_yaw_rate_rps;
+  107   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       665     ------
+  ecode size           =       677     ------
   data size            =    ------     ------
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              25/07/26  22:02:16  PAGE 3   
+
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =       105     ------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              24/07/26  19:08:31  PAGE 3   
-
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -146,7 +149,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        85     ------
+  hconst size          =       118     ------
 End of Module Information.
 
 

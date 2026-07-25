@@ -254,6 +254,12 @@ static uint8 bsp_imu_boot_submit(uint8 command, uint8 value)
     EA = 0;
     if((0U != s_bsp_imu_boot_transfer_active) || (0U != spi_dma_async_is_busy(IMU660RC_SPI)))
     {
+        if(0U != spi_dma_async_is_busy(IMU660RC_SPI))
+        {
+            (void)spi_dma_async_abort(IMU660RC_SPI);
+            IMU660RC_CS(1);
+            s_bsp_imu_dma_error_count++;
+        }
         EA = ea_backup;
         return 0U;
     }
@@ -358,204 +364,41 @@ void bsp_imu_init(void)
     s_bsp_imu_published_index = 0U;
     s_bsp_imu_sequence = 0U;
     s_bsp_imu_dma_error_count = 0U;
-    s_bsp_imu_boot_config_count = 0U;
-    s_bsp_imu_boot_config_index = 0U;
-    s_bsp_imu_boot_transfer_active = 0U;
-    s_bsp_imu_boot_transfer_done = 0U;
-    s_bsp_imu_boot_transfer_success = 0U;
     s_bsp_imu_transfer_deadline_tick = 0UL;
-    s_bsp_imu_boot_transfer_deadline_tick = 0UL;
-    s_bsp_imu_boot_state = BSP_IMU_BOOT_IDLE;
     for(i = 0U; i < 2U; i++)
     {
         s_bsp_imu_sample[i].valid = 0U;
         s_bsp_imu_sample[i].sequence = 0U;
     }
 
-    spi_dma_init(IMU660RC_SPI, SPI_MODE0, IMU660RC_SPI_SPEED,
-            IMU660RC_SPC_PIN, IMU660RC_SDI_PIN, IMU660RC_SDO_PIN, SPI_CS_NULL);
-    gpio_init(IMU660RC_CS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
-    IMU660RC_CS(1);
+    (void)imu660rc_init(BSP_IMU_QUARTERNION_RATE);
 
-    if(0U == bsp_imu_build_boot_config())
-    {
-        s_bsp_imu_boot_state = BSP_IMU_BOOT_ERROR;
-        s_bsp_imu_dma_error_count++;
-        return;
-    }
-
-    s_bsp_imu_boot_deadline_tick = service_timetick_what() + BSP_IMU_BOOT_POWER_WAIT_TICK;
-    s_bsp_imu_boot_state = BSP_IMU_BOOT_POWER_WAIT;
+    s_bsp_imu_ready = 1U;
 }
 
 void bsp_imu_bootstrap_process(void)
 {
-    uint8 transfer_result;
-    uint32 now;
-
-    if((0U != s_bsp_imu_ready) || (BSP_IMU_BOOT_ERROR == s_bsp_imu_boot_state))
-    {
-        return;
-    }
-
-    now = service_timetick_what();
-    if((0U != s_bsp_imu_boot_transfer_active) &&
-       (0U != bsp_imu_deadline_reached(now, s_bsp_imu_boot_transfer_deadline_tick)))
-    {
-        (void)spi_dma_async_abort(IMU660RC_SPI);
-        IMU660RC_CS(1);
-        s_bsp_imu_boot_transfer_active = 0U;
-        s_bsp_imu_boot_transfer_deadline_tick = 0UL;
-        s_bsp_imu_boot_transfer_success = 0U;
-        s_bsp_imu_boot_transfer_done = 1U;
-    }
-    switch(s_bsp_imu_boot_state)
-    {
-        case BSP_IMU_BOOT_POWER_WAIT:
-            if(0U != bsp_imu_boot_deadline_reached(now))
-            {
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_ID_SUBMIT;
-            }
-            break;
-
-        case BSP_IMU_BOOT_ID_SUBMIT:
-            if(0U != bsp_imu_boot_submit((uint8)(IMU660RC_CHIP_ID | IMU660RC_SPI_R), 0x00U))
-            {
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_ID_WAIT;
-            }
-            break;
-
-        case BSP_IMU_BOOT_ID_WAIT:
-            transfer_result = bsp_imu_boot_take_result();
-            if(1U == transfer_result)
-            {
-                if(0x70U == s_bsp_imu_boot_rx[1])
-                {
-                    s_bsp_imu_boot_state = BSP_IMU_BOOT_RESET_SUBMIT;
-                }
-                else
-                {
-                    s_bsp_imu_dma_error_count++;
-                    s_bsp_imu_boot_state = BSP_IMU_BOOT_ERROR;
-                }
-            }
-            break;
-
-        case BSP_IMU_BOOT_RESET_SUBMIT:
-            if(0U != bsp_imu_boot_submit((uint8)(IMU660RC_FUNC_CFG_ACCESS | IMU660RC_SPI_W), 0x04U))
-            {
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_RESET_WAIT;
-            }
-            break;
-
-        case BSP_IMU_BOOT_RESET_WAIT:
-            transfer_result = bsp_imu_boot_take_result();
-            if(1U == transfer_result)
-            {
-                s_bsp_imu_boot_deadline_tick = now + BSP_IMU_BOOT_RESET_WAIT_TICK;
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_RESET_DELAY;
-            }
-            break;
-
-        case BSP_IMU_BOOT_RESET_DELAY:
-            if(0U != bsp_imu_boot_deadline_reached(now))
-            {
-                s_bsp_imu_boot_config_index = 0U;
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_CONFIG_SUBMIT;
-            }
-            break;
-
-        case BSP_IMU_BOOT_CONFIG_SUBMIT:
-            if(s_bsp_imu_boot_config_index >= s_bsp_imu_boot_config_count)
-            {
-                if(IMU660RC_QUARTERNION_DISABLE != BSP_IMU_QUARTERNION_RATE)
-                {
-                    gpio_int_irq_handlers[((IMU660RC_INT2_PIN & 0X0F00) >> 8)][(IMU660RC_INT2_PIN & 0X000F)] = imu660rc_callback;
-                    exit_init(IMU660RC_INT2_PIN, RISING_EDGE);
-                    interrupt_set_priority(0X50 + ((IMU660RC_INT2_PIN & 0X0F00) >> 8), 2U);
-                }
-                s_bsp_imu_ready = 1U;
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_READY;
-                (void)bsp_imu_request_sample();
-            }
-            else if(0U != bsp_imu_boot_submit(
-                    (uint8)(s_bsp_imu_boot_config[s_bsp_imu_boot_config_index].reg | IMU660RC_SPI_W),
-                    s_bsp_imu_boot_config[s_bsp_imu_boot_config_index].value))
-            {
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_CONFIG_WAIT;
-            }
-            break;
-
-        case BSP_IMU_BOOT_CONFIG_WAIT:
-            transfer_result = bsp_imu_boot_take_result();
-            if(1U == transfer_result)
-            {
-                s_bsp_imu_boot_config_index++;
-                s_bsp_imu_boot_state = BSP_IMU_BOOT_CONFIG_SUBMIT;
-            }
-            break;
-
-        case BSP_IMU_BOOT_IDLE:
-        case BSP_IMU_BOOT_READY:
-        case BSP_IMU_BOOT_ERROR:
-        default:
-            break;
-    }
 }
 
 uint8 bsp_imu_request_sample(void)
 {
     uint8 i;
-    uint8 result;
-    uint8 ea_backup;
-    uint32 now;
 
     if(0U == s_bsp_imu_ready)
     {
         return 0U;
     }
 
-    now = service_timetick_what();
-    ea_backup = EA;
-    EA = 0;
-    if((0U != s_bsp_imu_transfer_active) &&
-       (0U != bsp_imu_deadline_reached(now, s_bsp_imu_transfer_deadline_tick)))
-    {
-        (void)spi_dma_async_abort(IMU660RC_SPI);
-        IMU660RC_CS(1);
-        s_bsp_imu_transfer_active = 0U;
-        s_bsp_imu_transfer_deadline_tick = 0UL;
-        s_bsp_imu_dma_error_count++;
-    }
-    if((0U != s_bsp_imu_transfer_active) || (0U != spi_dma_async_is_busy(IMU660RC_SPI)))
-    {
-        EA = ea_backup;
-        return 0U;
-    }
-
-    s_bsp_imu_tx[0] = BSP_IMU_FRAME_REGISTER;
-    for(i = 1U; i < BSP_IMU_DMA_LENGTH; i++)
-    {
-        s_bsp_imu_tx[i] = 0U;
-    }
-
-    s_bsp_imu_transfer_active = 1U;
+    /* Synchronous read of 14 bytes from IMU660RC (0x20: temp, 0x22: gyro, 0x28: accel).
+       Write starting at s_bsp_imu_rx[1] so the DMA completion handler's RX[1..14] layout matches. */
     IMU660RC_CS(0);
-    result = spi_dma_async_transfer(IMU660RC_SPI, s_bsp_imu_tx, s_bsp_imu_rx,
-            BSP_IMU_DMA_LENGTH, bsp_imu_dma_complete);
-    if(0U != result)
-    {
-        s_bsp_imu_transfer_deadline_tick = now + BSP_IMU_SPI_TIMEOUT_TICK;
-    }
-    else
-    {
-        IMU660RC_CS(1);
-        s_bsp_imu_transfer_active = 0U;
-        s_bsp_imu_transfer_deadline_tick = 0UL;
-        s_bsp_imu_dma_error_count++;
-    }
-    EA = ea_backup;
-    return result;
+    spi_read_8bit_registers(IMU660RC_SPI, BSP_IMU_FRAME_REGISTER, &s_bsp_imu_rx[1], BSP_IMU_FRAME_DATA_LENGTH);
+    IMU660RC_CS(1);
+
+    /* Process via the same DMA completion handler so data format is identical. */
+    bsp_imu_dma_complete(IMU660RC_SPI, 1U);
+
+    return 1U;
 }
 
 uint8 bsp_imu_get_latest_sample(bsp_imu_sample_t *out_data)
