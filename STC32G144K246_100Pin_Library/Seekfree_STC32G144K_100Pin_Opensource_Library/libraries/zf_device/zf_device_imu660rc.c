@@ -663,7 +663,18 @@ uint8 imu660rc_enable_unified_fifo(void)
 
     if(IMU660RC_QUARTERNION_DISABLE == imu660rc_quarternion_rate)
     {
-        return 1U;
+        /* 无四元数模式下只启用 gyro+accel 的 FIFO 批量输出：
+           FIFO_CONFIG2 = 0x88 → batch rate = 8 (约 250Hz @ 480Hz ODR)
+           watermark = 2 → gyro + accel 各一笔即触发 INT2
+           STOP_ON_WTM + continuous FIFO */
+        imu660rc_write_register(IMU660RC_INT2_CTRL, 0x00);
+        imu660rc_write_register(0x0A, 0x00);
+        imu660rc_write_register(0x07, 0x02);
+        imu660rc_write_register(0x08, 0x80);
+        imu660rc_write_register(0x09, 0x88);
+        imu660rc_write_register(0x0A, 0x06);
+        imu660rc_write_register(IMU660RC_INT2_CTRL, 0x08);
+        return 0U;
     }
 
     /* enum 15/30/60/120/240/480 Hz maps to FIFO BDR codes 3..8. */
@@ -672,9 +683,9 @@ uint8 imu660rc_enable_unified_fifo(void)
     imu660rc_write_register(IMU660RC_INT2_CTRL, 0x00);
     imu660rc_write_register(0x0A, 0x00);                         // FIFO bypass: clear stale words
     imu660rc_set_mem_bank(IMU660RC_EMBED_MEM_BANK);
-    imu660rc_write_register(0x44, 0x01);                         // SFLP_GAME_FIFO_EN
+    imu660rc_write_register(0x44, 0x00);                         // SFLP_GAME_FIFO_EN = 0
     imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
-    imu660rc_write_register(0x07, 0x03);                         // watermark = gyro + acc + game vector
+    imu660rc_write_register(0x07, 0x02);                         // watermark = gyro + acc
     imu660rc_write_register(0x08, 0x80);                         // STOP_ON_WTM: no adjacent-frame mixing
     imu660rc_write_register(0x09, (uint8)((batch_rate << 4) | batch_rate));
     imu660rc_write_register(0x0A, 0x06);                         // continuous FIFO
@@ -796,9 +807,9 @@ uint8 imu660rc_init(imu660rc_quarternion_rate_config quarternion_rate)
         }
         
         // 设置传感器模式，设置为高精度模式以及输出速率
-        imu660rc_write_register(IMU660RC_CTRL1, 0x15);
+        imu660rc_write_register(IMU660RC_CTRL1, 0x18);
         imu660rc_write_register(IMU660RC_CTRL2, 0x18);
-        
+
         // 开启LPF1滤波器
         imu660rc_write_register(IMU660RC_CTRL7, 0x01);
         

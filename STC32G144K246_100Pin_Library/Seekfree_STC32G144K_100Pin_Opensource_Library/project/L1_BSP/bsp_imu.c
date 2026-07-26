@@ -4,11 +4,11 @@
 #include "bsp_imu.h"
 
 #ifndef BSP_IMU_QUARTERNION_RATE
-#define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_480HZ)
+#define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_DISABLE)
 #endif
 
-/* FIFO frame: gyro word + accelerometer word + SFLP game-vector word. */
-#define BSP_IMU_FIFO_WORD_COUNT         (3U)
+/* FIFO frame: gyro word + accelerometer word.  SFLP quaternion disabled. */
+#define BSP_IMU_FIFO_WORD_COUNT         (2U)
 #define BSP_IMU_FIFO_WORD_LENGTH        (7U)
 #define BSP_IMU_FIFO_DMA_LENGTH         (1U + BSP_IMU_FIFO_WORD_COUNT * BSP_IMU_FIFO_WORD_LENGTH)
 #define BSP_IMU_FIFO_REGISTER           (0x78U | IMU660RC_SPI_R)
@@ -19,7 +19,6 @@
 
 #define BSP_IMU_FIFO_TAG_GYRO            (0x01U)
 #define BSP_IMU_FIFO_TAG_ACC             (0x02U)
-#define BSP_IMU_FIFO_TAG_SFLP_GAME       (0x13U)
 
 /* P84 is dedicated IMU CS.  Atomic SET/CLR avoids a P8OUT read-modify-write
  * collision with the motor direction pin on the same port. */
@@ -252,18 +251,14 @@ static uint8 bsp_imu_decode_fifo_frame(bsp_imu_sample_t *sample)
     uint8 tag;
     uint8 gyro_seen = 0U;
     uint8 acc_seen = 0U;
-    uint8 quaternion_seen = 0U;
-    uint16 qx_half = 0U;
-    uint16 qy_half = 0U;
-    uint16 qz_half = 0U;
-    float qx;
-    float qy;
-    float qz;
-    float qw;
-    float norm_squared;
-    float norm;
-    float temp_a;
-    float temp_b;
+    float ax;
+    float ay;
+    float az;
+    float ay2;
+    float az2;
+    float roll;
+    float pitch;
+    float acc_scale;
 
     if(NULL == sample)
     {
@@ -278,7 +273,7 @@ static uint8 bsp_imu_decode_fifo_frame(bsp_imu_sample_t *sample)
         {
             if(0U != gyro_seen)
             {
-                return 0U;
+                continue;
             }
             sample->gyro_x_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 1U], s_bsp_imu_fifo_rx[offset + 2U]);
             sample->gyro_y_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 3U], s_bsp_imu_fifo_rx[offset + 4U]);
@@ -289,76 +284,40 @@ static uint8 bsp_imu_decode_fifo_frame(bsp_imu_sample_t *sample)
         {
             if(0U != acc_seen)
             {
-                return 0U;
+                continue;
             }
             sample->acc_x_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 1U], s_bsp_imu_fifo_rx[offset + 2U]);
             sample->acc_y_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 3U], s_bsp_imu_fifo_rx[offset + 4U]);
             sample->acc_z_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 5U], s_bsp_imu_fifo_rx[offset + 6U]);
             acc_seen = 1U;
         }
-        else if(BSP_IMU_FIFO_TAG_SFLP_GAME == tag)
-        {
-            if(0U != quaternion_seen)
-            {
-                return 0U;
-            }
-            qx_half = (uint16)(((uint16)s_bsp_imu_fifo_rx[offset + 2U] << 8) | s_bsp_imu_fifo_rx[offset + 1U]);
-            qy_half = (uint16)(((uint16)s_bsp_imu_fifo_rx[offset + 4U] << 8) | s_bsp_imu_fifo_rx[offset + 3U]);
-            qz_half = (uint16)(((uint16)s_bsp_imu_fifo_rx[offset + 6U] << 8) | s_bsp_imu_fifo_rx[offset + 5U]);
-            quaternion_seen = 1U;
-        }
-        else
-        {
-            return 0U;
-        }
     }
 
-    if((0U == gyro_seen) || (0U == acc_seen) || (0U == quaternion_seen) ||
-       (0x7c00U == (qx_half & 0x7c00U)) || (0x7c00U == (qy_half & 0x7c00U)) ||
-       (0x7c00U == (qz_half & 0x7c00U)))
+    if((0U == gyro_seen) || (0U == acc_seen))
     {
         return 0U;
     }
 
-    *(uint32 *)(&qx) = bsp_imu_fp16_to_float_bits(qx_half);
-    *(uint32 *)(&qy) = bsp_imu_fp16_to_float_bits(qy_half);
-    *(uint32 *)(&qz) = bsp_imu_fp16_to_float_bits(qz_half);
-    norm_squared = tfpu_add(tfpu_add(tfpu_mul(qx, qx), tfpu_mul(qy, qy)), tfpu_mul(qz, qz));
-    if(norm_squared > 1.01f)
+    /* 从加速度计计算 roll/pitch（无 DMP 四元数）：
+       roll  = atan2(ay, az)
+       pitch = atan2(-ax, sqrt(ay^2 + az^2))
+       yaw = 0（加速度计无法测偏航） */
+    if(imu660rc_transition_factor[0] > 0.0f)
     {
-        return 0U;
-    }
-    qw = (norm_squared >= 1.0f) ? 0.0f : tfpu_sqrt(tfpu_sub(1.0f, norm_squared));
-    norm = tfpu_sqrt(tfpu_add(norm_squared, tfpu_mul(qw, qw)));
-    if(0U == (norm > 0.001f))
-    {
-        return 0U;
-    }
+        acc_scale = tfpu_div(1.0f, imu660rc_transition_factor[0]);
+        ax = tfpu_mul(tfpu_int2float((long)sample->acc_x_raw), acc_scale);
+        ay = tfpu_mul(tfpu_int2float((long)sample->acc_y_raw), acc_scale);
+        az = tfpu_mul(tfpu_int2float((long)sample->acc_z_raw), acc_scale);
 
-    /* The old page path read [qw,qx,qy,qz] and published [qx,qy,qw,qz].
-     * Preserve that project-facing convention while FIFO supplies [qx,qy,qz]. */
-    sample->quaternion_0 = tfpu_div(qx, norm);
-    sample->quaternion_1 = tfpu_div(qy, norm);
-    sample->quaternion_2 = tfpu_div(qw, norm);
-    sample->quaternion_3 = tfpu_div(qz, norm);
+        roll = bsp_imu_tfpu_atan2(ay, az);
+        ay2 = tfpu_mul(ay, ay);
+        az2 = tfpu_mul(az, az);
+        pitch = bsp_imu_tfpu_atan2(tfpu_sub(0.0f, ax), tfpu_sqrt(tfpu_add(ay2, az2)));
 
-    temp_a = tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_1, sample->quaternion_3),
-            tfpu_mul(sample->quaternion_0, sample->quaternion_2)));
-    temp_b = tfpu_sub(1.0f, tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_1, sample->quaternion_1),
-            tfpu_mul(sample->quaternion_0, sample->quaternion_0))));
-    sample->roll_deg = tfpu_mul(bsp_imu_tfpu_atan2(temp_a, temp_b), BSP_IMU_RAD_TO_DEG);
-    temp_a = tfpu_mul(2.0f, tfpu_sub(tfpu_mul(sample->quaternion_0, sample->quaternion_3),
-            tfpu_mul(sample->quaternion_1, sample->quaternion_2)));
-    sample->pitch_deg = tfpu_mul(tfpu_sub(0.0f, bsp_imu_tfpu_asin(temp_a)), BSP_IMU_RAD_TO_DEG);
-    temp_a = tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_0, sample->quaternion_1),
-            tfpu_mul(sample->quaternion_2, sample->quaternion_3)));
-    temp_b = tfpu_sub(1.0f, tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_0, sample->quaternion_0),
-            tfpu_mul(sample->quaternion_2, sample->quaternion_2))));
-    sample->yaw_deg = tfpu_mul(bsp_imu_tfpu_atan2(temp_a, temp_b), BSP_IMU_RAD_TO_DEG);
-    if(sample->yaw_deg < 0.0f)
-    {
-        sample->yaw_deg = tfpu_add(sample->yaw_deg, 360.0f);
+        sample->roll_deg = tfpu_mul(roll, BSP_IMU_RAD_TO_DEG);
+        sample->pitch_deg = tfpu_mul(pitch, BSP_IMU_RAD_TO_DEG);
     }
+    sample->yaw_deg = 0.0f;
     return 1U;
 }
 
@@ -435,6 +394,8 @@ void bsp_imu_init(void)
     EA = 0;
     gpio_int_irq_handlers[((IMU660RC_INT2_PIN & 0x0f00U) >> 8)]
             [IMU660RC_INT2_PIN & 0x000fU] = bsp_imu_fifo_drdy_isr;
+    exit_init(IMU660RC_INT2_PIN, RISING_EDGE);
+    interrupt_set_priority(0X50 + ((IMU660RC_INT2_PIN & 0X0F00) >> 8), 2);
     /* imu660rc_init temporarily owned INT2.  Do not lose a watermark that
      * became active in the short hand-off window before our callback arrived. */
     if(0U != P37)

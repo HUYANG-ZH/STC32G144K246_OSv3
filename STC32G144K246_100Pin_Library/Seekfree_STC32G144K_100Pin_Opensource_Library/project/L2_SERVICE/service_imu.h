@@ -17,16 +17,9 @@ typedef struct
     float acc_x_g;
     float acc_y_g;
     float acc_z_g;
-    /* IMU660RC SFLP quaternion in the established vendor order [q0..q3]. */
-    float quaternion_0;
-    float quaternion_1;
-    float quaternion_2;
-    float quaternion_3;
-    /* Euler angles derived from the same quaternion, in degrees. */
     float roll_deg;
     float pitch_deg;
     float yaw_deg;
-    /* One FIFO DMA frame owns all fields above. */
     uint32 sequence;
     uint32 drdy_tick;
     uint32 timestamp_tick;

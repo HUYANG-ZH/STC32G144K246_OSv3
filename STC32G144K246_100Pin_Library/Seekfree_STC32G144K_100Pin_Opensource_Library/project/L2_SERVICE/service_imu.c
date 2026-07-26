@@ -82,10 +82,6 @@ static void service_imu_make_sample(service_imu_sample_t *out_data, const bsp_im
     out_data->acc_x_g = tfpu_mul(tfpu_int2float((long)raw->acc_x_raw), service_imu_acc_scale);
     out_data->acc_y_g = tfpu_mul(tfpu_int2float((long)raw->acc_y_raw), service_imu_acc_scale);
     out_data->acc_z_g = tfpu_mul(tfpu_int2float((long)raw->acc_z_raw), service_imu_acc_scale);
-    out_data->quaternion_0 = raw->quaternion_0;
-    out_data->quaternion_1 = raw->quaternion_1;
-    out_data->quaternion_2 = raw->quaternion_2;
-    out_data->quaternion_3 = raw->quaternion_3;
     out_data->roll_deg = raw->roll_deg;
     out_data->pitch_deg = raw->pitch_deg;
     out_data->yaw_deg = raw->yaw_deg;

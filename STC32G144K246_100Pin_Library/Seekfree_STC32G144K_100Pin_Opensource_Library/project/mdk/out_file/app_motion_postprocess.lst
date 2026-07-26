@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          
    52          static shared_pos_pid_t motion_postprocess_yaw_pid;
    53          static shared_lpf_t motion_postprocess_gyro_z_lpf;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 2   
 
    54          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
    55          static uint32 motion_postprocess_imu_last_sequence = 0U;
@@ -134,7 +134,7 @@ stmt  level    source
   117   1      
   118   1          ea_backup = EA;
   119   1          EA = 0;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 3   
 
   120   1          app_motion_postprocess_sync_pid();
   121   1          shared_pos_pid_restart(&motion_postprocess_yaw_pid);
@@ -202,7 +202,7 @@ stmt  level    source
   183   1      
   184   1          /*
   185   1           * SPI DMA may complete slower than the 1 ms control tick.  A stale frame
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 4   
 
   186   1           * must not be filtered repeatedly: doing so changes the LPF state without
   187   1           * any new physical observation and obscures a stalled acquisition chain.
@@ -270,7 +270,7 @@ stmt  level    source
   246   1          app_motion_postprocess_sync_pid();
   247   1          shared_pos_pid_init(&motion_postprocess_yaw_pid);
   248   1          motion_postprocess_last_enabled =
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 5   
 
   249   1                  (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
   250   1      
@@ -338,7 +338,7 @@ stmt  level    source
   310   1          float raw_error;
   311   1          float processed_error;
   312   1          float static_feedforward_speed;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 6   
 
   313   1          float feedback_yaw_rate_radps;
   314   1          float feedforward_differential_speed;
@@ -406,7 +406,7 @@ stmt  level    source
   376   4                      feedback_yaw_rate_radps = -limit;
   377   4                  }
   378   3      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 7   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 7   
 
   379   3                  static_feedforward_speed = 0.0f;
   380   3              }
@@ -474,7 +474,7 @@ stmt  level    source
   440   3                  print_tick = 0U;
   441   3              }
   442   2          }
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  20:02:56  PAGE 8   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             26/07/26  21:28:05  PAGE 8   
 
   443   1      }
 
@@ -486,7 +486,7 @@ Module Information          Static   Overlayable
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       579     ------
+  xdata size           =       547     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

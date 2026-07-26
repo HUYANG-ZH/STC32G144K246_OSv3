@@ -11,11 +11,6 @@
 typedef struct
 {
     float gyro_z;
-    /* Vendor SFLP order [q0..q3]; not labelled x/y/z/w until installation is verified. */
-    float quaternion_0;
-    float quaternion_1;
-    float quaternion_2;
-    float quaternion_3;
     float roll_deg;
     float pitch_deg;
     float yaw_deg;
