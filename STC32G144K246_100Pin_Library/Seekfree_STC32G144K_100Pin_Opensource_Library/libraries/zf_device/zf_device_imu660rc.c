@@ -653,6 +653,35 @@ uint8 imu660rc_update_quarternion(void)
 // 使用示例     imu660rc_init(IMU660RC_QUARTERNION_120HZ);
 // 备注信息     
 //-------------------------------------------------------------------------------------------------------------------
+/*
+ * FIFO word = tag + 6 data bytes.  The three batched sources use the same
+ * SFLP rate; watermark three therefore denotes one complete IMU frame.
+ */
+uint8 imu660rc_enable_unified_fifo(void)
+{
+    uint8 batch_rate;
+
+    if(IMU660RC_QUARTERNION_DISABLE == imu660rc_quarternion_rate)
+    {
+        return 1U;
+    }
+
+    /* enum 15/30/60/120/240/480 Hz maps to FIFO BDR codes 3..8. */
+    batch_rate = (uint8)(imu660rc_quarternion_rate + 3U);
+
+    imu660rc_write_register(IMU660RC_INT2_CTRL, 0x00);
+    imu660rc_write_register(0x0A, 0x00);                         // FIFO bypass: clear stale words
+    imu660rc_set_mem_bank(IMU660RC_EMBED_MEM_BANK);
+    imu660rc_write_register(0x44, 0x01);                         // SFLP_GAME_FIFO_EN
+    imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
+    imu660rc_write_register(0x07, 0x03);                         // watermark = gyro + acc + game vector
+    imu660rc_write_register(0x08, 0x80);                         // STOP_ON_WTM: no adjacent-frame mixing
+    imu660rc_write_register(0x09, (uint8)((batch_rate << 4) | batch_rate));
+    imu660rc_write_register(0x0A, 0x06);                         // continuous FIFO
+    imu660rc_write_register(IMU660RC_INT2_CTRL, 0x08);           // INT2_FIFO_TH
+    return 0U;
+}
+
 uint8 imu660rc_init(imu660rc_quarternion_rate_config quarternion_rate)
 {
     uint8 return_state = 0;

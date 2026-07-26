@@ -1,0 +1,138 @@
+C251 COMPILER V5.60.0,  app_battery_guard                                                  26/07/26  20:02:55  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_battery_guard
+OBJECT MODULE PLACED IN .\out_file\app_battery_guard.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_battery_guard.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZ
+                    -E(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -es\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_componen
+                    -ts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_battery_guard.lst) OBJECT
+                    -(.\out_file\app_battery_guard.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_batterycheck.h"
+    3          #include "service_timetick.h"
+    4          #include "app_feedforward.h"
+    5          #include "app_motion_postprocess.h"
+    6          #include "app_speedout.h"
+    7          #include "app_battery_guard.h"
+    8          
+    9          #define APP_BATTERY_GUARD_PIT                  TIM8_PIT
+   10          #define APP_BATTERY_GUARD_PERIOD_MS            (10U)
+   11          /* ceil(11.0 V * 4096 / 36.4737); compare raw ADC data in the timer. */
+   12          #define APP_BATTERY_GUARD_LOW_RAW              (1236U)
+   13          #define APP_BATTERY_GUARD_STARTUP_GRACE_TICK    (3000UL)
+   14          #define APP_BATTERY_GUARD_MAX_SAMPLE_AGE_TICK   (1500UL)
+   15          
+   16          #define APP_BATTERY_GUARD_REASON_LOW_VOLTAGE    (1U)
+   17          #define APP_BATTERY_GUARD_REASON_STALE_SAMPLE   (2U)
+   18          
+   19          static volatile uint8 battery_guard_triggered = 0U;
+   20          static volatile uint8 battery_guard_report_pending = 0U;
+   21          static volatile uint16 battery_guard_trip_raw = 0U;
+   22          static volatile uint8 battery_guard_reason = 0U;
+   23          static uint32 battery_guard_last_sequence = 0UL;
+   24          static uint32 battery_guard_last_fresh_tick = 0UL;
+   25          static uint32 battery_guard_start_tick = 0UL;
+   26          static uint8 battery_guard_sample_seen = 0U;
+   27          
+   28          static void app_battery_guard_trip(uint16 rawdata, uint8 reason)
+   29          {
+   30   1          if(0U != battery_guard_triggered)
+   31   1          {
+   32   2              return;
+   33   2          }
+   34   1      
+   35   1          battery_guard_triggered = 1U;
+   36   1          battery_guard_trip_raw = rawdata;
+   37   1          battery_guard_reason = reason;
+   38   1          battery_guard_report_pending = 1U;
+   39   1          /* An interlock cannot be overridden by a concurrent START command. */
+   40   1          app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_BATTERY);
+   41   1      }
+   42          
+   43          /* The only safety decision and motor stop request live in a high-priority timer. */
+   44          static void app_battery_guard_tick(void)
+   45          {
+   46   1          uint16 rawdata = 0U;
+   47   1          uint32 sequence;
+   48   1          uint32 now;
+   49   1      
+   50   1          if(0U != battery_guard_triggered)
+   51   1          {
+   52   2              return;
+   53   2          }
+   54   1      
+   55   1          now = service_timetick_what();
+C251 COMPILER V5.60.0,  app_battery_guard                                                  26/07/26  20:02:55  PAGE 2   
+
+   56   1          if(0U != service_batterycheck_get_raw_snapshot(&rawdata, &sequence))
+   57   1          {
+   58   2              if((0U == battery_guard_sample_seen) || (sequence != battery_guard_last_sequence))
+   59   2              {
+   60   3                  battery_guard_last_sequence = sequence;
+   61   3                  battery_guard_last_fresh_tick = now;
+   62   3                  battery_guard_sample_seen = 1U;
+   63   3                  if(rawdata < APP_BATTERY_GUARD_LOW_RAW)
+   64   3                  {
+   65   4                      app_battery_guard_trip(rawdata, APP_BATTERY_GUARD_REASON_LOW_VOLTAGE);
+   66   4                  }
+   67   3                  return;
+   68   3              }
+   69   2          }
+   70   1      
+   71   1          if((0U == battery_guard_sample_seen) &&
+   72   1                  ((uint32)(now - battery_guard_start_tick) >= APP_BATTERY_GUARD_STARTUP_GRACE_TICK))
+   73   1          {
+   74   2              app_battery_guard_trip(0U, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
+   75   2          }
+   76   1          else if((0U != battery_guard_sample_seen) &&
+   77   1                  ((uint32)(now - battery_guard_last_fresh_tick) >= APP_BATTERY_GUARD_MAX_SAMPLE_AGE_TICK))
+   78   1          {
+   79   2              app_battery_guard_trip(rawdata, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
+   80   2          }
+   81   1      }
+   82          
+   83          void app_battery_guard_init(void)
+   84          {
+   85   1          battery_guard_triggered = 0U;
+   86   1          battery_guard_report_pending = 0U;
+   87   1          battery_guard_trip_raw = 0U;
+   88   1          battery_guard_reason = 0U;
+   89   1          battery_guard_last_sequence = 0UL;
+   90   1          battery_guard_last_fresh_tick = service_timetick_what();
+   91   1          battery_guard_start_tick = battery_guard_last_fresh_tick;
+   92   1          battery_guard_sample_seen = 0U;
+   93   1          pit_ms_init(APP_BATTERY_GUARD_PIT, APP_BATTERY_GUARD_PERIOD_MS, app_battery_guard_tick);
+   94   1          interrupt_set_priority(TIM8_IRQn, 3U);
+   95   1      }
+   96          
+   97          void app_battery_guard_pump_events(void)
+   98          {
+   99   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       462     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        31     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        58     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

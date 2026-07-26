@@ -234,6 +234,13 @@ void        spi_dma_init                        (spi_index_enum spi_n, spi_mode_
 // arms DMA and completes from DMA_SPIx_VECTOR; it never polls for completion.
 // Buffers must remain valid until the callback runs.
 uint8       spi_dma_async_transfer              (spi_index_enum spi_n, const uint8 *write_buffer, uint8 *read_buffer, uint16 len, spi_dma_async_callback callback);
+/*
+ * Queue exactly one successor from an spi_dma_async_transfer completion
+ * callback.  It only stores a descriptor; the DMA ISR arms it after the
+ * callback returns, so the foreground submit function is never re-entered.
+ * Calling it outside that callback context is invalid.
+ */
+uint8       spi_dma_async_chain_from_callback   (spi_index_enum spi_n, const uint8 *write_buffer, uint8 *read_buffer, uint16 len, spi_dma_async_callback callback);
 uint8       spi_dma_async_is_busy               (spi_index_enum spi_n);
 uint8       spi_dma_async_abort                 (spi_index_enum spi_n);
 void        spi_dma_async_irq_handler           (spi_index_enum spi_n);

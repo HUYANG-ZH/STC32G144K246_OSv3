@@ -94,7 +94,8 @@ void app_element_init(void);
 void app_element_get_data(app_element_data_t *out_data);
 /* 5 ms 控制链步骤；不再自行占用低优先级队列或独立定时器。 */
 void app_element_control_step(void);
-void app_element_imu_task(const service_imu_gyro_t *gyro);
+/* Receives the same unified IMU snapshot consumed by the control step. */
+void app_element_imu_task(const service_imu_sample_t *imu);
 void app_element_pump_events(void);
 uint8 app_element_seesaw_is_slowdown_active(void);
 float app_element_seesaw_slowdown_speed_mps(void);

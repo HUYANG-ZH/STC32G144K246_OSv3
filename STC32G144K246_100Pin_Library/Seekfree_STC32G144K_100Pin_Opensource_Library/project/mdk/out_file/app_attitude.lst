@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_attitude                                                       25/07/26  22:02:14  PAGE 1   
+C251 COMPILER V5.60.0,  app_attitude                                                       26/07/26  20:02:54  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_attitude
@@ -18,57 +18,101 @@ stmt  level    source
     5          
     6          static shared_lpf_t attitude_gyro_z_lpf;
     7          static volatile app_attitude_data_t attitude_data;
-    8          
-    9          void app_attitude_init(void)
-   10          {
-   11   1          float gyro_z;
-   12   1      
-   13   1          gyro_z = service_imu_read_gyro_z();
-   14   1          shared_lpf_init(&attitude_gyro_z_lpf, APP_ATTITUDE_GYRO_LPF_ALPHA_DEFAULT, gyro_z);
-   15   1          attitude_data.gyro_z = gyro_z;
-   16   1      }
-   17          
-   18          void app_attitude_task(void)
-   19          {
-   20   1          uint8 ea_backup;
-   21   1          float gyro_z;
-   22   1      
-   23   1          gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, service_imu_read_gyro_z());
-   24   1      
-   25   1          ea_backup = EA;
-   26   1          EA = 0;
-   27   1          attitude_data.gyro_z = gyro_z;
-   28   1          EA = ea_backup;
-   29   1      }
-   30          
-   31          void app_attitude_get_data(app_attitude_data_t *out_data)
-   32          {
-   33   1          uint8 ea_backup;
-   34   1      
-   35   1          if(NULL == out_data)
-   36   1          {
-   37   2              return;
-   38   2          }
-   39   1      
-   40   1          ea_backup = EA;
-   41   1          EA = 0;
-   42   1          out_data->gyro_z = attitude_data.gyro_z;
-   43   1          EA = ea_backup;
-   44   1      }
+    8          static uint32 attitude_last_sequence = 0UL;
+    9          
+   10          void app_attitude_init(void)
+   11          {
+   12   1          service_imu_sample_t imu;
+   13   1          float gyro_z = 0.0f;
+   14   1      
+   15   1          if(0U != service_imu_get_latest_sample(&imu))
+   16   1          {
+   17   2              gyro_z = imu.gyro_z;
+   18   2          }
+   19   1          shared_lpf_init(&attitude_gyro_z_lpf, APP_ATTITUDE_GYRO_LPF_ALPHA_DEFAULT, gyro_z);
+   20   1          attitude_data.gyro_z = gyro_z;
+   21   1          attitude_data.quaternion_0 = 0.0f;
+   22   1          attitude_data.quaternion_1 = 0.0f;
+   23   1          attitude_data.quaternion_2 = 0.0f;
+   24   1          attitude_data.quaternion_3 = 0.0f;
+   25   1          attitude_data.roll_deg = 0.0f;
+   26   1          attitude_data.pitch_deg = 0.0f;
+   27   1          attitude_data.yaw_deg = 0.0f;
+   28   1          attitude_data.sequence = 0UL;
+   29   1          attitude_data.valid = 0U;
+   30   1          attitude_last_sequence = 0UL;
+   31   1      
+   32   1          if(0U != service_imu_get_latest_sample(&imu))
+   33   1          {
+   34   2              app_attitude_update(&imu);
+   35   2          }
+   36   1      }
+   37          
+   38          void app_attitude_update(const service_imu_sample_t *imu)
+   39          {
+   40   1          uint8 ea_backup;
+   41   1          float gyro_z;
+   42   1      
+   43   1          if((NULL == imu) || (0U == imu->valid) ||
+   44   1             (imu->sequence == attitude_last_sequence))
+   45   1          {
+   46   2              return;
+   47   2          }
+   48   1      
+   49   1          gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, imu->gyro_z);
+   50   1          ea_backup = EA;
+   51   1          EA = 0;
+   52   1          attitude_data.gyro_z = gyro_z;
+   53   1          attitude_data.quaternion_0 = imu->quaternion_0;
+   54   1          attitude_data.quaternion_1 = imu->quaternion_1;
+   55   1          attitude_data.quaternion_2 = imu->quaternion_2;
+C251 COMPILER V5.60.0,  app_attitude                                                       26/07/26  20:02:54  PAGE 2   
+
+   56   1          attitude_data.quaternion_3 = imu->quaternion_3;
+   57   1          attitude_data.roll_deg = imu->roll_deg;
+   58   1          attitude_data.pitch_deg = imu->pitch_deg;
+   59   1          attitude_data.yaw_deg = imu->yaw_deg;
+   60   1          attitude_data.sequence = imu->sequence;
+   61   1          attitude_data.valid = imu->valid;
+   62   1          attitude_last_sequence = imu->sequence;
+   63   1          EA = ea_backup;
+   64   1      }
+   65          
+   66          void app_attitude_task(void)
+   67          {
+   68   1          service_imu_sample_t imu;
+   69   1      
+   70   1          if(0U != service_imu_get_latest_sample(&imu))
+   71   1          {
+   72   2              app_attitude_update(&imu);
+   73   2          }
+   74   1      }
+   75          
+   76          void app_attitude_get_data(app_attitude_data_t *out_data)
+   77          {
+   78   1          uint8 ea_backup;
+   79   1      
+   80   1          if(NULL == out_data)
+   81   1          {
+   82   2              return;
+   83   2          }
+   84   1          ea_backup = EA;
+   85   1          EA = 0;
+   86   1          *out_data = attitude_data;
+   87   1          EA = ea_backup;
+   88   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       210     ------
+  ecode size           =       821     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        26     ------
+  xdata size           =       221     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_attitude                                                       25/07/26  22:02:14  PAGE 2   
-
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
@@ -76,7 +120,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =    ------     ------
+  hconst size          =         9     ------
 End of Module Information.
 
 

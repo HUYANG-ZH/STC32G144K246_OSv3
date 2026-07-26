@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_imu
@@ -17,503 +17,585 @@ stmt  level    source
     4          #include "bsp_imu.h"
     5          
     6          #ifndef BSP_IMU_QUARTERNION_RATE
-    7          #define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_DISABLE)
+    7          #define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_480HZ)
     8          #endif
     9          
-   10          #define BSP_IMU_FRAME_REGISTER           (IMU660RC_OUT_TEMP_L | IMU660RC_SPI_R)
-   11          #define BSP_IMU_FRAME_DATA_LENGTH        (14U)
-   12          #define BSP_IMU_DMA_LENGTH               (BSP_IMU_FRAME_DATA_LENGTH + 1U)
-   13          #define BSP_IMU_BOOT_DMA_LENGTH          (2U)
-   14          #define BSP_IMU_BOOT_CONFIG_MAX          (20U)
-   15          #define BSP_IMU_BOOT_POWER_WAIT_TICK     (100UL)
-   16          #define BSP_IMU_BOOT_RESET_WAIT_TICK     (300UL)
-   17          #define BSP_IMU_SPI_TIMEOUT_TICK          (50UL)
-   18          
-   19          typedef struct
-   20          {
-   21              uint8 reg;
-   22              uint8 value;
-   23          } bsp_imu_boot_write_t;
-   24          
-   25          typedef enum
-   26          {
-   27              BSP_IMU_BOOT_IDLE = 0,
-   28              BSP_IMU_BOOT_POWER_WAIT,
-   29              BSP_IMU_BOOT_ID_SUBMIT,
-   30              BSP_IMU_BOOT_ID_WAIT,
-   31              BSP_IMU_BOOT_RESET_SUBMIT,
-   32              BSP_IMU_BOOT_RESET_WAIT,
-   33              BSP_IMU_BOOT_RESET_DELAY,
-   34              BSP_IMU_BOOT_CONFIG_SUBMIT,
-   35              BSP_IMU_BOOT_CONFIG_WAIT,
-   36              BSP_IMU_BOOT_READY,
-   37              BSP_IMU_BOOT_ERROR,
-   38          } bsp_imu_boot_state_enum;
-   39          
-   40          static volatile uint8 s_bsp_imu_ready = 0U;
-   41          static volatile uint8 s_bsp_imu_transfer_active = 0U;
-   42          static volatile uint8 s_bsp_imu_published_index = 0U;
-   43          static volatile uint32 s_bsp_imu_sequence = 0U;
-   44          static volatile uint32 s_bsp_imu_dma_error_count = 0U;
-   45          static bsp_imu_sample_t xdata s_bsp_imu_sample[2];
-   46          static uint8 xdata s_bsp_imu_tx[BSP_IMU_DMA_LENGTH];
-   47          static uint8 xdata s_bsp_imu_rx[BSP_IMU_DMA_LENGTH];
-   48          static uint8 xdata s_bsp_imu_boot_tx[BSP_IMU_BOOT_DMA_LENGTH];
-   49          static uint8 xdata s_bsp_imu_boot_rx[BSP_IMU_BOOT_DMA_LENGTH];
-   50          static bsp_imu_boot_write_t xdata s_bsp_imu_boot_config[BSP_IMU_BOOT_CONFIG_MAX];
-   51          static uint8 s_bsp_imu_boot_config_count = 0U;
-   52          static uint8 s_bsp_imu_boot_config_index = 0U;
-   53          static uint32 s_bsp_imu_boot_deadline_tick = 0UL;
-   54          static uint32 s_bsp_imu_transfer_deadline_tick = 0UL;
-   55          static uint32 s_bsp_imu_boot_transfer_deadline_tick = 0UL;
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 2   
+   10          /* FIFO frame: gyro word + accelerometer word + SFLP game-vector word. */
+   11          #define BSP_IMU_FIFO_WORD_COUNT         (3U)
+   12          #define BSP_IMU_FIFO_WORD_LENGTH        (7U)
+   13          #define BSP_IMU_FIFO_DMA_LENGTH         (1U + BSP_IMU_FIFO_WORD_COUNT * BSP_IMU_FIFO_WORD_LENGTH)
+   14          #define BSP_IMU_FIFO_REGISTER           (0x78U | IMU660RC_SPI_R)
+   15          #define BSP_IMU_SPI_TIMEOUT_TICK        (50UL)
+   16          #define BSP_IMU_HALF_PI                  (1.5707963f)
+   17          #define BSP_IMU_PI                       (3.1415926f)
+   18          #define BSP_IMU_RAD_TO_DEG               (57.2957795f)
+   19          
+   20          #define BSP_IMU_FIFO_TAG_GYRO            (0x01U)
+   21          #define BSP_IMU_FIFO_TAG_ACC             (0x02U)
+   22          #define BSP_IMU_FIFO_TAG_SFLP_GAME       (0x13U)
+   23          
+   24          /* P84 is dedicated IMU CS.  Atomic SET/CLR avoids a P8OUT read-modify-write
+   25           * collision with the motor direction pin on the same port. */
+   26          #define BSP_IMU_CS(level)                do { if(0U != (level)) { P8SETB = 0x10U; } else { P8CLRB = 0x10U
+             -; } } while(0)
+   27          
+   28          static volatile uint8 s_bsp_imu_ready = 0U;
+   29          static volatile uint8 s_bsp_imu_transfer_active = 0U;
+   30          static volatile uint8 s_bsp_imu_frame_pending = 0U;
+   31          static volatile uint8 s_bsp_imu_frame_ready = 0U;
+   32          static volatile uint8 s_bsp_imu_published_index = 0U;
+   33          static volatile uint32 s_bsp_imu_sequence = 0UL;
+   34          static volatile uint32 s_bsp_imu_dma_error_count = 0UL;
+   35          static volatile uint32 s_bsp_imu_transfer_deadline_tick = 0UL;
+   36          static volatile uint32 s_bsp_imu_pending_drdy_tick = 0UL;
+   37          static uint32 s_bsp_imu_active_drdy_tick = 0UL;
+   38          static bsp_imu_sample_t xdata s_bsp_imu_sample[2];
+   39          static uint8 xdata s_bsp_imu_fifo_tx[BSP_IMU_FIFO_DMA_LENGTH];
+   40          static uint8 xdata s_bsp_imu_fifo_rx[BSP_IMU_FIFO_DMA_LENGTH];
+   41          
+   42          static int16 bsp_imu_make_i16(uint8 low, uint8 high);
+   43          static uint8 bsp_imu_deadline_reached(uint32 now, uint32 deadline);
+   44          static void bsp_imu_record_dma_error(void) reentrant;
+   45          static void bsp_imu_fifo_dma_complete(spi_index_enum spi_n, uint8 success);
+   46          static void bsp_imu_fifo_drdy_isr(void);
+   47          static uint8 bsp_imu_start_fifo_frame(void);
+   48          static void bsp_imu_check_timeout(uint32 now);
+   49          static uint32 bsp_imu_fp16_to_float_bits(uint16 h);
+   50          static float bsp_imu_tfpu_atan2(float y, float x);
+   51          static float bsp_imu_tfpu_asin(float value);
+   52          static uint8 bsp_imu_decode_fifo_frame(bsp_imu_sample_t *sample);
+   53          static void bsp_imu_publish_fifo_frame(void);
+   54          
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 2   
 
-   56          static volatile uint8 s_bsp_imu_boot_transfer_active = 0U;
-   57          static volatile uint8 s_bsp_imu_boot_transfer_done = 0U;
-   58          static volatile uint8 s_bsp_imu_boot_transfer_success = 0U;
-   59          static bsp_imu_boot_state_enum s_bsp_imu_boot_state = BSP_IMU_BOOT_IDLE;
-   60          
-   61          static int16 bsp_imu_make_i16(uint8 low, uint8 high)
-   62          {
-   63   1          return (int16)(((uint16)high << 8) | low);
-   64   1      }
-   65          
-   66          static uint8 bsp_imu_deadline_reached(uint32 now, uint32 deadline)
-   67          {
-   68   1          return ((uint32)(now - deadline) < 0x80000000UL) ? 1U : 0U;
-   69   1      }
-   70          
-   71          static uint8 bsp_imu_boot_deadline_reached(uint32 now)
-   72          {
-   73   1          return bsp_imu_deadline_reached(now, s_bsp_imu_boot_deadline_tick);
-   74   1      }
-   75          
-   76          static uint8 bsp_imu_boot_append_write(uint8 reg, uint8 value)
-   77          {
-   78   1          if(BSP_IMU_BOOT_CONFIG_MAX <= s_bsp_imu_boot_config_count)
-   79   1          {
-   80   2              return 0U;
-   81   2          }
+   55          static int16 bsp_imu_make_i16(uint8 low, uint8 high)
+   56          {
+   57   1          return (int16)(((uint16)high << 8) | low);
+   58   1      }
+   59          
+   60          static uint8 bsp_imu_deadline_reached(uint32 now, uint32 deadline)
+   61          {
+   62   1          return ((uint32)(now - deadline) < 0x80000000UL) ? 1U : 0U;
+   63   1      }
+   64          
+   65          static void bsp_imu_record_dma_error(void) reentrant
+   66          {
+   67   1          uint8 ea_backup;
+   68   1      
+   69   1          ea_backup = EA;
+   70   1          EA = 0;
+   71   1          s_bsp_imu_dma_error_count++;
+   72   1          EA = ea_backup;
+   73   1      }
+   74          
+   75          /* DMA completion is intentionally integer-only.  Floating-point conversion
+   76           * and snapshot publication stay in the foreground task. */
+   77          static void bsp_imu_fifo_dma_complete(spi_index_enum spi_n, uint8 success)
+   78          {
+   79   1          BSP_IMU_CS(1U);
+   80   1          s_bsp_imu_transfer_active = 0U;
+   81   1          s_bsp_imu_transfer_deadline_tick = 0UL;
    82   1      
-   83   1          s_bsp_imu_boot_config[s_bsp_imu_boot_config_count].reg = reg;
-   84   1          s_bsp_imu_boot_config[s_bsp_imu_boot_config_count].value = value;
-   85   1          s_bsp_imu_boot_config_count++;
-   86   1          return 1U;
-   87   1      }
-   88          
-   89          static uint8 bsp_imu_build_boot_config(void)
-   90          {
-   91   1          uint8 acc_config;
-   92   1          uint8 gyro_config;
-   93   1      
-   94   1          switch(IMU660RC_ACC_SAMPLE_DEFAULT)
-   95   1          {
-   96   2              case IMU660RC_ACC_SAMPLE_SGN_2G:
-   97   2                  acc_config = 0x00U;
-   98   2                  imu660rc_transition_factor[0] = 16393.44f;
-   99   2                  break;
-  100   2              case IMU660RC_ACC_SAMPLE_SGN_4G:
-  101   2                  acc_config = 0x01U;
-  102   2                  imu660rc_transition_factor[0] = 8196.72f;
-  103   2                  break;
-  104   2              case IMU660RC_ACC_SAMPLE_SGN_8G:
-  105   2                  acc_config = 0x02U;
-  106   2                  imu660rc_transition_factor[0] = 4098.36f;
-  107   2                  break;
-  108   2              case IMU660RC_ACC_SAMPLE_SGN_16G:
-  109   2                  acc_config = 0x03U;
-  110   2                  imu660rc_transition_factor[0] = 2049.18f;
-  111   2                  break;
-  112   2              default:
-  113   2                  return 0U;
-  114   2          }
-  115   1      
-  116   1          switch(IMU660RC_GYRO_SAMPLE_DEFAULT)
+   83   1          if((SPI_3 != spi_n) || (0U == success))
+   84   1          {
+   85   2              /* Keep the watermark event pending so a transient bus error retries. */
+   86   2              s_bsp_imu_frame_pending = 1U;
+   87   2              bsp_imu_record_dma_error();
+   88   2              return;
+   89   2          }
+   90   1      
+   91   1          s_bsp_imu_frame_ready = 1U;
+   92   1      }
+   93          
+   94          /* INT2 is FIFO watermark, configured for exactly one gyro+acc+SFLP frame. */
+   95          static void bsp_imu_fifo_drdy_isr(void)
+   96          {
+   97   1          s_bsp_imu_pending_drdy_tick = service_timetick_what();
+   98   1          s_bsp_imu_frame_pending = 1U;
+   99   1      }
+  100          
+  101          static uint8 bsp_imu_start_fifo_frame(void)
+  102          {
+  103   1          uint8 ea_backup;
+  104   1          uint8 result;
+  105   1      
+  106   1          if((0U == s_bsp_imu_ready) || (0U == s_bsp_imu_frame_pending) ||
+  107   1             (0U != s_bsp_imu_transfer_active) || (0U != s_bsp_imu_frame_ready) ||
+  108   1             (0U != spi_dma_async_is_busy(IMU660RC_SPI)))
+  109   1          {
+  110   2              return 0U;
+  111   2          }
+  112   1      
+  113   1          ea_backup = EA;
+  114   1          EA = 0;
+  115   1          if((0U == s_bsp_imu_frame_pending) || (0U != s_bsp_imu_transfer_active) ||
+  116   1             (0U != s_bsp_imu_frame_ready))
   117   1          {
-  118   2              case IMU660RC_GYRO_SAMPLE_SGN_125DPS:
-  119   2                  gyro_config = 0x00U;
-  120   2                  imu660rc_transition_factor[1] = 228.5714f;
-  121   2                  break;
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 3   
+  118   2              EA = ea_backup;
+  119   2              return 0U;
+  120   2          }
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 3   
 
-  122   2              case IMU660RC_GYRO_SAMPLE_SGN_250DPS:
-  123   2                  gyro_config = 0x01U;
-  124   2                  imu660rc_transition_factor[1] = 114.2857f;
-  125   2                  break;
-  126   2              case IMU660RC_GYRO_SAMPLE_SGN_500DPS:
-  127   2                  gyro_config = 0x02U;
-  128   2                  imu660rc_transition_factor[1] = 57.1428f;
-  129   2                  break;
-  130   2              case IMU660RC_GYRO_SAMPLE_SGN_1000DPS:
-  131   2                  gyro_config = 0x03U;
-  132   2                  imu660rc_transition_factor[1] = 28.5714f;
-  133   2                  break;
-  134   2              case IMU660RC_GYRO_SAMPLE_SGN_2000DPS:
-  135   2                  gyro_config = 0x04U;
-  136   2                  imu660rc_transition_factor[1] = 14.2857f;
-  137   2                  break;
-  138   2              case IMU660RC_GYRO_SAMPLE_SGN_4000DPS:
-  139   2                  gyro_config = 0x0CU;
-  140   2                  imu660rc_transition_factor[1] = 7.14285f;
-  141   2                  break;
-  142   2              default:
-  143   2                  return 0U;
-  144   2          }
-  145   1      
-  146   1          s_bsp_imu_boot_config_count = 0U;
-  147   1          // Use simple sequential checks.  C251 has fragile diagnostics for long
-  148   1          // short-circuit expressions, while this form is equivalent and clearer.
-  149   1          if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL3, 0x44U))
+  121   1          s_bsp_imu_active_drdy_tick = s_bsp_imu_pending_drdy_tick;
+  122   1          s_bsp_imu_frame_pending = 0U;
+  123   1          s_bsp_imu_transfer_active = 1U;
+  124   1          s_bsp_imu_transfer_deadline_tick = service_timetick_what() + BSP_IMU_SPI_TIMEOUT_TICK;
+  125   1          EA = ea_backup;
+  126   1      
+  127   1          BSP_IMU_CS(0U);
+  128   1          result = spi_dma_async_transfer(IMU660RC_SPI, s_bsp_imu_fifo_tx, s_bsp_imu_fifo_rx,
+  129   1                  BSP_IMU_FIFO_DMA_LENGTH, bsp_imu_fifo_dma_complete);
+  130   1          if(0U == result)
+  131   1          {
+  132   2              BSP_IMU_CS(1U);
+  133   2              ea_backup = EA;
+  134   2              EA = 0;
+  135   2              s_bsp_imu_transfer_active = 0U;
+  136   2              s_bsp_imu_transfer_deadline_tick = 0UL;
+  137   2              s_bsp_imu_frame_pending = 1U;
+  138   2              EA = ea_backup;
+  139   2              bsp_imu_record_dma_error();
+  140   2          }
+  141   1          return result;
+  142   1      }
+  143          
+  144          static void bsp_imu_check_timeout(uint32 now)
+  145          {
+  146   1          uint8 ea_backup;
+  147   1      
+  148   1          if((0U == s_bsp_imu_transfer_active) ||
+  149   1             (0U == bsp_imu_deadline_reached(now, s_bsp_imu_transfer_deadline_tick)))
   150   1          {
-  151   2              return 0U;
+  151   2              return;
   152   2          }
-  153   1          if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL8, acc_config))
-  154   1          {
-  155   2              return 0U;
-  156   2          }
-  157   1          if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL6, gyro_config))
+  153   1      
+  154   1          ea_backup = EA;
+  155   1          EA = 0;
+  156   1          if((0U != s_bsp_imu_transfer_active) &&
+  157   1             (0U != bsp_imu_deadline_reached(now, s_bsp_imu_transfer_deadline_tick)))
   158   1          {
-  159   2              return 0U;
-  160   2          }
-  161   1          if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL1, 0x15U))
-  162   1          {
-  163   2              return 0U;
-  164   2          }
-  165   1          if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL2, 0x18U))
-  166   1          {
-  167   2              return 0U;
-  168   2          }
-  169   1          if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL7, 0x01U))
-  170   1          {
-  171   2              return 0U;
-  172   2          }
-  173   1          if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL9, 0x08U))
-  174   1          {
-  175   2              return 0U;
-  176   2          }
-  177   1      
-  178   1          if(IMU660RC_QUARTERNION_DISABLE != BSP_IMU_QUARTERNION_RATE)
-  179   1          {
-  180   2              // Keep each append separate: C251's old expression parser is much
-  181   2              // less robust with a long OR-chain containing enum casts.
-  182   2              if(0U == bsp_imu_boot_append_write(IMU660RC_INT2_CTRL, 0x80U))
-  183   2              {
-  184   3                  return 0U;
-  185   3              }
-  186   2              if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL4, 0x08U))
-  187   2              {
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 4   
+  159   2              (void)spi_dma_async_abort(IMU660RC_SPI);
+  160   2              BSP_IMU_CS(1U);
+  161   2              s_bsp_imu_transfer_active = 0U;
+  162   2              s_bsp_imu_transfer_deadline_tick = 0UL;
+  163   2              s_bsp_imu_frame_pending = 1U;
+  164   2              bsp_imu_record_dma_error();
+  165   2          }
+  166   1          EA = ea_backup;
+  167   1      }
+  168          
+  169          static uint32 bsp_imu_fp16_to_float_bits(uint16 h)
+  170          {
+  171   1          uint16 h_exp;
+  172   1          uint16 h_sig;
+  173   1          uint32 f_sgn;
+  174   1          uint32 f_exp;
+  175   1          uint32 f_sig;
+  176   1      
+  177   1          h_exp = (uint16)(h & 0x7c00U);
+  178   1          h_sig = (uint16)(h & 0x03ffU);
+  179   1          f_sgn = ((uint32)(h & 0x8000U)) << 16;
+  180   1          switch(h_exp)
+  181   1          {
+  182   2              case 0x0000U:
+  183   2                  if(0U == h_sig)
+  184   2                  {
+  185   3                      return f_sgn;
+  186   3                  }
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 4   
 
-  188   3                  return 0U;
-  189   3              }
-  190   2              if(0U == bsp_imu_boot_append_write(IMU660RC_EMB_FUNC_CFG, 0x30U))
-  191   2              {
-  192   3                  return 0U;
-  193   3              }
-  194   2              if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL1,
-  195   2                      (uint8)(0x10U | (BSP_IMU_QUARTERNION_RATE + 3U))))
-  196   2              {
-  197   3                  return 0U;
-  198   3              }
-  199   2              if(0U == bsp_imu_boot_append_write(IMU660RC_CTRL2,
-  200   2                      (uint8)(0x10U | (BSP_IMU_QUARTERNION_RATE + 3U))))
-  201   2              {
-  202   3                  return 0U;
-  203   3              }
-  204   2              if(0U == bsp_imu_boot_append_write(IMU660RC_FUNC_CFG_ACCESS, IMU660RC_EMBED_MEM_BANK))
-  205   2              {
-  206   3                  return 0U;
-  207   3              }
-  208   2              if(0U == bsp_imu_boot_append_write(IMU660RC_SFLP_ODR,
-  209   2                      (uint8)(0x43U | (BSP_IMU_QUARTERNION_RATE << 3))))
-  210   2              {
-  211   3                  return 0U;
-  212   3              }
-  213   2              if(0U == bsp_imu_boot_append_write(IMU660RC_EMB_FUNC_EN_A, 0x02U))
-  214   2              {
-  215   3                  return 0U;
-  216   3              }
-  217   2              if(0U == bsp_imu_boot_append_write(IMU660RC_PAGE_RW, 0x00U))
-  218   2              {
-  219   3                  return 0U;
-  220   3              }
-  221   2              if(0U == bsp_imu_boot_append_write(IMU660RC_FUNC_CFG_ACCESS, IMU660RC_MAIN_MEM_BANK))
-  222   2              {
-  223   3                  return 0U;
-  224   3              }
-  225   2          }
-  226   1      
-  227   1          return 1U;
-  228   1      }
-  229          
-  230          static void bsp_imu_boot_dma_complete(spi_index_enum spi_n, uint8 success)
-  231          {
-  232   1          if(SPI_3 != spi_n)
-  233   1          {
-  234   2              s_bsp_imu_dma_error_count++;
-  235   2              return;
-  236   2          }
-  237   1      
-  238   1          IMU660RC_CS(1);
-  239   1          s_bsp_imu_boot_transfer_active = 0U;
-  240   1          s_bsp_imu_boot_transfer_deadline_tick = 0UL;
-  241   1          s_bsp_imu_boot_transfer_success = success;
-  242   1          s_bsp_imu_boot_transfer_done = 1U;
-  243   1      }
-  244          
-  245          static uint8 bsp_imu_boot_submit(uint8 command, uint8 value)
-  246          {
-  247   1          uint8 ea_backup;
-  248   1          uint8 result;
-  249   1          uint32 now;
-  250   1      
-  251   1          now = service_timetick_what();
-  252   1      
-  253   1          ea_backup = EA;
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 5   
+  187   2                  h_sig <<= 1;
+  188   2                  h_exp = 0U;
+  189   2                  while(0U == (h_sig & 0x0400U))
+  190   2                  {
+  191   3                      h_sig <<= 1;
+  192   3                      h_exp++;
+  193   3                  }
+  194   2                  f_exp = ((uint32)(127 - 15 - h_exp)) << 23;
+  195   2                  f_sig = ((uint32)(h_sig & 0x03ffU)) << 13;
+  196   2                  return f_sgn + f_exp + f_sig;
+  197   2              case 0x7c00U:
+  198   2                  return f_sgn + 0x7f800000UL + (((uint32)(h & 0x03ffU)) << 13);
+  199   2              default:
+  200   2                  return f_sgn + (((uint32)(h & 0x7fffU) + 0x1c000UL) << 13);
+  201   2          }
+  202   1      }
+  203          
+  204          static float bsp_imu_tfpu_atan2(float y, float x)
+  205          {
+  206   1          float value;
+  207   1      
+  208   1          if(x > 0.0f)
+  209   1          {
+  210   2              value = tfpu_atan(tfpu_div(y, x));
+  211   2          }
+  212   1          else if(x < 0.0f)
+  213   1          {
+  214   2              value = tfpu_atan(tfpu_div(y, x));
+  215   2              value = (y >= 0.0f) ? tfpu_add(value, BSP_IMU_PI) : tfpu_sub(value, BSP_IMU_PI);
+  216   2          }
+  217   1          else if(y > 0.0f)
+  218   1          {
+  219   2              value = BSP_IMU_HALF_PI;
+  220   2          }
+  221   1          else if(y < 0.0f)
+  222   1          {
+  223   2              value = tfpu_sub(0.0f, BSP_IMU_HALF_PI);
+  224   2          }
+  225   1          else
+  226   1          {
+  227   2              value = 0.0f;
+  228   2          }
+  229   1          return value;
+  230   1      }
+  231          
+  232          static float bsp_imu_tfpu_asin(float value)
+  233          {
+  234   1          float denominator;
+  235   1      
+  236   1          if(value >= 1.0f)
+  237   1          {
+  238   2              return BSP_IMU_HALF_PI;
+  239   2          }
+  240   1          if(value <= -1.0f)
+  241   1          {
+  242   2              return tfpu_sub(0.0f, BSP_IMU_HALF_PI);
+  243   2          }
+  244   1          denominator = tfpu_sqrt(tfpu_sub(1.0f, tfpu_mul(value, value)));
+  245   1          return tfpu_atan(tfpu_div(value, denominator));
+  246   1      }
+  247          
+  248          static uint8 bsp_imu_decode_fifo_frame(bsp_imu_sample_t *sample)
+  249          {
+  250   1          uint8 word;
+  251   1          uint8 offset;
+  252   1          uint8 tag;
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 5   
 
-  254   1          EA = 0;
-  255   1          if((0U != s_bsp_imu_boot_transfer_active) || (0U != spi_dma_async_is_busy(IMU660RC_SPI)))
-  256   1          {
-  257   2              if(0U != spi_dma_async_is_busy(IMU660RC_SPI))
-  258   2              {
-  259   3                  (void)spi_dma_async_abort(IMU660RC_SPI);
-  260   3                  IMU660RC_CS(1);
-  261   3                  s_bsp_imu_dma_error_count++;
-  262   3              }
-  263   2              EA = ea_backup;
-  264   2              return 0U;
-  265   2          }
-  266   1      
-  267   1          s_bsp_imu_boot_tx[0] = command;
-  268   1          s_bsp_imu_boot_tx[1] = value;
-  269   1          s_bsp_imu_boot_transfer_done = 0U;
-  270   1          s_bsp_imu_boot_transfer_active = 1U;
-  271   1          IMU660RC_CS(0);
-  272   1          result = spi_dma_async_transfer(IMU660RC_SPI, s_bsp_imu_boot_tx, s_bsp_imu_boot_rx,
-  273   1                  BSP_IMU_BOOT_DMA_LENGTH, bsp_imu_boot_dma_complete);
-  274   1          if(0U != result)
-  275   1          {
-  276   2              s_bsp_imu_boot_transfer_deadline_tick = now + BSP_IMU_SPI_TIMEOUT_TICK;
-  277   2          }
-  278   1          else
-  279   1          {
-  280   2              IMU660RC_CS(1);
-  281   2              s_bsp_imu_boot_transfer_active = 0U;
-  282   2              s_bsp_imu_boot_transfer_deadline_tick = 0UL;
-  283   2              s_bsp_imu_dma_error_count++;
-  284   2          }
-  285   1          EA = ea_backup;
-  286   1          return result;
-  287   1      }
-  288          
-  289          /* 0: transfer in flight, 1: success consumed, 2: failed and boot state is terminal. */
-  290          static uint8 bsp_imu_boot_take_result(void)
-  291          {
-  292   1          if(0U == s_bsp_imu_boot_transfer_done)
-  293   1          {
-  294   2              return 0U;
-  295   2          }
-  296   1      
-  297   1          s_bsp_imu_boot_transfer_done = 0U;
-  298   1          if(0U == s_bsp_imu_boot_transfer_success)
-  299   1          {
-  300   2              s_bsp_imu_dma_error_count++;
-  301   2              s_bsp_imu_boot_state = BSP_IMU_BOOT_ERROR;
-  302   2              return 2U;
-  303   2          }
-  304   1          return 1U;
-  305   1      }
-  306          
-  307          // DMA ISR callback: only publish a raw frame.  Floating-point conversion and
-  308          // control filtering run in the timer task, never in the transport ISR.
-  309          static void bsp_imu_dma_complete(spi_index_enum spi_n, uint8 success)
-  310          {
-  311   1          bsp_imu_sample_t xdata *sample;
-  312   1          uint8 next_index;
-  313   1          uint8 ea_backup;
-  314   1          uint32 next_sequence;
+  253   1          uint8 gyro_seen = 0U;
+  254   1          uint8 acc_seen = 0U;
+  255   1          uint8 quaternion_seen = 0U;
+  256   1          uint16 qx_half = 0U;
+  257   1          uint16 qy_half = 0U;
+  258   1          uint16 qz_half = 0U;
+  259   1          float qx;
+  260   1          float qy;
+  261   1          float qz;
+  262   1          float qw;
+  263   1          float norm_squared;
+  264   1          float norm;
+  265   1          float temp_a;
+  266   1          float temp_b;
+  267   1      
+  268   1          if(NULL == sample)
+  269   1          {
+  270   2              return 0U;
+  271   2          }
+  272   1      
+  273   1          for(word = 0U; word < BSP_IMU_FIFO_WORD_COUNT; word++)
+  274   1          {
+  275   2              offset = (uint8)(1U + word * BSP_IMU_FIFO_WORD_LENGTH);
+  276   2              tag = (uint8)(s_bsp_imu_fifo_rx[offset] >> 3);
+  277   2              if(BSP_IMU_FIFO_TAG_GYRO == tag)
+  278   2              {
+  279   3                  if(0U != gyro_seen)
+  280   3                  {
+  281   4                      return 0U;
+  282   4                  }
+  283   3                  sample->gyro_x_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 1U], s_bsp_imu_fifo_rx[offse
+             -t + 2U]);
+  284   3                  sample->gyro_y_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 3U], s_bsp_imu_fifo_rx[offse
+             -t + 4U]);
+  285   3                  sample->gyro_z_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 5U], s_bsp_imu_fifo_rx[offse
+             -t + 6U]);
+  286   3                  gyro_seen = 1U;
+  287   3              }
+  288   2              else if(BSP_IMU_FIFO_TAG_ACC == tag)
+  289   2              {
+  290   3                  if(0U != acc_seen)
+  291   3                  {
+  292   4                      return 0U;
+  293   4                  }
+  294   3                  sample->acc_x_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 1U], s_bsp_imu_fifo_rx[offset
+             - + 2U]);
+  295   3                  sample->acc_y_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 3U], s_bsp_imu_fifo_rx[offset
+             - + 4U]);
+  296   3                  sample->acc_z_raw = bsp_imu_make_i16(s_bsp_imu_fifo_rx[offset + 5U], s_bsp_imu_fifo_rx[offset
+             - + 6U]);
+  297   3                  acc_seen = 1U;
+  298   3              }
+  299   2              else if(BSP_IMU_FIFO_TAG_SFLP_GAME == tag)
+  300   2              {
+  301   3                  if(0U != quaternion_seen)
+  302   3                  {
+  303   4                      return 0U;
+  304   4                  }
+  305   3                  qx_half = (uint16)(((uint16)s_bsp_imu_fifo_rx[offset + 2U] << 8) | s_bsp_imu_fifo_rx[offset +
+             - 1U]);
+  306   3                  qy_half = (uint16)(((uint16)s_bsp_imu_fifo_rx[offset + 4U] << 8) | s_bsp_imu_fifo_rx[offset +
+             - 3U]);
+  307   3                  qz_half = (uint16)(((uint16)s_bsp_imu_fifo_rx[offset + 6U] << 8) | s_bsp_imu_fifo_rx[offset +
+             - 5U]);
+  308   3                  quaternion_seen = 1U;
+  309   3              }
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 6   
+
+  310   2              else
+  311   2              {
+  312   3                  return 0U;
+  313   3              }
+  314   2          }
   315   1      
-  316   1          if(SPI_3 != spi_n)
-  317   1          {
-  318   2              s_bsp_imu_dma_error_count++;
-  319   2              return;
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 6   
-
-  320   2          }
-  321   1      
-  322   1          IMU660RC_CS(1);
-  323   1      
-  324   1          if(0U == success)
-  325   1          {
-  326   2              s_bsp_imu_dma_error_count++;
-  327   2              s_bsp_imu_transfer_active = 0U;
-  328   2              s_bsp_imu_transfer_deadline_tick = 0UL;
-  329   2              return;
+  316   1          if((0U == gyro_seen) || (0U == acc_seen) || (0U == quaternion_seen) ||
+  317   1             (0x7c00U == (qx_half & 0x7c00U)) || (0x7c00U == (qy_half & 0x7c00U)) ||
+  318   1             (0x7c00U == (qz_half & 0x7c00U)))
+  319   1          {
+  320   2              return 0U;
+  321   2          }
+  322   1      
+  323   1          *(uint32 *)(&qx) = bsp_imu_fp16_to_float_bits(qx_half);
+  324   1          *(uint32 *)(&qy) = bsp_imu_fp16_to_float_bits(qy_half);
+  325   1          *(uint32 *)(&qz) = bsp_imu_fp16_to_float_bits(qz_half);
+  326   1          norm_squared = tfpu_add(tfpu_add(tfpu_mul(qx, qx), tfpu_mul(qy, qy)), tfpu_mul(qz, qz));
+  327   1          if(norm_squared > 1.01f)
+  328   1          {
+  329   2              return 0U;
   330   2          }
-  331   1      
-  332   1          next_index = (uint8)(s_bsp_imu_published_index ^ 1U);
-  333   1          sample = &s_bsp_imu_sample[next_index];
-  334   1          // RX[0] belongs to the command byte; the 14 payload bytes start at RX[1].
-  335   1          sample->temperature_raw = bsp_imu_make_i16(s_bsp_imu_rx[1], s_bsp_imu_rx[2]);
-  336   1          sample->gyro_x_raw = bsp_imu_make_i16(s_bsp_imu_rx[3], s_bsp_imu_rx[4]);
-  337   1          sample->gyro_y_raw = bsp_imu_make_i16(s_bsp_imu_rx[5], s_bsp_imu_rx[6]);
-  338   1          sample->gyro_z_raw = bsp_imu_make_i16(s_bsp_imu_rx[7], s_bsp_imu_rx[8]);
-  339   1          sample->acc_x_raw = bsp_imu_make_i16(s_bsp_imu_rx[9], s_bsp_imu_rx[10]);
-  340   1          sample->acc_y_raw = bsp_imu_make_i16(s_bsp_imu_rx[11], s_bsp_imu_rx[12]);
-  341   1          sample->acc_z_raw = bsp_imu_make_i16(s_bsp_imu_rx[13], s_bsp_imu_rx[14]);
-  342   1          next_sequence = s_bsp_imu_sequence + 1UL;
-  343   1          sample->sequence = next_sequence;
-  344   1          sample->valid = 1U;
-  345   1      
-  346   1          /* Keep the BSP transfer lock asserted until RX parsing and the complete
-  347   1             double-buffer publication are finished.  TIM7 may preempt this DMA ISR,
-  348   1             but it cannot start another DMA transfer over s_bsp_imu_rx mid-parse. */
-  349   1          ea_backup = EA;
-  350   1          EA = 0;
-  351   1          s_bsp_imu_sequence = next_sequence;
-  352   1          s_bsp_imu_published_index = next_index;
-  353   1          s_bsp_imu_transfer_active = 0U;
-  354   1          s_bsp_imu_transfer_deadline_tick = 0UL;
-  355   1          EA = ea_backup;
-  356   1      }
-  357          
-  358          void bsp_imu_init(void)
-  359          {
-  360   1          uint8 i;
-  361   1      
-  362   1          s_bsp_imu_ready = 0U;
-  363   1          s_bsp_imu_transfer_active = 0U;
-  364   1          s_bsp_imu_published_index = 0U;
-  365   1          s_bsp_imu_sequence = 0U;
-  366   1          s_bsp_imu_dma_error_count = 0U;
-  367   1          s_bsp_imu_transfer_deadline_tick = 0UL;
-  368   1          for(i = 0U; i < 2U; i++)
-  369   1          {
-  370   2              s_bsp_imu_sample[i].valid = 0U;
-  371   2              s_bsp_imu_sample[i].sequence = 0U;
-  372   2          }
-  373   1      
-  374   1          (void)imu660rc_init(BSP_IMU_QUARTERNION_RATE);
-  375   1      
-  376   1          s_bsp_imu_ready = 1U;
-  377   1      }
-  378          
-  379          void bsp_imu_bootstrap_process(void)
-  380          {
-  381   1      }
-  382          
-  383          uint8 bsp_imu_request_sample(void)
-  384          {
-  385   1          uint8 i;
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 7   
+  331   1          qw = (norm_squared >= 1.0f) ? 0.0f : tfpu_sqrt(tfpu_sub(1.0f, norm_squared));
+  332   1          norm = tfpu_sqrt(tfpu_add(norm_squared, tfpu_mul(qw, qw)));
+  333   1          if(0U == (norm > 0.001f))
+  334   1          {
+  335   2              return 0U;
+  336   2          }
+  337   1      
+  338   1          /* The old page path read [qw,qx,qy,qz] and published [qx,qy,qw,qz].
+  339   1           * Preserve that project-facing convention while FIFO supplies [qx,qy,qz]. */
+  340   1          sample->quaternion_0 = tfpu_div(qx, norm);
+  341   1          sample->quaternion_1 = tfpu_div(qy, norm);
+  342   1          sample->quaternion_2 = tfpu_div(qw, norm);
+  343   1          sample->quaternion_3 = tfpu_div(qz, norm);
+  344   1      
+  345   1          temp_a = tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_1, sample->quaternion_3),
+  346   1                  tfpu_mul(sample->quaternion_0, sample->quaternion_2)));
+  347   1          temp_b = tfpu_sub(1.0f, tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_1, sample->quaternion_1),
+  348   1                  tfpu_mul(sample->quaternion_0, sample->quaternion_0))));
+  349   1          sample->roll_deg = tfpu_mul(bsp_imu_tfpu_atan2(temp_a, temp_b), BSP_IMU_RAD_TO_DEG);
+  350   1          temp_a = tfpu_mul(2.0f, tfpu_sub(tfpu_mul(sample->quaternion_0, sample->quaternion_3),
+  351   1                  tfpu_mul(sample->quaternion_1, sample->quaternion_2)));
+  352   1          sample->pitch_deg = tfpu_mul(tfpu_sub(0.0f, bsp_imu_tfpu_asin(temp_a)), BSP_IMU_RAD_TO_DEG);
+  353   1          temp_a = tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_0, sample->quaternion_1),
+  354   1                  tfpu_mul(sample->quaternion_2, sample->quaternion_3)));
+  355   1          temp_b = tfpu_sub(1.0f, tfpu_mul(2.0f, tfpu_add(tfpu_mul(sample->quaternion_0, sample->quaternion_0),
+  356   1                  tfpu_mul(sample->quaternion_2, sample->quaternion_2))));
+  357   1          sample->yaw_deg = tfpu_mul(bsp_imu_tfpu_atan2(temp_a, temp_b), BSP_IMU_RAD_TO_DEG);
+  358   1          if(sample->yaw_deg < 0.0f)
+  359   1          {
+  360   2              sample->yaw_deg = tfpu_add(sample->yaw_deg, 360.0f);
+  361   2          }
+  362   1          return 1U;
+  363   1      }
+  364          
+  365          static void bsp_imu_publish_fifo_frame(void)
+  366          {
+  367   1          bsp_imu_sample_t xdata *sample;
+  368   1          uint8 current_index;
+  369   1          uint8 next_index;
+  370   1          uint8 ea_backup;
+  371   1          uint32 next_sequence;
+  372   1      
+  373   1          current_index = s_bsp_imu_published_index;
+  374   1          next_index = (uint8)(current_index ^ 1U);
+  375   1          s_bsp_imu_sample[next_index] = s_bsp_imu_sample[current_index];
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 7   
 
-  386   1      
-  387   1          if(0U == s_bsp_imu_ready)
-  388   1          {
-  389   2              return 0U;
-  390   2          }
-  391   1      
-  392   1          /* Synchronous read of 14 bytes from IMU660RC (0x20: temp, 0x22: gyro, 0x28: accel).
-  393   1             Write starting at s_bsp_imu_rx[1] so the DMA completion handler's RX[1..14] layout matches. */
-  394   1          IMU660RC_CS(0);
-  395   1          spi_read_8bit_registers(IMU660RC_SPI, BSP_IMU_FRAME_REGISTER, &s_bsp_imu_rx[1], BSP_IMU_FRAME_DATA_LE
-             -NGTH);
-  396   1          IMU660RC_CS(1);
-  397   1      
-  398   1          /* Process via the same DMA completion handler so data format is identical. */
-  399   1          bsp_imu_dma_complete(IMU660RC_SPI, 1U);
+  376   1          sample = &s_bsp_imu_sample[next_index];
+  377   1          if(0U == bsp_imu_decode_fifo_frame(sample))
+  378   1          {
+  379   2              bsp_imu_record_dma_error();
+  380   2              return;
+  381   2          }
+  382   1      
+  383   1          next_sequence = s_bsp_imu_sequence + 1UL;
+  384   1          sample->sequence = next_sequence;
+  385   1          sample->drdy_tick = s_bsp_imu_active_drdy_tick;
+  386   1          sample->timestamp_tick = service_timetick_what();
+  387   1          sample->valid = 1U;
+  388   1      
+  389   1          ea_backup = EA;
+  390   1          EA = 0;
+  391   1          s_bsp_imu_sequence = next_sequence;
+  392   1          s_bsp_imu_published_index = next_index;
+  393   1          EA = ea_backup;
+  394   1      }
+  395          
+  396          void bsp_imu_init(void)
+  397          {
+  398   1          uint8 i;
+  399   1          uint8 ea_backup;
   400   1      
-  401   1          return 1U;
-  402   1      }
-*** WARNING C47 IN LINE 385 OF ..\L1_BSP\bsp_imu.c: 'i': unreferenced local variable
-  403          
-  404          uint8 bsp_imu_get_latest_sample(bsp_imu_sample_t *out_data)
-  405          {
-  406   1          uint8 index;
-  407   1          uint8 result;
-  408   1          uint8 ea_backup;
-  409   1      
-  410   1          if(NULL == out_data)
-  411   1          {
-  412   2              return 0U;
-  413   2          }
-  414   1      
-  415   1          ea_backup = EA;
-  416   1          EA = 0;
-  417   1          index = s_bsp_imu_published_index;
-  418   1          result = s_bsp_imu_sample[index].valid;
-  419   1          *out_data = s_bsp_imu_sample[index];
-  420   1          EA = ea_backup;
-  421   1          return result;
-  422   1      }
-  423          
-  424          uint32 bsp_imu_get_dma_error_count(void)
-  425          {
-  426   1          uint32 result;
-  427   1          uint8 ea_backup;
-  428   1      
-  429   1          ea_backup = EA;
-  430   1          EA = 0;
-  431   1          result = s_bsp_imu_dma_error_count;
-  432   1          EA = ea_backup;
-  433   1          return result;
-  434   1      }
-  435          
-  436          void bsp_imu_read_gyro(bsp_imu_gyro_t *out_data)
-  437          {
-  438   1          bsp_imu_sample_t sample;
-  439   1      
-  440   1          if(NULL == out_data)
+  401   1          s_bsp_imu_ready = 0U;
+  402   1          s_bsp_imu_transfer_active = 0U;
+  403   1          s_bsp_imu_frame_pending = 0U;
+  404   1          s_bsp_imu_frame_ready = 0U;
+  405   1          s_bsp_imu_published_index = 0U;
+  406   1          s_bsp_imu_sequence = 0UL;
+  407   1          s_bsp_imu_dma_error_count = 0UL;
+  408   1          s_bsp_imu_transfer_deadline_tick = 0UL;
+  409   1          s_bsp_imu_pending_drdy_tick = 0UL;
+  410   1          s_bsp_imu_active_drdy_tick = 0UL;
+  411   1          for(i = 0U; i < 2U; i++)
+  412   1          {
+  413   2              s_bsp_imu_sample[i].valid = 0U;
+  414   2              s_bsp_imu_sample[i].sequence = 0UL;
+  415   2              s_bsp_imu_sample[i].drdy_tick = 0UL;
+  416   2              s_bsp_imu_sample[i].timestamp_tick = 0UL;
+  417   2          }
+  418   1          for(i = 0U; i < BSP_IMU_FIFO_DMA_LENGTH; i++)
+  419   1          {
+  420   2              s_bsp_imu_fifo_tx[i] = 0x00U;
+  421   2          }
+  422   1          s_bsp_imu_fifo_tx[0] = BSP_IMU_FIFO_REGISTER;
+  423   1      
+  424   1          if((0U != imu660rc_init(BSP_IMU_QUARTERNION_RATE)) ||
+  425   1             (0U != imu660rc_enable_unified_fifo()))
+  426   1          {
+  427   2              bsp_imu_record_dma_error();
+  428   2              return;
+  429   2          }
+  430   1      
+  431   1          spi_dma_init(IMU660RC_SPI, SPI_MODE0, IMU660RC_SPI_SPEED, IMU660RC_SPC_PIN,
+  432   1                  IMU660RC_SDI_PIN, IMU660RC_SDO_PIN, SPI_CS_NULL);
+  433   1      
+  434   1          ea_backup = EA;
+  435   1          EA = 0;
+  436   1          gpio_int_irq_handlers[((IMU660RC_INT2_PIN & 0x0f00U) >> 8)]
+  437   1                  [IMU660RC_INT2_PIN & 0x000fU] = bsp_imu_fifo_drdy_isr;
+  438   1          /* imu660rc_init temporarily owned INT2.  Do not lose a watermark that
+  439   1           * became active in the short hand-off window before our callback arrived. */
+  440   1          if(0U != P37)
   441   1          {
-  442   2              return;
-  443   2          }
-  444   1      
-  445   1          if(0U == bsp_imu_get_latest_sample(&sample))
-  446   1          {
-  447   2              out_data->gyro_x = 0.0f;
-  448   2              out_data->gyro_y = 0.0f;
-  449   2              out_data->gyro_z = 0.0f;
-C251 COMPILER V5.60.0,  bsp_imu                                                            25/07/26  22:49:10  PAGE 8   
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 8   
 
-  450   2              return;
-  451   2          }
-  452   1      
-  453   1          out_data->gyro_x = imu660rc_gyro_transition(sample.gyro_x_raw);
-  454   1          out_data->gyro_y = imu660rc_gyro_transition(sample.gyro_y_raw);
-  455   1          out_data->gyro_z = imu660rc_gyro_transition(sample.gyro_z_raw);
-  456   1      }
-  457          
-  458          float bsp_imu_read_gyro_z(void)
-  459          {
-  460   1          bsp_imu_sample_t sample;
-  461   1      
-  462   1          if(0U == bsp_imu_get_latest_sample(&sample))
-  463   1          {
-  464   2              return 0.0f;
-  465   2          }
-  466   1      
-  467   1          return imu660rc_gyro_transition(sample.gyro_z_raw);
-  468   1      }
-  469          
-  470          uint8 bsp_imu_is_ready(void)
-  471          {
-  472   1          return s_bsp_imu_ready;
-  473   1      }
-*** WARNING C174 IN LINE 245 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_boot_submit': unreferenced 'static' function
-*** WARNING C174 IN LINE 290 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_boot_take_result': unreferenced 'static' function
-*** WARNING C174 IN LINE 71 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_boot_deadline_reached': unreferenced 'static' function
-*** WARNING C174 IN LINE 89 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_build_boot_config': unreferenced 'static' function
+  442   2              s_bsp_imu_pending_drdy_tick = service_timetick_what();
+  443   2              s_bsp_imu_frame_pending = 1U;
+  444   2          }
+  445   1          s_bsp_imu_ready = 1U;
+  446   1          EA = ea_backup;
+  447   1      }
+  448          
+  449          void bsp_imu_task(void)
+  450          {
+  451   1          uint8 ea_backup;
+  452   1          uint8 frame_ready;
+  453   1      
+  454   1          if(0U == s_bsp_imu_ready)
+  455   1          {
+  456   2              return;
+  457   2          }
+  458   1      
+  459   1          bsp_imu_check_timeout(service_timetick_what());
+  460   1          ea_backup = EA;
+  461   1          EA = 0;
+  462   1          frame_ready = s_bsp_imu_frame_ready;
+  463   1          s_bsp_imu_frame_ready = 0U;
+  464   1          EA = ea_backup;
+  465   1          if(0U != frame_ready)
+  466   1          {
+  467   2              bsp_imu_publish_fifo_frame();
+  468   2          }
+  469   1          (void)bsp_imu_start_fifo_frame();
+  470   1      }
+  471          
+  472          void bsp_imu_bootstrap_process(void)
+  473          {
+  474   1          bsp_imu_task();
+  475   1      }
+  476          
+  477          uint8 bsp_imu_request_sample(void)
+  478          {
+  479   1          /* FIFO watermark is the sole sampling clock; never issue a duplicate read. */
+  480   1          return 0U;
+  481   1      }
+  482          
+  483          uint8 bsp_imu_get_latest_sample(bsp_imu_sample_t *out_data)
+  484          {
+  485   1          uint8 index;
+  486   1          uint8 result;
+  487   1          uint8 ea_backup;
+  488   1      
+  489   1          if(NULL == out_data)
+  490   1          {
+  491   2              return 0U;
+  492   2          }
+  493   1      
+  494   1          ea_backup = EA;
+  495   1          EA = 0;
+  496   1          index = s_bsp_imu_published_index;
+  497   1          result = s_bsp_imu_sample[index].valid;
+  498   1          *out_data = s_bsp_imu_sample[index];
+  499   1          EA = ea_backup;
+  500   1          return result;
+  501   1      }
+  502          
+  503          uint32 bsp_imu_get_dma_error_count(void)
+  504          {
+  505   1          uint32 result;
+  506   1          uint8 ea_backup;
+  507   1      
+C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  20:08:11  PAGE 9   
+
+  508   1          ea_backup = EA;
+  509   1          EA = 0;
+  510   1          result = s_bsp_imu_dma_error_count;
+  511   1          EA = ea_backup;
+  512   1          return result;
+  513   1      }
+  514          
+  515          void bsp_imu_read_gyro(bsp_imu_gyro_t *out_data)
+  516          {
+  517   1          bsp_imu_sample_t sample;
+  518   1      
+  519   1          if(NULL == out_data)
+  520   1          {
+  521   2              return;
+  522   2          }
+  523   1          if(0U == bsp_imu_get_latest_sample(&sample))
+  524   1          {
+  525   2              out_data->gyro_x = 0.0f;
+  526   2              out_data->gyro_y = 0.0f;
+  527   2              out_data->gyro_z = 0.0f;
+  528   2              return;
+  529   2          }
+  530   1          out_data->gyro_x = imu660rc_gyro_transition(sample.gyro_x_raw);
+  531   1          out_data->gyro_y = imu660rc_gyro_transition(sample.gyro_y_raw);
+  532   1          out_data->gyro_z = imu660rc_gyro_transition(sample.gyro_z_raw);
+  533   1      }
+  534          
+  535          float bsp_imu_read_gyro_z(void)
+  536          {
+  537   1          bsp_imu_sample_t sample;
+  538   1      
+  539   1          if(0U == bsp_imu_get_latest_sample(&sample))
+  540   1          {
+  541   2              return 0.0f;
+  542   2          }
+  543   1          return imu660rc_gyro_transition(sample.gyro_z_raw);
+  544   1      }
+  545          
+  546          uint8 bsp_imu_is_ready(void)
+  547          {
+  548   1          return s_bsp_imu_ready;
+  549   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2567     ------
+  ecode size           =      5252     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       237     ------
+  xdata size           =       416     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -523,8 +605,8 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       100     ------
+  hconst size          =        75     ------
 End of Module Information.
 
 
-C251 COMPILATION COMPLETE.  5 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

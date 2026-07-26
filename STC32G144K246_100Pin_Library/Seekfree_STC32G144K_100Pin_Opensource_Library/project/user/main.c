@@ -14,6 +14,7 @@
 #include "service_speed.h"
 #include "service_tof.h"
 #include "app_element.h"
+#include "app_attitude.h"
 #include "app_feedforward.h"
 #include "app_inductor_preprocess.h"
 #include "app_motion_preprocess.h"
@@ -48,6 +49,7 @@ void main(void)
     app_feedforward_init();
     app_speed_plan_init();
     app_element_init();
+    app_attitude_init();
     app_speedout_init();
     app_motion_postprocess_init();
     app_boot_sequence_init();

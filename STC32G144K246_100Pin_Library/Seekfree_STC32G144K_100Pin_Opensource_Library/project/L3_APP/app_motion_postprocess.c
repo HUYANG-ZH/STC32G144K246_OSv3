@@ -5,6 +5,7 @@
 #include "service_imu.h"
 #include "service_packet.h"
 #include "service_timetick.h"
+#include "app_attitude.h"
 #include "app_element.h"
 #include "app_feedforward.h"
 #include "app_motion_preprocess.h"
@@ -163,27 +164,37 @@ static void app_motion_postprocess_publish(app_motion_postprocess_data_t *output
 
 void app_motion_postprocess_imu_step(void)
 {
-    service_imu_gyro_t gyro;
+    service_imu_sample_t imu;
     uint8 ea_backup;
+    uint8 imu_available;
     uint32 now;
 
     service_imu_update();
-    service_imu_read_gyro(&gyro);
     now = service_timetick_what();
+    imu_available = service_imu_get_latest_sample(&imu);
+    if(0U == imu_available)
+    {
+        imu.gyro_x = 0.0f;
+        imu.gyro_y = 0.0f;
+        imu.gyro_z = 0.0f;
+        imu.sequence = 0UL;
+        imu.valid = 0U;
+    }
 
     /*
      * SPI DMA may complete slower than the 1 ms control tick.  A stale frame
      * must not be filtered repeatedly: doing so changes the LPF state without
      * any new physical observation and obscures a stalled acquisition chain.
      */
-    if((0U != gyro.sequence) && (gyro.sequence != motion_postprocess_imu_last_sequence))
+    if((0U != imu.valid) && (0U != imu.sequence) &&
+       (imu.sequence != motion_postprocess_imu_last_sequence))
     {
         ea_backup = EA;
         EA = 0;
-        motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, gyro.gyro_z);
+        motion_postprocess_gyro_z_filtered = shared_lpf_update(&motion_postprocess_gyro_z_lpf, imu.gyro_z);
         EA = ea_backup;
-        motion_postprocess_imu_last_sequence = gyro.sequence;
-        motion_postprocess_imu_last_fresh_tick = now;
+        motion_postprocess_imu_last_sequence = imu.sequence;
+        motion_postprocess_imu_last_fresh_tick = imu.timestamp_tick;
         motion_postprocess_imu_seen = 1U;
         if(0U != motion_postprocess_imu_fault)
         {
@@ -203,25 +214,34 @@ void app_motion_postprocess_imu_step(void)
             app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_IMU);
         }
     }
-    app_element_imu_task(&gyro);
+    app_element_imu_task(&imu);
+    if(0U != imu_available)
+    {
+        app_attitude_update(&imu);
+    }
 }
 
 void app_motion_postprocess_init(void)
 {
-    service_imu_gyro_t gyro;
+    service_imu_sample_t imu;
     app_motion_postprocess_data_t output;
     uint32 now;
 
-    service_imu_read_gyro(&gyro);
+    if(0U == service_imu_get_latest_sample(&imu))
+    {
+        imu.gyro_z = 0.0f;
+        imu.sequence = 0UL;
+        imu.valid = 0U;
+    }
     now = service_timetick_what();
     shared_lpf_init(&motion_postprocess_gyro_z_lpf,
             APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT,
-            gyro.gyro_z);
-    motion_postprocess_gyro_z_filtered = gyro.gyro_z;
-    motion_postprocess_imu_last_sequence = gyro.sequence;
-    motion_postprocess_imu_last_fresh_tick = now;
+            imu.gyro_z);
+    motion_postprocess_gyro_z_filtered = imu.gyro_z;
+    motion_postprocess_imu_last_sequence = imu.sequence;
+    motion_postprocess_imu_last_fresh_tick = (0U != imu.valid) ? imu.timestamp_tick : now;
     motion_postprocess_imu_start_tick = now;
-    motion_postprocess_imu_seen = (0U != gyro.sequence) ? 1U : 0U;
+    motion_postprocess_imu_seen = ((0U != imu.valid) && (0U != imu.sequence)) ? 1U : 0U;
     motion_postprocess_imu_fault = 0U;
     app_motion_postprocess_sync_pid();
     shared_pos_pid_init(&motion_postprocess_yaw_pid);

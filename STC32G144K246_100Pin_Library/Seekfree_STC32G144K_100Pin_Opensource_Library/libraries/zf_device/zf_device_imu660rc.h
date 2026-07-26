@@ -214,6 +214,8 @@ void    imu660rc_get_quarternion    (void);
 void    imu660rc_callback           (void);
 uint8   imu660rc_update_quarternion (void);
 uint8   imu660rc_init               (imu660rc_quarternion_rate_config quarternion_rate);
+/* Configure FIFO as one gyro + one acc + one SFLP game-vector frame. */
+uint8   imu660rc_enable_unified_fifo (void);
 
 
 

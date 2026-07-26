@@ -20,7 +20,7 @@ void service_timetick_debug(void)
     printf("[timetick:time=%ld.]\r\n", service_timetick_what());
 }
 
-uint32 service_timetick_what(void)
+uint32 service_timetick_what(void) reentrant
 {
     uint32 snapshot;
     uint8 ea_backup;

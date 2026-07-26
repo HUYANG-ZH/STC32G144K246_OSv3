@@ -111,7 +111,9 @@ static shared_lpf_t element_gyro_x_lpf;
 static float element_cylinder_bucket_angle_pos[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
 static float element_cylinder_bucket_angle_neg[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
 static uint32 element_cylinder_bucket_tick[APP_ELEMENT_CYLINDER_BUCKET_COUNT];
-static uint32 element_last_tick = 0U;
+/* Raw timestamp is the integration clock; TIM7 itself only schedules work. */
+static uint32 element_last_raw_timestamp_tick = 0U;
+static uint8 element_raw_timestamp_valid = 0U;
 static uint32 element_imu_last_sequence = 0U;
 static uint32 element_cylinder_dead_start_tick = 0U;
 static uint32 element_cylinder_yaw_limit_start_tick = 0U;
@@ -180,7 +182,7 @@ static volatile uint8 element_realtime_event_flags = 0U;
 #define ELEMENT_EVENT_SEESAW_FOUND         (0x04U)
 
 static void app_element_cylinder_state_reply(void);
-static void app_element_roundabout_imu_step(uint8 sample_fresh);
+static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta_tick);
 static void app_element_process_control_events(uint32 now);
 
 static float app_element_roundabout_get_ff_scale(void)
@@ -249,7 +251,8 @@ static void app_element_reset(void)
     element_data.gyro_x = 0.0f;
     element_data.gyro_y = 0.0f;
     element_data.gyro_z = 0.0f;
-    element_last_tick = service_timetick_what();
+    element_last_raw_timestamp_tick = 0U;
+    element_raw_timestamp_valid = 0U;
     element_imu_last_sequence = 0U;
     element_cylinder_dead_start_tick = 0U;
     element_cylinder_angle_pos_deg = 0.0f;
@@ -278,6 +281,7 @@ static void app_element_reset(void)
     element_roundabout_gz_high = 0U;
     element_roundabout_gz_integrate = 0U;
     element_roundabout_gz_angle_deg = 0.0f;
+    element_roundabout_last_tick = 0U;
     element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
     element_roundabout_distance_m = 0.0f;
     app_element_roundabout_bias_yaw_radps = 0.0f;
@@ -602,12 +606,12 @@ void app_element_control_step(void)
 // 使用示例     app_element_roundabout_imu_step();
 // 备注信息     从主循环 imu_task 移植而来，使用 element_gyro_snapshot 共享数据，时基独立
 //-------------------------------------------------------------------------------------------------------------------
-static void app_element_roundabout_imu_step(uint8 sample_fresh)
+static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta_tick)
 {
     service_imu_gyro_t gyro;
     uint8 ea_backup;
     uint32 now;
-    uint32 delta_tick;
+    uint32 control_delta_tick;
 
     gyro = element_gyro_snapshot;   /* volatile 读主循环快照 */
 
@@ -617,7 +621,7 @@ static void app_element_roundabout_imu_step(uint8 sample_fresh)
         element_roundabout_last_tick = now;
         return;
     }
-    delta_tick = now - element_roundabout_last_tick;
+    control_delta_tick = now - element_roundabout_last_tick;
     element_roundabout_last_tick = now;
 
     /* 追踪gx是否在20ms内超过200°/s（环岛检测阻挡条件） */
@@ -633,11 +637,13 @@ static void app_element_roundabout_imu_step(uint8 sample_fresh)
     }
 
     /* 环岛gz积分：达到当前环岛配置角度后退出，第三次环岛直接停车 */
-    if((0U != element_roundabout_gz_integrate) && (0U != sample_fresh))
+    if((0U != element_roundabout_gz_integrate) && (0U != sample_fresh) &&
+       (0U != raw_delta_tick) &&
+       (APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK >= raw_delta_tick))
     {
         float target_angle_deg;
         float delta_angle = tfpu_mul(gyro.gyro_z,
-                tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
+                tfpu_mul(tfpu_int2float((long)raw_delta_tick), APP_ELEMENT_TICK_TO_SECOND));
 
         app_element_roundabout_apply_runtime_config();
         target_angle_deg = app_element_roundabout_get_angle_deg();
@@ -692,7 +698,7 @@ static void app_element_roundabout_imu_step(uint8 sample_fresh)
         service_speed_get(&speed);
         avg_mps = tfpu_mul(tfpu_sub(speed.left_mps, speed.right_mps), 0.5f);
         element_roundabout_distance_m = tfpu_add(element_roundabout_distance_m,
-                tfpu_mul(avg_mps, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND)));
+                tfpu_mul(avg_mps, tfpu_mul(tfpu_int2float((long)control_delta_tick), APP_ELEMENT_TICK_TO_SECOND)));
         if(element_roundabout_distance_m >= APP_ELEMENT_ROUNDABOUT_EXIT_DISTANCE_M)
         {
             element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
@@ -963,55 +969,68 @@ void app_element_get_data(app_element_data_t *out_data)
 // 使用示例     app_element_imu_task(&gyro);
 // 备注信息     当前只识别gyro_x滑动窗口内单方向累计转动超过180度的圆筒元素
 //-------------------------------------------------------------------------------------------------------------------
-void app_element_imu_task(const service_imu_gyro_t *gyro)
+void app_element_imu_task(const service_imu_sample_t *imu)
 {
     uint8 ea_backup;
     uint8 sample_fresh;
     uint32 now;
-    uint32 delta_tick;
+    uint32 raw_delta_tick = 0U;
     float gyro_x;
 
-    if(NULL == gyro)
+    if(NULL == imu)
     {
         return;
     }
 
     /* 提供 gyro 快照供 TIM7 环岛中断读取（volatile 写） */
-    sample_fresh = ((0U != gyro->sequence) && (gyro->sequence != element_imu_last_sequence)) ? 1U : 0U;
+    sample_fresh = ((0U != imu->valid) && (0U != imu->sequence) &&
+            (imu->sequence != element_imu_last_sequence)) ? 1U : 0U;
     if(0U != sample_fresh)
     {
-        element_imu_last_sequence = gyro->sequence;
+        element_imu_last_sequence = imu->sequence;
         ea_backup = EA;
         EA = 0;
-        element_gyro_snapshot = *gyro;
+        element_gyro_snapshot.gyro_x = imu->gyro_x;
+        element_gyro_snapshot.gyro_y = imu->gyro_y;
+        element_gyro_snapshot.gyro_z = imu->gyro_z;
+        element_gyro_snapshot.sequence = imu->sequence;
         EA = ea_backup;
+
+        if(0U == element_raw_timestamp_valid)
+        {
+            element_last_raw_timestamp_tick = imu->timestamp_tick;
+            element_raw_timestamp_valid = 1U;
+        }
+        else
+        {
+            raw_delta_tick = imu->timestamp_tick - element_last_raw_timestamp_tick;
+            element_last_raw_timestamp_tick = imu->timestamp_tick;
+        }
     }
 
     now = service_timetick_what();
     app_element_process_control_events(now);
-    delta_tick = now - element_last_tick;
-    element_last_tick = now;
 
     gyro_x = element_cylinder_gyro_x;
     if(0U != sample_fresh)
     {
         if(0U == element_gyro_x_lpf_ready)
         {
-            shared_lpf_reset(&element_gyro_x_lpf, gyro->gyro_x);
+            shared_lpf_reset(&element_gyro_x_lpf, imu->gyro_x);
             element_gyro_x_lpf_ready = 1U;
         }
-        gyro_x = shared_lpf_update(&element_gyro_x_lpf, gyro->gyro_x);
+        gyro_x = shared_lpf_update(&element_gyro_x_lpf, imu->gyro_x);
 
         ea_backup = EA;
         EA = 0;
         element_data.gyro_x = gyro_x;
-        element_data.gyro_y = gyro->gyro_y;
-        element_data.gyro_z = gyro->gyro_z;
+        element_data.gyro_y = imu->gyro_y;
+        element_data.gyro_z = imu->gyro_z;
         EA = ea_backup;
     }
 
     /* 追踪gz是否在50ms内出现过>120°/s（供跷跷板检测） */
-    if((0U != sample_fresh) && ((gyro->gyro_z > 120.0f) || (gyro->gyro_z < -120.0f)))
+    if((0U != sample_fresh) && ((imu->gyro_z > 120.0f) || (imu->gyro_z < -120.0f)))
     {
         element_seesaw_gz_high = 1U;
         element_seesaw_gz_high_tick = now;
@@ -1025,13 +1044,14 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
     /* 注：gx 阻挡追踪、环岛 gz 积分、退出、EXIT_WAIT 距离积分、偏置到期清除
        已移至 app_element_roundabout_imu_step() 在 TIM7 中断内硬实时执行 */
 
-    if(delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK)
+    if((0U != sample_fresh) &&
+       (raw_delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK))
     {
         app_element_cylinder_clear();
     }
-    else if((0U != sample_fresh) && (0U != delta_tick))
+    else if((0U != sample_fresh) && (0U != raw_delta_tick))
     {
-        app_element_cylinder_update(gyro_x, delta_tick, now);
+        app_element_cylinder_update(gyro_x, raw_delta_tick, now);
     }
 
     /* 跷跷板检测 */
@@ -1077,5 +1097,5 @@ void app_element_imu_task(const service_imu_gyro_t *gyro)
 
     /* Integrate the roundabout state from each fresh IMU tick.  It used to
      * run from the 5 ms TIM6 control step despite being an IMU-rate task. */
-    app_element_roundabout_imu_step(sample_fresh);
+    app_element_roundabout_imu_step(sample_fresh, raw_delta_tick);
 }

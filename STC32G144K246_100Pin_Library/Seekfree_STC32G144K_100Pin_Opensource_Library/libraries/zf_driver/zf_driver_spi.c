@@ -198,12 +198,29 @@ const vuint32 SPIX_CLKDIV_ADDR[] =
 typedef struct
 {
     volatile uint8 active;
+    volatile uint8 callback_context;
     spi_dma_async_callback callback;
 } spi_dma_async_state_t;
+
+/* One descriptor is enough because a completion callback may only chain its
+ * direct successor.  It is consumed by the same DMA ISR after the callback
+ * returns, avoiding C251 foreground-function re-entry on very short DMA jobs.
+ */
+typedef struct
+{
+    volatile uint8 pending;
+    const uint8 *write_buffer;
+    uint8 *read_buffer;
+    uint16 len;
+    spi_dma_async_callback callback;
+} spi_dma_async_chain_state_t;
 
 #define SPI_DMA_ASYNC_IRQ_PRIORITY    (2U)
 
 static spi_dma_async_state_t spi_dma_async_state[3];
+static spi_dma_async_chain_state_t spi_dma_async_chain_state[3];
+/* C251's foreground submit routine is non-reentrant across every SPI port. */
+static volatile uint8 spi_dma_async_callback_depth = 0U;
 
 static uint8 spi_dma_index_is_valid(spi_index_enum spi_n)
 {
@@ -223,7 +240,10 @@ uint8 spi_dma_async_transfer(spi_index_enum spi_n, const uint8 *write_buffer,
 
     ea_backup = EA;
     EA = 0;
-    if(0U != spi_dma_async_state[spi_n].active)
+    if((0U != spi_dma_async_callback_depth) ||
+       (0U != spi_dma_async_state[spi_n].callback_context) ||
+       (0U != spi_dma_async_state[spi_n].active) ||
+       (0U != spi_dma_async_chain_state[spi_n].pending))
     {
         EA = ea_backup;
         return 0U;
@@ -246,9 +266,45 @@ uint8 spi_dma_async_transfer(spi_index_enum spi_n, const uint8 *write_buffer,
     return 1U;
 }
 
+uint8 spi_dma_async_chain_from_callback(spi_index_enum spi_n,
+        const uint8 *write_buffer, uint8 *read_buffer, uint16 len,
+        spi_dma_async_callback callback)
+{
+    uint8 ea_backup;
+
+    if((0U == spi_dma_index_is_valid(spi_n)) || (NULL == write_buffer) ||
+            (NULL == read_buffer) || (0U == len))
+    {
+        return 0U;
+    }
+
+    ea_backup = EA;
+    EA = 0;
+    if((0U == spi_dma_async_state[spi_n].callback_context) ||
+       (0U != spi_dma_async_state[spi_n].active) ||
+       (0U != spi_dma_async_chain_state[spi_n].pending))
+    {
+        EA = ea_backup;
+        return 0U;
+    }
+
+    spi_dma_async_chain_state[spi_n].write_buffer = write_buffer;
+    spi_dma_async_chain_state[spi_n].read_buffer = read_buffer;
+    spi_dma_async_chain_state[spi_n].len = len;
+    spi_dma_async_chain_state[spi_n].callback = callback;
+    spi_dma_async_chain_state[spi_n].pending = 1U;
+    EA = ea_backup;
+    return 1U;
+}
+
 uint8 spi_dma_async_is_busy(spi_index_enum spi_n)
 {
-    return (0U != spi_dma_index_is_valid(spi_n)) ? spi_dma_async_state[spi_n].active : 0U;
+    if(0U == spi_dma_index_is_valid(spi_n))
+    {
+        return 0U;
+    }
+    return ((0U != spi_dma_async_state[spi_n].active) ||
+            (0U != spi_dma_async_chain_state[spi_n].pending)) ? 1U : 0U;
 }
 
 uint8 spi_dma_async_abort(spi_index_enum spi_n)
@@ -263,12 +319,16 @@ uint8 spi_dma_async_abort(spi_index_enum spi_n)
 
     ea_backup = EA;
     EA = 0;
-    if(0U != spi_dma_async_state[spi_n].active)
+    if((0U != spi_dma_async_state[spi_n].active) ||
+       (0U != spi_dma_async_chain_state[spi_n].pending))
     {
         DMA_SPIX_CR(spi_n) = 0x00U;
         DMA_SPIX_STA(spi_n) = 0x00U;
         spi_dma_async_state[spi_n].callback = 0;
         spi_dma_async_state[spi_n].active = 0U;
+        spi_dma_async_state[spi_n].callback_context = 0U;
+        spi_dma_async_chain_state[spi_n].callback = 0;
+        spi_dma_async_chain_state[spi_n].pending = 0U;
         aborted = 1U;
     }
     EA = ea_backup;
@@ -281,6 +341,7 @@ void spi_dma_async_irq_handler(spi_index_enum spi_n)
     spi_dma_async_callback callback;
     uint8 state;
     uint8 success;
+    uint8 ea_backup;
 
     if(0U == spi_dma_index_is_valid(spi_n))
     {
@@ -299,12 +360,48 @@ void spi_dma_async_irq_handler(spi_index_enum spi_n)
     DMA_SPIX_CR(spi_n) = 0x00U;
     callback = spi_dma_async_state[spi_n].callback;
     spi_dma_async_state[spi_n].callback = 0;
-    spi_dma_async_state[spi_n].active = 0U;
 
     if(NULL != callback)
     {
+        spi_dma_async_state[spi_n].callback_context = 1U;
+        spi_dma_async_callback_depth++;
+        spi_dma_async_state[spi_n].active = 0U;
         callback(spi_n, success);
+        spi_dma_async_state[spi_n].callback_context = 0U;
+        spi_dma_async_callback_depth--;
     }
+    else
+    {
+        spi_dma_async_state[spi_n].active = 0U;
+    }
+
+    /*
+     * A callback can queue one successor without calling the foreground
+     * submit routine recursively.  Keep interrupts masked while ownership
+     * moves from the descriptor to the live DMA registers; the new DMA IRQ
+     * cannot run until this ISR returns.
+     */
+    ea_backup = EA;
+    EA = 0;
+    if((0U != spi_dma_async_chain_state[spi_n].pending) &&
+       (0U == spi_dma_async_state[spi_n].active))
+    {
+        DMA_SPIX_CR(spi_n) = 0x00U;
+        DMA_SPIX_STA(spi_n) = 0x00U;
+        DMA_SPIX_AMT(spi_n) = (uint8)((spi_dma_async_chain_state[spi_n].len - 1U) & 0xFFU);
+        DMA_SPIX_AMTH(spi_n) = (uint8)((spi_dma_async_chain_state[spi_n].len - 1U) >> 8);
+        DMA_SPIX_TXAH(spi_n) = (uint8)((uint16)spi_dma_async_chain_state[spi_n].write_buffer >> 8);
+        DMA_SPIX_TXAL(spi_n) = (uint8)((uint16)spi_dma_async_chain_state[spi_n].write_buffer);
+        DMA_SPIX_RXAH(spi_n) = (uint8)((uint16)spi_dma_async_chain_state[spi_n].read_buffer >> 8);
+        DMA_SPIX_RXAL(spi_n) = (uint8)((uint16)spi_dma_async_chain_state[spi_n].read_buffer);
+        spi_dma_async_state[spi_n].callback = spi_dma_async_chain_state[spi_n].callback;
+        spi_dma_async_state[spi_n].active = 1U;
+        spi_dma_async_chain_state[spi_n].callback = 0;
+        spi_dma_async_chain_state[spi_n].pending = 0U;
+        DMA_SPIX_CFG(spi_n) = (uint8)(0xE0U | (SPI_DMA_ASYNC_IRQ_PRIORITY << 2));
+        DMA_SPIX_CR(spi_n) = 0xC1U;
+    }
+    EA = ea_backup;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -850,8 +947,11 @@ void spi_dma_init(spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_pin
     DMA_SPIX_ITVL(spi_n) = 0;
 
     spi_dma_async_state[spi_n].active = 0U;
+    spi_dma_async_state[spi_n].callback_context = 0U;
     spi_dma_async_state[spi_n].callback = 0;
-	DMA_SPIX_CR(spi_n)   = 0x00U;      // transfer starts only when an API explicitly arms DMA
+    spi_dma_async_chain_state[spi_n].pending = 0U;
+    spi_dma_async_chain_state[spi_n].callback = 0;
+    DMA_SPIX_CR(spi_n)   = 0x00U;      // transfer starts only when an API explicitly arms DMA
 }
 
 #define SPI_WRITE_DAT(spi_n, dat) spi_write_dat(spi_n, dat)
