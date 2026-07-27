@@ -11,11 +11,6 @@
 typedef struct
 {
     float gyro_z;
-    float roll_deg;
-    float pitch_deg;
-    float yaw_deg;
-    uint32 sequence;
-    uint8 valid;
 } app_attitude_data_t;
 
 void app_attitude_init(void);

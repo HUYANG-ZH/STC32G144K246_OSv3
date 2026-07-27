@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_imu
@@ -20,7 +20,7 @@ stmt  level    source
     7          #define BSP_IMU_QUARTERNION_RATE        (IMU660RC_QUARTERNION_DISABLE)
     8          #endif
     9          
-   10          /* FIFO frame: gyro word + accelerometer word. */
+   10          /* FIFO frame: gyro word + accelerometer word.  SFLP quaternion disabled. */
    11          #define BSP_IMU_FIFO_WORD_COUNT         (2U)
    12          #define BSP_IMU_FIFO_WORD_LENGTH        (7U)
    13          #define BSP_IMU_FIFO_DMA_LENGTH         (1U + BSP_IMU_FIFO_WORD_COUNT * BSP_IMU_FIFO_WORD_LENGTH)
@@ -66,7 +66,7 @@ stmt  level    source
    52          static void bsp_imu_publish_fifo_frame(void);
    53          
    54          static int16 bsp_imu_make_i16(uint8 low, uint8 high)
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 2   
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 2   
 
    55          {
    56   1          return (int16)(((uint16)high << 8) | low);
@@ -134,7 +134,7 @@ stmt  level    source
   118   2              return 0U;
   119   2          }
   120   1          s_bsp_imu_active_drdy_tick = s_bsp_imu_pending_drdy_tick;
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 3   
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 3   
 
   121   1          s_bsp_imu_frame_pending = 0U;
   122   1          s_bsp_imu_transfer_active = 1U;
@@ -202,7 +202,7 @@ stmt  level    source
   184   3                      return f_sgn;
   185   3                  }
   186   2                  h_sig <<= 1;
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 4   
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 4   
 
   187   2                  h_exp = 0U;
   188   2                  while(0U == (h_sig & 0x0400U))
@@ -270,7 +270,7 @@ stmt  level    source
   250   1          uint8 offset;
   251   1          uint8 tag;
   252   1          uint8 gyro_seen = 0U;
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 5   
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 5   
 
   253   1          uint8 acc_seen = 0U;
   254   1          float ax;
@@ -326,223 +326,227 @@ stmt  level    source
   298   2              return 0U;
   299   2          }
   300   1      
-  301   1          if(imu660rc_transition_factor[0] > 0.0f)
-  302   1          {
-  303   2              acc_scale = tfpu_div(1.0f, imu660rc_transition_factor[0]);
-  304   2              ax = tfpu_mul(tfpu_int2float((long)sample->acc_x_raw), acc_scale);
-  305   2              ay = tfpu_mul(tfpu_int2float((long)sample->acc_y_raw), acc_scale);
-  306   2              az = tfpu_mul(tfpu_int2float((long)sample->acc_z_raw), acc_scale);
-  307   2      
-  308   2              roll = bsp_imu_tfpu_atan2(ay, az);
-  309   2              ay2 = tfpu_mul(ay, ay);
-  310   2              az2 = tfpu_mul(az, az);
-  311   2              pitch = bsp_imu_tfpu_atan2(tfpu_sub(0.0f, ax), tfpu_sqrt(tfpu_add(ay2, az2)));
-  312   2      
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 6   
+  301   1          /* 从加速度计计算 roll/pitch（无 DMP 四元数）：
+  302   1             roll  = atan2(ay, az)
+  303   1             pitch = atan2(-ax, sqrt(ay^2 + az^2))
+  304   1             yaw = 0（加速度计无法测偏航） */
+  305   1          if(imu660rc_transition_factor[0] > 0.0f)
+  306   1          {
+  307   2              acc_scale = tfpu_div(1.0f, imu660rc_transition_factor[0]);
+  308   2              ax = tfpu_mul(tfpu_int2float((long)sample->acc_x_raw), acc_scale);
+  309   2              ay = tfpu_mul(tfpu_int2float((long)sample->acc_y_raw), acc_scale);
+  310   2              az = tfpu_mul(tfpu_int2float((long)sample->acc_z_raw), acc_scale);
+  311   2      
+  312   2              roll = bsp_imu_tfpu_atan2(ay, az);
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 6   
 
-  313   2              sample->roll_deg = tfpu_mul(roll, BSP_IMU_RAD_TO_DEG);
-  314   2              sample->pitch_deg = tfpu_mul(pitch, BSP_IMU_RAD_TO_DEG);
-  315   2          }
-  316   1          sample->yaw_deg = 0.0f;
-  317   1          return 1U;
-  318   1      }
-  319          
-  320          static void bsp_imu_publish_fifo_frame(void)
-  321          {
-  322   1          bsp_imu_sample_t xdata *sample;
-  323   1          uint8 current_index;
-  324   1          uint8 next_index;
-  325   1          uint8 ea_backup;
-  326   1          uint32 next_sequence;
-  327   1      
-  328   1          current_index = s_bsp_imu_published_index;
-  329   1          next_index = (uint8)(current_index ^ 1U);
-  330   1          s_bsp_imu_sample[next_index] = s_bsp_imu_sample[current_index];
-  331   1          sample = &s_bsp_imu_sample[next_index];
-  332   1          if(0U == bsp_imu_decode_fifo_frame(sample))
-  333   1          {
-  334   2              bsp_imu_record_dma_error();
-  335   2              return;
-  336   2          }
-  337   1      
-  338   1          next_sequence = s_bsp_imu_sequence + 1UL;
-  339   1          sample->sequence = next_sequence;
-  340   1          sample->drdy_tick = s_bsp_imu_active_drdy_tick;
-  341   1          sample->timestamp_tick = service_timetick_what();
-  342   1          sample->valid = 1U;
-  343   1      
-  344   1          ea_backup = EA;
-  345   1          EA = 0;
-  346   1          s_bsp_imu_sequence = next_sequence;
-  347   1          s_bsp_imu_published_index = next_index;
-  348   1          EA = ea_backup;
-  349   1      }
-  350          
-  351          void bsp_imu_init(void)
-  352          {
-  353   1          uint8 i;
-  354   1          uint8 ea_backup;
-  355   1      
-  356   1          s_bsp_imu_ready = 0U;
-  357   1          s_bsp_imu_transfer_active = 0U;
-  358   1          s_bsp_imu_frame_pending = 0U;
-  359   1          s_bsp_imu_frame_ready = 0U;
-  360   1          s_bsp_imu_published_index = 0U;
-  361   1          s_bsp_imu_sequence = 0UL;
-  362   1          s_bsp_imu_dma_error_count = 0UL;
-  363   1          s_bsp_imu_transfer_deadline_tick = 0UL;
-  364   1          s_bsp_imu_pending_drdy_tick = 0UL;
-  365   1          s_bsp_imu_active_drdy_tick = 0UL;
-  366   1          for(i = 0U; i < 2U; i++)
-  367   1          {
-  368   2              s_bsp_imu_sample[i].valid = 0U;
-  369   2              s_bsp_imu_sample[i].sequence = 0UL;
-  370   2              s_bsp_imu_sample[i].drdy_tick = 0UL;
-  371   2              s_bsp_imu_sample[i].timestamp_tick = 0UL;
-  372   2          }
-  373   1          for(i = 0U; i < BSP_IMU_FIFO_DMA_LENGTH; i++)
-  374   1          {
-  375   2              s_bsp_imu_fifo_tx[i] = 0x00U;
+  313   2              ay2 = tfpu_mul(ay, ay);
+  314   2              az2 = tfpu_mul(az, az);
+  315   2              pitch = bsp_imu_tfpu_atan2(tfpu_sub(0.0f, ax), tfpu_sqrt(tfpu_add(ay2, az2)));
+  316   2      
+  317   2              sample->roll_deg = tfpu_mul(roll, BSP_IMU_RAD_TO_DEG);
+  318   2              sample->pitch_deg = tfpu_mul(pitch, BSP_IMU_RAD_TO_DEG);
+  319   2          }
+  320   1          sample->yaw_deg = 0.0f;
+  321   1          return 1U;
+  322   1      }
+  323          
+  324          static void bsp_imu_publish_fifo_frame(void)
+  325          {
+  326   1          bsp_imu_sample_t xdata *sample;
+  327   1          uint8 current_index;
+  328   1          uint8 next_index;
+  329   1          uint8 ea_backup;
+  330   1          uint32 next_sequence;
+  331   1      
+  332   1          current_index = s_bsp_imu_published_index;
+  333   1          next_index = (uint8)(current_index ^ 1U);
+  334   1          s_bsp_imu_sample[next_index] = s_bsp_imu_sample[current_index];
+  335   1          sample = &s_bsp_imu_sample[next_index];
+  336   1          if(0U == bsp_imu_decode_fifo_frame(sample))
+  337   1          {
+  338   2              bsp_imu_record_dma_error();
+  339   2              return;
+  340   2          }
+  341   1      
+  342   1          next_sequence = s_bsp_imu_sequence + 1UL;
+  343   1          sample->sequence = next_sequence;
+  344   1          sample->drdy_tick = s_bsp_imu_active_drdy_tick;
+  345   1          sample->timestamp_tick = service_timetick_what();
+  346   1          sample->valid = 1U;
+  347   1      
+  348   1          ea_backup = EA;
+  349   1          EA = 0;
+  350   1          s_bsp_imu_sequence = next_sequence;
+  351   1          s_bsp_imu_published_index = next_index;
+  352   1          EA = ea_backup;
+  353   1      }
+  354          
+  355          void bsp_imu_init(void)
+  356          {
+  357   1          uint8 i;
+  358   1          uint8 ea_backup;
+  359   1      
+  360   1          s_bsp_imu_ready = 0U;
+  361   1          s_bsp_imu_transfer_active = 0U;
+  362   1          s_bsp_imu_frame_pending = 0U;
+  363   1          s_bsp_imu_frame_ready = 0U;
+  364   1          s_bsp_imu_published_index = 0U;
+  365   1          s_bsp_imu_sequence = 0UL;
+  366   1          s_bsp_imu_dma_error_count = 0UL;
+  367   1          s_bsp_imu_transfer_deadline_tick = 0UL;
+  368   1          s_bsp_imu_pending_drdy_tick = 0UL;
+  369   1          s_bsp_imu_active_drdy_tick = 0UL;
+  370   1          for(i = 0U; i < 2U; i++)
+  371   1          {
+  372   2              s_bsp_imu_sample[i].valid = 0U;
+  373   2              s_bsp_imu_sample[i].sequence = 0UL;
+  374   2              s_bsp_imu_sample[i].drdy_tick = 0UL;
+  375   2              s_bsp_imu_sample[i].timestamp_tick = 0UL;
   376   2          }
-  377   1          s_bsp_imu_fifo_tx[0] = BSP_IMU_FIFO_REGISTER;
-  378   1      
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 7   
+  377   1          for(i = 0U; i < BSP_IMU_FIFO_DMA_LENGTH; i++)
+  378   1          {
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 7   
 
-  379   1          if((0U != imu660rc_init(BSP_IMU_QUARTERNION_RATE)) ||
-  380   1             (0U != imu660rc_enable_unified_fifo()))
-  381   1          {
-  382   2              bsp_imu_record_dma_error();
-  383   2              return;
-  384   2          }
-  385   1      
-  386   1          spi_dma_init(IMU660RC_SPI, SPI_MODE0, IMU660RC_SPI_SPEED, IMU660RC_SPC_PIN,
-  387   1                  IMU660RC_SDI_PIN, IMU660RC_SDO_PIN, SPI_CS_NULL);
-  388   1      
-  389   1          ea_backup = EA;
-  390   1          EA = 0;
-  391   1          gpio_int_irq_handlers[((IMU660RC_INT2_PIN & 0x0f00U) >> 8)]
-  392   1                  [IMU660RC_INT2_PIN & 0x000fU] = bsp_imu_fifo_drdy_isr;
-  393   1          exit_init(IMU660RC_INT2_PIN, RISING_EDGE);
-  394   1          interrupt_set_priority(0X50 + ((IMU660RC_INT2_PIN & 0X0F00) >> 8), 2);
-  395   1          /* imu660rc_init temporarily owned INT2.  Do not lose a watermark that
-  396   1           * became active in the short hand-off window before our callback arrived. */
-  397   1          if(0U != P37)
-  398   1          {
-  399   2              s_bsp_imu_pending_drdy_tick = service_timetick_what();
-  400   2              s_bsp_imu_frame_pending = 1U;
-  401   2          }
-  402   1          s_bsp_imu_ready = 1U;
-  403   1          EA = ea_backup;
-  404   1      }
-  405          
-  406          void bsp_imu_task(void)
-  407          {
-  408   1          uint8 ea_backup;
-  409   1          uint8 frame_ready;
-  410   1      
-  411   1          if(0U == s_bsp_imu_ready)
-  412   1          {
-  413   2              return;
-  414   2          }
-  415   1      
-  416   1          bsp_imu_check_timeout(service_timetick_what());
-  417   1          ea_backup = EA;
-  418   1          EA = 0;
-  419   1          frame_ready = s_bsp_imu_frame_ready;
-  420   1          s_bsp_imu_frame_ready = 0U;
-  421   1          EA = ea_backup;
-  422   1          if(0U != frame_ready)
-  423   1          {
-  424   2              bsp_imu_publish_fifo_frame();
-  425   2          }
-  426   1          (void)bsp_imu_start_fifo_frame();
-  427   1      }
-  428          
-  429          void bsp_imu_bootstrap_process(void)
-  430          {
-  431   1          bsp_imu_task();
-  432   1      }
-  433          
-  434          uint8 bsp_imu_request_sample(void)
-  435          {
-  436   1          /* FIFO watermark is the sole sampling clock; never issue a duplicate read. */
-  437   1          return 0U;
-  438   1      }
-  439          
-  440          uint8 bsp_imu_get_latest_sample(bsp_imu_sample_t *out_data)
-  441          {
-  442   1          uint8 index;
-  443   1          uint8 result;
-  444   1          uint8 ea_backup;
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 8   
+  379   2              s_bsp_imu_fifo_tx[i] = 0x00U;
+  380   2          }
+  381   1          s_bsp_imu_fifo_tx[0] = BSP_IMU_FIFO_REGISTER;
+  382   1      
+  383   1          if((0U != imu660rc_init(BSP_IMU_QUARTERNION_RATE)) ||
+  384   1             (0U != imu660rc_enable_unified_fifo()))
+  385   1          {
+  386   2              bsp_imu_record_dma_error();
+  387   2              return;
+  388   2          }
+  389   1      
+  390   1          spi_dma_init(IMU660RC_SPI, SPI_MODE0, IMU660RC_SPI_SPEED, IMU660RC_SPC_PIN,
+  391   1                  IMU660RC_SDI_PIN, IMU660RC_SDO_PIN, SPI_CS_NULL);
+  392   1      
+  393   1          ea_backup = EA;
+  394   1          EA = 0;
+  395   1          gpio_int_irq_handlers[((IMU660RC_INT2_PIN & 0x0f00U) >> 8)]
+  396   1                  [IMU660RC_INT2_PIN & 0x000fU] = bsp_imu_fifo_drdy_isr;
+  397   1          exit_init(IMU660RC_INT2_PIN, RISING_EDGE);
+  398   1          interrupt_set_priority(0X50 + ((IMU660RC_INT2_PIN & 0X0F00) >> 8), 2);
+  399   1          /* imu660rc_init temporarily owned INT2.  Do not lose a watermark that
+  400   1           * became active in the short hand-off window before our callback arrived. */
+  401   1          if(0U != P37)
+  402   1          {
+  403   2              s_bsp_imu_pending_drdy_tick = service_timetick_what();
+  404   2              s_bsp_imu_frame_pending = 1U;
+  405   2          }
+  406   1          s_bsp_imu_ready = 1U;
+  407   1          EA = ea_backup;
+  408   1      }
+  409          
+  410          void bsp_imu_task(void)
+  411          {
+  412   1          uint8 ea_backup;
+  413   1          uint8 frame_ready;
+  414   1      
+  415   1          if(0U == s_bsp_imu_ready)
+  416   1          {
+  417   2              return;
+  418   2          }
+  419   1      
+  420   1          bsp_imu_check_timeout(service_timetick_what());
+  421   1          ea_backup = EA;
+  422   1          EA = 0;
+  423   1          frame_ready = s_bsp_imu_frame_ready;
+  424   1          s_bsp_imu_frame_ready = 0U;
+  425   1          EA = ea_backup;
+  426   1          if(0U != frame_ready)
+  427   1          {
+  428   2              bsp_imu_publish_fifo_frame();
+  429   2          }
+  430   1          (void)bsp_imu_start_fifo_frame();
+  431   1      }
+  432          
+  433          void bsp_imu_bootstrap_process(void)
+  434          {
+  435   1          bsp_imu_task();
+  436   1      }
+  437          
+  438          uint8 bsp_imu_request_sample(void)
+  439          {
+  440   1          /* FIFO watermark is the sole sampling clock; never issue a duplicate read. */
+  441   1          return 0U;
+  442   1      }
+  443          
+  444          uint8 bsp_imu_get_latest_sample(bsp_imu_sample_t *out_data)
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 8   
 
-  445   1      
-  446   1          if(NULL == out_data)
-  447   1          {
-  448   2              return 0U;
-  449   2          }
-  450   1      
-  451   1          ea_backup = EA;
-  452   1          EA = 0;
-  453   1          index = s_bsp_imu_published_index;
-  454   1          result = s_bsp_imu_sample[index].valid;
-  455   1          *out_data = s_bsp_imu_sample[index];
-  456   1          EA = ea_backup;
-  457   1          return result;
-  458   1      }
-  459          
-  460          uint32 bsp_imu_get_dma_error_count(void)
-  461          {
-  462   1          uint32 result;
-  463   1          uint8 ea_backup;
-  464   1      
-  465   1          ea_backup = EA;
-  466   1          EA = 0;
-  467   1          result = s_bsp_imu_dma_error_count;
-  468   1          EA = ea_backup;
-  469   1          return result;
-  470   1      }
-  471          
-  472          void bsp_imu_read_gyro(bsp_imu_gyro_t *out_data)
-  473          {
-  474   1          bsp_imu_sample_t sample;
-  475   1      
-  476   1          if(NULL == out_data)
-  477   1          {
-  478   2              return;
-  479   2          }
-  480   1          if(0U == bsp_imu_get_latest_sample(&sample))
+  445          {
+  446   1          uint8 index;
+  447   1          uint8 result;
+  448   1          uint8 ea_backup;
+  449   1      
+  450   1          if(NULL == out_data)
+  451   1          {
+  452   2              return 0U;
+  453   2          }
+  454   1      
+  455   1          ea_backup = EA;
+  456   1          EA = 0;
+  457   1          index = s_bsp_imu_published_index;
+  458   1          result = s_bsp_imu_sample[index].valid;
+  459   1          *out_data = s_bsp_imu_sample[index];
+  460   1          EA = ea_backup;
+  461   1          return result;
+  462   1      }
+  463          
+  464          uint32 bsp_imu_get_dma_error_count(void)
+  465          {
+  466   1          uint32 result;
+  467   1          uint8 ea_backup;
+  468   1      
+  469   1          ea_backup = EA;
+  470   1          EA = 0;
+  471   1          result = s_bsp_imu_dma_error_count;
+  472   1          EA = ea_backup;
+  473   1          return result;
+  474   1      }
+  475          
+  476          void bsp_imu_read_gyro(bsp_imu_gyro_t *out_data)
+  477          {
+  478   1          bsp_imu_sample_t sample;
+  479   1      
+  480   1          if(NULL == out_data)
   481   1          {
-  482   2              out_data->gyro_x = 0.0f;
-  483   2              out_data->gyro_y = 0.0f;
-  484   2              out_data->gyro_z = 0.0f;
-  485   2              return;
-  486   2          }
-  487   1          out_data->gyro_x = imu660rc_gyro_transition(sample.gyro_x_raw);
-  488   1          out_data->gyro_y = imu660rc_gyro_transition(sample.gyro_y_raw);
-  489   1          out_data->gyro_z = imu660rc_gyro_transition(sample.gyro_z_raw);
-  490   1      }
-  491          
-  492          float bsp_imu_read_gyro_z(void)
-  493          {
-  494   1          bsp_imu_sample_t sample;
-  495   1      
-  496   1          if(0U == bsp_imu_get_latest_sample(&sample))
-  497   1          {
-  498   2              return 0.0f;
-  499   2          }
-  500   1          return imu660rc_gyro_transition(sample.gyro_z_raw);
-  501   1      }
-  502          
-  503          uint8 bsp_imu_is_ready(void)
-  504          {
-  505   1          return s_bsp_imu_ready;
-  506   1      }
+  482   2              return;
+  483   2          }
+  484   1          if(0U == bsp_imu_get_latest_sample(&sample))
+  485   1          {
+  486   2              out_data->gyro_x = 0.0f;
+  487   2              out_data->gyro_y = 0.0f;
+  488   2              out_data->gyro_z = 0.0f;
+  489   2              return;
+  490   2          }
+  491   1          out_data->gyro_x = imu660rc_gyro_transition(sample.gyro_x_raw);
+  492   1          out_data->gyro_y = imu660rc_gyro_transition(sample.gyro_y_raw);
+  493   1          out_data->gyro_z = imu660rc_gyro_transition(sample.gyro_z_raw);
+  494   1      }
+  495          
+  496          float bsp_imu_read_gyro_z(void)
+  497          {
+  498   1          bsp_imu_sample_t sample;
+  499   1      
+  500   1          if(0U == bsp_imu_get_latest_sample(&sample))
+  501   1          {
+  502   2              return 0.0f;
+  503   2          }
+  504   1          return imu660rc_gyro_transition(sample.gyro_z_raw);
+  505   1      }
+  506          
+  507          uint8 bsp_imu_is_ready(void)
+  508          {
+  509   1          return s_bsp_imu_ready;
+  510   1      }
+C251 COMPILER V5.60.0,  bsp_imu                                                            27/07/26  10:07:29  PAGE 9   
+
 *** WARNING C174 IN LINE 231 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_tfpu_asin': unreferenced 'static' function
 *** WARNING C174 IN LINE 168 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_fp16_to_float_bits': unreferenced 'static' function
 
-
-C251 COMPILER V5.60.0,  bsp_imu                                                            26/07/26  21:28:00  PAGE 9   
 
 Module Information          Static   Overlayable
 ------------------------------------------------

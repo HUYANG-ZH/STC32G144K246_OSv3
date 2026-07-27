@@ -3,13 +3,21 @@
 #include "bsp_tof_async.h"
 #include "service_timetick.h"
 #include "zf_device_config.h"
-#include "zf_device_dl1b.h"
 #include "zf_device_type.h"
 #include "zf_driver_iic.h"
 
-#if (BSP_TOF_DRIVER != BSP_TOF_DRIVER_DL1B)
-    #error "The architecture runtime supports the verified VL53L1X/DL1B hardware only."
+#if (BSP_TOF_DRIVER == BSP_TOF_DRIVER_DL1A)
+    #include "zf_device_dl1a.h"
+#elif (BSP_TOF_DRIVER == BSP_TOF_DRIVER_DL1B)
+    #include "zf_device_dl1b.h"
+#else
+    #error "Unsupported BSP_TOF_DRIVER"
 #endif
+
+/* ------------------------------------------------------------------ */
+/*  DL1B 异步 IIC 状态机                                               */
+/* ------------------------------------------------------------------ */
+#if (BSP_TOF_DRIVER == BSP_TOF_DRIVER_DL1B)
 
 #define BSP_TOF_CONFIG_BYTES                (135U)
 #define BSP_TOF_TRANSFER_BYTES              (BSP_TOF_CONFIG_BYTES + 2U)
@@ -19,7 +27,6 @@
 #define BSP_TOF_READY_POLL_TICK             (10UL)
 #define BSP_TOF_READY_MAX_POLLS              (1000U)
 #define BSP_TOF_RETRY_WAIT_TICK              (10000UL)
-/* Match the bounded hardware-IIC transaction timeout (100 us tick base). */
 #define BSP_TOF_SUBMIT_BUSY_TIMEOUT_TICK     (100UL)
 
 typedef enum
@@ -85,7 +92,6 @@ static void bsp_tof_fail(iic_status_enum status)
     tof_state = BSP_TOF_STATE_ERROR;
 }
 
-/* Return 1 when accepted, 0 when the shared controller is busy, and 2 on an error. */
 static uint8 bsp_tof_submit(uint16 reg, uint8 write_len, uint8 read_len)
 {
     iic_status_enum status;
@@ -102,9 +108,6 @@ static uint8 bsp_tof_submit(uint16 reg, uint8 write_len, uint8 read_len)
     }
     if(IIC_ERROR_BUSY == status)
     {
-        /* A normal shared-bus owner may complete on the next main-loop pass,
-           but a hardware BUSY bit that never clears must reach the same
-           XSHUT/retreat recovery chain as a command timeout. */
         now = service_timetick_what();
         if(0U == tof_submit_busy_pending)
         {
@@ -145,13 +148,6 @@ uint8 bsp_tof_async_init(void)
 {
     uint8 index;
 
-    /*
-     * XSHUT must precede every IIC electrical probe.  If a failed VL53L1X
-     * holds SDA/SCL low, iic_init() intentionally returns BUS_STUCK without
-     * executing synchronous GPIO recovery.  Starting with XSHUT instead
-     * gives the sensor a bounded, asynchronous chance to release the bus;
-     * BSP_TOF_STATE_IIC_INIT performs the probe only after the boot delay.
-     */
     tof_initialized = 1U;
 
     for(index = 0U; index < BSP_TOF_CONFIG_BYTES; index++)
@@ -217,7 +213,6 @@ void bsp_tof_async_process(void)
         case BSP_TOF_STATE_XS_BOOT_WAIT:
             if(0U != bsp_tof_deadline_reached(now))
             {
-                /* Never let a low IIC line skip the XSHUT recovery sequence. */
                 tof_state = BSP_TOF_STATE_IIC_INIT;
             }
             break;
@@ -227,8 +222,6 @@ void bsp_tof_async_process(void)
                     DL1B_SCL_PIN, DL1B_SDA_PIN);
             if(IIC_SUCCESS != status)
             {
-                /* BUS_STUCK/NACK is retried through XSHUT after the bounded
-                   background backoff; no synchronous recovery is introduced. */
                 bsp_tof_fail(status);
             }
             else
@@ -462,3 +455,71 @@ uint8 bsp_tof_async_get_last_error(void)
 {
     return tof_last_error;
 }
+
+/* ------------------------------------------------------------------ */
+/*  DL1A 同步软 IIC                                                    */
+/* ------------------------------------------------------------------ */
+#elif (BSP_TOF_DRIVER == BSP_TOF_DRIVER_DL1A)
+
+static uint8 tof_ready = 0U;
+static uint8 tof_sample_requested = 0U;
+static uint8 tof_last_error = 0U;
+static uint8 tof_waiting = 0U;
+
+uint8 bsp_tof_async_init(void)
+{
+    tof_last_error = dl1a_init();
+    tof_ready = (0U == tof_last_error) ? 1U : 0U;
+    tof_waiting = 0U;
+    return tof_ready;
+}
+
+void bsp_tof_async_process(void)
+{
+    if(0U == tof_ready)
+    {
+        return;
+    }
+    if(0U != tof_waiting)
+    {
+        dl1a_get_distance();
+        if(0U != dl1a_finsh_flag)
+        {
+            dl1a_finsh_flag = 0U;
+            tof_waiting = 0U;
+        }
+    }
+    else if(0U != tof_sample_requested)
+    {
+        tof_sample_requested = 0U;
+        tof_waiting = 1U;
+        iic_write_8bit_register(DL1A_IIC, DL1A_DEV_ADDR, DL1A_SYSRANGE_START, 0x02);
+    }
+}
+
+uint8 bsp_tof_async_is_ready(void)
+{
+    return tof_ready;
+}
+
+uint8 bsp_tof_async_request_sample(void)
+{
+    if(0U == tof_ready)
+    {
+        return 0U;
+    }
+    tof_sample_requested = 1U;
+    return 1U;
+}
+
+uint16 bsp_tof_async_get_distance_mm(void)
+{
+    return (0U != tof_ready) ? dl1a_distance_mm : BSP_TOF_INVALID_DISTANCE_MM;
+}
+
+uint8 bsp_tof_async_get_last_error(void)
+{
+    return tof_last_error;
+}
+
+#endif

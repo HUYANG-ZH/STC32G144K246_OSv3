@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  26/07/26  20:02:55  PAGE 1   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  27/07/26  10:07:39  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_boot_sequence
@@ -66,7 +66,7 @@ stmt  level    source
    53          {
    54   1          app_speedout_request_stop_all();
    55   1          boot_stop_received = 0U;
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  26/07/26  20:02:55  PAGE 2   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  27/07/26  10:07:39  PAGE 2   
 
    56   1          boot_state = APP_BOOT_STATE_START_WAIT;
    57   1          boot_state_tick = service_timetick_what();
@@ -134,7 +134,7 @@ stmt  level    source
   119   2      
   120   2              case APP_BOOT_STATE_START_PRESSURE:
   121   2                  if((uint32)(now - boot_state_tick) >= APP_BOOT_START_PRESSURE_BUILD_TICKS)
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  26/07/26  20:02:55  PAGE 3   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  27/07/26  10:07:39  PAGE 3   
 
   122   2                  {
   123   3                      app_speedout_request_start();

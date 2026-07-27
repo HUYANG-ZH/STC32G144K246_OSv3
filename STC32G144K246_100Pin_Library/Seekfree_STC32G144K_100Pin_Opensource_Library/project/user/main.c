@@ -1,49 +1,79 @@
 #include "zf_common_headfile.h"
 #include "sys_include.h"
+#include "bsp_buzzer.h"
 #include "service_timetick.h"
+#include "service_function_queue.h"
+#include "service_wireless_uart.h"
+#include "service_packet.h"
+#include "service_batterycheck.h"
+#include "service_buzzer.h"
 #include "service_imu.h"
-#include "app_attitude.h"
+#include "service_inductor.h"
+#include "service_motor.h"
+#include "service_negative_pressure.h"
+#include "service_speed.h"
+#include "service_tof.h"
+#include "app_element.h"
+#include "app_feedforward.h"
+#include "app_inductor_preprocess.h"
+#include "app_motion_preprocess.h"
+#include "app_motion_postprocess.h"
+#include "app_scheduler.h"
+#include "app_speed_plan.h"
+#include "app_speedout.h"
+#include "app_boot_sequence.h"
 #include "service_boot_request.h"
 
-#define ATTITUDE_PRINT_INTERVAL_TICK    (20UL)     // 2ms @ 0.1ms/tick = 500Hz 打印
+#define BOOT_BUZZ_MS            (500UL)
 
 void main(void)
 {
-    uint32 print_last_tick;
-
     SystemStart();
 
     service_timetick_init();
+    service_function_queue_init();
+    app_scheduler_init();
+    service_wireless_uart_init();
+    service_packet_init();
+    service_batterycheck_init();
+    service_buzzer_init();
+    service_buzzer_stop();
     service_imu_init();
-    app_attitude_init();
+    service_tof_init();
+    service_motor_init();
+    service_negative_pressure_init();
+    service_speed_init();
+    app_inductor_preprocess_init();
+    app_motion_preprocess_init();
+    app_feedforward_init();
+    app_speed_plan_init();
+    app_element_init();
+    app_speedout_init();
+    app_motion_postprocess_init();
+    app_boot_sequence_init();
     service_boot_request_init();
 
     wdt_init();
 
-    print_last_tick = service_timetick_what();
+    bsp_buzzer_init();
+    bsp_buzzer_on();
+    system_delay_ms(BOOT_BUZZ_MS);
+    bsp_buzzer_off();
 
     while(1)
     {
         wdt_feed();
+        iic_async_process_all_timed(service_timetick_what());
         service_imu_task();
+        service_tof_task();
+        service_batterycheck_task();
+        service_inductor_task();
         service_boot_request_process();
-
-        service_imu_update();
-        app_attitude_task();
-
-        {
-            uint32 now = service_timetick_what();
-            if((uint32)(now - print_last_tick) >= ATTITUDE_PRINT_INTERVAL_TICK)
-            {
-                app_attitude_data_t att;
-                print_last_tick = now;
-                app_attitude_get_data(&att);
-                if(0U != att.valid)
-                {
-                    printf("%.4f,%.4f,%.4f,%u\r\n",
-                        att.roll_deg, att.pitch_deg, att.yaw_deg, att.sequence);
-                }
-            }
-        }
+        service_function_queue_update();
+        service_packet_update();
+        app_scheduler_run();
+        app_element_pump_events();
+        service_negative_pressure_task();
+        service_buzzer_task();
     }
 }

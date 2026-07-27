@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_imu660rc
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   GND               电源地
    47          *                   其余引脚悬空
    48          *
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 2   
 
    49          *                   // 软件 IIC 引脚
    50          *                   SCL/SPC           查看 zf_device_imu660rc.h 中 IMU660RC_SCL_PIN 宏定义
@@ -134,7 +134,7 @@ stmt  level    source
   107   1              }
   108          
   109                  //------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 3   
 
              --------------
   110                  // 函数简介     IMU660RC 写数据
@@ -202,7 +202,7 @@ stmt  level    source
                        //  @param      byte        发送的数据
                        //  @return     uint8 edata       return 返回status状态
                        //  @since      v1.0
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 4   
 
                        //  Sample usage:
                        //------------------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ stmt  level    source
              --------------
                        static void imu660rc_simspi_r_reg_bytes(uint8 cmd, uint8 *val, uint32 num)
                        {
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 5   
 
                                cmd |= IMU660RC_SPI_R;
                                imu660rc_simspi_wr_byte(cmd);
@@ -338,7 +338,7 @@ stmt  level    source
                        // 函数简介     IMU660RC 读数据
                        // 参数说明     reg             寄存器地址
                        // 参数说明     dat            数据缓冲区
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 6   
 
                        // 参数说明     len             数据长度
                        // 返回参数     void
@@ -406,7 +406,7 @@ stmt  level    source
   343   3                  f_sig = ((uint32)(h_sig & 0x03ffu)) << 13;
   344   3                  return f_sgn + f_exp + f_sig;
   345   3              }
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 7   
 
   346   2              case 0x7c00u: // inf or NaN
   347   2              {
@@ -474,7 +474,7 @@ stmt  level    source
   405   2          }
   406   1          else if(x < 0.0f)
   407   1          {
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 8   
 
   408   2              value = tfpu_atan(tfpu_div(y, x));
   409   2              value = (y >= 0.0f) ? tfpu_add(value, M_PI) : tfpu_sub(value, M_PI);
@@ -542,7 +542,7 @@ stmt  level    source
   471   1          euler[1] = tfpu_mul(euler[1], IMU660RC_RAD_TO_DEG);
   472   1          euler[2] = tfpu_mul(euler[2], IMU660RC_RAD_TO_DEG);
   473   1          
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 9   
 
   474   1          // 角度调整
   475   1          euler[2] = 0 > euler[2] ? tfpu_add(euler[2], 360.0f) : euler[2];
@@ -610,7 +610,7 @@ stmt  level    source
   529   1          if(IMU660RC_QUARTERNION_DISABLE == imu660rc_quarternion_rate)
   530   1          {   // 仅在四元数关闭状态下支持调用此函数， 四元数开启时如果需要读取加
              -速度信息则IMU660RC_QUARTERNION_GET_ACC设置为1
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 10  
 
   531   2              imu660rc_read_registers(IMU660RC_OUTX_L_A, dat, 6);
   532   2              imu660rc_acc_x =((uint16)dat[1] << 8) | dat[0];
@@ -678,7 +678,7 @@ stmt  level    source
   587   2              
   588   2              imu660rc_write_register(IMU660RC_PAGE_RW, 0x0);
   589   2              imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 11  
 
   590   2              
   591   2              // 四元数归一化
@@ -746,7 +746,7 @@ stmt  level    source
   650          // 函数简介     初始化 IMU660RC
   651          // 参数说明     void
   652          // 返回参数     uint8           1-初始化失败 0-初始化成功
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 12  
 
   653          // 使用示例     imu660rc_init(IMU660RC_QUARTERNION_120HZ);
   654          // 备注信息     
@@ -762,44 +762,48 @@ stmt  level    source
   663   1      
   664   1          if(IMU660RC_QUARTERNION_DISABLE == imu660rc_quarternion_rate)
   665   1          {
-  666   2              imu660rc_write_register(IMU660RC_INT2_CTRL, 0x00);
-  667   2              imu660rc_write_register(0x0A, 0x00);
-  668   2              imu660rc_write_register(0x07, 0x02);
-  669   2              imu660rc_write_register(0x08, 0x80);
-  670   2              imu660rc_write_register(0x09, 0x88);
-  671   2              imu660rc_write_register(0x0A, 0x06);
-  672   2              imu660rc_write_register(IMU660RC_INT2_CTRL, 0x08);
-  673   2              return 0U;
-  674   2          }
-  675   1      
-  676   1          /* enum 15/30/60/120/240/480 Hz maps to FIFO BDR codes 3..8. */
-  677   1          batch_rate = (uint8)(imu660rc_quarternion_rate + 3U);
-  678   1      
-  679   1          imu660rc_write_register(IMU660RC_INT2_CTRL, 0x00);
-  680   1          imu660rc_write_register(0x0A, 0x00);                         // FIFO bypass: clear stale words
-  681   1          imu660rc_set_mem_bank(IMU660RC_EMBED_MEM_BANK);
-  682   1          imu660rc_write_register(0x44, 0x00);                         // SFLP_GAME_FIFO_EN = 0
-  683   1          imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
-  684   1          imu660rc_write_register(0x07, 0x02);                         // watermark = gyro + acc
-  685   1          imu660rc_write_register(0x08, 0x80);                         // STOP_ON_WTM: no adjacent-frame mixing
-  686   1          imu660rc_write_register(0x09, (uint8)((batch_rate << 4) | batch_rate));
-  687   1          imu660rc_write_register(0x0A, 0x06);                         // continuous FIFO
-  688   1          imu660rc_write_register(IMU660RC_INT2_CTRL, 0x08);           // INT2_FIFO_TH
-  689   1          return 0U;
-  690   1      }
-  691          
-  692          uint8 imu660rc_init(imu660rc_quarternion_rate_config quarternion_rate)
-  693          {
-  694   1          uint8 return_state = 0;
-  695   1      
-  696   1          imu660rc_quarternion_rate = quarternion_rate;
-  697   1              
-  698   1      #if (IMU660RC_USE_INTERFACE==HARDWARE_SPI)   
-  699   1          spi_init(IMU660RC_SPI, SPI_MODE0, IMU660RC_SPI_SPEED, IMU660RC_SPC_PIN, IMU660RC_SDI_PIN, IMU660RC_SD
+  666   2              /* 无四元数模式下只启用 gyro+accel 的 FIFO 批量输出：
+  667   2                 FIFO_CONFIG2 = 0x88 → batch rate = 8 (约 250Hz @ 480Hz ODR)
+  668   2                 watermark = 2 → gyro + accel 各一笔即触发 INT2
+  669   2                 STOP_ON_WTM + continuous FIFO */
+  670   2              imu660rc_write_register(IMU660RC_INT2_CTRL, 0x00);
+  671   2              imu660rc_write_register(0x0A, 0x00);
+  672   2              imu660rc_write_register(0x07, 0x02);
+  673   2              imu660rc_write_register(0x08, 0x80);
+  674   2              imu660rc_write_register(0x09, 0x88);
+  675   2              imu660rc_write_register(0x0A, 0x06);
+  676   2              imu660rc_write_register(IMU660RC_INT2_CTRL, 0x08);
+  677   2              return 0U;
+  678   2          }
+  679   1      
+  680   1          /* enum 15/30/60/120/240/480 Hz maps to FIFO BDR codes 3..8. */
+  681   1          batch_rate = (uint8)(imu660rc_quarternion_rate + 3U);
+  682   1      
+  683   1          imu660rc_write_register(IMU660RC_INT2_CTRL, 0x00);
+  684   1          imu660rc_write_register(0x0A, 0x00);                         // FIFO bypass: clear stale words
+  685   1          imu660rc_set_mem_bank(IMU660RC_EMBED_MEM_BANK);
+  686   1          imu660rc_write_register(0x44, 0x00);                         // SFLP_GAME_FIFO_EN = 0
+  687   1          imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
+  688   1          imu660rc_write_register(0x07, 0x02);                         // watermark = gyro + acc
+  689   1          imu660rc_write_register(0x08, 0x80);                         // STOP_ON_WTM: no adjacent-frame mixing
+  690   1          imu660rc_write_register(0x09, (uint8)((batch_rate << 4) | batch_rate));
+  691   1          imu660rc_write_register(0x0A, 0x06);                         // continuous FIFO
+  692   1          imu660rc_write_register(IMU660RC_INT2_CTRL, 0x08);           // INT2_FIFO_TH
+  693   1          return 0U;
+  694   1      }
+  695          
+  696          uint8 imu660rc_init(imu660rc_quarternion_rate_config quarternion_rate)
+  697          {
+  698   1          uint8 return_state = 0;
+  699   1      
+  700   1          imu660rc_quarternion_rate = quarternion_rate;
+  701   1              
+  702   1      #if (IMU660RC_USE_INTERFACE==HARDWARE_SPI)   
+  703   1          spi_init(IMU660RC_SPI, SPI_MODE0, IMU660RC_SPI_SPEED, IMU660RC_SPC_PIN, IMU660RC_SDI_PIN, IMU660RC_SD
              -O_PIN, SPI_CS_NULL);   // 配置 IMU660RC 的 SPI 端口
-  700   1          gpio_init(IMU660RC_CS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);                  // 配置 IMU660RC 的CS�
+  704   1          gpio_init(IMU660RC_CS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);                  // 配置 IMU660RC 的CS�
              -��口
-  701   1      #elif (IMU660RC_USE_INTERFACE==SOFT_SPI)
+  705   1      #elif (IMU660RC_USE_INTERFACE==SOFT_SPI)
                    // 默认使用双向IO，不需要初始化。
                    // soft_spi_init (IMU660RC_SPI, SPI_MODE0, 0, IMU660RC_SPC_PIN, IMU660RC_SDI_PIN, IMU660RC_SDO_PIN, I
              -MU660RC_CS_PIN);
@@ -807,161 +811,161 @@ stmt  level    source
                    soft_iic_init(&imu660rc_iic_struct, IMU660RC_DEV_ADDR, IMU660RC_SOFT_IIC_DELAY, IMU660RC_SCL_PIN, IMU
              -660RC_SDA_PIN);        // 配置 IMU660RC 的 IIC 端口
                #endif
-  707   1      
-  708   1          system_delay_ms(10);
-  709   1      
-  710   1          do
-  711   1          {
-  712   2              if(imu660rc_self_check())                                               // IMU660RC 自检
-  713   2              {
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 13  
+  711   1      
+  712   1          system_delay_ms(10);
+  713   1      
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 13  
 
-  714   3                  // 如果程序在输出了断言信息 并且提示出错位置在这里
-  715   3                  // 那么就是 IMU660RC 自检出错并超时退出了
-  716   3                  // 检查一下接线有没有问题 如果没问题可能就是坏了
-  717   3                  printf("imu660rc self check error.");
-  718   3                  return_state = 1;
-  719   3                  break;
-  720   3              }
-  721   2                      
-  722   2              // 复位传感器
-  723   2              imu660rc_write_register(IMU660RC_FUNC_CFG_ACCESS, 0x04);
-  724   2              system_delay_ms(30);
-  725   2      
-  726   2              // 启用块更新功能与地址递增
-  727   2              imu660rc_write_register(IMU660RC_CTRL3, 0x44);
-  728   2              
-  729   2              switch(IMU660RC_ACC_SAMPLE_DEFAULT)
-  730   2              {
-  731   3                  default:
-  732   3                  {
-  733   4                      printf("IMU660RC_ACC_SAMPLE_DEFAULT set error.");
-  734   4                      return_state = 1;
-  735   4                  }break;
-  736   3                  case IMU660RC_ACC_SAMPLE_SGN_2G:
-  737   3                  {
-  738   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x00);
-  739   4                      imu660rc_transition_factor[0] = 16393.44;
-  740   4                  }break;
-  741   3                  case IMU660RC_ACC_SAMPLE_SGN_4G:
-  742   3                  {
-  743   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x01);
-  744   4                      imu660rc_transition_factor[0] = 8196.72;
-  745   4                  }break;
-  746   3                  case IMU660RC_ACC_SAMPLE_SGN_8G:
-  747   3                  {
-  748   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x02);
-  749   4                      imu660rc_transition_factor[0] = 4098.36;
-  750   4                  }break;
-  751   3                  case IMU660RC_ACC_SAMPLE_SGN_16G:
-  752   3                  {
-  753   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x03);
-  754   4                      imu660rc_transition_factor[0] = 2049.18;
-  755   4                  }break;
-  756   3              }
-  757   2              if(1 == return_state)
-  758   2              {
-  759   3                  break;
+  714   1          do
+  715   1          {
+  716   2              if(imu660rc_self_check())                                               // IMU660RC 自检
+  717   2              {
+  718   3                  // 如果程序在输出了断言信息 并且提示出错位置在这里
+  719   3                  // 那么就是 IMU660RC 自检出错并超时退出了
+  720   3                  // 检查一下接线有没有问题 如果没问题可能就是坏了
+  721   3                  printf("imu660rc self check error.");
+  722   3                  return_state = 1;
+  723   3                  break;
+  724   3              }
+  725   2                      
+  726   2              // 复位传感器
+  727   2              imu660rc_write_register(IMU660RC_FUNC_CFG_ACCESS, 0x04);
+  728   2              system_delay_ms(30);
+  729   2      
+  730   2              // 启用块更新功能与地址递增
+  731   2              imu660rc_write_register(IMU660RC_CTRL3, 0x44);
+  732   2              
+  733   2              switch(IMU660RC_ACC_SAMPLE_DEFAULT)
+  734   2              {
+  735   3                  default:
+  736   3                  {
+  737   4                      printf("IMU660RC_ACC_SAMPLE_DEFAULT set error.");
+  738   4                      return_state = 1;
+  739   4                  }break;
+  740   3                  case IMU660RC_ACC_SAMPLE_SGN_2G:
+  741   3                  {
+  742   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x00);
+  743   4                      imu660rc_transition_factor[0] = 16393.44;
+  744   4                  }break;
+  745   3                  case IMU660RC_ACC_SAMPLE_SGN_4G:
+  746   3                  {
+  747   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x01);
+  748   4                      imu660rc_transition_factor[0] = 8196.72;
+  749   4                  }break;
+  750   3                  case IMU660RC_ACC_SAMPLE_SGN_8G:
+  751   3                  {
+  752   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x02);
+  753   4                      imu660rc_transition_factor[0] = 4098.36;
+  754   4                  }break;
+  755   3                  case IMU660RC_ACC_SAMPLE_SGN_16G:
+  756   3                  {
+  757   4                      imu660rc_write_register(IMU660RC_CTRL8, 0x03);
+  758   4                      imu660rc_transition_factor[0] = 2049.18;
+  759   4                  }break;
   760   3              }
-  761   2              
-  762   2              switch(IMU660RC_GYRO_SAMPLE_DEFAULT)
-  763   2              {
-  764   3                  default:
-  765   3                  {
-  766   4                      printf("IMU660RC_GYRO_SAMPLE_DEFAULT set error.");
-  767   4                      return_state = 1;
-  768   4                  }break;
-  769   3                  case IMU660RC_GYRO_SAMPLE_SGN_125DPS:
-  770   3                  {
-  771   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x00);
-  772   4                      imu660rc_transition_factor[1] = 228.5714;
-  773   4                  }break;
-  774   3                  case IMU660RC_GYRO_SAMPLE_SGN_250DPS:
-  775   3                  {
-  776   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x01);
-  777   4                      imu660rc_transition_factor[1] = 114.2857;
-  778   4                  }break;
-  779   3                  case IMU660RC_GYRO_SAMPLE_SGN_500DPS:
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 14  
+  761   2              if(1 == return_state)
+  762   2              {
+  763   3                  break;
+  764   3              }
+  765   2              
+  766   2              switch(IMU660RC_GYRO_SAMPLE_DEFAULT)
+  767   2              {
+  768   3                  default:
+  769   3                  {
+  770   4                      printf("IMU660RC_GYRO_SAMPLE_DEFAULT set error.");
+  771   4                      return_state = 1;
+  772   4                  }break;
+  773   3                  case IMU660RC_GYRO_SAMPLE_SGN_125DPS:
+  774   3                  {
+  775   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x00);
+  776   4                      imu660rc_transition_factor[1] = 228.5714;
+  777   4                  }break;
+  778   3                  case IMU660RC_GYRO_SAMPLE_SGN_250DPS:
+  779   3                  {
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 14  
 
-  780   3                  {
-  781   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x02);
-  782   4                      imu660rc_transition_factor[1] = 57.1428;
-  783   4                  }break;
-  784   3                  case IMU660RC_GYRO_SAMPLE_SGN_1000DPS:
-  785   3                  {
-  786   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x03);
-  787   4                      imu660rc_transition_factor[1] = 28.5714;
-  788   4                  }break;
-  789   3                  case IMU660RC_GYRO_SAMPLE_SGN_2000DPS:
-  790   3                  {
-  791   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x04);
-  792   4                      imu660rc_transition_factor[1] = 14.2857;
-  793   4                  }break;
-  794   3                  case IMU660RC_GYRO_SAMPLE_SGN_4000DPS:
-  795   3                  {
-  796   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x0C);
-  797   4                      imu660rc_transition_factor[1] = 7.14285;
-  798   4                  }break;
-  799   3              }
-  800   2              if(1 == return_state)
-  801   2              {
-  802   3                  break;
+  780   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x01);
+  781   4                      imu660rc_transition_factor[1] = 114.2857;
+  782   4                  }break;
+  783   3                  case IMU660RC_GYRO_SAMPLE_SGN_500DPS:
+  784   3                  {
+  785   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x02);
+  786   4                      imu660rc_transition_factor[1] = 57.1428;
+  787   4                  }break;
+  788   3                  case IMU660RC_GYRO_SAMPLE_SGN_1000DPS:
+  789   3                  {
+  790   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x03);
+  791   4                      imu660rc_transition_factor[1] = 28.5714;
+  792   4                  }break;
+  793   3                  case IMU660RC_GYRO_SAMPLE_SGN_2000DPS:
+  794   3                  {
+  795   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x04);
+  796   4                      imu660rc_transition_factor[1] = 14.2857;
+  797   4                  }break;
+  798   3                  case IMU660RC_GYRO_SAMPLE_SGN_4000DPS:
+  799   3                  {
+  800   4                      imu660rc_write_register(IMU660RC_CTRL6, 0x0C);
+  801   4                      imu660rc_transition_factor[1] = 7.14285;
+  802   4                  }break;
   803   3              }
-  804   2              
-  805   2              // 设置传感器模式，设置为高精度模式以及输出速率
-  806   2              imu660rc_write_register(IMU660RC_CTRL1, 0x18);
-  807   2              imu660rc_write_register(IMU660RC_CTRL2, 0x18);
-  808   2      
-  809   2              // 开启LPF1滤波器
-  810   2              imu660rc_write_register(IMU660RC_CTRL7, 0x01);
-  811   2              
-  812   2              // 开启LPF2滤波器
-  813   2              imu660rc_write_register(IMU660RC_CTRL9, 0x08);
-  814   2              
-  815   2      
-  816   2              
-  817   2              // 如果启用四元数输出，则配置相应数据
-  818   2              if(IMU660RC_QUARTERNION_DISABLE != quarternion_rate)
-  819   2              {
-  820   3                  // 设置中断触发信号
-  821   3                  imu660rc_write_register(IMU660RC_INT2_CTRL, 0x80);
-  822   3                  imu660rc_write_register(IMU660RC_CTRL4, 0x08);
-  823   3                  imu660rc_write_register(IMU660RC_EMB_FUNC_CFG, 0x30);
-  824   3                  
-  825   3                  // 重新配置加速度、角速度输出速率
-  826   3                  imu660rc_write_register(IMU660RC_CTRL1, 0x10 | (quarternion_rate + 3));
-  827   3                  imu660rc_write_register(IMU660RC_CTRL2, 0x10 | (quarternion_rate + 3));
+  804   2              if(1 == return_state)
+  805   2              {
+  806   3                  break;
+  807   3              }
+  808   2              
+  809   2              // 设置传感器模式，设置为高精度模式以及输出速率
+  810   2              imu660rc_write_register(IMU660RC_CTRL1, 0x18);
+  811   2              imu660rc_write_register(IMU660RC_CTRL2, 0x18);
+  812   2      
+  813   2              // 开启LPF1滤波器
+  814   2              imu660rc_write_register(IMU660RC_CTRL7, 0x01);
+  815   2              
+  816   2              // 开启LPF2滤波器
+  817   2              imu660rc_write_register(IMU660RC_CTRL9, 0x08);
+  818   2              
+  819   2      
+  820   2              
+  821   2              // 如果启用四元数输出，则配置相应数据
+  822   2              if(IMU660RC_QUARTERNION_DISABLE != quarternion_rate)
+  823   2              {
+  824   3                  // 设置中断触发信号
+  825   3                  imu660rc_write_register(IMU660RC_INT2_CTRL, 0x80);
+  826   3                  imu660rc_write_register(IMU660RC_CTRL4, 0x08);
+  827   3                  imu660rc_write_register(IMU660RC_EMB_FUNC_CFG, 0x30);
   828   3                  
-  829   3                  // 设置四元数输出速率并开启
-  830   3                  imu660rc_set_mem_bank(IMU660RC_EMBED_MEM_BANK);
-  831   3                  imu660rc_write_register(IMU660RC_SFLP_ODR, 0x43 | (quarternion_rate << 3));
-  832   3                  imu660rc_write_register(IMU660RC_EMB_FUNC_EN_A, 0x02);
-  833   3                  imu660rc_write_register(IMU660RC_PAGE_RW, 0x00);
-  834   3                  imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
-  835   3                  
-  836   3                  gpio_int_irq_handlers[((IMU660RC_INT2_PIN & 0X0F00) >> 8)][(IMU660RC_INT2_PIN & 0X000F)] = im
+  829   3                  // 重新配置加速度、角速度输出速率
+  830   3                  imu660rc_write_register(IMU660RC_CTRL1, 0x10 | (quarternion_rate + 3));
+  831   3                  imu660rc_write_register(IMU660RC_CTRL2, 0x10 | (quarternion_rate + 3));
+  832   3                  
+  833   3                  // 设置四元数输出速率并开启
+  834   3                  imu660rc_set_mem_bank(IMU660RC_EMBED_MEM_BANK);
+  835   3                  imu660rc_write_register(IMU660RC_SFLP_ODR, 0x43 | (quarternion_rate << 3));
+  836   3                  imu660rc_write_register(IMU660RC_EMB_FUNC_EN_A, 0x02);
+  837   3                  imu660rc_write_register(IMU660RC_PAGE_RW, 0x00);
+  838   3                  imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
+  839   3                  
+  840   3                  gpio_int_irq_handlers[((IMU660RC_INT2_PIN & 0X0F00) >> 8)][(IMU660RC_INT2_PIN & 0X000F)] = im
              -u660rc_callback;//设置中断回调函数
-  837   3                  exit_init(IMU660RC_INT2_PIN,RISING_EDGE);// 开启中断检测引脚，上升沿中断      
-  838   3                              interrupt_set_priority(0X50 + ((IMU660RC_INT2_PIN & 0X0F00) >> 8), 2);//中断优先级为2
-  839   3                              
-  840   3      //                      int_irq_handlers[0] = imu660rc_callback;
-  841   3      //                      exit_init(IMU660RC_INT2_PIN,BOTH);
-  842   3      //                      
-  843   3      //                      switch(IMU660RC_INT2_PIN)
-  844   3      //                      {
-C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 26/07/26  21:58:05  PAGE 15  
+  841   3                  exit_init(IMU660RC_INT2_PIN,RISING_EDGE);// 开启中断检测引脚，上升沿中断      
+  842   3                              interrupt_set_priority(0X50 + ((IMU660RC_INT2_PIN & 0X0F00) >> 8), 2);//中断优先级为2
+  843   3                              
+  844   3      //                      int_irq_handlers[0] = imu660rc_callback;
+C251 COMPILER V5.60.0,  zf_device_imu660rc                                                 27/07/26  10:07:26  PAGE 15  
 
-  845   3      //                              case INT0_P32: interrupt_set_priority(INT0_IRQn, 2); break;
-  846   3      //                              case INT1_P33: interrupt_set_priority(INT1_IRQn, 2); break;
-  847   3      //                              default: break;
-  848   3      //                      }
-  849   3              }
-  850   2              
-  851   2          }while(0);
-  852   1          
-  853   1          return return_state;
-  854   1      }
+  845   3      //                      exit_init(IMU660RC_INT2_PIN,BOTH);
+  846   3      //                      
+  847   3      //                      switch(IMU660RC_INT2_PIN)
+  848   3      //                      {
+  849   3      //                              case INT0_P32: interrupt_set_priority(INT0_IRQn, 2); break;
+  850   3      //                              case INT1_P33: interrupt_set_priority(INT1_IRQn, 2); break;
+  851   3      //                              default: break;
+  852   3      //                      }
+  853   3              }
+  854   2              
+  855   2          }while(0);
+  856   1          
+  857   1          return return_state;
+  858   1      }
 
 
 Module Information          Static   Overlayable

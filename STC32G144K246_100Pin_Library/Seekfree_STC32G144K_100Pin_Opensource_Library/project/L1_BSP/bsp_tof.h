@@ -7,7 +7,7 @@
 #define BSP_TOF_DRIVER_DL1B             (2U)
 
 #ifndef BSP_TOF_DRIVER
-#define BSP_TOF_DRIVER                  BSP_TOF_DRIVER_DL1B
+#define BSP_TOF_DRIVER                  BSP_TOF_DRIVER_DL1A
 #endif
 
 #define BSP_TOF_INVALID_DISTANCE_MM    (8192U)

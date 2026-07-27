@@ -46,9 +46,13 @@
 
 #include "zf_common_debug.h"
 #include "zf_driver_delay.h"
-#include "zf_driver_soft_iic.h"
 #include "zf_device_dl1a.h"
 #include "zf_device_type.h"
+#if (DL1A_USE_INTERFACE==HARDWARE_IIC)
+    #include "zf_driver_iic.h"
+#else
+    #include "zf_driver_soft_iic.h"
+#endif
 
 #pragma warning disable = 183
 
