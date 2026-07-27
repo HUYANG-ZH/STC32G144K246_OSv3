@@ -10,7 +10,7 @@
  * is made by the ToF service.
  */
 #ifndef SERVICE_TOF_ENABLE
-#define SERVICE_TOF_ENABLE             (1U)
+#define SERVICE_TOF_ENABLE             (0U)
 #endif
 
 void service_tof_init(void);

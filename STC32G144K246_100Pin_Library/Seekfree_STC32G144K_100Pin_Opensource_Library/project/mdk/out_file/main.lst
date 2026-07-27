@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               27/07/26  15:39:25  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               27/07/26  16:17:22  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -14,42 +14,68 @@ stmt  level    source
     2          #include "sys_include.h"
     3          #include "service_timetick.h"
     4          #include "service_wireless_uart.h"
-    5          #include "service_boot_request.h"
-    6          #include "service_button.h"
-    7          
-    8          void main(void)
-    9          {
-   10   1          SystemStart();
-   11   1      
-   12   1          service_timetick_init();
-   13   1          service_wireless_uart_init();
-   14   1          service_boot_request_init();
-   15   1          service_button_init();
-   16   1      
-   17   1          wdt_init();
+    5          #include "service_inductor.h"
+    6          #include "service_boot_request.h"
+    7          #include "service_button.h"
+    8          
+    9          void main(void)
+   10          {
+   11   1          SystemStart();
+   12   1      
+   13   1          service_timetick_init();
+   14   1          service_wireless_uart_init();
+   15   1          service_inductor_init();
+   16   1          service_boot_request_init();
+   17   1          service_button_init();
    18   1      
-   19   1          while(1)
-   20   1          {
-   21   2              wdt_feed();
-   22   2              service_boot_request_process();
-   23   2              service_button_task();
-   24   2      
-   25   2              if (service_button_clicked())
-   26   2              {
-   27   3                  wprint("button_pressed\r\n");
-   28   3              }
-   29   2          }
-   30   1      }
+   19   1          wdt_init();
+   20   1      
+   21   1          while(1)
+   22   1          {
+   23   2              service_inductor_data_t ind;
+   24   2              uint32 seq;
+   25   2              static uint32 last_seq;
+   26   2              static uint32 s_last_print;
+   27   2      
+   28   2              wdt_feed();
+   29   2              service_boot_request_process();
+   30   2              service_button_task();
+   31   2      
+   32   2              if(0U == service_inductor_is_busy())
+   33   2              {
+   34   3                  (void)service_inductor_request_sample();
+   35   3              }
+   36   2      
+   37   2              if(0U != service_inductor_get_snapshot(&ind, &seq))
+   38   2              {
+   39   3                  if(seq != last_seq)
+   40   3                  {
+   41   4                      uint32 now;
+   42   4      
+   43   4                      last_seq = seq;
+   44   4                      now = service_timetick_what();
+   45   4                      if((uint32)(now - s_last_print) >= 100)
+   46   4                      {
+   47   5                          s_last_print = now;
+   48   5                          wprint("I:%u,%u,%u,%u\r\n",
+   49   5                              ind.channel_1, ind.channel_2, ind.channel_3, ind.channel_4);
+   50   5                      }
+   51   4                  }
+   52   3              }
+   53   2          }
+   54   1      }
 
+
+C251 COMPILER V5.60.0,  main                                                               27/07/26  16:17:22  PAGE 2   
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       106     ------
+  ecode size           =       297     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =    ------     ------
+  xdata size           =        26     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -59,7 +85,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        19     ------
+  hconst size          =        18     ------
 End of Module Information.
 
 
