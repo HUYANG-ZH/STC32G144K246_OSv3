@@ -23,6 +23,7 @@
 #include "app_speedout.h"
 #include "app_boot_sequence.h"
 #include "service_boot_request.h"
+#include "service_button.h"
 
 #define BOOT_BUZZ_MS            (500UL)
 
@@ -52,6 +53,7 @@ void main(void)
     app_motion_postprocess_init();
     app_boot_sequence_init();
     service_boot_request_init();
+    service_button_init();
 
     wdt_init();
 
@@ -75,5 +77,6 @@ void main(void)
         app_element_pump_events();
         service_negative_pressure_task();
         service_buzzer_task();
+        service_button_task();
     }
 }

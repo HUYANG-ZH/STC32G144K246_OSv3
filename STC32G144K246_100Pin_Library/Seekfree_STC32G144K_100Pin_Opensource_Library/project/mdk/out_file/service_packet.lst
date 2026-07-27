@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 1   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_packet
@@ -66,7 +66,7 @@ stmt  level    source
    53          static volatile uint32 packet_write_parse_fail_total = 0U;
    54          static char packet_last_miss_name[SERVICE_PACKET_NAME_SNAPSHOT_MAX];
    55          
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 2   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 2   
 
    56          static void service_packet_save_miss_name(const char *name);
    57          static void service_packet_append_char(char *buffer, uint8 *index, char value);
@@ -134,7 +134,7 @@ stmt  level    source
   111   1          while(('\0' != *text) && (0U != service_packet_is_value_separator(*text)))
   112   1          {
   113   2              text++;
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 3   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 3   
 
   114   2          }
   115   1      
@@ -202,7 +202,7 @@ stmt  level    source
   171   1      }
   172          
   173          static void service_packet_save_miss_name(const char *name)
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 4   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 4   
 
   174          {
   175   1          uint8 i = 0U;
@@ -270,7 +270,7 @@ stmt  level    source
   237   2          }
   238   1      }
   239          
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 5   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 5   
 
   240          static void service_packet_append_float3(char *buffer, uint8 *index, float value)
   241          {
@@ -338,7 +338,7 @@ stmt  level    source
   301   1          {
   302   2              text = service_packet_skip_value_separator(text);
   303   2              if('\0' == *text)
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 6   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 6   
 
   304   2              {
   305   3                  return 0U;
@@ -406,7 +406,7 @@ stmt  level    source
   366          // 使用示例     内部调用，用户无需关心
   367          // 备注信息     输出格式为 name,value0,value1...\r\n
   368          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 7   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 7   
 
              -------------
   369          static void service_packet_print_variable(service_packet_variable_t *variable)
@@ -474,7 +474,7 @@ stmt  level    source
              -------------
   428          static void service_packet_handle_write(char *name, char *value_text)
   429          {
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 8   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 8   
 
   430   1          uint8 i;
   431   1          uint8 changed;
@@ -542,7 +542,7 @@ stmt  level    source
   490   1          else
   491   1          {
   492   2              (void)service_function_queue_add(action->func, action->delay_ms, SERVICE_PACKET_TRIGGER_PRIORITY)
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 9   
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 9   
 
              -;
   493   2          }
@@ -610,7 +610,7 @@ stmt  level    source
   553          //-------------------------------------------------------------------------------------------------------
              -------------
   554          // 函数简介     复位接收状态机
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 10  
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 10  
 
   555          // 参数说明     void
   556          // 返回参数     void
@@ -678,7 +678,7 @@ stmt  level    source
   613   3              }
   614   2              return;
   615   2          }
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 11  
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 11  
 
   616   1      
   617   1          if(SERVICE_PACKET_RX_BODY == packet_rx_state)
@@ -746,7 +746,7 @@ stmt  level    source
   677   2              packet_variables[i].name = NULL;
   678   2              packet_variables[i].value = NULL;
   679   2              packet_variables[i].value_count = 0U;
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 12  
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 12  
 
   680   2              packet_variables[i].callback = (service_packet_write_callback_t)0;
   681   2          }
@@ -814,7 +814,7 @@ stmt  level    source
   738   2              variable->value = value;
   739   2              variable->value_count = value_count;
   740   2              variable->callback = callback;
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 13  
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 13  
 
   741   2              return 1U;
   742   2          }
@@ -882,7 +882,7 @@ stmt  level    source
   801          // 使用示例     service_packet_update();
   802          // 备注信息     从无线串口读取数据并送入帧状态机，建议在主循环中周期调用
   803          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  10:07:33  PAGE 14  
+C251 COMPILER V5.60.0,  service_packet                                                     27/07/26  14:29:41  PAGE 14  
 
              -------------
   804          void service_packet_update(void)

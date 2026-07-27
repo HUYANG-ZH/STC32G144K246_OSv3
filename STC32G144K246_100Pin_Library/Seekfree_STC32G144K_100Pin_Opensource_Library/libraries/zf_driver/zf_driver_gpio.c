@@ -406,6 +406,7 @@ void gpio_init(gpio_pin_enum pin, gpio_dir_enum dir, const uint8 dat, gpio_mode_
         {
             gpio_set_impedance(pin);
             gpio_set_pd(pin);
+            gpio_set_ie(pin, GPIO_DIGITAL_IN_ENABLE);
         }
 	}
 	else if(dir == GPO)

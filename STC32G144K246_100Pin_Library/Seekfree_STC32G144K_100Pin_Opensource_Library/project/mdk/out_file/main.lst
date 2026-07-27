@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               27/07/26  11:27:08  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               27/07/26  15:39:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -14,68 +14,52 @@ stmt  level    source
     2          #include "sys_include.h"
     3          #include "service_timetick.h"
     4          #include "service_wireless_uart.h"
-    5          #include "service_packet.h"
-    6          #include "service_negative_pressure.h"
-    7          #include "service_boot_request.h"
-    8          
-    9          void main(void)
-   10          {
-   11   1          uint32 apply_last_tick;
-   12   1      
-   13   1          SystemStart();
-   14   1      
-   15   1          service_timetick_init();
-   16   1          service_wireless_uart_init();
-   17   1          service_packet_init();
-   18   1          service_negative_pressure_init();
-   19   1          service_boot_request_init();
-   20   1      
-   21   1          wdt_init();
-   22   1      
-   23   1          service_negative_pressure_set_percent(5);
-   24   1          service_negative_pressure_apply_request();
-   25   1      
-   26   1          apply_last_tick = service_timetick_what();
-   27   1      
-   28   1          while(1)
-   29   1          {
-   30   2              uint32 now;
-   31   2      
-   32   2              wdt_feed();
-   33   2              service_negative_pressure_task();
-   34   2              service_boot_request_process();
-   35   2              service_packet_update();
-   36   2      
-   37   2              now = service_timetick_what();
-   38   2              if((uint32)(now - apply_last_tick) >= 10UL)
-   39   2              {
-   40   3                  apply_last_tick = now;
-   41   3                  service_negative_pressure_apply_request();
-   42   3              }
-   43   2          }
-   44   1      }
+    5          #include "service_boot_request.h"
+    6          #include "service_button.h"
+    7          
+    8          void main(void)
+    9          {
+   10   1          SystemStart();
+   11   1      
+   12   1          service_timetick_init();
+   13   1          service_wireless_uart_init();
+   14   1          service_boot_request_init();
+   15   1          service_button_init();
+   16   1      
+   17   1          wdt_init();
+   18   1      
+   19   1          while(1)
+   20   1          {
+   21   2              wdt_feed();
+   22   2              service_boot_request_process();
+   23   2              service_button_task();
+   24   2      
+   25   2              if (service_button_clicked())
+   26   2              {
+   27   3                  wprint("button_pressed\r\n");
+   28   3              }
+   29   2          }
+   30   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       183     ------
+  ecode size           =       106     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         8     ------
+  xdata size           =    ------     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
-C251 COMPILER V5.60.0,  main                                                               27/07/26  11:27:08  PAGE 2   
-
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =         2     ------
+  hconst size          =        19     ------
 End of Module Information.
 
 
