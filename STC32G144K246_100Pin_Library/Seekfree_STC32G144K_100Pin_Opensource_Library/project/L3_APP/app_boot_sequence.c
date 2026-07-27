@@ -20,14 +20,9 @@
 #define APP_BOOT_PRESSURE_PERCENT           (60U)
 #define APP_BOOT_PRESSURE_DELAY_MS          (2000UL)
 
-#define APP_BOOT_START_WAIT_MS              (35000UL)
-#define APP_BOOT_START_PRESSURE_BUILD_MS    (5000UL)
-
 #define APP_BOOT_BEEP_TICKS                 (APP_BOOT_BEEP_MS * APP_BOOT_TICKS_PER_MS)
 #define APP_BOOT_WAIT_TICKS                 (APP_BOOT_WAIT_MS * APP_BOOT_TICKS_PER_MS)
 #define APP_BOOT_PRESSURE_DELAY_TICKS       (APP_BOOT_PRESSURE_DELAY_MS * APP_BOOT_TICKS_PER_MS)
-#define APP_BOOT_START_WAIT_TICKS           (APP_BOOT_START_WAIT_MS * APP_BOOT_TICKS_PER_MS)
-#define APP_BOOT_START_PRESSURE_BUILD_TICKS (APP_BOOT_START_PRESSURE_BUILD_MS * APP_BOOT_TICKS_PER_MS)
 
 #define APP_BOOT_STATE_IDLE                 (0U)
 #define APP_BOOT_STATE_BEEP                 (1U)
@@ -35,8 +30,7 @@
 #define APP_BOOT_STATE_PRESSURE             (3U)
 #define APP_BOOT_STATE_DONE                 (4U)
 #define APP_BOOT_STATE_ABORTED              (5U)
-#define APP_BOOT_STATE_START_WAIT           (6U)
-#define APP_BOOT_STATE_START_PRESSURE       (7U)
+
 
 static uint8 boot_state = APP_BOOT_STATE_IDLE;
 static uint32 boot_state_tick = 0U;
@@ -51,12 +45,11 @@ static void app_boot_stop_handler(void)
 
 static void app_boot_start_handler(void)
 {
-    app_speedout_request_stop_all();
     boot_stop_received = 0U;
-    boot_state = APP_BOOT_STATE_START_WAIT;
-    boot_state_tick = service_timetick_what();
+    boot_state = APP_BOOT_STATE_DONE;
     service_buzzer_beep_ms(200U);
-    wprint("start_delay,1.000\r\n");
+    wprint("start_drive,1.000\r\n");
+    app_speedout_request_start();
 }
 
 static void app_boot_task(void)
@@ -104,25 +97,6 @@ static void app_boot_task(void)
                 app_speedout_request_start();
                 boot_state = APP_BOOT_STATE_DONE;
                 wprint("boot_drive,1.000\r\n");
-            }
-            break;
-
-        case APP_BOOT_STATE_START_WAIT:
-            if((uint32)(now - boot_state_tick) >= APP_BOOT_START_WAIT_TICKS)
-            {
-                service_negative_pressure_set_percent(APP_BOOT_PRESSURE_PERCENT);
-                boot_state = APP_BOOT_STATE_START_PRESSURE;
-                boot_state_tick = now;
-                wprint("start_pressure,1.000\r\n");
-            }
-            break;
-
-        case APP_BOOT_STATE_START_PRESSURE:
-            if((uint32)(now - boot_state_tick) >= APP_BOOT_START_PRESSURE_BUILD_TICKS)
-            {
-                app_speedout_request_start();
-                boot_state = APP_BOOT_STATE_DONE;
-                wprint("start_drive,1.000\r\n");
             }
             break;
 
