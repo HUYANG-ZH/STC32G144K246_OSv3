@@ -219,6 +219,7 @@ void app_speedout_init(void)
     interrupt_set_priority(TIM5_IRQn, 3U);
     #if __DBGFLAG__
     printf(">>[app_speedout_init]\r\n");
+    wprint(">>[app_speedout_init]\r\n");
     #endif
 }
 

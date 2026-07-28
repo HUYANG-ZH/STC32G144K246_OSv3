@@ -2,6 +2,7 @@
 #include "bsp_include.h"
 #include "service_buzzer.h"
 #include "service_timetick.h"
+#include "service_wireless_uart.h"
 
 #define SERVICE_BUZZER_TICKS_PER_MS        (10UL)
 #define SERVICE_BUZZER_TIME_HALF_RANGE     (0x80000000UL)
@@ -23,6 +24,7 @@ void service_buzzer_init(void)
     buzzer_deadline_tick = 0UL;
     #if __DBGFLAG__
     printf(">>[service_buzzer_init]\r\n");
+    wprint(">>[service_buzzer_init]\r\n");
     #endif
 }
 

@@ -1,6 +1,7 @@
 #include "zf_common_headfile.h"
 #include "service_packet.h"
 #include "service_negative_pressure.h"
+#include "service_wireless_uart.h"
 
 #define NEGATIVE_PRESSURE_PERCENT_MAX       (100U)
 #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
@@ -71,6 +72,7 @@ void service_negative_pressure_init(void)
             NEGATIVE_PRESSURE_PACKET_COUNT, service_negative_pressure_config_updated);
     #if __DBGFLAG__
     printf(">>[service_negative_pressure_init]\r\n");
+    wprint(">>[service_negative_pressure_init]\r\n");
     #endif
 }
 

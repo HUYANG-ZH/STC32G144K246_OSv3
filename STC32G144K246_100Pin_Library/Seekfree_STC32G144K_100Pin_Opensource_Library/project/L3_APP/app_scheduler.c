@@ -1,5 +1,6 @@
 #include "zf_common_headfile.h"
 #include "app_scheduler.h"
+#include "service_wireless_uart.h"
 
 typedef struct
 {
@@ -39,6 +40,7 @@ void app_scheduler_init(void)
     pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
     #if __DBGFLAG__
     printf(">>[app_scheduler_init]\r\n");
+    wprint(">>[app_scheduler_init]\r\n");
     #endif
 }
 

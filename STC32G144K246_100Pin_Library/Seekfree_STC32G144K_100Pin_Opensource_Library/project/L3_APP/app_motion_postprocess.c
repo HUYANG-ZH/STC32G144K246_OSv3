@@ -12,6 +12,7 @@
 #include "app_speed_plan.h"
 #include "app_speedout.h"
 #include "app_motion_postprocess.h"
+#include "service_wireless_uart.h"
 
 #define APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT     (1U)
 #define APP_MOTION_POSTPROCESS_DEFAULT_KP              (0.25f)
@@ -273,6 +274,7 @@ void app_motion_postprocess_init(void)
     interrupt_set_priority(TIM7_IRQn, 3U);
     #if __DBGFLAG__
     printf(">>[app_motion_postprocess_init]\r\n");
+    wprint(">>[app_motion_postprocess_init]\r\n");
     #endif
 }
 

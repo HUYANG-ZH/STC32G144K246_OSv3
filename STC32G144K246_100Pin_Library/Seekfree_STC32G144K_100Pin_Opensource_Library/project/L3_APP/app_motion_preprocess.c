@@ -3,6 +3,7 @@
 #include "service_packet.h"
 #include "app_inductor_preprocess.h"
 #include "app_motion_preprocess.h"
+#include "service_wireless_uart.h"
 
 #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
 #define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.35f)     // x轴差比融合权重
@@ -56,6 +57,7 @@ void app_motion_preprocess_init(void)
     app_motion_preprocess_control_step();
     #if __DBGFLAG__
     printf(">>[app_motion_preprocess_init]\r\n");
+    wprint(">>[app_motion_preprocess_init]\r\n");
     #endif
 }
 

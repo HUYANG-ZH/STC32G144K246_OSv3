@@ -2,6 +2,7 @@
 #include "sys_tfpu.h"
 #include "bsp_include.h"
 #include "service_imu.h"
+#include "service_wireless_uart.h"
 
 #define SERVICE_IMU_CALIBRATE_COUNT     (200U)
 #define SERVICE_IMU_CALIBRATE_INV       (0.005f)
@@ -125,6 +126,7 @@ void service_imu_init(void)
     service_imu_start_calibration();
     #if __DBGFLAG__
     printf(">>[service_imu_init]\r\n");
+    wprint(">>[service_imu_init]\r\n");
     #endif
 }
 

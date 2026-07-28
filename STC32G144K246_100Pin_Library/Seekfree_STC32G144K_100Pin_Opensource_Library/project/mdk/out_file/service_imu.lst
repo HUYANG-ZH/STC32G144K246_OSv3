@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_imu                                                        27/07/26  14:29:39  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        28/07/26  21:10:42  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
@@ -15,242 +15,244 @@ stmt  level    source
     2          #include "sys_tfpu.h"
     3          #include "bsp_include.h"
     4          #include "service_imu.h"
-    5          
-    6          #define SERVICE_IMU_CALIBRATE_COUNT     (200U)
-    7          #define SERVICE_IMU_CALIBRATE_INV       (0.005f)
-    8          
-    9          typedef enum
-   10          {
-   11              SERVICE_IMU_CALIBRATION_IDLE = 0,
-   12              SERVICE_IMU_CALIBRATION_GYRO_Z,
-   13              SERVICE_IMU_CALIBRATION_GYRO_X,
-   14              SERVICE_IMU_CALIBRATION_COMPLETE,
-   15          } service_imu_calibration_state_enum;
-   16          
-   17          static volatile service_imu_sample_t service_imu_sample;
-   18          static uint32 service_imu_last_sequence = 0UL;
-   19          static float gyro_x_offset = 0.0f;
-   20          static float gyro_z_offset = 0.0f;
-   21          static float service_imu_acc_scale = 0.0f;
-   22          static float service_imu_gyro_scale = 0.0f;
-   23          static float service_imu_calibration_sum = 0.0f;
-   24          static uint16 service_imu_calibration_count = 0U;
-   25          static volatile service_imu_calibration_state_enum service_imu_calibration_state = SERVICE_IMU_CALIBRATIO
+    5          #include "service_wireless_uart.h"
+    6          
+    7          #define SERVICE_IMU_CALIBRATE_COUNT     (200U)
+    8          #define SERVICE_IMU_CALIBRATE_INV       (0.005f)
+    9          
+   10          typedef enum
+   11          {
+   12              SERVICE_IMU_CALIBRATION_IDLE = 0,
+   13              SERVICE_IMU_CALIBRATION_GYRO_Z,
+   14              SERVICE_IMU_CALIBRATION_GYRO_X,
+   15              SERVICE_IMU_CALIBRATION_COMPLETE,
+   16          } service_imu_calibration_state_enum;
+   17          
+   18          static volatile service_imu_sample_t service_imu_sample;
+   19          static uint32 service_imu_last_sequence = 0UL;
+   20          static float gyro_x_offset = 0.0f;
+   21          static float gyro_z_offset = 0.0f;
+   22          static float service_imu_acc_scale = 0.0f;
+   23          static float service_imu_gyro_scale = 0.0f;
+   24          static float service_imu_calibration_sum = 0.0f;
+   25          static uint16 service_imu_calibration_count = 0U;
+   26          static volatile service_imu_calibration_state_enum service_imu_calibration_state = SERVICE_IMU_CALIBRATIO
              -N_IDLE;
-   26          
-   27          static void service_imu_begin_calibration(service_imu_calibration_state_enum state);
-   28          static void service_imu_update_calibration(const service_imu_sample_t *sample);
-   29          static void service_imu_make_sample(service_imu_sample_t *out_data, const bsp_imu_sample_t *raw);
-   30          static void service_imu_publish_sample(const service_imu_sample_t *sample);
-   31          
-   32          static void service_imu_begin_calibration(service_imu_calibration_state_enum state)
-   33          {
-   34   1          service_imu_calibration_sum = 0.0f;
-   35   1          service_imu_calibration_count = 0U;
-   36   1          service_imu_calibration_state = state;
-   37   1      }
-   38          
-   39          static void service_imu_update_calibration(const service_imu_sample_t *sample)
-   40          {
-   41   1          if(NULL == sample)
-   42   1          {
-   43   2              return;
-   44   2          }
-   45   1          if(SERVICE_IMU_CALIBRATION_GYRO_Z == service_imu_calibration_state)
-   46   1          {
-   47   2              service_imu_calibration_sum = tfpu_add(service_imu_calibration_sum, sample->gyro_z);
-   48   2              service_imu_calibration_count++;
-   49   2              if(SERVICE_IMU_CALIBRATE_COUNT <= service_imu_calibration_count)
-   50   2              {
-   51   3                  gyro_z_offset = tfpu_mul(service_imu_calibration_sum, SERVICE_IMU_CALIBRATE_INV);
-   52   3                  service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_X);
-   53   3              }
-   54   2          }
-C251 COMPILER V5.60.0,  service_imu                                                        27/07/26  14:29:39  PAGE 2   
+   27          
+   28          static void service_imu_begin_calibration(service_imu_calibration_state_enum state);
+   29          static void service_imu_update_calibration(const service_imu_sample_t *sample);
+   30          static void service_imu_make_sample(service_imu_sample_t *out_data, const bsp_imu_sample_t *raw);
+   31          static void service_imu_publish_sample(const service_imu_sample_t *sample);
+   32          
+   33          static void service_imu_begin_calibration(service_imu_calibration_state_enum state)
+   34          {
+   35   1          service_imu_calibration_sum = 0.0f;
+   36   1          service_imu_calibration_count = 0U;
+   37   1          service_imu_calibration_state = state;
+   38   1      }
+   39          
+   40          static void service_imu_update_calibration(const service_imu_sample_t *sample)
+   41          {
+   42   1          if(NULL == sample)
+   43   1          {
+   44   2              return;
+   45   2          }
+   46   1          if(SERVICE_IMU_CALIBRATION_GYRO_Z == service_imu_calibration_state)
+   47   1          {
+   48   2              service_imu_calibration_sum = tfpu_add(service_imu_calibration_sum, sample->gyro_z);
+   49   2              service_imu_calibration_count++;
+   50   2              if(SERVICE_IMU_CALIBRATE_COUNT <= service_imu_calibration_count)
+   51   2              {
+   52   3                  gyro_z_offset = tfpu_mul(service_imu_calibration_sum, SERVICE_IMU_CALIBRATE_INV);
+   53   3                  service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_X);
+   54   3              }
+C251 COMPILER V5.60.0,  service_imu                                                        28/07/26  21:10:42  PAGE 2   
 
-   55   1          else if(SERVICE_IMU_CALIBRATION_GYRO_X == service_imu_calibration_state)
-   56   1          {
-   57   2              service_imu_calibration_sum = tfpu_add(service_imu_calibration_sum, sample->gyro_x);
-   58   2              service_imu_calibration_count++;
-   59   2              if(SERVICE_IMU_CALIBRATE_COUNT <= service_imu_calibration_count)
-   60   2              {
-   61   3                  gyro_x_offset = tfpu_mul(service_imu_calibration_sum, SERVICE_IMU_CALIBRATE_INV);
-   62   3                  service_imu_calibration_state = SERVICE_IMU_CALIBRATION_COMPLETE;
-   63   3              }
-   64   2          }
-   65   1      }
-   66          
-   67          static void service_imu_make_sample(service_imu_sample_t *out_data, const bsp_imu_sample_t *raw)
-   68          {
-   69   1          if((NULL == out_data) || (NULL == raw))
-   70   1          {
-   71   2              return;
-   72   2          }
-   73   1          out_data->gyro_x_raw = raw->gyro_x_raw;
-   74   1          out_data->gyro_y_raw = raw->gyro_y_raw;
-   75   1          out_data->gyro_z_raw = raw->gyro_z_raw;
-   76   1          out_data->acc_x_raw = raw->acc_x_raw;
-   77   1          out_data->acc_y_raw = raw->acc_y_raw;
-   78   1          out_data->acc_z_raw = raw->acc_z_raw;
-   79   1          out_data->gyro_x = tfpu_mul(tfpu_int2float((long)raw->gyro_x_raw), service_imu_gyro_scale);
-   80   1          out_data->gyro_y = tfpu_mul(tfpu_int2float((long)raw->gyro_y_raw), service_imu_gyro_scale);
-   81   1          out_data->gyro_z = tfpu_mul(tfpu_int2float((long)raw->gyro_z_raw), service_imu_gyro_scale);
-   82   1          out_data->acc_x_g = tfpu_mul(tfpu_int2float((long)raw->acc_x_raw), service_imu_acc_scale);
-   83   1          out_data->acc_y_g = tfpu_mul(tfpu_int2float((long)raw->acc_y_raw), service_imu_acc_scale);
-   84   1          out_data->acc_z_g = tfpu_mul(tfpu_int2float((long)raw->acc_z_raw), service_imu_acc_scale);
-   85   1          out_data->roll_deg = raw->roll_deg;
-   86   1          out_data->pitch_deg = raw->pitch_deg;
-   87   1          out_data->yaw_deg = raw->yaw_deg;
-   88   1          out_data->sequence = raw->sequence;
-   89   1          out_data->drdy_tick = raw->drdy_tick;
-   90   1          out_data->timestamp_tick = raw->timestamp_tick;
-   91   1          out_data->valid = raw->valid;
-   92   1      }
-   93          
-   94          static void service_imu_publish_sample(const service_imu_sample_t *sample)
-   95          {
-   96   1          uint8 ea_backup;
-   97   1      
-   98   1          if(NULL == sample)
-   99   1          {
-  100   2              return;
-  101   2          }
-  102   1          ea_backup = EA;
-  103   1          EA = 0;
-  104   1          service_imu_sample = *sample;
-  105   1          EA = ea_backup;
-  106   1      }
-  107          
-  108          void service_imu_init(void)
-  109          {
-  110   1          service_imu_sample.valid = 0U;
-  111   1          service_imu_sample.sequence = 0UL;
-  112   1          service_imu_last_sequence = 0UL;
-  113   1          gyro_x_offset = 0.0f;
-  114   1          gyro_z_offset = 0.0f;
-  115   1          service_imu_acc_scale = 0.0f;
-  116   1          service_imu_gyro_scale = 0.0f;
-  117   1          bsp_imu_init();
-  118   1          if((0U != bsp_imu_is_ready()) &&
-  119   1             (0.0f < imu660rc_transition_factor[0]) &&
-  120   1             (0.0f < imu660rc_transition_factor[1]))
-C251 COMPILER V5.60.0,  service_imu                                                        27/07/26  14:29:39  PAGE 3   
+   55   2          }
+   56   1          else if(SERVICE_IMU_CALIBRATION_GYRO_X == service_imu_calibration_state)
+   57   1          {
+   58   2              service_imu_calibration_sum = tfpu_add(service_imu_calibration_sum, sample->gyro_x);
+   59   2              service_imu_calibration_count++;
+   60   2              if(SERVICE_IMU_CALIBRATE_COUNT <= service_imu_calibration_count)
+   61   2              {
+   62   3                  gyro_x_offset = tfpu_mul(service_imu_calibration_sum, SERVICE_IMU_CALIBRATE_INV);
+   63   3                  service_imu_calibration_state = SERVICE_IMU_CALIBRATION_COMPLETE;
+   64   3              }
+   65   2          }
+   66   1      }
+   67          
+   68          static void service_imu_make_sample(service_imu_sample_t *out_data, const bsp_imu_sample_t *raw)
+   69          {
+   70   1          if((NULL == out_data) || (NULL == raw))
+   71   1          {
+   72   2              return;
+   73   2          }
+   74   1          out_data->gyro_x_raw = raw->gyro_x_raw;
+   75   1          out_data->gyro_y_raw = raw->gyro_y_raw;
+   76   1          out_data->gyro_z_raw = raw->gyro_z_raw;
+   77   1          out_data->acc_x_raw = raw->acc_x_raw;
+   78   1          out_data->acc_y_raw = raw->acc_y_raw;
+   79   1          out_data->acc_z_raw = raw->acc_z_raw;
+   80   1          out_data->gyro_x = tfpu_mul(tfpu_int2float((long)raw->gyro_x_raw), service_imu_gyro_scale);
+   81   1          out_data->gyro_y = tfpu_mul(tfpu_int2float((long)raw->gyro_y_raw), service_imu_gyro_scale);
+   82   1          out_data->gyro_z = tfpu_mul(tfpu_int2float((long)raw->gyro_z_raw), service_imu_gyro_scale);
+   83   1          out_data->acc_x_g = tfpu_mul(tfpu_int2float((long)raw->acc_x_raw), service_imu_acc_scale);
+   84   1          out_data->acc_y_g = tfpu_mul(tfpu_int2float((long)raw->acc_y_raw), service_imu_acc_scale);
+   85   1          out_data->acc_z_g = tfpu_mul(tfpu_int2float((long)raw->acc_z_raw), service_imu_acc_scale);
+   86   1          out_data->roll_deg = raw->roll_deg;
+   87   1          out_data->pitch_deg = raw->pitch_deg;
+   88   1          out_data->yaw_deg = raw->yaw_deg;
+   89   1          out_data->sequence = raw->sequence;
+   90   1          out_data->drdy_tick = raw->drdy_tick;
+   91   1          out_data->timestamp_tick = raw->timestamp_tick;
+   92   1          out_data->valid = raw->valid;
+   93   1      }
+   94          
+   95          static void service_imu_publish_sample(const service_imu_sample_t *sample)
+   96          {
+   97   1          uint8 ea_backup;
+   98   1      
+   99   1          if(NULL == sample)
+  100   1          {
+  101   2              return;
+  102   2          }
+  103   1          ea_backup = EA;
+  104   1          EA = 0;
+  105   1          service_imu_sample = *sample;
+  106   1          EA = ea_backup;
+  107   1      }
+  108          
+  109          void service_imu_init(void)
+  110          {
+  111   1          service_imu_sample.valid = 0U;
+  112   1          service_imu_sample.sequence = 0UL;
+  113   1          service_imu_last_sequence = 0UL;
+  114   1          gyro_x_offset = 0.0f;
+  115   1          gyro_z_offset = 0.0f;
+  116   1          service_imu_acc_scale = 0.0f;
+  117   1          service_imu_gyro_scale = 0.0f;
+  118   1          bsp_imu_init();
+  119   1          if((0U != bsp_imu_is_ready()) &&
+  120   1             (0.0f < imu660rc_transition_factor[0]) &&
+C251 COMPILER V5.60.0,  service_imu                                                        28/07/26  21:10:42  PAGE 3   
 
-  121   1          {
-  122   2              service_imu_acc_scale = tfpu_div(1.0f, imu660rc_transition_factor[0]);
-  123   2              service_imu_gyro_scale = tfpu_div(1.0f, imu660rc_transition_factor[1]);
-  124   2          }
-  125   1          service_imu_start_calibration();
-  126   1          #if __DBGFLAG__
-  127   1          printf(">>[service_imu_init]\r\n");
-  128   1          #endif
-  129   1      }
-  130          
-  131          void service_imu_task(void)
-  132          {
-  133   1          bsp_imu_task();
-  134   1      }
-  135          
-  136          void service_imu_update(void)
-  137          {
-  138   1          bsp_imu_sample_t raw;
-  139   1          service_imu_sample_t sample;
-  140   1      
-  141   1          if((0U == bsp_imu_get_latest_sample(&raw)) ||
-  142   1             (raw.sequence == service_imu_last_sequence))
-  143   1          {
-  144   2              return;
-  145   2          }
-  146   1      
-  147   1          service_imu_make_sample(&sample, &raw);
-  148   1          service_imu_update_calibration(&sample);
-  149   1          sample.gyro_x = tfpu_sub(sample.gyro_x, gyro_x_offset);
-  150   1          sample.gyro_z = tfpu_sub(sample.gyro_z, gyro_z_offset);
-  151   1          service_imu_publish_sample(&sample);
-  152   1          service_imu_last_sequence = raw.sequence;
-  153   1      }
-  154          
-  155          void service_imu_start_calibration(void)
-  156          {
-  157   1          gyro_x_offset = 0.0f;
-  158   1          gyro_z_offset = 0.0f;
-  159   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_Z);
-  160   1      }
-  161          
-  162          uint8 service_imu_calibration_is_complete(void)
-  163          {
-  164   1          return (SERVICE_IMU_CALIBRATION_COMPLETE == service_imu_calibration_state) ? 1U : 0U;
-  165   1      }
-  166          
-  167          void service_imu_calibrate_gyro_z(void)
-  168          {
-  169   1          gyro_z_offset = 0.0f;
-  170   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_Z);
-  171   1      }
-  172          
-  173          void service_imu_calibrate_gyro_x(void)
-  174          {
-  175   1          gyro_x_offset = 0.0f;
-  176   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_X);
-  177   1      }
-  178          
-  179          void service_imu_read_gyro(service_imu_gyro_t *out_data)
-  180          {
-  181   1          service_imu_sample_t sample;
-  182   1      
-  183   1          if(NULL == out_data)
-  184   1          {
-  185   2              return;
-  186   2          }
-C251 COMPILER V5.60.0,  service_imu                                                        27/07/26  14:29:39  PAGE 4   
+  121   1             (0.0f < imu660rc_transition_factor[1]))
+  122   1          {
+  123   2              service_imu_acc_scale = tfpu_div(1.0f, imu660rc_transition_factor[0]);
+  124   2              service_imu_gyro_scale = tfpu_div(1.0f, imu660rc_transition_factor[1]);
+  125   2          }
+  126   1          service_imu_start_calibration();
+  127   1          #if __DBGFLAG__
+  128   1          printf(">>[service_imu_init]\r\n");
+  129   1          wprint(">>[service_imu_init]\r\n");
+  130   1          #endif
+  131   1      }
+  132          
+  133          void service_imu_task(void)
+  134          {
+  135   1          bsp_imu_task();
+  136   1      }
+  137          
+  138          void service_imu_update(void)
+  139          {
+  140   1          bsp_imu_sample_t raw;
+  141   1          service_imu_sample_t sample;
+  142   1      
+  143   1          if((0U == bsp_imu_get_latest_sample(&raw)) ||
+  144   1             (raw.sequence == service_imu_last_sequence))
+  145   1          {
+  146   2              return;
+  147   2          }
+  148   1      
+  149   1          service_imu_make_sample(&sample, &raw);
+  150   1          service_imu_update_calibration(&sample);
+  151   1          sample.gyro_x = tfpu_sub(sample.gyro_x, gyro_x_offset);
+  152   1          sample.gyro_z = tfpu_sub(sample.gyro_z, gyro_z_offset);
+  153   1          service_imu_publish_sample(&sample);
+  154   1          service_imu_last_sequence = raw.sequence;
+  155   1      }
+  156          
+  157          void service_imu_start_calibration(void)
+  158          {
+  159   1          gyro_x_offset = 0.0f;
+  160   1          gyro_z_offset = 0.0f;
+  161   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_Z);
+  162   1      }
+  163          
+  164          uint8 service_imu_calibration_is_complete(void)
+  165          {
+  166   1          return (SERVICE_IMU_CALIBRATION_COMPLETE == service_imu_calibration_state) ? 1U : 0U;
+  167   1      }
+  168          
+  169          void service_imu_calibrate_gyro_z(void)
+  170          {
+  171   1          gyro_z_offset = 0.0f;
+  172   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_Z);
+  173   1      }
+  174          
+  175          void service_imu_calibrate_gyro_x(void)
+  176          {
+  177   1          gyro_x_offset = 0.0f;
+  178   1          service_imu_begin_calibration(SERVICE_IMU_CALIBRATION_GYRO_X);
+  179   1      }
+  180          
+  181          void service_imu_read_gyro(service_imu_gyro_t *out_data)
+  182          {
+  183   1          service_imu_sample_t sample;
+  184   1      
+  185   1          if(NULL == out_data)
+  186   1          {
+C251 COMPILER V5.60.0,  service_imu                                                        28/07/26  21:10:42  PAGE 4   
 
-  187   1          if(0U == service_imu_get_latest_sample(&sample))
-  188   1          {
-  189   2              out_data->gyro_x = 0.0f;
-  190   2              out_data->gyro_y = 0.0f;
-  191   2              out_data->gyro_z = 0.0f;
-  192   2              out_data->sequence = 0UL;
-  193   2              return;
-  194   2          }
-  195   1          out_data->gyro_x = sample.gyro_x;
-  196   1          out_data->gyro_y = sample.gyro_y;
-  197   1          out_data->gyro_z = sample.gyro_z;
-  198   1          out_data->sequence = sample.sequence;
-  199   1      }
-  200          
-  201          float service_imu_read_gyro_z(void)
-  202          {
-  203   1          service_imu_sample_t sample;
-  204   1      
-  205   1          if(0U == service_imu_get_latest_sample(&sample))
-  206   1          {
-  207   2              return 0.0f;
-  208   2          }
-  209   1          return sample.gyro_z;
-  210   1      }
-  211          
-  212          uint8 service_imu_get_latest_sample(service_imu_sample_t *out_data)
-  213          {
-  214   1          uint8 result;
-  215   1          uint8 ea_backup;
-  216   1      
-  217   1          if(NULL == out_data)
-  218   1          {
-  219   2              return 0U;
-  220   2          }
-  221   1          ea_backup = EA;
-  222   1          EA = 0;
-  223   1          *out_data = service_imu_sample;
-  224   1          result = service_imu_sample.valid;
-  225   1          EA = ea_backup;
-  226   1          return result;
-  227   1      }
+  187   2              return;
+  188   2          }
+  189   1          if(0U == service_imu_get_latest_sample(&sample))
+  190   1          {
+  191   2              out_data->gyro_x = 0.0f;
+  192   2              out_data->gyro_y = 0.0f;
+  193   2              out_data->gyro_z = 0.0f;
+  194   2              out_data->sequence = 0UL;
+  195   2              return;
+  196   2          }
+  197   1          out_data->gyro_x = sample.gyro_x;
+  198   1          out_data->gyro_y = sample.gyro_y;
+  199   1          out_data->gyro_z = sample.gyro_z;
+  200   1          out_data->sequence = sample.sequence;
+  201   1      }
+  202          
+  203          float service_imu_read_gyro_z(void)
+  204          {
+  205   1          service_imu_sample_t sample;
+  206   1      
+  207   1          if(0U == service_imu_get_latest_sample(&sample))
+  208   1          {
+  209   2              return 0.0f;
+  210   2          }
+  211   1          return sample.gyro_z;
+  212   1      }
+  213          
+  214          uint8 service_imu_get_latest_sample(service_imu_sample_t *out_data)
+  215          {
+  216   1          uint8 result;
+  217   1          uint8 ea_backup;
+  218   1      
+  219   1          if(NULL == out_data)
+  220   1          {
+  221   2              return 0U;
+  222   2          }
+  223   1          ea_backup = EA;
+  224   1          EA = 0;
+  225   1          *out_data = service_imu_sample;
+  226   1          result = service_imu_sample.valid;
+  227   1          EA = ea_backup;
+  228   1          return result;
+  229   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2134     ------
+  ecode size           =      2146     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

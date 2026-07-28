@@ -123,5 +123,6 @@ void app_boot_sequence_init(void)
             APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
     #if __DBGFLAG__
     printf(">>[app_boot_sequence_init]\r\n");
+    wprint(">>[app_boot_sequence_init]\r\n");
     #endif
 }

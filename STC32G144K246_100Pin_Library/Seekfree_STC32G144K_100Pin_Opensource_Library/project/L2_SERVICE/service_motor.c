@@ -1,6 +1,7 @@
 #include "zf_common_headfile.h"
 #include "bsp_include.h"
 #include "service_motor.h"
+#include "service_wireless_uart.h"
 
 #define SERVICE_MOTOR_NSLEEP_PRE_HIGH_MS       (1U)
 #define SERVICE_MOTOR_NSLEEP_RESET_LOW_US      (30U)
@@ -62,6 +63,7 @@ void service_motor_init(void)
     service_motor_reset();
     #if __DBGFLAG__
     printf(">>[service_motor_init]\r\n");
+    wprint(">>[service_motor_init]\r\n");
     #endif
 }
 

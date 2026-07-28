@@ -266,6 +266,7 @@ void service_wireless_uart_init(void)
     }
     #if __DBGFLAG__
     printf(">>[service_wireless_uart_init]\r\n");
+    wprint(">>[service_wireless_uart_init]\r\n");
     #endif
 }
 

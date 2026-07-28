@@ -2,6 +2,7 @@
 #include "service_boot_request.h"
 #include "service_motor.h"
 #include "sys_start.h"
+#include "service_wireless_uart.h"
 
 #if SERVICE_BOOT_REQUEST_ENABLE
 
@@ -164,6 +165,7 @@ void service_boot_request_init(void)
     uart_rx_handlers[UART_1] = service_boot_request_feed_byte;
     #if __DBGFLAG__
     printf(">>[service_boot_request_init]\r\n");
+    wprint(">>[service_boot_request_init]\r\n");
     #endif
 }
 

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_speed                                                      27/07/26  14:29:41  PAGE 1   
+C251 COMPILER V5.60.0,  service_speed                                                      28/07/26  21:09:33  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_speed
@@ -16,86 +16,88 @@ stmt  level    source
     3          #include "shared_lpf.h"
     4          #include "bsp_include.h"
     5          #include "service_speed.h"
-    6          
-    7          #define SERVICE_SPEED_PI                     (3.1415926f)
-    8          #define SERVICE_SPEED_ENCODER_PULSE_PER_REV  (1024.0f)
-    9          #define SERVICE_SPEED_ENCODER_GEAR_TEETH     (10.0f)
-   10          #define SERVICE_SPEED_WHEEL_GEAR_TEETH       (41.0f)
-   11          #define SERVICE_SPEED_WHEEL_DIAMETER_M       (0.024f)
-   12          #define SERVICE_SPEED_SAMPLE_PERIOD_MS       (1U)
-   13          #define SERVICE_SPEED_SAMPLE_PERIOD_SECOND   (0.001f)
-   14          
-   15          #define SERVICE_SPEED_ENCODER_TO_WHEEL_RATIO \
-   16              (SERVICE_SPEED_WHEEL_GEAR_TEETH / SERVICE_SPEED_ENCODER_GEAR_TEETH)
-   17          
-   18          #define SERVICE_SPEED_DISTANCE_PER_PULSE_M \
-   19              ((SERVICE_SPEED_PI * SERVICE_SPEED_WHEEL_DIAMETER_M) / \
-   20              (SERVICE_SPEED_ENCODER_PULSE_PER_REV * SERVICE_SPEED_ENCODER_TO_WHEEL_RATIO))
-   21          
-   22          #define SERVICE_SPEED_MPS_PER_PULSE \
-   23              (SERVICE_SPEED_DISTANCE_PER_PULSE_M / SERVICE_SPEED_SAMPLE_PERIOD_SECOND)
-   24          
-   25          #define SERVICE_SPEED_LPF_ALPHA              (0.2f)
-   26          
-   27          static volatile service_speed_data_t speed_data = {0.0f, 0.0f};
-   28          static shared_lpf_t speed_lpf_left;
-   29          static shared_lpf_t speed_lpf_right;
-   30          
-   31          void service_speed_init(void)
-   32          {
-   33   1          bsp_encoder_init();
-   34   1          speed_data.left_mps = 0.0f;
-   35   1          speed_data.right_mps = 0.0f;
-   36   1          shared_lpf_init(&speed_lpf_left, SERVICE_SPEED_LPF_ALPHA, 0.0f);
-   37   1          shared_lpf_init(&speed_lpf_right, SERVICE_SPEED_LPF_ALPHA, 0.0f);
-   38   1          pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
-   39   1          interrupt_set_priority(TIM3_IRQn, 3U);
-   40   1          #if __DBGFLAG__
-   41   1          printf(">>[service_speed_init]\r\n");
-   42   1          #endif
-   43   1      }
-   44          
-   45          void service_speed_debug(void)
-   46          {
-   47   1          service_speed_data_t testdata;
-   48   1      
-   49   1          service_speed_get(&testdata);
-   50   1          printf("[speed:] %f,%f\r\n",testdata.left_mps,testdata.right_mps);
-   51   1      }
-   52          
-   53          void service_speed_update(void)
-   54          {
-   55   1          bsp_encoder_count_t encoder_delta;
-C251 COMPILER V5.60.0,  service_speed                                                      27/07/26  14:29:41  PAGE 2   
+    6          #include "service_wireless_uart.h"
+    7          
+    8          #define SERVICE_SPEED_PI                     (3.1415926f)
+    9          #define SERVICE_SPEED_ENCODER_PULSE_PER_REV  (1024.0f)
+   10          #define SERVICE_SPEED_ENCODER_GEAR_TEETH     (10.0f)
+   11          #define SERVICE_SPEED_WHEEL_GEAR_TEETH       (41.0f)
+   12          #define SERVICE_SPEED_WHEEL_DIAMETER_M       (0.024f)
+   13          #define SERVICE_SPEED_SAMPLE_PERIOD_MS       (1U)
+   14          #define SERVICE_SPEED_SAMPLE_PERIOD_SECOND   (0.001f)
+   15          
+   16          #define SERVICE_SPEED_ENCODER_TO_WHEEL_RATIO \
+   17              (SERVICE_SPEED_WHEEL_GEAR_TEETH / SERVICE_SPEED_ENCODER_GEAR_TEETH)
+   18          
+   19          #define SERVICE_SPEED_DISTANCE_PER_PULSE_M \
+   20              ((SERVICE_SPEED_PI * SERVICE_SPEED_WHEEL_DIAMETER_M) / \
+   21              (SERVICE_SPEED_ENCODER_PULSE_PER_REV * SERVICE_SPEED_ENCODER_TO_WHEEL_RATIO))
+   22          
+   23          #define SERVICE_SPEED_MPS_PER_PULSE \
+   24              (SERVICE_SPEED_DISTANCE_PER_PULSE_M / SERVICE_SPEED_SAMPLE_PERIOD_SECOND)
+   25          
+   26          #define SERVICE_SPEED_LPF_ALPHA              (0.2f)
+   27          
+   28          static volatile service_speed_data_t speed_data = {0.0f, 0.0f};
+   29          static shared_lpf_t speed_lpf_left;
+   30          static shared_lpf_t speed_lpf_right;
+   31          
+   32          void service_speed_init(void)
+   33          {
+   34   1          bsp_encoder_init();
+   35   1          speed_data.left_mps = 0.0f;
+   36   1          speed_data.right_mps = 0.0f;
+   37   1          shared_lpf_init(&speed_lpf_left, SERVICE_SPEED_LPF_ALPHA, 0.0f);
+   38   1          shared_lpf_init(&speed_lpf_right, SERVICE_SPEED_LPF_ALPHA, 0.0f);
+   39   1          pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
+   40   1          interrupt_set_priority(TIM3_IRQn, 3U);
+   41   1          #if __DBGFLAG__
+   42   1          printf(">>[service_speed_init]\r\n");
+   43   1          wprint(">>[service_speed_init]\r\n");
+   44   1          #endif
+   45   1      }
+   46          
+   47          void service_speed_debug(void)
+   48          {
+   49   1          service_speed_data_t testdata;
+   50   1      
+   51   1          service_speed_get(&testdata);
+   52   1          printf("[speed:] %f,%f\r\n",testdata.left_mps,testdata.right_mps);
+   53   1      }
+   54          
+   55          void service_speed_update(void)
+C251 COMPILER V5.60.0,  service_speed                                                      28/07/26  21:09:33  PAGE 2   
 
-   56   1      
-   57   1          bsp_encoder_get_delta(&encoder_delta);
-   58   1          speed_data.left_mps = shared_lpf_update(&speed_lpf_left,
-   59   1                  tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_MPS_PER_PULSE));
-   60   1          speed_data.right_mps = shared_lpf_update(&speed_lpf_right,
-   61   1                  tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_MPS_PER_PULSE));
-   62   1      }
-   63          
-   64          void service_speed_get(service_speed_data_t *out_speed)
-   65          {
-   66   1          uint8 ea_backup;
-   67   1      
-   68   1          if(NULL == out_speed)
-   69   1          {
-   70   2              return;
-   71   2          }
-   72   1      
-   73   1          ea_backup = EA;
-   74   1          EA = 0;
-   75   1          *out_speed = speed_data;
-   76   1          EA = ea_backup;
-   77   1      }
+   56          {
+   57   1          bsp_encoder_count_t encoder_delta;
+   58   1      
+   59   1          bsp_encoder_get_delta(&encoder_delta);
+   60   1          speed_data.left_mps = shared_lpf_update(&speed_lpf_left,
+   61   1                  tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_MPS_PER_PULSE));
+   62   1          speed_data.right_mps = shared_lpf_update(&speed_lpf_right,
+   63   1                  tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_MPS_PER_PULSE));
+   64   1      }
+   65          
+   66          void service_speed_get(service_speed_data_t *out_speed)
+   67          {
+   68   1          uint8 ea_backup;
+   69   1      
+   70   1          if(NULL == out_speed)
+   71   1          {
+   72   2              return;
+   73   2          }
+   74   1      
+   75   1          ea_backup = EA;
+   76   1          EA = 0;
+   77   1          *out_speed = speed_data;
+   78   1          EA = ea_backup;
+   79   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       407     ------
+  ecode size           =       419     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

@@ -3,6 +3,7 @@
 #include "shared_lpf.h"
 #include "bsp_include.h"
 #include "service_speed.h"
+#include "service_wireless_uart.h"
 
 #define SERVICE_SPEED_PI                     (3.1415926f)
 #define SERVICE_SPEED_ENCODER_PULSE_PER_REV  (1024.0f)
@@ -39,6 +40,7 @@ void service_speed_init(void)
     interrupt_set_priority(TIM3_IRQn, 3U);
     #if __DBGFLAG__
     printf(">>[service_speed_init]\r\n");
+    wprint(">>[service_speed_init]\r\n");
     #endif
 }
 

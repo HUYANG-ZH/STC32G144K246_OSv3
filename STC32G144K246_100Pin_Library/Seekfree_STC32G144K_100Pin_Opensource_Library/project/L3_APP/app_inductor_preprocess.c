@@ -319,6 +319,7 @@ void app_inductor_preprocess_init(void)
     interrupt_set_priority(TIM4_IRQn, 3U);
     #if __DBGFLAG__
     printf(">>[app_inductor_preprocess_init]\r\n");
+    wprint(">>[app_inductor_preprocess_init]\r\n");
     #endif
 }
 

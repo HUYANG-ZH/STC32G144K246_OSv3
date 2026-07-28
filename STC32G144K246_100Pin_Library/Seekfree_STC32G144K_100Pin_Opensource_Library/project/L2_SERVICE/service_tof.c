@@ -2,6 +2,7 @@
 #include "bsp_include.h"
 #include "service_tof.h"
 #include "service_timetick.h"
+#include "service_wireless_uart.h"
 
 #define SERVICE_TOF_SAMPLE_PERIOD_TICK      (500UL)
 
@@ -14,6 +15,7 @@ void service_tof_init(void)
     service_tof_last_request_tick = service_timetick_what();
     #if __DBGFLAG__
     printf(">>[service_tof_init]\r\n");
+    wprint(">>[service_tof_init]\r\n");
     #endif
 #else
     service_tof_last_request_tick = 0UL;

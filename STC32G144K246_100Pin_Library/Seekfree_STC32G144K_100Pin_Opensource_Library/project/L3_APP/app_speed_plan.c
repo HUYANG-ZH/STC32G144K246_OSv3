@@ -5,6 +5,7 @@
 #include "app_motion_preprocess.h"
 #include "app_speed_plan.h"
 #include "app_element.h"
+#include "service_wireless_uart.h"
 
 #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
 #define APP_SPEED_PLAN_DEFAULT_MIN_RATIO        (0.9f)
@@ -104,6 +105,7 @@ void app_speed_plan_init(void)
     /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定。 */
     #if __DBGFLAG__
     printf(">>[app_speed_plan_init]\r\n");
+    wprint(">>[app_speed_plan_init]\r\n");
     #endif
 }
 

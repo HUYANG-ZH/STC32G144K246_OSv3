@@ -1,5 +1,6 @@
 #include "zf_common_headfile.h"
 #include "service_timetick.h"
+#include "service_wireless_uart.h"
 
 static volatile uint32 time;
 
@@ -12,6 +13,7 @@ void service_timetick_init(void)
     pit_us_init(TIM0_PIT,100,timetick_new);
     #if __DBGFLAG__
     printf(">>[service_timetick_init]\r\n");
+    wprint(">>[service_timetick_init]\r\n");
     #endif
 }
 

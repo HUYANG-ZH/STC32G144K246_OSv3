@@ -4,6 +4,7 @@
 #include "app_inductor_preprocess.h"
 #include "app_feedforward.h"
 #include "app_element.h"
+#include "service_wireless_uart.h"
 
 #define APP_FEEDFORWARD_PACKET_SINGLE_COUNT       (1U)       // 无线变量单次注册数量
 #define APP_FEEDFORWARD_DEFAULT_KFF              (1.3f)   // 默认前馈增益
@@ -65,6 +66,7 @@ void app_feedforward_init(void)
     /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定。 */
     #if __DBGFLAG__
     printf(">>[app_feedforward_init]\r\n");
+    wprint(">>[app_feedforward_init]\r\n");
     #endif
 }
 

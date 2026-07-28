@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_boot_request                                               27/07/26  14:29:43  PAGE 1   
+C251 COMPILER V5.60.0,  service_boot_request                                               28/07/26  21:09:34  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_boot_request
@@ -15,182 +15,184 @@ stmt  level    source
     2          #include "service_boot_request.h"
     3          #include "service_motor.h"
     4          #include "sys_start.h"
-    5          
-    6          #if SERVICE_BOOT_REQUEST_ENABLE
-    7          
-    8          #define BOOT_REQUEST_FRAME_SIZE     (12U)
-    9          #define BOOT_REQUEST_PREFIX_SIZE    (10U)
-   10          #define BOOT_REQUEST_DFU_TAG        (0x12ABCD34UL)
-   11          #define BOOT_REQUEST_ACK_SIZE       (10U)
-   12          #define BOOT_REQUEST_TX_TIMEOUT     (5000UL)
-   13          
-   14          static const uint8 boot_request_prefix[4] = {0x53U, 0x42U, 0x4CU, 0x52U};
-   15          static volatile uint8 service_boot_request_pending = 0U;
-   16          static uint8 boot_request_frame[BOOT_REQUEST_FRAME_SIZE];
-   17          static uint8 boot_request_index = 0U;
-   18          
-   19          unsigned long xdata boot_request_dfu_flag _at_ 0xfffc;
-   20          
-   21          static uint16 service_boot_request_crc16(const uint8 *buffer, uint8 length)
-   22          {
-   23   1          uint8 i;
-   24   1          uint8 bit_index;
-   25   1          uint16 crc = 0xFFFFU;
-   26   1      
-   27   1          for(i = 0U; i < length; i++)
-   28   1          {
-   29   2              crc ^= (uint16)buffer[i] << 8;
-   30   2              for(bit_index = 0U; bit_index < 8U; bit_index++)
-   31   2              {
-   32   3                  if(0U != (crc & 0x8000U))
-   33   3                  {
-   34   4                      crc = (uint16)((crc << 1) ^ 0x1021U);
-   35   4                  }
-   36   3                  else
-   37   3                  {
-   38   4                      crc <<= 1;
-   39   4                  }
-   40   3              }
-   41   2          }
-   42   1          return crc;
-   43   1      }
-   44          
-   45          static void service_boot_request_reset_parser(uint8 rx_byte)
-   46          {
-   47   1          boot_request_index = 0U;
-   48   1          if(rx_byte == boot_request_prefix[0])
-   49   1          {
-   50   2              boot_request_frame[0] = rx_byte;
-   51   2              boot_request_index = 1U;
-   52   2          }
-   53   1      }
-   54          
-   55          void service_boot_request_feed_byte(uint8 rx_byte)
-C251 COMPILER V5.60.0,  service_boot_request                                               27/07/26  14:29:43  PAGE 2   
+    5          #include "service_wireless_uart.h"
+    6          
+    7          #if SERVICE_BOOT_REQUEST_ENABLE
+    8          
+    9          #define BOOT_REQUEST_FRAME_SIZE     (12U)
+   10          #define BOOT_REQUEST_PREFIX_SIZE    (10U)
+   11          #define BOOT_REQUEST_DFU_TAG        (0x12ABCD34UL)
+   12          #define BOOT_REQUEST_ACK_SIZE       (10U)
+   13          #define BOOT_REQUEST_TX_TIMEOUT     (5000UL)
+   14          
+   15          static const uint8 boot_request_prefix[4] = {0x53U, 0x42U, 0x4CU, 0x52U};
+   16          static volatile uint8 service_boot_request_pending = 0U;
+   17          static uint8 boot_request_frame[BOOT_REQUEST_FRAME_SIZE];
+   18          static uint8 boot_request_index = 0U;
+   19          
+   20          unsigned long xdata boot_request_dfu_flag _at_ 0xfffc;
+   21          
+   22          static uint16 service_boot_request_crc16(const uint8 *buffer, uint8 length)
+   23          {
+   24   1          uint8 i;
+   25   1          uint8 bit_index;
+   26   1          uint16 crc = 0xFFFFU;
+   27   1      
+   28   1          for(i = 0U; i < length; i++)
+   29   1          {
+   30   2              crc ^= (uint16)buffer[i] << 8;
+   31   2              for(bit_index = 0U; bit_index < 8U; bit_index++)
+   32   2              {
+   33   3                  if(0U != (crc & 0x8000U))
+   34   3                  {
+   35   4                      crc = (uint16)((crc << 1) ^ 0x1021U);
+   36   4                  }
+   37   3                  else
+   38   3                  {
+   39   4                      crc <<= 1;
+   40   4                  }
+   41   3              }
+   42   2          }
+   43   1          return crc;
+   44   1      }
+   45          
+   46          static void service_boot_request_reset_parser(uint8 rx_byte)
+   47          {
+   48   1          boot_request_index = 0U;
+   49   1          if(rx_byte == boot_request_prefix[0])
+   50   1          {
+   51   2              boot_request_frame[0] = rx_byte;
+   52   2              boot_request_index = 1U;
+   53   2          }
+   54   1      }
+   55          
+C251 COMPILER V5.60.0,  service_boot_request                                               28/07/26  21:09:34  PAGE 2   
 
-   56          {
-   57   1          uint8 command;
-   58   1          uint16 expected_crc;
-   59   1          uint16 actual_crc;
-   60   1      
-   61   1          if(0U != service_boot_request_pending)
-   62   1          {
-   63   2              return;
-   64   2          }
-   65   1      
-   66   1          if(boot_request_index < 4U)
-   67   1          {
-   68   2              if(rx_byte != boot_request_prefix[boot_request_index])
-   69   2              {
-   70   3                  service_boot_request_reset_parser(rx_byte);
-   71   3                  return;
-   72   3              }
-   73   2          }
-   74   1      
-   75   1          boot_request_frame[boot_request_index++] = rx_byte;
-   76   1          if(boot_request_index < BOOT_REQUEST_FRAME_SIZE)
-   77   1          {
-   78   2              return;
-   79   2          }
-   80   1      
-   81   1          command = boot_request_frame[4];
-   82   1          expected_crc = (uint16)boot_request_frame[10]
-   83   1                  | ((uint16)boot_request_frame[11] << 8);
-   84   1          actual_crc = service_boot_request_crc16(boot_request_frame, BOOT_REQUEST_PREFIX_SIZE);
-   85   1      
-   86   1          if((boot_request_frame[5] == (uint8)(~command))
-   87   1                  && (0x32U == boot_request_frame[6])
-   88   1                  && (0x47U == boot_request_frame[7])
-   89   1                  && (0x14U == boot_request_frame[8])
-   90   1                  && (0x4BU == boot_request_frame[9])
-   91   1                  && (expected_crc == actual_crc)
-   92   1                  && ((BOOT_REQUEST_USER_SYSTEM == command)
-   93   1                      || (BOOT_REQUEST_FACTORY_ISP == command)))
-   94   1          {
-   95   2              service_boot_request_pending = command;
-   96   2          }
-   97   1      
-   98   1          boot_request_index = 0U;
-   99   1      }
-  100          
-  101          uint8 service_boot_request_is_pending(void)
-  102          {
-  103   1          return service_boot_request_pending;
-  104   1      }
-  105          
-  106          void service_boot_request_process(void)
-  107          {
-  108   1          uint8 command = service_boot_request_pending;
-  109   1          uint8 ack_frame[BOOT_REQUEST_ACK_SIZE];
-  110   1      
-  111   1          if(0U == command)
-  112   1          {
-  113   2              return;
-  114   2          }
-  115   1      
-  116   1          service_boot_request_pending = 0U;
-  117   1      
-  118   1          ack_frame[0] = 0xA5U;
-  119   1          ack_frame[1] = 0x5AU;
-  120   1          ack_frame[2] = 0x53U;
-  121   1          ack_frame[3] = 0x42U;
-C251 COMPILER V5.60.0,  service_boot_request                                               27/07/26  14:29:43  PAGE 3   
+   56          void service_boot_request_feed_byte(uint8 rx_byte)
+   57          {
+   58   1          uint8 command;
+   59   1          uint16 expected_crc;
+   60   1          uint16 actual_crc;
+   61   1      
+   62   1          if(0U != service_boot_request_pending)
+   63   1          {
+   64   2              return;
+   65   2          }
+   66   1      
+   67   1          if(boot_request_index < 4U)
+   68   1          {
+   69   2              if(rx_byte != boot_request_prefix[boot_request_index])
+   70   2              {
+   71   3                  service_boot_request_reset_parser(rx_byte);
+   72   3                  return;
+   73   3              }
+   74   2          }
+   75   1      
+   76   1          boot_request_frame[boot_request_index++] = rx_byte;
+   77   1          if(boot_request_index < BOOT_REQUEST_FRAME_SIZE)
+   78   1          {
+   79   2              return;
+   80   2          }
+   81   1      
+   82   1          command = boot_request_frame[4];
+   83   1          expected_crc = (uint16)boot_request_frame[10]
+   84   1                  | ((uint16)boot_request_frame[11] << 8);
+   85   1          actual_crc = service_boot_request_crc16(boot_request_frame, BOOT_REQUEST_PREFIX_SIZE);
+   86   1      
+   87   1          if((boot_request_frame[5] == (uint8)(~command))
+   88   1                  && (0x32U == boot_request_frame[6])
+   89   1                  && (0x47U == boot_request_frame[7])
+   90   1                  && (0x14U == boot_request_frame[8])
+   91   1                  && (0x4BU == boot_request_frame[9])
+   92   1                  && (expected_crc == actual_crc)
+   93   1                  && ((BOOT_REQUEST_USER_SYSTEM == command)
+   94   1                      || (BOOT_REQUEST_FACTORY_ISP == command)))
+   95   1          {
+   96   2              service_boot_request_pending = command;
+   97   2          }
+   98   1      
+   99   1          boot_request_index = 0U;
+  100   1      }
+  101          
+  102          uint8 service_boot_request_is_pending(void)
+  103          {
+  104   1          return service_boot_request_pending;
+  105   1      }
+  106          
+  107          void service_boot_request_process(void)
+  108          {
+  109   1          uint8 command = service_boot_request_pending;
+  110   1          uint8 ack_frame[BOOT_REQUEST_ACK_SIZE];
+  111   1      
+  112   1          if(0U == command)
+  113   1          {
+  114   2              return;
+  115   2          }
+  116   1      
+  117   1          service_boot_request_pending = 0U;
+  118   1      
+  119   1          ack_frame[0] = 0xA5U;
+  120   1          ack_frame[1] = 0x5AU;
+  121   1          ack_frame[2] = 0x53U;
+C251 COMPILER V5.60.0,  service_boot_request                                               28/07/26  21:09:34  PAGE 3   
 
-  122   1          ack_frame[4] = 0x4CU;
-  123   1          ack_frame[5] = 0x52U;
-  124   1          ack_frame[6] = command;
-  125   1          ack_frame[7] = (uint8)(~command);
-  126   1          ack_frame[8] = 0x0DU;
-  127   1          ack_frame[9] = 0x0AU;
-  128   1      
-  129   1          uart_write_buffer(DEBUG_UART_INDEX, ack_frame, BOOT_REQUEST_ACK_SIZE);
-  130   1      
-  131   1          {
-  132   2              uint32 tx_wait = BOOT_REQUEST_TX_TIMEOUT;
-  133   2              while (0U != uart_tx_is_busy(DEBUG_UART_INDEX) && (0UL != tx_wait))
-  134   2              {
-  135   3                  tx_wait--;
-  136   3                  wdt_feed();
-  137   3              }
-  138   2          }
-  139   1      
-  140   1          EAXFR = 1;
-  141   1          EA = 0;
-  142   1      
-  143   1          DMA_UR1R_CR = 0x00;
-  144   1          service_motor_stop();
-  145   1      
-  146   1          if(BOOT_REQUEST_USER_SYSTEM == command)
-  147   1          {
-  148   2              boot_request_dfu_flag = BOOT_REQUEST_DFU_TAG;
-  149   2              IAP_CONTR = 0x28;
-  150   2          }
-  151   1          else
-  152   1          {
-  153   2              IAP_CONTR = 0x60;
-  154   2          }
-  155   1      
-  156   1          while(1)
-  157   1          {
-  158   2          }
-  159   1      }
-  160          
-  161          void service_boot_request_init(void)
-  162          {
-  163   1          boot_request_dfu_flag = 0UL;
-  164   1          uart_rx_handlers[UART_1] = service_boot_request_feed_byte;
-  165   1          #if __DBGFLAG__
-  166   1          printf(">>[service_boot_request_init]\r\n");
-  167   1          #endif
-  168   1      }
-  169          
-  170          #endif
+  122   1          ack_frame[3] = 0x42U;
+  123   1          ack_frame[4] = 0x4CU;
+  124   1          ack_frame[5] = 0x52U;
+  125   1          ack_frame[6] = command;
+  126   1          ack_frame[7] = (uint8)(~command);
+  127   1          ack_frame[8] = 0x0DU;
+  128   1          ack_frame[9] = 0x0AU;
+  129   1      
+  130   1          uart_write_buffer(DEBUG_UART_INDEX, ack_frame, BOOT_REQUEST_ACK_SIZE);
+  131   1      
+  132   1          {
+  133   2              uint32 tx_wait = BOOT_REQUEST_TX_TIMEOUT;
+  134   2              while (0U != uart_tx_is_busy(DEBUG_UART_INDEX) && (0UL != tx_wait))
+  135   2              {
+  136   3                  tx_wait--;
+  137   3                  wdt_feed();
+  138   3              }
+  139   2          }
+  140   1      
+  141   1          EAXFR = 1;
+  142   1          EA = 0;
+  143   1      
+  144   1          DMA_UR1R_CR = 0x00;
+  145   1          service_motor_stop();
+  146   1      
+  147   1          if(BOOT_REQUEST_USER_SYSTEM == command)
+  148   1          {
+  149   2              boot_request_dfu_flag = BOOT_REQUEST_DFU_TAG;
+  150   2              IAP_CONTR = 0x28;
+  151   2          }
+  152   1          else
+  153   1          {
+  154   2              IAP_CONTR = 0x60;
+  155   2          }
+  156   1      
+  157   1          while(1)
+  158   1          {
+  159   2          }
+  160   1      }
+  161          
+  162          void service_boot_request_init(void)
+  163          {
+  164   1          boot_request_dfu_flag = 0UL;
+  165   1          uart_rx_handlers[UART_1] = service_boot_request_feed_byte;
+  166   1          #if __DBGFLAG__
+  167   1          printf(">>[service_boot_request_init]\r\n");
+  168   1          wprint(">>[service_boot_request_init]\r\n");
+  169   1          #endif
+  170   1      }
+  171          
+  172          #endif
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       785     ------
+  ecode size           =       797     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -201,10 +203,10 @@ Module Information          Static   Overlayable
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
+C251 COMPILER V5.60.0,  service_boot_request                                               28/07/26  21:09:34  PAGE 4   
+
   far data size        =    ------     ------
   huge data size       =    ------     ------
-C251 COMPILER V5.60.0,  service_boot_request                                               27/07/26  14:29:43  PAGE 4   
-
   const size           =    ------     ------
   hconst size          =        48     ------
 End of Module Information.

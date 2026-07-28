@@ -938,6 +938,7 @@ void app_element_init(void)
             &element_roundabout_angle_deg_3, APP_ELEMENT_PACKET_SINGLE_COUNT);
     #if __DBGFLAG__
     printf(">>[app_element_init]\r\n");
+    wprint(">>[app_element_init]\r\n");
     #endif
 }
 

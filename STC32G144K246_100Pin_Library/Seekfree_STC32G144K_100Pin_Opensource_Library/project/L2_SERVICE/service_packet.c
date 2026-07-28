@@ -775,6 +775,7 @@ void service_packet_init(void)
     }
     #if __DBGFLAG__
     printf(">>[service_packet_init]\r\n");
+    wprint(">>[service_packet_init]\r\n");
     #endif
 }
 

@@ -1,6 +1,7 @@
 #include "zf_common_headfile.h"
 #include "service_timetick.h"
 #include "service_function_queue.h"
+#include "service_wireless_uart.h"
 
 #pragma warning disable = 150
 
@@ -49,6 +50,7 @@ void service_function_queue_init(void)
     EA = ea_backup;
     #if __DBGFLAG__
     printf(">>[service_function_queue_init]\r\n");
+    wprint(">>[service_function_queue_init]\r\n");
     #endif
 }
 
