@@ -7,7 +7,7 @@
 #define SERVICE_MOTOR_NSLEEP_POST_HIGH_MS      (1U)
 
 #define SERVICE_MOTOR_LEFT_FORWARD_LEVEL       GPIO_LOW
-#define SERVICE_MOTOR_RIGHT_FORWARD_LEVEL      GPIO_HIGH
+#define SERVICE_MOTOR_RIGHT_FORWARD_LEVEL      GPIO_LOW
 
 static uint8 motor_initialized = 0U;
 static uint8 motor_ready = 0U;

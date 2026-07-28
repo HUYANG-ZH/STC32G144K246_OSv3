@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -24,16 +24,16 @@ stmt  level    source
    11          #define APP_SPEEDOUT_ENABLE_THRESHOLD        (0.5f)
    12          #define APP_SPEEDOUT_DT_SECOND               ((float)APP_SPEEDOUT_PERIOD_MS / 1000.0f)
    13          #define APP_SPEEDOUT_TARGET_LIMIT_MPS        (10.0f)
-   14          #define APP_SPEEDOUT_DEFAULT_LEFT_KP         (2955.0f)
-   15          #define APP_SPEEDOUT_DEFAULT_LEFT_KI         (29993.0f)
-   16          #define APP_SPEEDOUT_DEFAULT_RIGHT_KP        (2959.0f)
-   17          #define APP_SPEEDOUT_DEFAULT_RIGHT_KI        (29993.0f)
+   14          #define APP_SPEEDOUT_DEFAULT_LEFT_KP         (1570.0f)
+   15          #define APP_SPEEDOUT_DEFAULT_LEFT_KI         (40000.0f)
+   16          #define APP_SPEEDOUT_DEFAULT_RIGHT_KP        (1570.0f)
+   17          #define APP_SPEEDOUT_DEFAULT_RIGHT_KI        (40000.0f)
    18          #define APP_SPEEDOUT_DEFAULT_KD              (0.0f)
    19          #define APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT  (0.0f)
    20          #define APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT    ((float)PWM_DUTY_MAX)
-   21          #define APP_SPEEDOUT_RIGHT_TARGET_SIGN       (-1.0f)
-   22          #define APP_SPEEDOUT_LEFT_PID_DIRECTION      SHARED_POS_PID_DIRECTION_REVERSE
-   23          #define APP_SPEEDOUT_RIGHT_PID_DIRECTION     SHARED_POS_PID_DIRECTION_REVERSE
+   21          #define APP_SPEEDOUT_RIGHT_TARGET_SIGN       (1.0f)
+   22          #define APP_SPEEDOUT_LEFT_PID_DIRECTION      SHARED_POS_PID_DIRECTION_DIRECT
+   23          #define APP_SPEEDOUT_RIGHT_PID_DIRECTION     SHARED_POS_PID_DIRECTION_DIRECT
    24          
    25          app_speedout_config_t app_speedout_config =
    26          {
@@ -66,7 +66,7 @@ stmt  level    source
    51              uint32 sequence;
    52              uint8 owner;
    53          } app_speedout_target_mailbox_t;
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 2   
 
    54          
    55          #define APP_SPEEDOUT_TARGET_OWNER_NONE        (0U)
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          pid->output_limit_enable = ZF_ENABLE;
   118   1          pid->output_min = -output_limit;
   119   1          pid->output_max = output_limit;
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 3   
 
   120   1          pid->integral_limit_enable = (0.0f < config->integral_limit) ? ZF_ENABLE : ZF_DISABLE;
   121   1          pid->integral_min = -config->integral_limit;
@@ -186,26 +186,24 @@ stmt  level    source
   163          
   164          static void app_speedout_register_packet(void)
   165          {
-  166   1          (void)service_packet_add_variable_with_callback("speed_left_target", &app_speedout_config.left.target
-             -_mps,
+  166   1          (void)service_packet_add_variable_with_callback("SLT", &app_speedout_config.left.target_mps,
   167   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_packet_target_changed);
-  168   1          (void)service_packet_add_variable_with_callback("speed_left_kp", &app_speedout_config.left.kp,
+  168   1          (void)service_packet_add_variable_with_callback("SLK", &app_speedout_config.left.kp,
   169   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
-  170   1          (void)service_packet_add_variable_with_callback("speed_left_ki", &app_speedout_config.left.ki,
+  170   1          (void)service_packet_add_variable_with_callback("SLI", &app_speedout_config.left.ki,
   171   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
-  172   1          (void)service_packet_add_variable_with_callback("speed_right_target", &app_speedout_config.right.targ
-             -et_mps,
+  172   1          (void)service_packet_add_variable_with_callback("SRT", &app_speedout_config.right.target_mps,
   173   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_packet_target_changed);
-  174   1          (void)service_packet_add_variable_with_callback("speed_right_kp", &app_speedout_config.right.kp,
+  174   1          (void)service_packet_add_variable_with_callback("SRK", &app_speedout_config.right.kp,
   175   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
-  176   1          (void)service_packet_add_variable_with_callback("speed_right_ki", &app_speedout_config.right.ki,
+  176   1          (void)service_packet_add_variable_with_callback("SRI", &app_speedout_config.right.ki,
   177   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
   178   1          (void)service_packet_add_action("speed_stop", app_speedout_request_stop, 0UL);
   179   1          (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 4   
-
   180   1          (void)service_packet_add_action("start", app_speedout_start_action, 0UL);
   181   1      }
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 4   
+
   182          
   183          void app_speedout_init(void)
   184          {
@@ -270,10 +268,10 @@ stmt  level    source
   241   1          app_speedout_data.left_pwm = 0.0f;
   242   1          app_speedout_data.right_pwm = 0.0f;
   243   1          app_speedout_data.enabled = 0.0f;
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 5   
-
   244   1          speedout_last_enabled = 0U;
   245   1          app_speedout_clear_pid();
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 5   
+
   246   1      
   247   1          service_motor_stop();
   248   1      }
@@ -338,10 +336,10 @@ stmt  level    source
   307   1          result = speedout_safety_inhibit;
   308   1          EA = ea_backup;
   309   1          return result;
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 6   
-
   310   1      }
   311          
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 6   
+
   312          static void app_speedout_stop_all_action(void)
   313          {
   314   1          app_speedout_request_stop_all();
@@ -406,10 +404,10 @@ stmt  level    source
   373          static void app_speedout_consume_target(void)
   374          {
   375   1          app_speedout_target_mailbox_t snapshot;
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 7   
-
   376   1          uint8 ea_backup;
   377   1      
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 7   
+
   378   1          ea_backup = EA;
   379   1          EA = 0;
   380   1          snapshot.left_mps = speedout_target_mailbox.left_mps;
@@ -474,10 +472,10 @@ stmt  level    source
   439   2              app_speedout_data.right_actual_mps = speed.right_mps;
   440   2              app_speedout_data.left_target_mps = left_target;
   441   2              app_speedout_data.right_target_mps = right_target;
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 8   
-
   442   2              app_speedout_data.left_pwm = 0.0f;
   443   2              app_speedout_data.right_pwm = 0.0f;
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 8   
+
   444   2              app_speedout_data.enabled = 0.0f;
   445   2              return;
   446   2          }
@@ -540,13 +538,13 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      3552     ------
+  ecode size           =      3530     ------
   data size            =    ------     ------
   idata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_speedout                                                       27/07/26  14:29:47  PAGE 9   
-
   pdata size           =    ------     ------
   xdata size           =       404     ------
+C251 COMPILER V5.60.0,  app_speedout                                                       28/07/26  17:24:49  PAGE 9   
+
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -556,7 +554,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       328     ------
+  hconst size          =       257     ------
 End of Module Information.
 
 

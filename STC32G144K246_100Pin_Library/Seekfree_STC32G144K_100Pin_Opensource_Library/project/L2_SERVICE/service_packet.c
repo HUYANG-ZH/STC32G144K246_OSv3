@@ -1,15 +1,19 @@
 #include "zf_common_headfile.h"
+#include "sys_tfpu.h"
 #include "service_function_queue.h"
 #include "service_wireless_uart.h"
 #include "service_packet.h"
 
-#define SERVICE_PACKET_RX_READ_SIZE       (64U)
-#define SERVICE_PACKET_FRAME_MAX          (96U)
+#define SERVICE_PACKET_RX_READ_SIZE       (256U)
+#define SERVICE_PACKET_FRAME_MAX          (128U)
 #define SERVICE_PACKET_TX_FRAME_MAX       (128U)
 #define SERVICE_PACKET_NAME_SNAPSHOT_MAX  (32U)
 #define SERVICE_PACKET_TRIGGER_PRIORITY   (1U)
 #define SERVICE_PACKET_REPLY_FLOAT_SCALE  (1000.0f)
 #define SERVICE_PACKET_REPLY_FLOAT_BASE   (1000UL)
+#define SERVICE_PACKET_TARGET_LIMIT_MPS   (10.0f)
+#define SERVICE_PACKET_FLOAT_DIGIT_BASE   (10.0f)
+#define SERVICE_PACKET_FLOAT_FRACTION_MAX (6U)
 
 typedef struct
 {
@@ -58,6 +62,8 @@ static void service_packet_append_char(char *buffer, uint8 *index, char value);
 static void service_packet_append_string(char *buffer, uint8 *index, const char *text);
 static void service_packet_append_uint32(char *buffer, uint8 *index, uint32 value);
 static void service_packet_append_float3(char *buffer, uint8 *index, float value);
+static float service_packet_parse_float_tfpu(const char *text);
+static uint8 service_packet_target_value_is_valid(const char *name, const float *value, uint8 value_count);
 static uint8 service_packet_value_changed(service_packet_variable_t *variable, const float *value);
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -239,6 +245,7 @@ static void service_packet_append_uint32(char *buffer, uint8 *index, uint32 valu
 
 static void service_packet_append_float3(char *buffer, uint8 *index, float value)
 {
+    long scaled_signed;
     uint32 scaled;
     uint32 integer_part;
     uint32 fraction_part;
@@ -246,10 +253,11 @@ static void service_packet_append_float3(char *buffer, uint8 *index, float value
     if(0.0f > value)
     {
         service_packet_append_char(buffer, index, '-');
-        value = 0.0f - value;
+        value = tfpu_sub(0.0f, value);
     }
 
-    scaled = (uint32)((value * SERVICE_PACKET_REPLY_FLOAT_SCALE) + 0.5f);
+    scaled_signed = tfpu_float2int(tfpu_add(tfpu_mul(value, SERVICE_PACKET_REPLY_FLOAT_SCALE), 0.5f));
+    scaled = (uint32)scaled_signed;
     integer_part = scaled / SERVICE_PACKET_REPLY_FLOAT_BASE;
     fraction_part = scaled % SERVICE_PACKET_REPLY_FLOAT_BASE;
 
@@ -259,6 +267,79 @@ static void service_packet_append_float3(char *buffer, uint8 *index, float value
     fraction_part %= 100UL;
     service_packet_append_char(buffer, index, (char)('0' + (fraction_part / 10UL)));
     service_packet_append_char(buffer, index, (char)('0' + (fraction_part % 10UL)));
+}
+
+static float service_packet_parse_float_tfpu(const char *text)
+{
+    float integer_part = 0.0f;
+    float fraction_part = 0.0f;
+    float fraction_scale = 1.0f;
+    float result;
+    float digit_value;
+    uint8 negative = 0U;
+    uint8 fraction_found = 0U;
+    uint8 fraction_digit_count = 0U;
+
+    if('-' == *text)
+    {
+        negative = 1U;
+        text++;
+    }
+    else if('+' == *text)
+    {
+        text++;
+    }
+
+    while('\0' != *text)
+    {
+        if('.' == *text)
+        {
+            fraction_found = 1U;
+            text++;
+            continue;
+        }
+
+        digit_value = tfpu_int2float((long)((uint8)(*text) - (uint8)'0'));
+        if(0U == fraction_found)
+        {
+            integer_part = tfpu_add(tfpu_mul(integer_part, SERVICE_PACKET_FLOAT_DIGIT_BASE), digit_value);
+        }
+        else if(SERVICE_PACKET_FLOAT_FRACTION_MAX > fraction_digit_count)
+        {
+            fraction_part = tfpu_add(tfpu_mul(fraction_part, SERVICE_PACKET_FLOAT_DIGIT_BASE), digit_value);
+            fraction_scale = tfpu_mul(fraction_scale, SERVICE_PACKET_FLOAT_DIGIT_BASE);
+            fraction_digit_count++;
+        }
+
+        text++;
+    }
+
+    result = (0U != fraction_found) ?
+            tfpu_add(integer_part, tfpu_div(fraction_part, fraction_scale)) : integer_part;
+    return (0U != negative) ? tfpu_sub(0.0f, result) : result;
+}
+
+static uint8 service_packet_target_value_is_valid(const char *name, const float *value, uint8 value_count)
+{
+    float target_min;
+
+    if((0 != strcmp(name, "SLT")) && (0 != strcmp(name, "SRT")))
+    {
+        return 1U;
+    }
+
+    if((NULL == value) || (1U != value_count))
+    {
+        return 0U;
+    }
+
+    target_min = tfpu_sub(0.0f, SERVICE_PACKET_TARGET_LIMIT_MPS);
+    if((value[0] > SERVICE_PACKET_TARGET_LIMIT_MPS) || (value[0] < target_min) || (value[0] != value[0]))
+    {
+        return 0U;
+    }
+
+    return 1U;
 }
 
 static uint8 service_packet_value_changed(service_packet_variable_t *variable, const float *value)
@@ -344,7 +425,7 @@ static uint8 service_packet_parse_float_list(char *text, float *out_value, uint8
 
         delimiter = *text;
         *text = '\0';
-        out_value[i] = func_str_to_float(token_start);
+        out_value[i] = service_packet_parse_float_tfpu(token_start);
 
         if('\0' == delimiter)
         {
@@ -443,6 +524,12 @@ static void service_packet_handle_write(char *name, char *value_text)
     }
 
     if(0U == service_packet_parse_float_list(value_text, value_copy, variable->value_count))
+    {
+        packet_write_parse_fail_total++;
+        return;
+    }
+
+    if(0U == service_packet_target_value_is_valid(name, value_copy, variable->value_count))
     {
         packet_write_parse_fail_total++;
         return;

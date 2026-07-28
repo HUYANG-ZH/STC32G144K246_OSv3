@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_wireless_uart                                              27/07/26  14:29:42  PAGE 1   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              28/07/26  18:41:12  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_wireless_uart
@@ -20,7 +20,7 @@ stmt  level    source
     7          #define WPRINT_BUFFER_SIZE              (128U)
     8          #define WPRINT_FLOAT_DEFAULT_PRECISION  (3U)
     9          #define WPRINT_FLOAT_MAX_PRECISION      (6U)
-   10          #define SERVICE_WIRELESS_UART_DMA_PRIORITY (0U)
+   10          #define SERVICE_WIRELESS_UART_DMA_PRIORITY (3U)
    11          
    12          static char xdata wprint_buffer[WPRINT_BUFFER_SIZE];
    13          static volatile uint8 wprint_busy = 0U;
@@ -66,7 +66,7 @@ stmt  level    source
    53   2              temp_index++;
    54   2              value /= base;
    55   2          }
-C251 COMPILER V5.60.0,  service_wireless_uart                                              27/07/26  14:29:42  PAGE 2   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              28/07/26  18:41:12  PAGE 2   
 
    56   1      
    57   1          while(0U != temp_index)
@@ -134,7 +134,7 @@ stmt  level    source
   119   1      
   120   1          if(fraction_part >= scale)
   121   1          {
-C251 COMPILER V5.60.0,  service_wireless_uart                                              27/07/26  14:29:42  PAGE 3   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              28/07/26  18:41:12  PAGE 3   
 
   122   2              integer_part++;
   123   2              fraction_part -= scale;
@@ -202,7 +202,7 @@ stmt  level    source
   185   4                      format++;
   186   4                  }
   187   3                  else
-C251 COMPILER V5.60.0,  service_wireless_uart                                              27/07/26  14:29:42  PAGE 4   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              28/07/26  18:41:12  PAGE 4   
 
   188   3                  {
   189   4                      wprint_put_char(buffer, &index, '%');
@@ -270,7 +270,7 @@ stmt  level    source
   251          {
   252   1          if(NULL == buff)
   253   1          {
-C251 COMPILER V5.60.0,  service_wireless_uart                                              27/07/26  14:29:42  PAGE 5   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              28/07/26  18:41:12  PAGE 5   
 
   254   2              return len;
   255   2          }
@@ -338,7 +338,7 @@ stmt  level    source
   317   1          unsent = service_wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
   318   1      
   319   1          ea_backup = EA;
-C251 COMPILER V5.60.0,  service_wireless_uart                                              27/07/26  14:29:42  PAGE 6   
+C251 COMPILER V5.60.0,  service_wireless_uart                                              28/07/26  18:41:12  PAGE 6   
 
   320   1          EA = 0;
   321   1          wprint_busy = 0U;
@@ -350,7 +350,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      3020     ------
+  ecode size           =      3021     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

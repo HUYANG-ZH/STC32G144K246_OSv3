@@ -7,7 +7,7 @@
 #define WPRINT_BUFFER_SIZE              (128U)
 #define WPRINT_FLOAT_DEFAULT_PRECISION  (3U)
 #define WPRINT_FLOAT_MAX_PRECISION      (6U)
-#define SERVICE_WIRELESS_UART_DMA_PRIORITY (0U)
+#define SERVICE_WIRELESS_UART_DMA_PRIORITY (3U)
 
 static char xdata wprint_buffer[WPRINT_BUFFER_SIZE];
 static volatile uint8 wprint_busy = 0U;

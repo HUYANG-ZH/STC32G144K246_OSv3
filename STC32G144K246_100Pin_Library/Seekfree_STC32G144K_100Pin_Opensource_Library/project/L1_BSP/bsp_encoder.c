@@ -31,7 +31,7 @@
 #endif
 
 #ifndef BSP_ENCODER_RIGHT_SIGN
-#define BSP_ENCODER_RIGHT_SIGN         (1)
+#define BSP_ENCODER_RIGHT_SIGN          (-1)
 #endif
 
 void bsp_encoder_init(void)
