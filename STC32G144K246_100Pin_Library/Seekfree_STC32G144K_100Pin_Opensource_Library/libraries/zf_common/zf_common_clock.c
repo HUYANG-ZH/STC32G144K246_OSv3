@@ -79,9 +79,11 @@ void clock_init (uint32 clock)                                              // �
 	IRCBAND |= 0x01;			// 选择27Mhz频段
 	HPLLCR &= ~0x10;    	    // 选择HPLL输入时钟源为HIRC
 	HPLLPDIV = 4;				// 24MHz/4=6MHz,需要保证输入HPLL的时钟在6MHz附近
+    HPLLCR &= ~0x0F;
     HPLLCR |= pll_div & 0x0F;   // 设置PLL1倍频系数
 	HPLLCR |= 0x80;     	    // 使能HPLL
     soft_delay(50000);
+    HPLL2CR &= ~0x20U;
 	CLKSEL &= ~0x03;			// BASE_CLK选择为HIRC，用以提供给HPLL
 	CLKSEL &= ~0x0c;			// 清空主时钟源选择
 	CLKSEL |= 1<<2;				// 设置主时钟源为内部 HPLL1 输出/2

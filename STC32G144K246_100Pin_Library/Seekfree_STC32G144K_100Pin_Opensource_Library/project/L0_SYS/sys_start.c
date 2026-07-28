@@ -5,7 +5,7 @@ static void tfpu_start(void);
 
 void SystemStart(void)
 {
-    clock_init(SYSTEM_CLOCK_124M); 				// 时钟配置及系统初始化<务必保留>
+    clock_init(SYSTEM_CLOCK_120M); 				// 时钟配置及系统初始化<务必保留>
     debug_init();                       		// 调试串口信息初始化
     tfpu_start();
 }
@@ -23,6 +23,6 @@ void wdt_feed(void)
 static void tfpu_start(void)
 {
     P_SW2 |= 0x80;
-    TFPU_CLKDIV = 0x02;
+    TFPU_CLKDIV = 0x00;
     tfpu_init();
 }

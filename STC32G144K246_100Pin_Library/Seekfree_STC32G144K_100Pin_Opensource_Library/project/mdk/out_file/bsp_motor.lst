@@ -1,9 +1,9 @@
-C251 COMPILER V5.60.0,  bsp_motor                                                          27/07/26  14:29:37  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_motor                                                          29/07/26  01:04:31  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_motor
 OBJECT MODULE PLACED IN .\out_file\bsp_motor.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_motor.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEE
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_motor.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEE
                     -D) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_dr
                     -iver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32
                     -g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\bsp_motor.lst) OBJECT(.\out_file\bsp_
@@ -12,106 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_motor.c LARGE R
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_motor.h"
-    3          
-    4          #define BSP_MOTOR_PWM_FREQ_HZ       (10000U)
-    5          #define BSP_MOTOR_INIT_DUTY         (0U)
-    6          
-    7          #define BSP_MOTOR_LEFT_PWM_CH       PWMC_CH1P_P80
-    8          #define BSP_MOTOR_LEFT_DIR_PIN      IO_P62
-    9          
-   10          #define BSP_MOTOR_RIGHT_PWM_CH      PWMC_CH2P_P82
-   11          #define BSP_MOTOR_RIGHT_DIR_PIN     IO_P83
-   12          
-   13          #define BSP_MOTOR_NSLEEP_PIN        IO_P61
-   14          #define BSP_MOTOR_INIT_DIR_LEVEL    GPIO_LOW
-   15          #define BSP_MOTOR_NSLEEP_ACTIVE     GPIO_HIGH
-   16          #define BSP_MOTOR_NSLEEP_INACTIVE   GPIO_LOW
-   17          
-   18          static uint32 bsp_motor_limit_duty(uint32 duty)
-   19          {
-   20   1          if(PWM_DUTY_MAX < duty)
-   21   1          {
-   22   2              return PWM_DUTY_MAX;
-   23   2          }
-   24   1      
-   25   1          return duty;
-   26   1      }
-   27          
-   28          void bsp_motor_init(void)
-   29          {
-   30   1          gpio_init(BSP_MOTOR_NSLEEP_PIN, GPO, BSP_MOTOR_NSLEEP_INACTIVE, GPO_PUSH_PULL);
-   31   1          gpio_init(BSP_MOTOR_LEFT_DIR_PIN, GPO, BSP_MOTOR_INIT_DIR_LEVEL, GPO_PUSH_PULL);
-   32   1          gpio_init(BSP_MOTOR_RIGHT_DIR_PIN, GPO, BSP_MOTOR_INIT_DIR_LEVEL, GPO_PUSH_PULL);
-   33   1      
-   34   1          pwm_init(BSP_MOTOR_LEFT_PWM_CH, BSP_MOTOR_PWM_FREQ_HZ, BSP_MOTOR_INIT_DUTY);
-   35   1          pwm_init(BSP_MOTOR_RIGHT_PWM_CH, BSP_MOTOR_PWM_FREQ_HZ, BSP_MOTOR_INIT_DUTY);
-   36   1      }
-   37          
-   38          void bsp_motor_debug(void)
-   39          {
-   40   1      }
-   41          
-   42          void bsp_motor_set_left_pwm(uint32 duty)
-   43          {
-   44   1          pwm_set_duty(BSP_MOTOR_LEFT_PWM_CH, bsp_motor_limit_duty(duty));
-   45   1      }
-   46          
-   47          void bsp_motor_set_right_pwm(uint32 duty)
-   48          {
-   49   1          pwm_set_duty(BSP_MOTOR_RIGHT_PWM_CH, bsp_motor_limit_duty(duty));
-   50   1      }
-   51          
-   52          void bsp_motor_set_pwm(uint32 left_duty, uint32 right_duty)
-   53          {
-   54   1          bsp_motor_set_left_pwm(left_duty);
-   55   1          bsp_motor_set_right_pwm(right_duty);
-C251 COMPILER V5.60.0,  bsp_motor                                                          27/07/26  14:29:37  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-   56   1      }
-   57          
-   58          void bsp_motor_set_left_dir(uint8 level)
-   59          {
-   60   1          gpio_set_level(BSP_MOTOR_LEFT_DIR_PIN, level);
-   61   1      }
-   62          
-   63          void bsp_motor_set_right_dir(uint8 level)
-   64          {
-   65   1          gpio_set_level(BSP_MOTOR_RIGHT_DIR_PIN, level);
-   66   1      }
-   67          
-   68          void bsp_motor_set_dir(uint8 left_level, uint8 right_level)
-   69          {
-   70   1          bsp_motor_set_left_dir(left_level);
-   71   1          bsp_motor_set_right_dir(right_level);
-   72   1      }
-   73          
-   74          void bsp_motor_set_nsleep(uint8 enable)
-   75          {
-   76   1          gpio_set_level(BSP_MOTOR_NSLEEP_PIN, (0U != enable) ? BSP_MOTOR_NSLEEP_ACTIVE : BSP_MOTOR_NSLEEP_INAC
-             -TIVE);
-   77   1      }
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       349     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =        25     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =    ------     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

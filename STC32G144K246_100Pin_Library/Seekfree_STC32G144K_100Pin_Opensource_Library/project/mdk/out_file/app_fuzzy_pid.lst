@@ -1,9 +1,9 @@
-C251 COMPILER V5.60.0,  app_fuzzy_pid                                                      27/07/26  14:29:45  PAGE 1   
+C251 COMPILER V5.60.0,  app_fuzzy_pid                                                      29/07/26  01:04:41  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_fuzzy_pid
 OBJECT MODULE PLACED IN .\out_file\app_fuzzy_pid.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_fuzzy_pid.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_fuzzy_pid.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,
                     -SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\z
                     -f_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\s
                     -tc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_fuzzy_pid.lst) OBJECT(.\out_f
@@ -12,202 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_fuzzy_pid.c LAR
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "sys_tfpu.h"
-    3          #include "app_fuzzy_pid.h"
-    4          
-    5          #define APP_FUZZY_PID_TABLE_SIZE                 (7U)        // 模糊表节点数量
-    6          #define APP_FUZZY_PID_DEFAULT_ERROR_SCALE        (1.0f)      // 误差输入缩放
-    7          #define APP_FUZZY_PID_DEFAULT_ERROR_DELTA_SCALE  (1.0f)      // 误差变化输入缩放
-    8          #define APP_FUZZY_PID_DEFAULT_KP_SCALE           (1.0f)      // Kp变化量输出缩放
-    9          #define APP_FUZZY_PID_DEFAULT_KD_SCALE           (1.0f)      // Kd变化量输出缩放
-   10          
-   11          static const float fuzzy_pid_axis[APP_FUZZY_PID_TABLE_SIZE] =
-   12          {
-   13              -1.0f, -0.66f, -0.33f, 0.0f, 0.33f, 0.66f, 1.0f
-   14          };
-   15          
-   16          static const float fuzzy_pid_kp_table[APP_FUZZY_PID_TABLE_SIZE][APP_FUZZY_PID_TABLE_SIZE] =
-   17          {
-   18              { 0.45f,  0.40f,  0.35f,  0.30f,  0.35f,  0.40f,  0.45f},
-   19              { 0.40f,  0.35f,  0.30f,  0.25f,  0.30f,  0.35f,  0.40f},
-   20              { 0.30f,  0.25f,  0.20f,  0.15f,  0.20f,  0.25f,  0.30f},
-   21              { 0.15f,  0.10f,  0.05f,  0.00f,  0.05f,  0.10f,  0.15f},
-   22              { 0.30f,  0.25f,  0.20f,  0.15f,  0.20f,  0.25f,  0.30f},
-   23              { 0.40f,  0.35f,  0.30f,  0.25f,  0.30f,  0.35f,  0.40f},
-   24              { 0.45f,  0.40f,  0.35f,  0.30f,  0.35f,  0.40f,  0.45f},
-   25          };
-   26          
-   27          static const float fuzzy_pid_kd_table[APP_FUZZY_PID_TABLE_SIZE][APP_FUZZY_PID_TABLE_SIZE] =
-   28          {
-   29              { 0.30f,  0.25f,  0.20f,  0.15f,  0.20f,  0.25f,  0.30f},
-   30              { 0.28f,  0.23f,  0.18f,  0.12f,  0.18f,  0.23f,  0.28f},
-   31              { 0.25f,  0.20f,  0.15f,  0.08f,  0.15f,  0.20f,  0.25f},
-   32              { 0.22f,  0.16f,  0.10f,  0.00f,  0.10f,  0.16f,  0.22f},
-   33              { 0.25f,  0.20f,  0.15f,  0.08f,  0.15f,  0.20f,  0.25f},
-   34              { 0.28f,  0.23f,  0.18f,  0.12f,  0.18f,  0.23f,  0.28f},
-   35              { 0.30f,  0.25f,  0.20f,  0.15f,  0.20f,  0.25f,  0.30f},
-   36          };
-   37          
-   38          app_fuzzy_pid_config_t app_fuzzy_pid_config =
-   39          {
-   40              APP_FUZZY_PID_DEFAULT_ERROR_SCALE,
-   41              APP_FUZZY_PID_DEFAULT_ERROR_DELTA_SCALE,
-   42              APP_FUZZY_PID_DEFAULT_KP_SCALE,
-   43              APP_FUZZY_PID_DEFAULT_KD_SCALE
-   44          };
-   45          
-   46          static float app_fuzzy_pid_clamp(float value, float min_value, float max_value)
-   47          {
-   48   1          if(value < min_value)
-   49   1          {
-   50   2              return min_value;
-   51   2          }
-   52   1      
-   53   1          if(max_value < value)
-   54   1          {
-   55   2              return max_value;
-C251 COMPILER V5.60.0,  app_fuzzy_pid                                                      27/07/26  14:29:45  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-   56   2          }
-   57   1      
-   58   1          return value;
-   59   1      }
-   60          
-   61          static uint8 app_fuzzy_pid_find_index(float value)
-   62          {
-   63   1          uint8 i;
-   64   1      
-   65   1          for(i = 0U; i < (APP_FUZZY_PID_TABLE_SIZE - 1U); i++)
-   66   1          {
-   67   2              if(value <= fuzzy_pid_axis[i + 1U])
-   68   2              {
-   69   3                  return i;
-   70   3              }
-   71   2          }
-   72   1      
-   73   1          return (uint8)(APP_FUZZY_PID_TABLE_SIZE - 2U);
-   74   1      }
-   75          
-   76          static float app_fuzzy_pid_axis_rate(float value, uint8 index)
-   77          {
-   78   1          float range;
-   79   1      
-   80   1          range = tfpu_sub(fuzzy_pid_axis[index + 1U], fuzzy_pid_axis[index]);
-   81   1          if(0.0f == range)
-   82   1          {
-   83   2              return 0.0f;
-   84   2          }
-   85   1      
-   86   1          return tfpu_div(tfpu_sub(value, fuzzy_pid_axis[index]), range);
-   87   1      }
-   88          
-   89          static float app_fuzzy_pid_bilinear(const float table[APP_FUZZY_PID_TABLE_SIZE][APP_FUZZY_PID_TABLE_SIZE]
-             -,
-   90                  float error, float error_delta)
-   91          {
-   92   1          uint8 error_index;
-   93   1          uint8 error_delta_index;
-   94   1          float error_rate;
-   95   1          float error_delta_rate;
-   96   1          float value_00;
-   97   1          float value_01;
-   98   1          float value_10;
-   99   1          float value_11;
-  100   1          float value_0;
-  101   1          float value_1;
-  102   1      
-  103   1          error_index = app_fuzzy_pid_find_index(error);
-  104   1          error_delta_index = app_fuzzy_pid_find_index(error_delta);
-  105   1          error_rate = app_fuzzy_pid_axis_rate(error, error_index);
-  106   1          error_delta_rate = app_fuzzy_pid_axis_rate(error_delta, error_delta_index);
-  107   1      
-  108   1          value_00 = table[error_index][error_delta_index];
-  109   1          value_01 = table[error_index][error_delta_index + 1U];
-  110   1          value_10 = table[error_index + 1U][error_delta_index];
-  111   1          value_11 = table[error_index + 1U][error_delta_index + 1U];
-  112   1      
-  113   1          value_0 = tfpu_add(value_00, tfpu_mul(tfpu_sub(value_01, value_00), error_delta_rate));
-  114   1          value_1 = tfpu_add(value_10, tfpu_mul(tfpu_sub(value_11, value_10), error_delta_rate));
-  115   1      
-  116   1          return tfpu_add(value_0, tfpu_mul(tfpu_sub(value_1, value_0), error_rate));
-  117   1      }
-  118          
-  119          //-------------------------------------------------------------------------------------------------------
-             -------------
-C251 COMPILER V5.60.0,  app_fuzzy_pid                                                      27/07/26  14:29:45  PAGE 3   
-
-  120          // 函数简介     模糊 PID 参数修正初始化
-  121          // 参数说明     void
-  122          // 返回参数     void
-  123          // 使用示例     app_fuzzy_pid_init();
-  124          //-------------------------------------------------------------------------------------------------------
-             -------------
-  125          void app_fuzzy_pid_init(void)
-  126          {
-  127   1          app_fuzzy_pid_config.error_scale = APP_FUZZY_PID_DEFAULT_ERROR_SCALE;
-  128   1          app_fuzzy_pid_config.error_delta_scale = APP_FUZZY_PID_DEFAULT_ERROR_DELTA_SCALE;
-  129   1          app_fuzzy_pid_config.kp_scale = APP_FUZZY_PID_DEFAULT_KP_SCALE;
-  130   1          app_fuzzy_pid_config.kd_scale = APP_FUZZY_PID_DEFAULT_KD_SCALE;
-  131   1      }
-  132          
-  133          //-------------------------------------------------------------------------------------------------------
-             -------------
-  134          // 函数简介     更新模糊 PID 参数变化量
-  135          // 参数说明     error           误差输入
-  136          // 参数说明     error_delta     误差变化输入
-  137          // 参数说明     out_data        参数变化量输出地址
-  138          // 返回参数     void
-  139          // 使用示例     app_fuzzy_pid_update(error, error_delta, &fuzzy_data);
-  140          //-------------------------------------------------------------------------------------------------------
-             -------------
-  141          void app_fuzzy_pid_update(float error, float error_delta, app_fuzzy_pid_data_t *out_data)
-  142          {
-  143   1          float use_error;
-  144   1          float use_error_delta;
-  145   1          float delta_kp;
-  146   1          float delta_kd;
-  147   1      
-  148   1          if(NULL == out_data)
-  149   1          {
-  150   2              return;
-  151   2          }
-  152   1      
-  153   1          use_error = tfpu_mul(error, app_fuzzy_pid_config.error_scale);
-  154   1          use_error_delta = tfpu_mul(error_delta, app_fuzzy_pid_config.error_delta_scale);
-  155   1          use_error = app_fuzzy_pid_clamp(use_error, fuzzy_pid_axis[0], fuzzy_pid_axis[APP_FUZZY_PID_TABLE_SIZE
-             - - 1U]);
-  156   1          use_error_delta = app_fuzzy_pid_clamp(use_error_delta,
-  157   1                  fuzzy_pid_axis[0], fuzzy_pid_axis[APP_FUZZY_PID_TABLE_SIZE - 1U]);
-  158   1      
-  159   1          delta_kp = app_fuzzy_pid_bilinear(fuzzy_pid_kp_table, use_error, use_error_delta);
-  160   1          delta_kd = app_fuzzy_pid_bilinear(fuzzy_pid_kd_table, use_error, use_error_delta);
-  161   1      
-  162   1          out_data->delta_kp = tfpu_mul(delta_kp, app_fuzzy_pid_config.kp_scale);
-  163   1          out_data->delta_kd = tfpu_mul(delta_kd, app_fuzzy_pid_config.kd_scale);
-  164   1      }
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =      1357     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =       116     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-C251 COMPILER V5.60.0,  app_fuzzy_pid                                                      27/07/26  14:29:45  PAGE 4   
-
-  const size           =    ------     ------
-  hconst size          =       441     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_imu963ra
 OBJECT MODULE PLACED IN .\out_file\zf_device_imu963ra.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_imu963ra.c LARGE ROM(HUGE) WARNIN
-                    -GLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
+                    -GLEVEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_dev
                     -ice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libr
                     -aries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_im
                     -u963ra.lst) OBJECT(.\out_file\zf_device_imu963ra.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   其余引脚悬空
    47          *
    48          *                   // 软件 IIC 引脚
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 2   
 
    49          *                   SCL/SPC             查看 zf_device_imu963ra.h 中 IMU963RA_SCL_PIN 宏定义
    50          *                   SDA/SDI             查看 zf_device_imu963ra.h 中 IMU963RA_SDA_PIN 宏定义
@@ -134,7 +134,7 @@ stmt  level    source
   107                  //------------------------------------------------------------------------------------------------------
              --------------
   108                  // 函数简介     IMU963RA 读数据 内部调用
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 3   
 
   109                  // 参数说明     reg             寄存器地址
   110                  // 参数说明     dat            数据缓冲区
@@ -202,7 +202,7 @@ stmt  level    source
                        }
                
                        //------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 4   
 
              --------------
                        //  @brief      读取 cmd 指定寄存器的一个字节到 *val
@@ -270,7 +270,7 @@ stmt  level    source
              --------------
                        static uint8 imu963ra_read_acc_gyro_register(uint8 reg)
                        {
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 5   
 
                                uint8 dat = 0;
                                IMU963RA_CS(0);
@@ -338,7 +338,7 @@ stmt  level    source
              --------------
                        #define imu963ra_read_acc_gyro_registers(reg,dat,len)   (soft_iic_read_8bit_registers(&imu963ra_iic_stru
              -ct,reg,dat,len))
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 6   
 
                #endif
   283          
@@ -406,7 +406,7 @@ stmt  level    source
   336   1          imu963ra_write_acc_gyro_register(IMU963RA_MASTER_CONFIG, 0x4C);             // 仅在第一个周期�
              -��用通讯 开启上拉 I2C主机使能
   337   1          
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 7   
 
   338   1          // 等待通讯成功
   339   1          while(0 == (0x01 & imu963ra_read_acc_gyro_register(IMU963RA_STATUS_MASTER)))
@@ -474,7 +474,7 @@ stmt  level    source
   393   2                      printf("dat = %d\r\n", dat);
   394   2              system_delay_ms(10);
   395   2          }
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 8   
 
   396   1          
   397   1          return return_state;
@@ -542,7 +542,7 @@ stmt  level    source
   453          void imu963ra_get_gyro (void)
   454          {
   455   1          uint8 dat[6];
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 9   
 
   456   1          
   457   1          imu963ra_read_acc_gyro_registers(IMU963RA_OUTX_L_G, dat, 6);
@@ -610,7 +610,7 @@ stmt  level    source
                        
                        soft_iic_init(&imu963ra_iic_struct, IMU963RA_DEV_ADDR, IMU963RA_SOFT_IIC_DELAY, IMU963RA_SCL_PIN, IMU963
              -RA_SDA_PIN);
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 10  
 
                        
                #endif
@@ -678,7 +678,7 @@ stmt  level    source
   571   4                      imu963ra_write_acc_gyro_register(IMU963RA_CTRL1_XL, 0x34);
   572   4                      imu963ra_transition_factor[0] = 2049;
   573   4                  }
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 11  
 
   574   3                  break;
   575   3              }
@@ -746,7 +746,7 @@ stmt  level    source
   631   3                  break;
   632   3                  
   633   3                  case IMU963RA_GYRO_SAMPLE_SGN_4000DPS:
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 12  
 
   634   3                  {
   635   4                      imu963ra_write_acc_gyro_register(IMU963RA_CTRL2_G, 0x51);
@@ -814,7 +814,7 @@ stmt  level    source
   688   3                  break;
   689   3                  
   690   3                  case IMU963RA_MAG_SAMPLE_8G:
-C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 27/07/26  14:29:33  PAGE 13  
+C251 COMPILER V5.60.0,  zf_device_imu963ra                                                 29/07/26  01:04:27  PAGE 13  
 
   691   3                  {
   692   4                      imu963ra_write_mag_register(IMU963RA_MAG_ADDR, IMU963RA_MAG_CONTROL1, 0x19);
@@ -846,11 +846,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2015     ------
+  ecode size           =      1269     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        83     ------
+  xdata size           =        30         20
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

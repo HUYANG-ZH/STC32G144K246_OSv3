@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  app_load_distribution                                              27/07/26  14:29:45  PAGE 1   
+C251 COMPILER V5.60.0,  app_load_distribution                                              29/07/26  01:04:42  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_load_distribution
 OBJECT MODULE PLACED IN .\out_file\app_load_distribution.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_load_distribution.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPT
-                    -IMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\lib
+                    -IMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\lib
                     -raries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_comp
                     -onents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_load_distribution.lst
                     -) OBJECT(.\out_file\app_load_distribution.obj) 
@@ -12,83 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_load_distributi
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "sys_tfpu.h"
-    3          #include "app_load_distribution.h"
-    4          
-    5          #define APP_LOAD_DISTRIBUTION_CAR_HEIGHT_M           (0.05f)       // 车辆重心高度，单位 m
-    6          #define APP_LOAD_DISTRIBUTION_GRAVITY_MPS2           (29.43f)      // 实际重力加速度，单位 m/s^
-             -2
-    7          #define APP_LOAD_DISTRIBUTION_LTC_LIMIT              (0.5f)        // 荷载转移比例限幅
-    8          
-    9          static float app_load_distribution_limit_ltc(float ltc)
-   10          {
-   11   1          float ltc_min;
-   12   1      
-   13   1          if(ltc > APP_LOAD_DISTRIBUTION_LTC_LIMIT)
-   14   1          {
-   15   2              return APP_LOAD_DISTRIBUTION_LTC_LIMIT;
-   16   2          }
-   17   1      
-   18   1          ltc_min = tfpu_sub(0.0f, APP_LOAD_DISTRIBUTION_LTC_LIMIT);
-   19   1          if(ltc < ltc_min)
-   20   1          {
-   21   2              return ltc_min;
-   22   2          }
-   23   1      
-   24   1          return ltc;
-   25   1      }
-   26          
-   27          void app_load_distribution_init(void)
-   28          {
-   29   1      }
-   30          
-   31          void app_load_distribution_process(app_load_distribution_data_t *datas)
-   32          {
-   33   1          float ltc_denominator;
-   34   1          float left_ratio;
-   35   1          float right_ratio;
-   36   1      
-   37   1          if(NULL == datas)
-   38   1          {
-   39   2              return;
-   40   2          }
-   41   1      
-   42   1          // turn_current unit is rad/s, converted once in app_motion_postprocess.
-   43   1          datas->ay = tfpu_mul(datas->straight_current, datas->turn_current);
-   44   1      
-   45   1          ltc_denominator = tfpu_mul(APP_LOAD_DISTRIBUTION_GRAVITY_MPS2, APP_LOAD_DISTRIBUTION_CAR_WIDTH_M);
-   46   1          datas->LTC = tfpu_div(tfpu_mul(datas->ay, APP_LOAD_DISTRIBUTION_CAR_HEIGHT_M), ltc_denominator);
-   47   1          datas->LTC = app_load_distribution_limit_ltc(datas->LTC);
-   48   1      
-   49   1          left_ratio = tfpu_sub(0.5f, datas->LTC);
-   50   1          right_ratio = tfpu_add(0.5f, datas->LTC);
-   51   1      
-   52   1          datas->load_left = tfpu_mul(datas->Target_differential_speed, left_ratio);
-   53   1          datas->load_right = tfpu_mul(datas->Target_differential_speed, right_ratio);
-   54   1      }
-C251 COMPILER V5.60.0,  app_load_distribution                                              27/07/26  14:29:45  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       548     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =        24     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =    ------     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

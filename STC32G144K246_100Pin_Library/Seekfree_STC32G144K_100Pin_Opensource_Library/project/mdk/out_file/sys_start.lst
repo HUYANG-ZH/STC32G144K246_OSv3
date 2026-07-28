@@ -1,9 +1,9 @@
-C251 COMPILER V5.60.0,  sys_start                                                          27/07/26  14:29:34  PAGE 1   
+C251 COMPILER V5.60.0,  sys_start                                                          29/07/26  01:04:28  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE sys_start
 OBJECT MODULE PLACED IN .\out_file\sys_start.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L0_SYS\sys_start.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEE
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L0_SYS\sys_start.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEE
                     -D) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_dr
                     -iver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32
                     -g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\sys_start.lst) OBJECT(.\out_file\sys_
@@ -12,54 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L0_SYS\sys_start.c LARGE R
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "sys_start.h"
-    3          #include "sys_tfpu.h"
-    4          static void tfpu_start(void);
-    5          
-    6          void SystemStart(void)
-    7          {
-    8   1          clock_init(SYSTEM_CLOCK_124M);                              // 时钟配置及系统初始化<务必保留>
-    9   1          debug_init();                                       // 调试串口信息初始化
-   10   1          tfpu_start();
-   11   1      }
-   12          
-   13          void wdt_init(void)
-   14          {
-   15   1          WDT_CONTR = 0x37;                           // EN_WDT=1, CLR_WDT=1, prescaler=7(max)
-   16   1      }
-   17          
-   18          void wdt_feed(void)
-   19          {
-   20   1          WDT_CONTR |= 0x10;                          // Set CLR_WDT to reset counter
-   21   1      }
-   22          
-   23          static void tfpu_start(void)
-   24          {
-   25   1          P_SW2 |= 0x80;
-   26   1          TFPU_CLKDIV = 0x02;
-   27   1          tfpu_init();
-   28   1      }
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =        50     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =    ------     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =    ------     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

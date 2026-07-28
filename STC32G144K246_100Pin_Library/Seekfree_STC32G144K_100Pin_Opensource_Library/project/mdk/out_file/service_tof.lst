@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  service_tof                                                        28/07/26  21:10:43  PAGE 1   
+C251 COMPILER V5.60.0,  service_tof                                                        29/07/26  01:04:38  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_tof
 OBJECT MODULE PLACED IN .\out_file\service_tof.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_tof.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(
-                    -0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries
+                    -8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries
                     -\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components
                     -\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_tof.lst) OBJECT(.\out_f
                     -ile\service_tof.obj) 
@@ -12,101 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_tof.c L
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_include.h"
-    3          #include "service_tof.h"
-    4          #include "service_timetick.h"
-    5          #include "service_wireless_uart.h"
-    6          
-    7          #define SERVICE_TOF_SAMPLE_PERIOD_TICK      (500UL)
-    8          
-    9          static uint32 service_tof_last_request_tick = 0UL;
-   10          
-   11          void service_tof_init(void)
-   12          {
-   13   1      #if SERVICE_TOF_ENABLE
-                   (void)bsp_tof_init();
-                   service_tof_last_request_tick = service_timetick_what();
-                   #if __DBGFLAG__
-                   printf(">>[service_tof_init]\r\n");
-                   wprint(">>[service_tof_init]\r\n");
-                   #endif
-               #else
-   21   1          service_tof_last_request_tick = 0UL;
-   22   1      #endif
-   23   1      }
-   24          
-   25          void service_tof_task(void)
-   26          {
-   27   1      #if SERVICE_TOF_ENABLE
-                   uint32 now;
-               
-                   bsp_tof_process();
-                   if(0U == bsp_tof_is_ready())
-                   {
-                       return;
-                   }
-               
-                   now = service_timetick_what();
-                   if((uint32)(now - service_tof_last_request_tick) >= SERVICE_TOF_SAMPLE_PERIOD_TICK)
-                   {
-                       if(0U != bsp_tof_request_sample())
-                       {
-                           service_tof_last_request_tick = now;
-                       }
-                   }
-               #endif
-   45   1      }
-   46          
-   47          uint8 service_tof_is_ready(void)
-   48          {
-   49   1      #if SERVICE_TOF_ENABLE
-                   return bsp_tof_is_ready();
-               #else
-   52   1          return 0U;
-   53   1      #endif
-   54   1      }
-   55          
-C251 COMPILER V5.60.0,  service_tof                                                        28/07/26  21:10:43  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-   56          uint8 service_tof_get_last_error(void)
-   57          {
-   58   1      #if SERVICE_TOF_ENABLE
-                   return bsp_tof_get_last_error();
-               #else
-   61   1          return 0U;
-   62   1      #endif
-   63   1      }
-   64          
-   65          uint16 service_tof_get_distance_mm(void)
-   66          {
-   67   1      #if SERVICE_TOF_ENABLE
-                   (void)bsp_tof_request_sample();
-                   return bsp_tof_get_distance_mm();
-               #else
-   71   1          return BSP_TOF_INVALID_DISTANCE_MM;
-   72   1      #endif
-   73   1      }
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =        23     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =         4     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =         9     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

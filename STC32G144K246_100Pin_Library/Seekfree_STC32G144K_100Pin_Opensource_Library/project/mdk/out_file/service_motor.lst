@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  service_motor                                                      28/07/26  21:09:32  PAGE 1   
+C251 COMPILER V5.60.0,  service_motor                                                      29/07/26  01:04:36  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_motor
 OBJECT MODULE PLACED IN .\out_file\service_motor.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_motor.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZ
-                    -E(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -E(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
                     -es\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_componen
                     -ts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_motor.lst) OBJECT(.\o
                     -ut_file\service_motor.obj) 
@@ -12,170 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_motor.c
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_include.h"
-    3          #include "service_motor.h"
-    4          #include "service_wireless_uart.h"
-    5          
-    6          #define SERVICE_MOTOR_NSLEEP_PRE_HIGH_MS       (1U)
-    7          #define SERVICE_MOTOR_NSLEEP_RESET_LOW_US      (30U)
-    8          #define SERVICE_MOTOR_NSLEEP_POST_HIGH_MS      (1U)
-    9          
-   10          #define SERVICE_MOTOR_LEFT_FORWARD_LEVEL       GPIO_LOW
-   11          #define SERVICE_MOTOR_RIGHT_FORWARD_LEVEL      GPIO_LOW
-   12          
-   13          static uint8 motor_initialized = 0U;
-   14          static uint8 motor_ready = 0U;
-   15          
-   16          static void service_motor_init_bsp_once(void)
-   17          {
-   18   1          if(0U == motor_initialized)
-   19   1          {
-   20   2              bsp_motor_init();
-   21   2              motor_initialized = 1U;
-   22   2          }
-   23   1      }
-   24          
-   25          static uint8 service_motor_reverse_level(uint8 level)
-   26          {
-   27   1          return (GPIO_HIGH == level) ? GPIO_LOW : GPIO_HIGH;
-   28   1      }
-   29          
-   30          static uint32 service_motor_abs_duty(int32 pwm)
-   31          {
-   32   1          if((int32)PWM_DUTY_MAX <= pwm)
-   33   1          {
-   34   2              return PWM_DUTY_MAX;
-   35   2          }
-   36   1      
-   37   1          if(-((int32)PWM_DUTY_MAX) >= pwm)
-   38   1          {
-   39   2              return PWM_DUTY_MAX;
-   40   2          }
-   41   1      
-   42   1          if(0 > pwm)
-   43   1          {
-   44   2              return (uint32)(0 - pwm);
-   45   2          }
-   46   1      
-   47   1          return (uint32)pwm;
-   48   1      }
-   49          
-   50          static uint8 service_motor_dir_level(int32 pwm, uint8 forward_level)
-   51          {
-   52   1          if(0 <= pwm)
-   53   1          {
-   54   2              return forward_level;
-   55   2          }
-C251 COMPILER V5.60.0,  service_motor                                                      28/07/26  21:09:32  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-   56   1      
-   57   1          return service_motor_reverse_level(forward_level);
-   58   1      }
-   59          
-   60          void service_motor_init(void)
-   61          {
-   62   1          service_motor_init_bsp_once();
-   63   1          service_motor_reset();
-   64   1          #if __DBGFLAG__
-   65   1          printf(">>[service_motor_init]\r\n");
-   66   1          wprint(">>[service_motor_init]\r\n");
-   67   1          #endif
-   68   1      }
-   69          
-   70          void service_motor_debug(void)
-   71          {
-   72   1          printf("[motor:30/100]\r\n");
-   73   1          service_motor_set_pwm(3000,3000);
-   74   1      }
-   75          
-   76          void service_motor_reset(void)
-   77          {
-   78   1          service_motor_init_bsp_once();
-   79   1      
-   80   1          motor_ready = 0U;
-   81   1          bsp_motor_set_pwm(0U, 0U);
-   82   1      
-   83   1          bsp_motor_set_nsleep(1U);
-   84   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_PRE_HIGH_MS);
-   85   1          bsp_motor_set_nsleep(0U);
-   86   1          system_delay_us(SERVICE_MOTOR_NSLEEP_RESET_LOW_US);
-   87   1          bsp_motor_set_nsleep(1U);
-   88   1          system_delay_ms(SERVICE_MOTOR_NSLEEP_POST_HIGH_MS);
-   89   1      
-   90   1          motor_ready = 1U;
-   91   1      }
-   92          
-   93          void service_motor_stop(void)
-   94          {
-   95   1          if(0U == motor_initialized)
-   96   1          {
-   97   2              return;
-   98   2          }
-   99   1      
-  100   1          bsp_motor_set_pwm(0U, 0U);
-  101   1      }
-  102          
-  103          void service_motor_set_left_pwm(int32 pwm)
-  104          {
-  105   1          if(0U == motor_ready)
-  106   1          {
-  107   2              return;
-  108   2          }
-  109   1      
-  110   1          bsp_motor_set_left_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL));
-  111   1          bsp_motor_set_left_pwm(service_motor_abs_duty(pwm));
-  112   1      }
-  113          
-  114          void service_motor_set_right_pwm(int32 pwm)
-  115          {
-  116   1          if(0U == motor_ready)
-  117   1          {
-  118   2              return;
-  119   2          }
-  120   1      
-  121   1          bsp_motor_set_right_dir(service_motor_dir_level(pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
-C251 COMPILER V5.60.0,  service_motor                                                      28/07/26  21:09:32  PAGE 3   
-
-  122   1          bsp_motor_set_right_pwm(service_motor_abs_duty(pwm));
-  123   1      }
-  124          
-  125          void service_motor_set_pwm(int32 left_pwm, int32 right_pwm)
-  126          {
-  127   1          if(0U == motor_ready)
-  128   1          {
-  129   2              return;
-  130   2          }
-  131   1      
-  132   1          bsp_motor_set_dir(service_motor_dir_level(left_pwm, SERVICE_MOTOR_LEFT_FORWARD_LEVEL),
-  133   1                  service_motor_dir_level(right_pwm, SERVICE_MOTOR_RIGHT_FORWARD_LEVEL));
-  134   1          bsp_motor_set_pwm(service_motor_abs_duty(left_pwm), service_motor_abs_duty(right_pwm));
-  135   1      }
-  136          
-  137          uint8 service_motor_is_ready(void)
-  138          {
-  139   1          return motor_ready;
-  140   1      }
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       598     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =        28     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =        54     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/07/26  14:29:31  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/07/26  01:04:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_ble6a20
 OBJECT MODULE PLACED IN .\out_file\zf_device_ble6a20.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_ble6a20.c LARGE ROM(HUGE) WARNING
-                    -LEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
+                    -LEVEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
                     -ce;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libra
                     -ries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_ble
                     -6a20.lst) OBJECT(.\out_file\zf_device_ble6a20.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   ------------------------------------
    47          *********************************************************************************************************
              -************/
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/07/26  14:29:31  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/07/26  01:04:25  PAGE 2   
 
    48          
    49          #include "zf_device_ble6a20.h"
@@ -76,6 +76,23 @@ stmt  level    source
    53          #include "zf_driver_delay.h"
    54          #include "zf_driver_gpio.h"
    55          #include "zf_driver_uart.h"
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
    56          #include "zf_device_type.h"
    57          
    58          #pragma warning disable = 183
@@ -95,62 +112,66 @@ stmt  level    source
              -------------
    71          uint32 ble6a20_send_byte (const uint8 dat)
    72          {
-   73   1          uint16 time_cnt = BLE6A20_TIMEOUT_COUNT;
-   74   1          
-   75   1          while (time_cnt && gpio_get_level(BLE6A20_RTS_PIN)) 
-   76   1              {
-   77   2              system_delay_ms(1);
-   78   2              time_cnt--;
-   79   2          }
-   80   1          
-   81   1          if (time_cnt) 
-   82   1              {
-   83   2              uart_write_byte(BLE6A20_INDEX, dat);
-   84   2          }
-   85   1          
-   86   1          return time_cnt == 0;
-   87   1      }
+   73              uint16 time_cnt = BLE6A20_TIMEOUT_COUNT;
+   74              
+   75              while (time_cnt && gpio_get_level(BLE6A20_RTS_PIN)) 
+   76                  {
+   77                  system_delay_ms(1);
+*** ERROR C25 IN LINE 77 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: syntax error near '/'
+   78                  time_cnt--;
+   79              }
+   80              
+   81              if (time_cnt) 
+   82                  {
+   83                  uart_write_byte(BLE6A20_INDEX, dat);
+   84              }
+   85              
+   86              return time_cnt == 0;
+   87          }
    88          
    89          //-------------------------------------------------------------------------------------------------------
              -------------
    90          // 函数简介     蓝牙转串口模块 发送数据块
    91          // 参数说明     *buff           发送缓冲区
    92          // 参数说明     len             发送数据长度
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/07/26  01:04:25  PAGE 3   
+
    93          // 返回参数     uint32          剩余发送长度
    94          // 使用示例     ble6a20_send_buffer(buff, 64);
    95          // 备注信息
    96          //-------------------------------------------------------------------------------------------------------
              -------------
    97          uint32 ble6a20_send_buffer (const uint8 *buff, uint32 len)
+*** WARNING C34 IN LINE 97 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 97 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: syntax error near 'uint32'
    98          {
-   99   1          #define PKT_SIZE 64
-  100   1          #define DELAY_MS 1
-  101   1          
-  102   1          uint16 time_cnt = 0;
-  103   1              uint16 send_len = 0;
-  104   1          zf_assert(NULL != buff);  // 确保缓冲区非空
-  105   1          
-  106   1          while(len && time_cnt < BLE6A20_TIMEOUT_COUNT)
-  107   1          {
-  108   2              if(!gpio_get_level(BLE6A20_RTS_PIN))    // RTS低电平，可发送
-  109   2              {
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/07/26  14:29:31  PAGE 3   
-
-  110   3                  send_len = len < PKT_SIZE ? len : PKT_SIZE;
-  111   3                  uart_write_buffer(BLE6A20_INDEX, buff, send_len);
-  112   3                  buff += send_len;
-  113   3                  len -= send_len;
-  114   3                  time_cnt = 0;        // 重置超时计数
-  115   3              }
-  116   2                      else    // RTS高电平，模块忙
-  117   2                      {
-  118   3                              system_delay_ms(DELAY_MS);
-  119   3                              time_cnt++;
-  120   3                      }
-  121   2          }
-  122   1          
-  123   1          return len;
-  124   1      }
+   99              #define PKT_SIZE 64
+  100              #define DELAY_MS 1
+  101              
+  102              uint16 time_cnt = 0;
+  103                  uint16 send_len = 0;
+  104              zf_assert(NULL != buff);  // 确保缓冲区非空
+  105              
+  106              while(len && time_cnt < BLE6A20_TIMEOUT_COUNT)
+  107              {
+  108                  if(!gpio_get_level(BLE6A20_RTS_PIN))    // RTS低电平，可发送
+  109                  {
+  110                      send_len = len < PKT_SIZE ? len : PKT_SIZE;
+  111                      uart_write_buffer(BLE6A20_INDEX, buff, send_len);
+  112                      buff += send_len;
+  113                      len -= send_len;
+  114                      time_cnt = 0;        // 重置超时计数
+  115                  }
+  116                          else    // RTS高电平，模块忙
+  117                          {
+  118                                  system_delay_ms(DELAY_MS);
+*** ERROR C25 IN LINE 118 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: syntax error near '/'
+  119                                  time_cnt++;
+  120                          }
+  121              }
+  122              
+  123              return len;
+  124          }
   125          
   126          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -162,12 +183,13 @@ stmt  level    source
   132          //-------------------------------------------------------------------------------------------------------
              -------------
   133          uint32 ble6a20_send_string (const char *str)
+*** WARNING C34 IN LINE 133 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: 'str': missing declaration specifiers
   134          {
-  135   1          uint32 len = strlen(str);
-  136   1          zf_assert(NULL != str);
-  137   1              
-  138   1          return  ble6a20_send_buffer(str, len);
-  139   1      }
+  135              uint32 len = strlen(str);
+  136              zf_assert(NULL != str);
+  137                  
+  138              return  ble6a20_send_buffer(str, len);
+  139          }
   140          
   141          
   142          //-------------------------------------------------------------------------------------------------------
@@ -180,13 +202,18 @@ stmt  level    source
   148          // 备注信息
   149          //-------------------------------------------------------------------------------------------------------
              -------------
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  29/07/26  01:04:25  PAGE 4   
+
   150          uint32 ble6a20_read_buffer (uint8 *buff, uint32 len)
+*** WARNING C34 IN LINE 150 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: 'buff': missing declaration specifiers
+*** ERROR C53 IN LINE 150 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: redefinition of 'buff': different pointer
+*** ERROR C25 IN LINE 150 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: syntax error near 'uint32'
   151          {
-  152   1          uint32 data_len = len;
-  153   1          zf_assert(NULL != buff);
-  154   1          fifo_read_buffer(&ble6a20_fifo, buff, &data_len, FIFO_READ_AND_CLEAN);
-  155   1          return data_len;
-  156   1      }
+  152              uint32 data_len = len;
+  153              zf_assert(NULL != buff);
+  154              fifo_read_buffer(&ble6a20_fifo, buff, &data_len, FIFO_READ_AND_CLEAN);
+  155              return data_len;
+  156          }
   157          
   158          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -201,11 +228,9 @@ stmt  level    source
              -------------
   167          void ble6a20_callback (uint8 uart_dat)
   168          {
-  169   1      //    uart_query_byte(BLE6A20_INDEX, &ble6a20_data);
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  27/07/26  14:29:31  PAGE 4   
-
-  170   1          fifo_write_buffer(&ble6a20_fifo, &uart_dat, 1);
-  171   1      }
+  169          //    uart_query_byte(BLE6A20_INDEX, &ble6a20_data);
+  170              fifo_write_buffer(&ble6a20_fifo, &uart_dat, 1);
+  171          }
   172          
   173          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -218,44 +243,24 @@ stmt  level    source
              -------------
   180          uint8 ble6a20_init (void)
   181          {
-  182   1          uint8 return_state = 0;
-  183   1          
-  184   1          // 等待模块初始化
-  185   1          system_delay_ms(50);
-  186   1          
-  187   1      //    set_wireless_type(BLE6A20, BLE6A20_INDEX, ble6a20_callback);
-  188   1      
-  189   1          fifo_init(&ble6a20_fifo, FIFO_DATA_8BIT, ble6a20_buffer, BLE6A20_BUFFER_SIZE);
-  190   1          gpio_init(BLE6A20_RTS_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
-  191   1          
-  192   1          // 本函数使用的波特率为115200 为蓝牙转串口模块的默认波特率 如需其他波特
+  182              uint8 return_state = 0;
+  183              
+  184              // 等待模块初始化
+  185              system_delay_ms(50);
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: syntax error near '/'
+  186              
+  187          //    set_wireless_type(BLE6A20, BLE6A20_INDEX, ble6a20_callback);
+  188          
+  189              fifo_init(&ble6a20_fifo, FIFO_DATA_8BIT, ble6a20_buffer, BLE6A20_BUFFER_SIZE);
+  190              gpio_init(BLE6A20_RTS_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
+  191              
+  192              // 本函数使用的波特率为115200 为蓝牙转串口模块的默认波特率 如需其他波特
              -率请自行配置模块并修改串口的波特率
-  193   1          uart_init (BLE6A20_INDEX, BLE6A20_BUAD_RATE, BLE6A20_RX_PIN, BLE6A20_TX_PIN);   // 初始化串口
-  194   1          uart_rx_interrupt(BLE6A20_INDEX, 1, ble6a20_callback);
-  195   1          
-  196   1          return return_state;
-  197   1      }
+  193              uart_init (BLE6A20_INDEX, BLE6A20_BUAD_RATE, BLE6A20_RX_PIN, BLE6A20_TX_PIN);   // 初始化串口
+  194              uart_rx_interrupt(BLE6A20_INDEX, 1, ble6a20_callback);
+  195              
+  196              return return_state;
+  197          }
+*** ERROR C7 IN LINE 197 OF ..\..\libraries\zf_device\zf_device_ble6a20.c: compilation aborted
 
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       835     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =       124     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =        46     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  15 WARNING(S),  12 ERROR(S)

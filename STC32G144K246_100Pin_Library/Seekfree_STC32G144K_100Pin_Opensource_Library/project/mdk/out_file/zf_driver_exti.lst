@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     27/07/26  14:29:28  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     29/07/26  01:04:22  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_exti
 OBJECT MODULE PLACED IN .\out_file\zf_driver_exti.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_exti.c LARGE ROM(HUGE) WARNINGLEV
-                    -EL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
+                    -EL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
                     -..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librarie
                     -s\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_exti.l
                     -st) OBJECT(.\out_file\zf_driver_exti.obj) 
@@ -13,41 +13,41 @@ stmt  level    source
 
     1          /********************************************************************************************************
              -*************
-    2          * STC32G144K Opensource Library 即（STC32G144K 开源库）是一个基于官方 SDK 接口的第三方
-             -开源库
+    2          * STC32G144K Opensource Library 即（STC32G144K 开源库）是一个基于官�?SDK 接口的第三方�
+             -��源库
     3          * Copyright (c) 2025 SEEKFREE 逐飞科技
     4          *
     5          * 本文件是STC32G144K开源库的一部分
     6          *
-    7          * STC32G144K 开源库 是免费软件
-    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许
-             -可证）的条款
-    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修�
-             -�它
+    7          * STC32G144K 开源库 是免费软�?
+    8          * 您可以根据自由软件基金会发布�?GPL（GNU General Public License，即 GNU通用公共许�
+             -��证）的条�?
+    9          * �?GPL 的第3版（�?GPL3.0）或（您选择的）任何后来的版本，重新发布�?或修改�
+             -�
    10          *
    11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
    12          * 甚至没有隐含的适销性或适合特定用途的保证
-   13          * 更多细节请参见 GPL
+   13          * 更多细节请参�?GPL
    14          *
-   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   15          * 您应该在收到本开源库的同时收到一�?GPL 的副�?
    16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
    17          *
-   18          * 额外注明：
-   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可声明为译文版本
-   20          * 许可声明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
-   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   18          * 额外注明�?
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可声明为译文版�?
+   20          * 许可声明英文版在 libraries/doc 文件夹下�?GPL3_permission_statement.txt 文件�?
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下�?LICENSE 文件
    22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
-             -声明）
+             -声明�?
    23          *
    24          * 文件名称          
    25          * 公司名称          成都逐飞科技有限公司
    26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-   27          * 开发环境          MDK FOR C251
+   27          * 开发环�?         MDK FOR C251
    28          * 适用平台          STC32G144K
    29          * 店铺链接          https://seekfree.taobao.com/
    30          *
    31          * 修改记录
-   32          * 日期              作者           备注
+   32          * 日期              作�?          备注
    33          * 2025-11-20        大W            first version
    34          *********************************************************************************************************
              -***********/
@@ -55,18 +55,18 @@ stmt  level    source
    36          #include "zf_driver_exti.h"
    37          #include "zf_common_debug.h"
    38          
-   39          callback_function int_irq_handlers[5] = {0};
+   39          callback_function volatile int_irq_handlers[5] = {0};
    40          
-   41          callback_function gpio_int_irq_handlers[12][8] = {0};
+   41          callback_function volatile gpio_int_irq_handlers[12][8] = {0};
    42          
    43          //-------------------------------------------------------------------------------------------------------
              -------------
-   44          //  @brief      外部中断初始化
+   44          //  @brief      外部中断初始�?
    45          //  @param      NULL                    
    46          //  @return     void
    47          //  Sample usage:               exit_init(INT0_P32,BOTH) //初始化P32 作为外部中断引脚，双边
-             -沿触发。
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     27/07/26  14:29:28  PAGE 2   
+             -沿触发�?
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     29/07/26  01:04:22  PAGE 2   
 
    48          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -134,12 +134,12 @@ stmt  level    source
   110   2              }
   111   1              else
   112   1              {
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     27/07/26  14:29:28  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     29/07/26  01:04:22  PAGE 3   
 
   113   2                      (*(unsigned char volatile far *)(0X7EFD00 + ((int_n >> 8) & 0X0F) )) |= (1 << (int_n & 0x000F));//开�
-             -�中断功能
+             -�中断功�?
   114   2                      
-  115   2                      switch(mode)//初始化中断模式
+  115   2                      switch(mode)//初始化中断模�?
   116   2                      {
   117   3                              case FALLING_EDGE: 
   118   3                                              (*(unsigned char volatile far *)(0X7EF4E0 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));
@@ -181,11 +181,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1391     ------
+  ecode size           =       711     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       408     ------
+  xdata size           =       404     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

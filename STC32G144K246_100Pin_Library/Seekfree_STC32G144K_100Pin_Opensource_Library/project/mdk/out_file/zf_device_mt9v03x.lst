@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  27/07/26  14:29:30  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  29/07/26  01:04:24  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_mt9v03x
 OBJECT MODULE PLACED IN .\out_file\zf_device_mt9v03x.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_mt9v03x.c LARGE ROM(HUGE) WARNING
-                    -LEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
+                    -LEVEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devi
                     -ce;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libra
                     -ries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_mt9
                     -v03x.lst) OBJECT(.\out_file\zf_device_mt9v03x.obj) 
@@ -59,15 +59,43 @@ stmt  level    source
    40          #include "zf_driver_gpio.h"
    41          #include "zf_driver_soft_iic.h"
    42          #include "zf_driver_uart.h"
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  29/07/26  01:04:24  PAGE 2   
+
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
    43          #include "zf_driver_delay.h"
    44          #include "zf_driver_exti.h"
    45          
    46          #include "zf_device_type.h"
    47          #include "zf_device_config.h"
    48          #include "zf_device_mt9v03x.h"
+*** WARNING C34 IN LINE 66 OF ..\..\libraries\zf_common\zf_common_debug.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 66 OF ..\..\libraries\zf_common\zf_common_debug.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 74 OF ..\..\libraries\zf_common\zf_common_debug.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 74 OF ..\..\libraries\zf_common\zf_common_debug.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 75 OF ..\..\libraries\zf_common\zf_common_debug.h: 'file': missing declaration specifiers
+*** ERROR C25 IN LINE 75 OF ..\..\libraries\zf_common\zf_common_debug.h: syntax error near 'int'
    49          #include "zf_device_mt9v03x_dma.h"
-C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  27/07/26  14:29:30  PAGE 2   
-
+*** WARNING C34 IN LINE 25 OF ..\..\libraries\zf_device\zf_device_mt9v03x_dma.h: 'soft_iic_obj': missing declaration spe
+             -cifiers
+*** WARNING C34 IN LINE 58 OF ..\..\libraries\zf_device\zf_device_mt9v03x_dma.h: 'image_addr': missing declaration speci
+             -fiers
+*** ERROR C25 IN LINE 58 OF ..\..\libraries\zf_device\zf_device_mt9v03x_dma.h: syntax error near 'uint32'
    50          
    51          
    52          
@@ -104,9 +132,11 @@ stmt  level    source
              -------------
    80          uint8 mt9v03x_set_exposure_time (uint16 light)
    81          {
-   82   1          uint8 return_state = mt9v03x_sccb_set_exposure_time(light);
-   83   1          return return_state;
-   84   1      }
+   82              uint8 return_state = mt9v03x_sccb_set_exposure_time(light);
+   83              return return_state;
+C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  29/07/26  01:04:24  PAGE 3   
+
+   84          }
    85          
    86          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -121,9 +151,9 @@ stmt  level    source
              -------------
    94          uint8 mt9v03x_set_reg (uint8 addr, uint16 dat)
    95          {
-   96   1          uint8 return_state = mt9v03x_sccb_set_reg(addr, dat);
-   97   1          return return_state;
-   98   1      }
+   96              uint8 return_state = mt9v03x_sccb_set_reg(addr, dat);
+   97              return return_state;
+   98          }
    99          
   100          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -134,28 +164,26 @@ stmt  level    source
   105          // 备注信息
   106          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  27/07/26  14:29:30  PAGE 3   
-
   107          uint8 mt9v03x_sccb_init (void)
   108          {
-  109   1          uint8 return_state  = 1;
-  110   1          soft_iic_info_struct mt9v03x_iic_struct;
-  111   1      
-  112   1      
-  113   1          soft_iic_init(
-  114   1              &mt9v03x_iic_struct, 0,
-  115   1              MT9V03X_COF_IIC_DELAY,
-  116   1              MT9V03X_COF_IIC_SCL,
-  117   1              MT9V03X_COF_IIC_SDA);
-  118   1          
-  119   1          if(!mt9v03x_sccb_check_id(&mt9v03x_iic_struct))
-  120   1          {
-  121   2      
-  122   2              return_state = mt9v03x_sccb_set_config(&mt9v03x_set_confing_buffer[0][0]);
-  123   2          }
-  124   1      
-  125   1          return return_state;
-  126   1      }
+  109              uint8 return_state  = 1;
+  110              soft_iic_info_struct mt9v03x_iic_struct;
+  111          
+  112          
+  113              soft_iic_init(
+  114                  &mt9v03x_iic_struct, 0,
+  115                  MT9V03X_COF_IIC_DELAY,
+  116                  MT9V03X_COF_IIC_SCL,
+  117                  MT9V03X_COF_IIC_SDA);
+  118              
+  119              if(!mt9v03x_sccb_check_id(&mt9v03x_iic_struct))
+  120              {
+  121          
+  122                  return_state = mt9v03x_sccb_set_config(&mt9v03x_set_confing_buffer[0][0]);
+  123              }
+  124          
+  125              return return_state;
+  126          }
   127          
   128          
   129          //-------------------------------------------------------------------------------------------------------
@@ -169,68 +197,47 @@ stmt  level    source
              -------------
   136          uint8 mt9v03x_init (void)
   137          {
-  138   1          uint8 loop_count    = 0;
-  139   1          uint8 return_state  = 0;
-  140   1          
-  141   1          do
-  142   1          { 
-  143   2              return_state = mt9v03x_sccb_init();
-  144   2      
-  145   2              if(!return_state)
-  146   2              {
-  147   3                  gpio_init(MT9V03X_D0_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  148   3                  gpio_init(MT9V03X_D1_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  149   3                  gpio_init(MT9V03X_D2_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  150   3                  gpio_init(MT9V03X_D3_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  151   3                  gpio_init(MT9V03X_D4_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  152   3                  gpio_init(MT9V03X_D5_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  153   3                  gpio_init(MT9V03X_D6_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  154   3                  gpio_init(MT9V03X_D7_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
-  155   3      
-  156   3                  gpio_init(FIFO_WE_PIN,   GPO, 0, GPO_PUSH_PULL);
-  157   3                  gpio_init(FIFO_WRST_PIN, GPO, 1, GPO_PUSH_PULL);
-  158   3                  gpio_init(FIFO_RCK_PIN,  GPO, 1, GPO_PUSH_PULL);
-  159   3                  gpio_init(FIFO_OE_PIN,   GPO, 0, GPO_PUSH_PULL);
-  160   3                  gpio_init(FIFO_RRST_PIN, GPO, 1, GPO_PUSH_PULL);
-  161   3                  gpio_init(FIFO_VSY_PIN,  GPI, 1, GPI_PULL_UP);
-  162   3      
-  163   3                  // 默认中断优先级最高，DMA优先级最高
-  164   3                  mt9v03x_dma_init((uint8 *)&mt9v03x_image[0][0], MT9V03X_IMAGE_SIZE, 0, 3, 3);   
-  165   3                  
-  166   3                  exit_init(INT1_P33, BOTH);
-  167   3                  // 默认中断优先级最高
-  168   3                  interrupt_set_priority(INT1_IRQn, 3);                               
-  169   3                  
-  170   3                  break;
-C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  27/07/26  14:29:30  PAGE 4   
+  138              uint8 loop_count    = 0;
+  139              uint8 return_state  = 0;
+  140              
+  141              do
+  142              { 
+C251 COMPILER V5.60.0,  zf_device_mt9v03x                                                  29/07/26  01:04:24  PAGE 4   
 
-  171   3              }
-  172   2          }while(0);
-  173   1          
-  174   1          return return_state;
-  175   1      }
+  143                  return_state = mt9v03x_sccb_init();
+  144          
+  145                  if(!return_state)
+  146                  {
+  147                      gpio_init(MT9V03X_D0_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  148                      gpio_init(MT9V03X_D1_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  149                      gpio_init(MT9V03X_D2_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  150                      gpio_init(MT9V03X_D3_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  151                      gpio_init(MT9V03X_D4_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  152                      gpio_init(MT9V03X_D5_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  153                      gpio_init(MT9V03X_D6_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  154                      gpio_init(MT9V03X_D7_PIN, GPI, GPIO_LOW, GPI_PULL_UP);
+  155          
+  156                      gpio_init(FIFO_WE_PIN,   GPO, 0, GPO_PUSH_PULL);
+  157                      gpio_init(FIFO_WRST_PIN, GPO, 1, GPO_PUSH_PULL);
+  158                      gpio_init(FIFO_RCK_PIN,  GPO, 1, GPO_PUSH_PULL);
+  159                      gpio_init(FIFO_OE_PIN,   GPO, 0, GPO_PUSH_PULL);
+  160                      gpio_init(FIFO_RRST_PIN, GPO, 1, GPO_PUSH_PULL);
+  161                      gpio_init(FIFO_VSY_PIN,  GPI, 1, GPI_PULL_UP);
+  162          
+  163                      // 默认中断优先级最高，DMA优先级最高
+  164                      mt9v03x_dma_init((uint8 *)&mt9v03x_image[0][0], MT9V03X_IMAGE_SIZE, 0, 3, 3);   
+  165                      
+  166                      exit_init(INT1_P33, BOTH);
+  167                      // 默认中断优先级最高
+  168                      interrupt_set_priority(INT1_IRQn, 3);                               
+  169                      
+  170                      break;
+  171                  }
+  172              }while(0);
+  173              
+  174              return return_state;
+  175          }
   176          
+*** ERROR C7 IN LINE 176 OF ..\..\libraries\zf_device\zf_device_mt9v03x.c: compilation aborted
 
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       447     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =        19     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =        40     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  17 WARNING(S),  10 ERROR(S)

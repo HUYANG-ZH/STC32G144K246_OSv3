@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  service_buzzer                                                     28/07/26  21:10:42  PAGE 1   
+C251 COMPILER V5.60.0,  service_buzzer                                                     29/07/26  01:04:33  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_buzzer
 OBJECT MODULE PLACED IN .\out_file\service_buzzer.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_buzzer.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMI
-                    -ZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
+                    -ZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librar
                     -ies\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_compone
                     -nts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_buzzer.lst) OBJECT(.
                     -\out_file\service_buzzer.obj) 
@@ -12,106 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_buzzer.
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_include.h"
-    3          #include "service_buzzer.h"
-    4          #include "service_timetick.h"
-    5          #include "service_wireless_uart.h"
-    6          
-    7          #define SERVICE_BUZZER_TICKS_PER_MS        (10UL)
-    8          #define SERVICE_BUZZER_TIME_HALF_RANGE     (0x80000000UL)
-    9          
-   10          static uint8 buzzer_is_on = 0U;
-   11          static uint8 buzzer_timing = 0U;
-   12          static uint32 buzzer_deadline_tick = 0UL;
-   13          
-   14          static uint8 service_buzzer_time_reached(uint32 now, uint32 deadline)
-   15          {
-   16   1          return ((uint32)(now - deadline) < SERVICE_BUZZER_TIME_HALF_RANGE);
-   17   1      }
-   18          
-   19          void service_buzzer_init(void)
-   20          {
-   21   1          bsp_buzzer_init();
-   22   1          buzzer_is_on = 1U;
-   23   1          buzzer_timing = 0U;
-   24   1          buzzer_deadline_tick = 0UL;
-   25   1          #if __DBGFLAG__
-   26   1          printf(">>[service_buzzer_init]\r\n");
-   27   1          wprint(">>[service_buzzer_init]\r\n");
-   28   1          #endif
-   29   1      }
-   30          
-   31          void service_buzzer_debug(void)
-   32          {
-   33   1          printf("[buzzer:scheduled500ms]\r\n");
-   34   1          service_buzzer_beep_ms(500);
-   35   1      }
-   36          
-   37          void service_buzzer_beep_ms(uint32 duration_ms)
-   38          {
-   39   1          if(0UL == duration_ms)
-   40   1          {
-   41   2              service_buzzer_stop();
-   42   2              return;
-   43   2          }
-   44   1      
-   45   1          bsp_buzzer_on();
-   46   1          buzzer_is_on = 1U;
-   47   1          buzzer_timing = 1U;
-   48   1          buzzer_deadline_tick = service_timetick_what() + duration_ms * SERVICE_BUZZER_TICKS_PER_MS;
-   49   1      }
-   50          
-   51          void service_buzzer_task(void)
-   52          {
-   53   1          uint32 now;
-   54   1      
-   55   1          if(0U == buzzer_timing)
-C251 COMPILER V5.60.0,  service_buzzer                                                     28/07/26  21:10:42  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-   56   1          {
-   57   2              return;
-   58   2          }
-   59   1      
-   60   1          now = service_timetick_what();
-   61   1          if(0U != service_buzzer_time_reached(now, buzzer_deadline_tick))
-   62   1          {
-   63   2              service_buzzer_stop();
-   64   2          }
-   65   1      }
-   66          
-   67          void service_buzzer_stop(void)
-   68          {
-   69   1          bsp_buzzer_off();
-   70   1          buzzer_is_on = 0U;
-   71   1          buzzer_timing = 0U;
-   72   1      }
-   73          
-   74          uint8 service_buzzer_is_on(void)
-   75          {
-   76   1          service_buzzer_task();
-   77   1          return buzzer_is_on;
-   78   1      }
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       294     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =        22     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =        73     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

@@ -1,9 +1,9 @@
-C251 COMPILER V5.60.0,  bsp_encoder                                                        27/07/26  16:33:44  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_encoder                                                        29/07/26  01:04:30  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_encoder
 OBJECT MODULE PLACED IN .\out_file\bsp_encoder.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_encoder.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SP
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_encoder.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SP
                     -EED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_
                     -driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc
                     -32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\bsp_encoder.lst) OBJECT(.\out_file\
@@ -12,93 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_encoder.c LARGE
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_encoder.h"
-    3          #include "zf_driver_encoder.h"
-    4          
-    5          #ifndef BSP_ENCODER_LEFT_INDEX
-    6          #define BSP_ENCODER_LEFT_INDEX         PWME_ENCODER
-    7          #endif
-    8          
-    9          #ifndef BSP_ENCODER_LEFT_PULSE_PIN
-   10          #define BSP_ENCODER_LEFT_PULSE_PIN     PWME_ENCODER_CH1P_PA0
-   11          #endif
-   12          
-   13          #ifndef BSP_ENCODER_LEFT_DIR_PIN
-   14          #define BSP_ENCODER_LEFT_DIR_PIN       PWME_ENCODER_CH2P_PA2
-   15          #endif
-   16          
-   17          #ifndef BSP_ENCODER_LEFT_SIGN
-   18          #define BSP_ENCODER_LEFT_SIGN          (1)
-   19          #endif
-   20          
-   21          #ifndef BSP_ENCODER_RIGHT_INDEX
-   22          #define BSP_ENCODER_RIGHT_INDEX        PWMF_ENCODER
-   23          #endif
-   24          
-   25          #ifndef BSP_ENCODER_RIGHT_PULSE_PIN
-   26          #define BSP_ENCODER_RIGHT_PULSE_PIN    PWMF_ENCODER_CH1_PA1
-   27          #endif
-   28          
-   29          #ifndef BSP_ENCODER_RIGHT_DIR_PIN
-   30          #define BSP_ENCODER_RIGHT_DIR_PIN      PWMF_ENCODER_CH2_PA3
-   31          #endif
-   32          
-   33          #ifndef BSP_ENCODER_RIGHT_SIGN
-   34          #define BSP_ENCODER_RIGHT_SIGN          (-1)
-   35          #endif
-   36          
-   37          void bsp_encoder_init(void)
-   38          {
-   39   1          encoder_dir_init(BSP_ENCODER_LEFT_INDEX, BSP_ENCODER_LEFT_PULSE_PIN, BSP_ENCODER_LEFT_DIR_PIN);
-   40   1          encoder_dir_init(BSP_ENCODER_RIGHT_INDEX, BSP_ENCODER_RIGHT_PULSE_PIN, BSP_ENCODER_RIGHT_DIR_PIN);
-   41   1          bsp_encoder_clear();
-   42   1      }
-   43          
-   44          void bsp_encoder_debug(void)
-   45          {
-   46   1      }
-   47          
-   48          void bsp_encoder_clear(void)
-   49          {
-   50   1          encoder_clear_count(BSP_ENCODER_LEFT_INDEX);
-   51   1          encoder_clear_count(BSP_ENCODER_RIGHT_INDEX);
-   52   1      }
-   53          
-   54          void bsp_encoder_get_delta(bsp_encoder_count_t *out_count)
-   55          {
-C251 COMPILER V5.60.0,  bsp_encoder                                                        27/07/26  16:33:44  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-   56   1          if(NULL == out_count)
-   57   1          {
-   58   2              return;
-   59   2          }
-   60   1      
-   61   1          out_count->left = encoder_get_count(BSP_ENCODER_LEFT_INDEX) * BSP_ENCODER_LEFT_SIGN;
-   62   1          out_count->right = encoder_get_count(BSP_ENCODER_RIGHT_INDEX) * BSP_ENCODER_RIGHT_SIGN;
-   63   1      
-   64   1          bsp_encoder_clear();
-   65   1      }
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       136     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =         4     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =    ------     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

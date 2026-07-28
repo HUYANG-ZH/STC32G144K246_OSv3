@@ -1,9 +1,9 @@
-C251 COMPILER V5.60.0,  bsp_battery                                                        27/07/26  14:29:35  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_battery                                                        29/07/26  01:04:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_battery
 OBJECT MODULE PLACED IN .\out_file\bsp_battery.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_battery.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SP
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_battery.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SP
                     -EED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_
                     -driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc
                     -32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\bsp_battery.lst) OBJECT(.\out_file\
@@ -12,241 +12,39 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_battery.c LARGE
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "bsp_battery.h"
-    3          
-    4          #define BSP_BATTERY_ADC_CH              ADC1_CH0_P10
-    5          #define BSP_BATTERY_ADC_FULL_SCALE      (4096.0f)
-    6          #define BSP_BATTERY_VOLTAGE_SCALE       (36.4737f)
-    7          
-    8          /* DMA ADC stores N 16-bit raw samples plus a final 16-bit hardware average. */
-    9          #define BSP_BATTERY_DMA_SAMPLES          (8U)
-   10          #define BSP_BATTERY_DMA_CFG2             (0x0AU)
-   11          #define BSP_BATTERY_DMA_DATA_BYTES       ((BSP_BATTERY_DMA_SAMPLES * 2U) + 4U)
-   12          #define BSP_BATTERY_DMA_CHSW0            (0x01U)
-   13          
-   14          typedef struct
-   15          {
-   16              uint16 raw;
-   17              uint32 sequence;
-   18              uint8 valid;
-   19          } bsp_battery_snapshot_t;
-   20          
-   21          static uint8 xdata battery_dma_buffer[BSP_BATTERY_DMA_DATA_BYTES];
-   22          static bsp_battery_snapshot_t xdata battery_snapshot[2];
-   23          static volatile uint8 battery_published_index = 0U;
-   24          static volatile uint32 battery_sequence = 0UL;
-   25          static volatile uint8 battery_dma_active = 0U;
-   26          
-   27          static void bsp_battery_dma_configure(void)
-   28          {
-   29   1          EAXFR = 1;
-   30   1          DMA_ADC_STA = 0x00U;
-   31   1          DMA_ADC_CFG = 0x80U;       /* Completion interrupt, lowest priority. */
-   32   1          DMA_ADC_RXAH = (uint8)((uint16)&battery_dma_buffer[0] >> 8);
-   33   1          DMA_ADC_RXAL = (uint8)((uint16)&battery_dma_buffer[0]);
-   34   1          DMA_ADC_CFG2 = BSP_BATTERY_DMA_CFG2;
-   35   1          DMA_ADC_CHSW0 = BSP_BATTERY_DMA_CHSW0;
-   36   1          DMA_ADC_CHSW1 = 0x00U;
-   37   1          DMA_ADC_CR = 0x80U;
-   38   1      }
-   39          
-   40          void bsp_battery_init(void)
-   41          {
-   42   1          uint8 index;
-   43   1      
-   44   1          adc_init(BSP_BATTERY_ADC_CH, ADC_12BIT);
-   45   1          for(index = 0U; index < BSP_BATTERY_DMA_DATA_BYTES; index++)
-   46   1          {
-   47   2              battery_dma_buffer[index] = 0U;
-   48   2          }
-   49   1      
-   50   1          for(index = 0U; index < 2U; index++)
-   51   1          {
-   52   2              battery_snapshot[index].raw = 0U;
-   53   2              battery_snapshot[index].sequence = 0UL;
-   54   2              battery_snapshot[index].valid = 0U;
-   55   2          }
-C251 COMPILER V5.60.0,  bsp_battery                                                        27/07/26  14:29:35  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-   56   1      
-   57   1          battery_published_index = 0U;
-   58   1          battery_sequence = 0UL;
-   59   1          battery_dma_active = 0U;
-   60   1          bsp_battery_dma_configure();
-   61   1          (void)bsp_battery_request_sample();
-   62   1      }
-   63          
-   64          void bsp_battery_debug(void)
-   65          {
-   66   1      }
-   67          
-   68          uint8 bsp_battery_request_sample(void)
-   69          {
-   70   1          uint8 ea_backup;
-   71   1          uint8 started = 0U;
-   72   1      
-   73   1          ea_backup = EA;
-   74   1          EA = 0;
-   75   1          if(0U == battery_dma_active)
-   76   1          {
-   77   2              EAXFR = 1;
-   78   2              DMA_ADC_STA = 0x00U;
-   79   2              DMA_ADC_CR = 0xC0U;     /* Enable + trigger one ADC1 DMA scan. */
-   80   2              battery_dma_active = 1U;
-   81   2              started = 1U;
-   82   2          }
-   83   1          EA = ea_backup;
-   84   1      
-   85   1          return started;
-   86   1      }
-   87          
-   88          void bsp_battery_dma_irq_handler(void)
-   89          {
-   90   1          uint8 next_index;
-   91   1          uint8 ea_backup;
-   92   1          uint32 next_sequence;
-   93   1      
-   94   1          EAXFR = 1;
-   95   1          if(0U == (DMA_ADC_STA & 0x01U))
-   96   1          {
-   97   2              return;
-   98   2          }
-   99   1      
-  100   1          DMA_ADC_STA = 0x00U;
-  101   1          /* The active slot is immutable.  Publish the completed ADC frame only
-  102   1             after the inactive slot has all data and metadata. */
-  103   1          next_index = (uint8)(battery_published_index ^ 1U);
-  104   1          battery_snapshot[next_index].raw =
-  105   1                  (uint16)(((uint16)battery_dma_buffer[BSP_BATTERY_DMA_DATA_BYTES - 2U] << 8) |
-  106   1                  battery_dma_buffer[BSP_BATTERY_DMA_DATA_BYTES - 1U]);
-  107   1          next_sequence = battery_sequence + 1UL;
-  108   1          battery_snapshot[next_index].sequence = next_sequence;
-  109   1          battery_snapshot[next_index].valid = 1U;
-  110   1      
-  111   1          ea_backup = EA;
-  112   1          EA = 0;
-  113   1          battery_sequence = next_sequence;
-  114   1          battery_published_index = next_index;
-  115   1          EA = ea_backup;
-  116   1          battery_dma_active = 0U;
-  117   1      }
-  118          
-  119          uint8 bsp_battery_sample_is_valid(void)
-  120          {
-  121   1          uint8 ea_backup;
-C251 COMPILER V5.60.0,  bsp_battery                                                        27/07/26  14:29:35  PAGE 3   
-
-  122   1          uint8 valid;
-  123   1      
-  124   1          ea_backup = EA;
-  125   1          EA = 0;
-  126   1          valid = battery_snapshot[battery_published_index].valid;
-  127   1          EA = ea_backup;
-  128   1          return valid;
-  129   1      }
-  130          
-  131          uint32 bsp_battery_sample_sequence(void)
-  132          {
-  133   1          uint32 sequence;
-  134   1          uint8 ea_backup;
-  135   1      
-  136   1          ea_backup = EA;
-  137   1          EA = 0;
-  138   1          sequence = battery_snapshot[battery_published_index].sequence;
-  139   1          EA = ea_backup;
-  140   1          return sequence;
-  141   1      }
-  142          
-  143          void bsp_battery_get_raw(uint16 *rawdata)
-  144          {
-  145   1          if(NULL == rawdata)
-  146   1          {
-  147   2              return;
-  148   2          }
-  149   1      
-  150   1          *rawdata = 0U;
-  151   1          (void)bsp_battery_get_snapshot(rawdata, NULL);
-  152   1      }
-  153          
-  154          uint8 bsp_battery_get_snapshot(uint16 *rawdata, uint32 *sequence)
-  155          {
-  156   1          uint8 ea_backup;
-  157   1          uint8 index;
-  158   1          uint8 valid;
-  159   1      
-  160   1          if(NULL == rawdata)
-  161   1          {
-  162   2              return 0U;
-  163   2          }
-  164   1      
-  165   1          ea_backup = EA;
-  166   1          EA = 0;
-  167   1          index = battery_published_index;
-  168   1          *rawdata = battery_snapshot[index].raw;
-  169   1          valid = battery_snapshot[index].valid;
-  170   1          if(NULL != sequence)
-  171   1          {
-  172   2              *sequence = battery_snapshot[index].sequence;
-  173   2          }
-  174   1          EA = ea_backup;
-  175   1          return valid;
-  176   1      }
-  177          
-  178          uint8 bsp_battery_is_busy(void)
-  179          {
-  180   1          return battery_dma_active;
-  181   1      }
-  182          
-  183          void bsp_battery_recover(void)
-  184          {
-  185   1          uint8 ea_backup;
-  186   1      
-  187   1          /* Background recovery only resets/re-arms peripheral registers. */
-C251 COMPILER V5.60.0,  bsp_battery                                                        27/07/26  14:29:35  PAGE 4   
-
-  188   1          ea_backup = EA;
-  189   1          EA = 0;
-  190   1          EAXFR = 1;
-  191   1          DMA_ADC_CR = 0x00U;
-  192   1          DMA_ADC_STA = 0x00U;
-  193   1          battery_dma_active = 0U;
-  194   1          bsp_battery_dma_configure();
-  195   1          EA = ea_backup;
-  196   1      }
-  197          
-  198          void bsp_battery_vol(float *vol)
-  199          {
-  200   1          uint16 rawdata = 0U;
-  201   1      
-  202   1          if(NULL == vol)
-  203   1          {
-  204   2              return;
-  205   2          }
-  206   1      
-  207   1          bsp_battery_get_raw(&rawdata);
-  208   1          *vol = ((float)rawdata / BSP_BATTERY_ADC_FULL_SCALE) * BSP_BATTERY_VOLTAGE_SCALE;
-  209   1      }
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =      1168     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =        78     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =        21     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

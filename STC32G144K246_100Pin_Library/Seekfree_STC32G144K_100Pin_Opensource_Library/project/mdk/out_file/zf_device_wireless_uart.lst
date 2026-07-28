@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            27/07/26  14:29:31  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:04:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_wireless_uart
 OBJECT MODULE PLACED IN .\out_file\zf_device_wireless_uart.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_wireless_uart.c LARGE ROM(HUGE) W
-                    -ARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
+                    -ARNINGLEVEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
                     -f_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..
                     -\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_devi
                     -ce_wireless_uart.lst) OBJECT(.\out_file\zf_device_wireless_uart.obj) 
@@ -17,7 +17,31 @@ stmt  level    source
     4          #include "zf_driver_delay.h"
     5          #include "zf_driver_gpio.h"
     6          #include "zf_driver_uart.h"
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
     7          #include "zf_device_wireless_uart.h"
+*** WARNING C34 IN LINE 42 OF ..\..\libraries\zf_device\zf_device_wireless_uart.h: 'buff': missing declaration specifier
+             -s
+*** ERROR C25 IN LINE 42 OF ..\..\libraries\zf_device\zf_device_wireless_uart.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 43 OF ..\..\libraries\zf_device\zf_device_wireless_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 44 OF ..\..\libraries\zf_device\zf_device_wireless_uart.h: 'buff': missing declaration specifier
+             -s
+*** ERROR C25 IN LINE 44 OF ..\..\libraries\zf_device\zf_device_wireless_uart.h: syntax error near 'uint32'
     8          #include "zf_device_type.h"
     9          
    10          #pragma warning disable = 183
@@ -42,6 +66,8 @@ stmt  level    source
                static uint8 wireless_uart_auto_baud_buffer[WIRELESS_UART_BUFFER_SIZE];
                #endif
    31          
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:04:26  PAGE 2   
+
    32          #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
                static volatile wireless_uart_auto_baudrate_state_enum wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_
              -RATE_INIT;
@@ -49,100 +75,114 @@ stmt  level    source
                #endif
    36          
    37          static uint32 wireless_uart_send_direct(const uint8 *buff, uint32 len)
+*** WARNING C34 IN LINE 37 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: 'buff': missing declaration specifier
+             -s
+*** ERROR C25 IN LINE 37 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: syntax error near 'uint32'
    38          {
-   39   1          uint16 request_len;
-   40   1          uint16 accepted_len;
-   41   1      
-   42   1          if(NULL == buff)
-   43   1          {
-   44   2              return len;
-   45   2          }
-   46   1      
-   47   1          // Copy only into the UART driver's xdata DMA queue.  The loop chunks a
-   48   1          // wide API request; it never waits for the physical transmission.
-   49   1          while(0U != len)
-   50   1          {
-   51   2              request_len = (len > 0xFFFFUL) ? 0xFFFFU : (uint16)len;
-   52   2              accepted_len = uart_write_buffer_async(WIRELESS_UART_INDEX, buff, request_len);
-   53   2              buff += accepted_len;
-   54   2              len -= accepted_len;
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            27/07/26  14:29:31  PAGE 2   
-
-   55   2              if(accepted_len != request_len)
-   56   2              {
-   57   3                  break;
-   58   3              }
-   59   2          }
-   60   1      
-   61   1          return len;
-   62   1      }
+   39              uint16 request_len;
+   40              uint16 accepted_len;
+   41          
+   42              if(NULL == buff)
+   43              {
+   44                  return len;
+   45              }
+   46          
+   47              // Copy only into the UART driver's xdata DMA queue.  The loop chunks a
+   48              // wide API request; it never waits for the physical transmission.
+   49              while(0U != len)
+   50              {
+   51                  request_len = (len > 0xFFFFUL) ? 0xFFFFU : (uint16)len;
+   52                  accepted_len = uart_write_buffer_async(WIRELESS_UART_INDEX, buff, request_len);
+   53                  buff += accepted_len;
+   54                  len -= accepted_len;
+   55                  if(accepted_len != request_len)
+   56                  {
+   57                      break;
+   58                  }
+   59              }
+   60          
+   61              return len;
+   62          }
    63          
    64          uint32 wireless_uart_send_byte(const uint8 dat)
    65          {
-   66   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
+   66          #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
                    if(gpio_get_level(WIRELESS_UART_RTS_PIN))
                    {
                        return 1U;
                    }
                #else
-   72   1      #endif
-   73   1      
-   74   1          return (1U == uart_write_buffer_async(WIRELESS_UART_INDEX, &dat, 1U)) ? 0U : 1U;
-   75   1      }
+   72          #endif
+   73          
+   74              return (1U == uart_write_buffer_async(WIRELESS_UART_INDEX, &dat, 1U)) ? 0U : 1U;
+   75          }
    76          
    77          uint32 wireless_uart_send_buffer(const uint8 *buff, uint32 len)
+*** WARNING C34 IN LINE 77 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: 'buff': missing declaration specifier
+             -s
+*** ERROR C53 IN LINE 77 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: redefinition of 'buff': different point
+             -er
+*** ERROR C25 IN LINE 77 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: syntax error near 'uint32'
    78          {
-   79   1          zf_assert(NULL != buff);
-   80   1      
-   81   1      #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
+   79              zf_assert(NULL != buff);
+   80          
+   81          #if (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_RTS)
                    if(gpio_get_level(WIRELESS_UART_RTS_PIN))
                    {
                        return len;
                    }
                #else
-   87   1      #endif
-   88   1      
-   89   1          return wireless_uart_send_direct(buff, len);
-   90   1      }
+   87          #endif
+   88          
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:04:26  PAGE 3   
+
+   89              return wireless_uart_send_direct(buff, len);
+   90          }
    91          
    92          uint32 wireless_uart_send_string(const char *str)
+*** WARNING C34 IN LINE 92 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: 'str': missing declaration specifiers
+*** ERROR C53 IN LINE 92 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: redefinition of 'str': different pointe
+             -r
    93          {
-   94   1          uint32 len;
-   95   1      
-   96   1          zf_assert(NULL != str);
-   97   1          len = strlen(str);
-   98   1      
-   99   1          return wireless_uart_send_buffer((const uint8 *)str, len);
-  100   1      }
+   94              uint32 len;
+   95          
+   96              zf_assert(NULL != str);
+   97              len = strlen(str);
+   98          
+   99              return wireless_uart_send_buffer((const uint8 *)str, len);
+  100          }
   101          
   102          uint32 wireless_uart_read_buffer(uint8 *buff, uint32 len)
+*** WARNING C34 IN LINE 102 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: 'buff': missing declaration specifie
+             -rs
+*** ERROR C53 IN LINE 102 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: redefinition of 'buff': different poin
+             -ter
+*** ERROR C25 IN LINE 102 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: syntax error near 'uint32'
   103          {
-  104   1          uint32 data_len = 0U;
-  105   1          uint8 tail;
-  106   1      
-  107   1          zf_assert(NULL != buff);
-  108   1      
-  109   1          while(data_len < len)
-  110   1          {
-  111   2              tail = wireless_uart_rx_tail;
-  112   2              if(tail == wireless_uart_rx_head)
-  113   2              {
-  114   3                  break;
-  115   3              }
-  116   2      
-  117   2              buff[data_len] = wireless_uart_buffer[tail];
-  118   2              wireless_uart_rx_tail = (uint8)((tail + 1U) & WIRELESS_UART_BUFFER_MASK);
-  119   2              data_len++;
-  120   2          }
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            27/07/26  14:29:31  PAGE 3   
-
-  121   1      
-  122   1          return data_len;
-  123   1      }
+  104              uint32 data_len = 0U;
+  105              uint8 tail;
+  106          
+  107              zf_assert(NULL != buff);
+  108          
+  109              while(data_len < len)
+  110              {
+  111                  tail = wireless_uart_rx_tail;
+  112                  if(tail == wireless_uart_rx_head)
+  113                  {
+  114                      break;
+  115                  }
+  116          
+  117                  buff[data_len] = wireless_uart_buffer[tail];
+  118                  wireless_uart_rx_tail = (uint8)((tail + 1U) & WIRELESS_UART_BUFFER_MASK);
+  119                  data_len++;
+  120              }
+  121          
+  122              return data_len;
+  123          }
   124          
   125          void wireless_uart_callback(uint8 uart_dat)
   126          {
-  127   1      #if WIRELESS_UART_AUTO_BAUD_RATE
+  127          #if WIRELESS_UART_AUTO_BAUD_RATE
                    if(WIRELESS_UART_AUTO_BAUD_RATE_START == wireless_auto_baud_flag)
                    {
                        fifo_write_buffer(&wireless_uart_auto_baud_fifo, &uart_dat, 1U);
@@ -157,42 +197,44 @@ stmt  level    source
                        return;
                    }
                #endif
-  142   1      
-  143   1          {
-  144   2              uint8 next_head = (uint8)((wireless_uart_rx_head + 1U) & WIRELESS_UART_BUFFER_MASK);
-  145   2              if(next_head == wireless_uart_rx_tail)
-  146   2              {
-  147   3                  wireless_uart_rx_dropped++;
-  148   3                  return;
-  149   3              }
-  150   2      
-  151   2              wireless_uart_buffer[wireless_uart_rx_head] = uart_dat;
-  152   2              wireless_uart_rx_head = next_head;
-  153   2          }
-  154   1      }
+  142          
+  143              {
+  144                  uint8 next_head = (uint8)((wireless_uart_rx_head + 1U) & WIRELESS_UART_BUFFER_MASK);
+  145                  if(next_head == wireless_uart_rx_tail)
+  146                  {
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:04:26  PAGE 4   
+
+  147                      wireless_uart_rx_dropped++;
+  148                      return;
+  149                  }
+  150          
+  151                  wireless_uart_buffer[wireless_uart_rx_head] = uart_dat;
+  152                  wireless_uart_rx_head = next_head;
+  153              }
+  154          }
   155          
   156          uint8 wireless_uart_init(void)
   157          {
-  158   1          uint8 return_state = 0U;
-  159   1      
-  160   1          wireless_uart_rx_head = 0U;
-  161   1          wireless_uart_rx_tail = 0U;
-  162   1          wireless_uart_rx_dropped = 0U;
-  163   1      
-  164   1      #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+  158              uint8 return_state = 0U;
+  159          
+  160              wireless_uart_rx_head = 0U;
+  161              wireless_uart_rx_tail = 0U;
+  162              wireless_uart_rx_dropped = 0U;
+  163          
+  164          #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
                    fifo_init(&wireless_uart_auto_baud_fifo, FIFO_DATA_8BIT,
                            wireless_uart_auto_baud_buffer, WIRELESS_UART_BUFFER_SIZE);
                #endif
-  168   1      
-  169   1      #if ((1 == WIRELESS_UART_AUTO_BAUD_RATE) || (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_R
+  168          
+  169          #if ((1 == WIRELESS_UART_AUTO_BAUD_RATE) || (WIRELESS_UART_TRANSFER_MODE == WIRELESS_UART_TRANSFER_MODE_R
              -TS))
                    gpio_init(WIRELESS_UART_RTS_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
                #endif
-  172   1      
-  173   1      #if (0 == WIRELESS_UART_AUTO_BAUD_RATE)
-  174   1          uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
-  175   1          uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
-  176   1      #elif (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+  172          
+  173          #if (0 == WIRELESS_UART_AUTO_BAUD_RATE)
+  174              uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+  175              uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
+  176          #elif (1 == WIRELESS_UART_AUTO_BAUD_RATE)
                    uint8 rts_init_status;
                    uint16 time_count = 0U;
                
@@ -202,8 +244,6 @@ stmt  level    source
                    wireless_auto_baud_data[2] = 3U;
                
                    rts_init_status = gpio_get_level(WIRELESS_UART_RTS_PIN);
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            27/07/26  14:29:31  PAGE 4   
-
                    gpio_init(WIRELESS_UART_RTS_PIN, GPO, rts_init_status, GPO_PUSH_PULL);
                
                    uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
@@ -230,6 +270,8 @@ stmt  level    source
                
                        time_count = 0U;
                
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:04:26  PAGE 5   
+
                        if((0xa5 != wireless_auto_baud_data[0]) &&
                                (0xff != wireless_auto_baud_data[1]) &&
                                (0xff != wireless_auto_baud_data[2]))
@@ -246,30 +288,9 @@ stmt  level    source
                
                    (void)time_count;
                #endif
-  228   1      
-  229   1          return return_state;
-  230   1      }
+  228          
+  229              return return_state;
+  230          }
+*** ERROR C7 IN LINE 230 OF ..\..\libraries\zf_device\zf_device_wireless_uart.c: compilation aborted
 
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =       821     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =       177     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =    ------     ------
-  ebit size            =    ------     ------
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =        71     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  19 WARNING(S),  14 ERROR(S)

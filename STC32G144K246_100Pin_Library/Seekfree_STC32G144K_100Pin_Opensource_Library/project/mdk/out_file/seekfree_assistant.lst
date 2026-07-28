@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 1   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 29/07/26  01:04:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE seekfree_assistant
 OBJECT MODULE PLACED IN .\out_file\seekfree_assistant.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_components\seekfree_assistant\seekfree_assistant.c
-                    - LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components
+                    - LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components
                     -;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_S
                     -hared_Source;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(
                     -.\out_file\seekfree_assistant.lst) OBJECT(.\out_file\seekfree_assistant.obj) 
@@ -53,505 +53,41 @@ stmt  level    source
              -***********/
    35          
    36          #include "seekfree_assistant.h"
-   37          
-   38          #pragma warning disable = 183
-   39          
-   40          static seekfree_assistant_camera_struct         seekfree_assistant_camera_data = {0};   
-   41          seekfree_assistant_oscilloscope_struct          seekfree_assistant_oscilloscope_data = {0};              
-             -          // 虚拟示波器数据
-   42          static seekfree_assistant_camera_dot_struct      seekfree_assistant_camera_dot_data = {0};               
-             -           // 图像上位机打点协议数据
-   43          static seekfree_assistant_camera_buffer_struct   seekfree_assistant_camera_buffer = {0};                 
-             -           // 图像以及边界缓冲区信息
-   44          
-   45          static fifo_struct      seekfree_assistant_fifo = {0};
-   46          static uint8            seekfree_assistant_buffer[SEEKFREE_ASSISTANT_BUFFER_SIZE] = {0};                        /
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 2   
+*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
+*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
+*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
+*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
+*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
+*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
+*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
+*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
+*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
+*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
+*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
+*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 29/07/26  01:04:27  PAGE 2   
 
-             -/ 数据存放数组
-   47          float                   seekfree_assistant_parameter[SEEKFREE_ASSISTANT_SET_PARAMETR_COUNT] = {0};      //
-             - 保存接收到的参数
-   48          vuint8                                  seekfree_assistant_parameter_update_flag[SEEKFREE_ASSISTANT_SET_PARAMETR_COUNT] = {0};
-   49          //-------------------------------------------------------------------------------------------------------
-             -------------
-   50          // 函数简介     逐飞助手求和函数
-   51          // 参数说明     *buffer         需要校验的数据地址
-   52          // 参数说明     length          校验长度
-   53          // 返回参数     uint8           和值
-   54          // 使用示例
-   55          //-------------------------------------------------------------------------------------------------------
-             -------------
-   56          static uint8 seekfree_assistant_sum (uint8 *buffer, uint32 length)
-   57          {
-   58   1          uint8 temp_sum = 0;
-   59   1      
-   60   1          while(length--)
-   61   1          {
-   62   2              temp_sum += *buffer++;
-   63   2          }
-   64   1      
-   65   1          return temp_sum;
-   66   1      }
-   67          
-   68          //-------------------------------------------------------------------------------------------------------
-             -------------
-   69          // 函数简介     逐飞助手 图像发送函数
-   70          // 参数说明     camera_type     摄像头类型
-   71          // 参数说明     *image_addr     图像首地址
-   72          // 参数说明     boundary_num    图像中包含边界数量
-   73          // 参数说明     width           图像宽度
-   74          // 参数说明     height          图像高度
-   75          // 返回参数     void
-   76          // 使用示例
-   77          //-------------------------------------------------------------------------------------------------------
-             -------------
-   78          void seekfree_assistant_camera_data_send (seekfree_assistant_image_type_enum camera_type, void *image_add
-             -r, uint8 boundary_num, uint16 width, uint16 height)
-   79          {
-   80   1          uint32 image_size = 0;
-   81   1      
-   82   1          seekfree_assistant_camera_data.head           = SEEKFREE_ASSISTANT_SEND_HEAD;
-   83   1          seekfree_assistant_camera_data.function       = SEEKFREE_ASSISTANT_CAMERA_FUNCTION;
-   84   1          seekfree_assistant_camera_data.camera_type    = (camera_type << 5) | ((image_addr != NULL ? 0 : 1) <<
-             - 4) | boundary_num;
-   85   1          // 写入包长度信息，仅包含协议部分
-   86   1          seekfree_assistant_camera_data.length         = sizeof(seekfree_assistant_camera_struct);
-   87   1          seekfree_assistant_camera_data.image_width    = ((((uint16)width << 8)&0xFF00) | ((uint16)width >> 8)
-             -);
-   88   1          seekfree_assistant_camera_data.image_height   = ((((uint16)height << 8)&0xFF00) | ((uint16)height >> 
-             -8));
-   89   1      
-   90   1          // 首先发送帧头、功能、摄像头类型、以及宽度高度等信息
-   91   1          seekfree_assistant_transfer_callback((const uint8 *)&seekfree_assistant_camera_data, sizeof(seekfree_
-             -assistant_camera_struct));
-   92   1      
-   93   1          // 根据摄像头类型计算图像大小
-   94   1          switch(camera_type)
-   95   1          {
-   96   2              case SEEKFREE_ASSISTANT_OV7725_BIN:
-   97   2              {
-   98   3                  image_size = width * height / 8;
-   99   3              }break;
-  100   2      
-  101   2              case SEEKFREE_ASSISTANT_MT9V03X:
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 3   
+*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
+*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
+*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
+*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
+*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
+             -pecifiers
+*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
+*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
+*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
 
-  102   2              {
-  103   3                  image_size = width * height;
-  104   3              }break;
-  105   2      
-  106   2              case SEEKFREE_ASSISTANT_SCC8660:
-  107   2              {
-  108   3                  image_size = width * height * 2;
-  109   3              }break;
-  110   2          }
-  111   1      
-  112   1          // 发送图像数据
-  113   1          if(NULL != image_addr)
-  114   1          {
-  115   2              seekfree_assistant_transfer_callback(image_addr, image_size);
-  116   2          }
-  117   1      }
-  118          
-  119          //-------------------------------------------------------------------------------------------------------
-             -------------
-  120          // 函数简介     逐飞助手图像信息配置函数
-  121          // 参数说明     camera_type     图像类型
-  122          // 参数说明     image_addr      图像地址    如果传递NULL参数则表示只发送边线信息�
-             -��上位机
-  123          // 参数说明     width           图像宽度
-  124          // 参数说明     height          图像高度
-  125          // 返回参数     void
-  126          // 使用示例                     seekfree_assistant_camera_information_config(SEEKFREE_ASSISTANT_MT9V0
-             -3X, mt9v03x_image[0], MT9V03X_W, MT9V03X_H);
-  127          // 备注信息
-  128          //-------------------------------------------------------------------------------------------------------
-             -------------
-  129          void seekfree_assistant_camera_information_config (seekfree_assistant_image_type_enum camera_type, void *
-             -image_addr, uint16 width, uint16 height)
-  130          {
-  131   1          seekfree_assistant_camera_dot_data.head       = SEEKFREE_ASSISTANT_SEND_HEAD;
-  132   1          seekfree_assistant_camera_dot_data.function   = SEEKFREE_ASSISTANT_CAMERA_DOT_FUNCTION;
-  133   1          // 写入包长度信息
-  134   1          seekfree_assistant_camera_dot_data.length     = sizeof(seekfree_assistant_camera_dot_struct);
-  135   1      
-  136   1          seekfree_assistant_camera_buffer.camera_type  = camera_type;
-  137   1          seekfree_assistant_camera_buffer.image_addr   = image_addr;
-  138   1          seekfree_assistant_camera_buffer.width        = width;
-  139   1          seekfree_assistant_camera_buffer.height       = height;
-  140   1      }
-  141          
-  142          //-------------------------------------------------------------------------------------------------------
-             -------------
-  143          // 函数简介     逐飞助手 虚拟示波器发送函数
-  144          // 参数说明     *seekfree_assistant_oscilloscope  示波器数据结构体
-  145          // 返回参数     void
-  146          // 使用示例     seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
-  147          //-------------------------------------------------------------------------------------------------------
-             -------------
-  148          void seekfree_assistant_oscilloscope_send (seekfree_assistant_oscilloscope_struct *seekfree_assistant_osc
-             -illoscope)
-  149          {
-  150   1          uint8 packet_size = 0;
-  151   1              uint8 i = 0;
-  152   1              seekfree_assistant_oscilloscope_struct temp_oscilloscope = {0};
-  153   1              
-  154   1              temp_oscilloscope.channel_num = seekfree_assistant_oscilloscope->channel_num & 0x0f;
-  155   1              
-  156   1              // 由于大小端不匹配，所以需要交换。
-  157   1              for(i = 0; i < temp_oscilloscope.channel_num; i++)
-  158   1              {
-  159   2                      ((uint8 *)&temp_oscilloscope.dat[i])[0] = ((uint8 *)&seekfree_assistant_oscilloscope->dat[i])[3];
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 4   
-
-  160   2                      ((uint8 *)&temp_oscilloscope.dat[i])[1] = ((uint8 *)&seekfree_assistant_oscilloscope->dat[i])[2];
-  161   2                      ((uint8 *)&temp_oscilloscope.dat[i])[2] = ((uint8 *)&seekfree_assistant_oscilloscope->dat[i])[1];
-  162   2                      ((uint8 *)&temp_oscilloscope.dat[i])[3] = ((uint8 *)&seekfree_assistant_oscilloscope->dat[i])[0];
-  163   2              }
-  164   1      
-  165   1          // 帧头
-  166   1          temp_oscilloscope.head         = SEEKFREE_ASSISTANT_SEND_HEAD;
-  167   1      
-  168   1          // 写入包长度信息
-  169   1          packet_size                     = sizeof(temp_oscilloscope) - (SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_CO
-             -UNT - temp_oscilloscope.channel_num) * 4;
-  170   1          temp_oscilloscope.length       = packet_size;
-  171   1      
-  172   1          // 写入功能字与通道数量
-  173   1          temp_oscilloscope.channel_num |= SEEKFREE_ASSISTANT_CAMERA_OSCILLOSCOPE;
-  174   1      
-  175   1          // 和校验计算
-  176   1          temp_oscilloscope.check_sum    = 0;
-  177   1          temp_oscilloscope.check_sum    = seekfree_assistant_sum((uint8 *)&temp_oscilloscope, packet_size);
-  178   1      
-  179   1          // 数据在调用本函数之前，由用户将需要发送的数据写入temp_oscilloscope.data[]
-  180   1      
-  181   1          seekfree_assistant_transfer_callback((const uint8 *)&temp_oscilloscope, packet_size);
-  182   1      }
-  183          
-  184          void seekfree_assistant_camera_dot_send (seekfree_assistant_camera_buffer_struct *buffer)
-  185          {
-  186   1          uint8  i;
-  187   1          uint16 dot_bytes = 0;   // 点字节数量
-  188   1      
-  189   1          dot_bytes = seekfree_assistant_camera_dot_data.dot_num;
-  190   1              dot_bytes = ((((uint16)dot_bytes << 8)&0xFF00) | ((uint16)dot_bytes >> 8));
-  191   1          if(seekfree_assistant_camera_dot_data.dot_type & (1 << 5))
-  192   1          {
-  193   2              dot_bytes *= 2;
-  194   2          }
-  195   1      
-  196   1          // 首先发送帧头、功能、边界编号、坐标长度、点个数
-  197   1          seekfree_assistant_transfer_callback((const uint8 *)&seekfree_assistant_camera_dot_data, sizeof(seekf
-             -ree_assistant_camera_dot_struct));
-  198   1      
-  199   1          for(i=0; i < SEEKFREE_ASSISTANT_CAMERA_MAX_BOUNDARY; i++)
-  200   1          {
-  201   2              // 判断是否发送横坐标数据
-  202   2              if(NULL != buffer->boundary_x[i])
-  203   2              {
-  204   3                  seekfree_assistant_transfer_callback((const uint8 *)buffer->boundary_x[i], dot_bytes);
-  205   3              }
-  206   2      
-  207   2              // 判断是否发送纵坐标数据
-  208   2              if(NULL != buffer->boundary_y[i])
-  209   2              {
-  210   3                  // 如果没有纵坐标数据，则表示每一行只有一个边界
-  211   3                  // 指定了横纵坐标数据，这种方式可以实现同一行多个边界的情况，例
-             -如搜线算法能够搜索出回弯。
-  212   3                  seekfree_assistant_transfer_callback((const uint8 *)buffer->boundary_y[i], dot_bytes);
-  213   3              }
-  214   2          }
-  215   1      }
-  216          
-  217          //-------------------------------------------------------------------------------------------------------
-             -------------
-  218          // 函数简介     逐飞助手图像边线发送配置函数
-  219          // 参数说明     boundary_type   边界类型
-  220          // 参数说明     dot_num         一条边界有多少个点
-  221          // 参数说明     dot_x1          存放边线1横坐标的地址  如果传递NULL参数则表示不�
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 5   
-
-             -�送边线1
-  222          // 参数说明     dot_x2          存放边线2横坐标的地址  如果传递NULL参数则表示不�
-             -�送边线2
-  223          // 参数说明     dot_x3          存放边线3横坐标的地址  如果传递NULL参数则表示不�
-             -�送边线3
-  224          // 参数说明     dot_y1          存放边线1纵坐标的地址  如果传递NULL参数则表示不�
-             -�送边线1
-  225          // 参数说明     dot_y2          存放边线2纵坐标的地址  如果传递NULL参数则表示不�
-             -�送边线2
-  226          // 参数说明     dot_y3          存放边线3纵坐标的地址  如果传递NULL参数则表示不�
-             -�送边线3
-  227          // 返回参数     void
-  228          // 使用示例                     seekfree_assistant_camera_config(X_BOUNDARY, MT9V03X_H, x1_boundary, 
-             -x2_boundary, x3_boundary, NULL, NULL, NULL);     // 图像发送时包含三条边线，边线只有横坐标
-  229          // 使用示例                     seekfree_assistant_camera_config(Y_BOUNDARY, MT9V03X_W, NULL, NULL, N
-             -ULL, y1_boundary, y2_boundary, y3_boundary);     // 图像发送时包含三条边线，边线只有纵坐标
-  230          // 使用示例                     seekfree_assistant_camera_config(XY_BOUNDARY, 160, xy_x1_boundary, xy
-             -_x2_boundary, xy_x3_boundary, xy_y1_boundary, xy_y2_boundary, xy_y3_boundary);   // 图像发送时包含三条边线，
-             -边线包含横纵坐标
-  231          // 备注信息
-  232          //-------------------------------------------------------------------------------------------------------
-             -------------
-  233          void seekfree_assistant_camera_boundary_config (seekfree_assistant_boundary_type_enum boundary_type, uint
-             -16 dot_num, void *dot_x1, void *dot_x2, void *dot_x3, void *dot_y1, void *dot_y2, void *dot_y3)
-  234          {
-  235   1          uint8 i = 0;
-  236   1          uint8 boundary_num = 0;
-  237   1          uint8 boundary_data_type = 0;
-  238   1      
-  239   1          seekfree_assistant_camera_dot_data.dot_num    = ((((uint16)dot_num << 8)&0xFF00) | ((uint16)dot_num >
-             -> 8));;
-  240   1          seekfree_assistant_camera_dot_data.valid_flag = 0;
-  241   1          for(i = 0; i < 3; i++)
-  242   1          {
-  243   2              seekfree_assistant_camera_buffer.boundary_x[i] = NULL;
-  244   2              seekfree_assistant_camera_buffer.boundary_y[i] = NULL;
-  245   2          }
-  246   1      
-  247   1          switch(boundary_type)
-  248   1          {
-  249   2              case X_BOUNDARY:
-  250   2              {
-  251   3                  if(NULL != dot_x1)
-  252   3                  {
-  253   4                      boundary_num++;
-  254   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 0;
-  255   4                      seekfree_assistant_camera_buffer.boundary_x[i++] = dot_x1;
-  256   4                  }
-  257   3                  if(NULL != dot_x2)
-  258   3                  {
-  259   4                      boundary_num++;
-  260   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 1;
-  261   4                      seekfree_assistant_camera_buffer.boundary_x[i++] = dot_x2;
-  262   4                  }
-  263   3                  if(NULL != dot_x3)
-  264   3                  {
-  265   4                      boundary_num++;
-  266   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 2;
-  267   4                      seekfree_assistant_camera_buffer.boundary_x[i++] = dot_x3;
-  268   4                  }
-  269   3      
-  270   3                  if(255 < seekfree_assistant_camera_buffer.height)
-  271   3                  {
-  272   4                      boundary_data_type = 1;
-  273   4                  }
-  274   3              }break;
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 6   
-
-  275   2      
-  276   2              case Y_BOUNDARY:
-  277   2              {
-  278   3                  if(NULL != dot_y1)
-  279   3                  {
-  280   4                      boundary_num++;
-  281   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 0;
-  282   4                      seekfree_assistant_camera_buffer.boundary_y[i++] = dot_y1;
-  283   4                  }
-  284   3                  if(NULL != dot_y2)
-  285   3                  {
-  286   4                      boundary_num++;
-  287   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 1;
-  288   4                      seekfree_assistant_camera_buffer.boundary_y[i++] = dot_y2;
-  289   4                  }
-  290   3                  if(NULL != dot_y3)
-  291   3                  {
-  292   4                      boundary_num++;
-  293   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 2;
-  294   4                      seekfree_assistant_camera_buffer.boundary_y[i++] = dot_y3;
-  295   4                  }
-  296   3      
-  297   3                  if(255 < seekfree_assistant_camera_buffer.width)
-  298   3                  {
-  299   4                      boundary_data_type = 1;
-  300   4                  }
-  301   3              }break;
-  302   2      
-  303   2              case XY_BOUNDARY:
-  304   2              {
-  305   3                  if((NULL != dot_x1) && (NULL != dot_y1))
-  306   3                  {
-  307   4                      boundary_num++;
-  308   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 0;
-  309   4                      seekfree_assistant_camera_buffer.boundary_x[i]   = dot_x1;
-  310   4                      seekfree_assistant_camera_buffer.boundary_y[i++] = dot_y1;
-  311   4                  }
-  312   3                  if((NULL != dot_x2) && (NULL != dot_y2))
-  313   3                  {
-  314   4                      boundary_num++;
-  315   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 1;
-  316   4                      seekfree_assistant_camera_buffer.boundary_x[i]   = dot_x2;
-  317   4                      seekfree_assistant_camera_buffer.boundary_y[i++] = dot_y2;
-  318   4                  }
-  319   3                  if((NULL != dot_x3) && (NULL != dot_y3))
-  320   3                  {
-  321   4                      boundary_num++;
-  322   4                      seekfree_assistant_camera_dot_data.valid_flag |= 1 << 2;
-  323   4                      seekfree_assistant_camera_buffer.boundary_x[i]   = dot_x3;
-  324   4                      seekfree_assistant_camera_buffer.boundary_y[i++] = dot_y3;
-  325   4                  }
-  326   3      
-  327   3                  if((255 < seekfree_assistant_camera_buffer.width) || (255 < seekfree_assistant_camera_buffer.
-             -height))
-  328   3                  {
-  329   4                      boundary_data_type = 1;
-  330   4                  }
-  331   3              }break;
-  332   2      
-  333   2              case NO_BOUNDARY:break;
-  334   2          }
-  335   1      
-  336   1          seekfree_assistant_camera_dot_data.dot_type   = (boundary_type << 6) | (boundary_data_type << 5) | bo
-             -undary_num;
-  337   1      }
-  338          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 7   
-
-             -------------
-  339          // 函数简介     逐飞助手解析接收到的数据
-  340          // 参数说明     void
-  341          // 返回参数     void
-  342          // 使用示例     函数只需要放到周期运行的PIT中断或者主循环即可
-  343          //-------------------------------------------------------------------------------------------------------
-             -------------
-  344          void seekfree_assistant_data_analysis (void)
-  345          {
-  346   1      
-  347   1          uint8  temp_sum = 0;
-  348   1          uint32 read_length = 0;
-  349   1              uint16 struct_len = sizeof(seekfree_assistant_parameter_struct);
-  350   1          seekfree_assistant_parameter_struct *receive_packet;
-  351   1              
-  352   1          // 这里使用uint32进行定义，目的是为了保证数组四字节对齐
-  353   1          uint32  temp_buffer[SEEKFREE_ASSISTANT_BUFFER_SIZE / 4] = {0};
-  354   1      
-  355   1              uint32 i = 0;
-  356   1              
-  357   1              bit flag = 0;
-  358   1              flag = EA;
-  359   1              // 防止fifo在读取的同时，又通过中断写入而数据错乱。
-  360   1              EA = 0;
-  361   1              
-  362   1          // 尝试读取数据, 如果不是自定义的传输方式则从接收回调中读取数据
-  363   1          read_length = seekfree_assistant_receive_callback((uint8 *)temp_buffer, SEEKFREE_ASSISTANT_BUFFER_SIZ
-             -E);
-  364   1              
-  365   1          if(read_length)
-  366   1          {
-  367   2              // 将读取到的数据写入FIFO
-  368   2              fifo_write_buffer(&seekfree_assistant_fifo, (uint8 *)temp_buffer, read_length);
-  369   2          }
-  370   1              
-  371   1          while(struct_len <= fifo_used(&seekfree_assistant_fifo))
-  372   1          {
-  373   2      
-  374   2              read_length = sizeof(seekfree_assistant_parameter_struct);
-  375   2              fifo_read_buffer(&seekfree_assistant_fifo, (uint8 *)temp_buffer, &read_length, FIFO_READ_ONLY);
-  376   2              if(SEEKFREE_ASSISTANT_RECEIVE_HEAD != ((uint8 *)temp_buffer)[0])
-  377   2              {
-  378   3                  // 没有帧头则从FIFO中去掉第一个数据
-  379   3                  read_length = 1;
-  380   3              }
-  381   2              else
-  382   2              {
-  383   3      
-  384   3                  // 找到帧头
-  385   3                  receive_packet = (seekfree_assistant_parameter_struct *)temp_buffer;
-  386   3                  temp_sum = receive_packet->check_sum;
-  387   3                  receive_packet->check_sum = 0;
-  388   3      
-  389   3                  if(temp_sum == seekfree_assistant_sum((uint8 *)temp_buffer, sizeof(seekfree_assistant_paramet
-             -er_struct)))
-  390   3                  {
-  391   4                      // 和校验成功保存数据
-  392   4                              
-  393   4                                      // 由于大小端不匹配，所以需要交换。
-  394   4                                      ((uint8 *)&seekfree_assistant_parameter[receive_packet->channel - 1])[3] = ((uint8 *)&receive_packet-
-             ->dat)[0];
-  395   4                                      ((uint8 *)&seekfree_assistant_parameter[receive_packet->channel - 1])[2] = ((uint8 *)&receive_packet-
-             ->dat)[1];
-  396   4                                      ((uint8 *)&seekfree_assistant_parameter[receive_packet->channel - 1])[1] = ((uint8 *)&receive_packet-
-             ->dat)[2];
-  397   4                                      ((uint8 *)&seekfree_assistant_parameter[receive_packet->channel - 1])[0] = ((uint8 *)&receive_packet-
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 8   
-
-             ->dat)[3];
-  398   4                                      seekfree_assistant_parameter_update_flag[receive_packet->channel - 1] = 1;
-  399   4                  }
-  400   3                  else
-  401   3                  {
-  402   4                      read_length = 1;
-  403   4                  }
-  404   3              }
-  405   2              
-  406   2              // 丢弃无需使用的数据
-  407   2              fifo_read_buffer(&seekfree_assistant_fifo, (uint8 *)temp_buffer, &read_length, FIFO_READ_AND_CLEA
-             -N);
-  408   2          }
-  409   1              EA = flag;
-  410   1      }
-  411          //-------------------------------------------------------------------------------------------------------
-             -------------
-  412          // 函数简介     逐飞助手发送摄像头图像
-  413          // 参数说明     void
-  414          // 返回参数     void
-  415          // 使用示例
-  416          // 备注信息     在调用图像发送函数之前，请务必调用一次seekfree_assistant_camera_co
-             -nfig函数，将对应的参数设置好
-  417          //-------------------------------------------------------------------------------------------------------
-             -------------
-  418          void seekfree_assistant_camera_send (void)
-  419          {
-  420   1      
-  421   1          seekfree_assistant_camera_data_send(seekfree_assistant_camera_buffer.camera_type, seekfree_assistant_
-             -camera_buffer.image_addr, seekfree_assistant_camera_dot_data.dot_type & 0x0f, seekfree_assistant_camera_buffer.width, se
-             -ekfree_assistant_camera_buffer.height);
-  422   1      
-  423   1          if(seekfree_assistant_camera_dot_data.dot_type & 0x0f)
-  424   1          {
-  425   2              seekfree_assistant_camera_dot_send(&seekfree_assistant_camera_buffer);
-  426   2          }
-  427   1      }
-  428          
-  429          //-------------------------------------------------------------------------------------------------------
-             -------------
-  430          // 函数简介     逐飞助手 初始化
-  431          // 参数说明
-  432          // 返回参数     void
-  433          // 使用示例
-  434          //-------------------------------------------------------------------------------------------------------
-             -------------
-  435          void seekfree_assistant_init ()
-  436          {
-  437   1          fifo_init(&seekfree_assistant_fifo,  FIFO_DATA_8BIT, seekfree_assistant_buffer, SEEKFREE_ASSISTANT_BU
-             -FFER_SIZE);
-  438   1      }
-  439          
-  440          
-
-
-Module Information          Static   Overlayable
-------------------------------------------------
-  code size            =    ------     ------
-  ecode size           =      3316     ------
-  data size            =    ------     ------
-  idata size           =    ------     ------
-  pdata size           =    ------     ------
-  xdata size           =       574     ------
-  xdata-const size     =    ------     ------
-  edata size           =    ------     ------
-  bit size             =         1     ------
-  ebit size            =    ------     ------
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 27/07/26  14:29:34  PAGE 9   
-
-  bitaddressable size  =    ------     ------
-  ebitaddressable size =    ------     ------
-  far data size        =    ------     ------
-  huge data size       =    ------     ------
-  const size           =    ------     ------
-  hconst size          =       521     ------
-End of Module Information.
-
-
-C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)

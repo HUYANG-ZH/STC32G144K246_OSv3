@@ -14,10 +14,10 @@
 
 static const uint8 boot_request_prefix[4] = {0x53U, 0x42U, 0x4CU, 0x52U};
 static volatile uint8 service_boot_request_pending = 0U;
-static uint8 boot_request_frame[BOOT_REQUEST_FRAME_SIZE];
-static uint8 boot_request_index = 0U;
+static volatile uint8 boot_request_frame[BOOT_REQUEST_FRAME_SIZE];
+static volatile uint8 boot_request_index = 0U;
 
-unsigned long xdata boot_request_dfu_flag _at_ 0xfffc;
+volatile unsigned long xdata boot_request_dfu_flag _at_ 0xfffc;
 
 static uint16 service_boot_request_crc16(const uint8 *buffer, uint8 length)
 {
@@ -154,9 +154,14 @@ void service_boot_request_process(void)
         IAP_CONTR = 0x60;
     }
 
+    #pragma SAVE         // 保存当前的编译器优化状态
+    #pragma OPTIMIZE(0)  // 局部将优化级别降为 0（关闭优化，OT(0) 也可以）
+
     while(1)
     {
     }
+
+    #pragma RESTORE      // 恢复为之前全局设置的高优化级别（如 O8）
 }
 
 void service_boot_request_init(void)

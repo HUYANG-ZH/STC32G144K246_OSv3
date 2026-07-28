@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_tft180
 OBJECT MODULE PLACED IN .\out_file\zf_device_tft180.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_tft180.c LARGE ROM(HUGE) WARNINGL
-                    -EVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
+                    -EVEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
                     -e;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librar
                     -ies\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_tft1
                     -80.lst) OBJECT(.\out_file\zf_device_tft180.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   GND                 电源地
    47          *                   最大分辨率160*128
    48          *                   ------------------------------------
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 2   
 
    49          *********************************************************************************************************
              -***********/
@@ -134,7 +134,7 @@ stmt  level    source
   107   1          zf_assert(y1 < tft180_y_max);
   108   1          zf_assert(x2 < tft180_x_max);
   109   1          zf_assert(y2 < tft180_y_max);
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 3   
 
   110   1      
   111   1          if(tft180_display_dir==TFT180_PORTAIT || tft180_display_dir==TFT180_PORTAIT_180)
@@ -202,7 +202,7 @@ stmt  level    source
   167   1          if(dir < 2)
   168   1          {
   169   2              tft180_x_max = 128;
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 4   
 
   170   2              tft180_y_max = 160;
   171   2          }
@@ -270,7 +270,7 @@ stmt  level    source
   223   1          zf_assert(y < tft180_y_max);
   224   1              
   225   1          for(i=0; i<16; i++)
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 5   
 
   226   1          {
   227   2              tft180_set_region(x,y+i,x+7,y+i);
@@ -338,7 +338,7 @@ stmt  level    source
   284   2          }
   285   1          else
   286   1              tft180_show_char(x,y,' ');
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 6   
 
   287   1          
   288   1          a[0] = dat/100;
@@ -406,7 +406,7 @@ stmt  level    source
   346   2              dat = -dat;
   347   2          }
   348   1          else    tft180_show_char(x,y,' ');
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 7   
 
   349   1      
   350   1          a[0] = dat/10000;
@@ -474,7 +474,7 @@ stmt  level    source
   407   1          uint8   length;
   408   1              
   409   1          zf_assert(x < tft180_x_max);
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 8   
 
   410   1          zf_assert(y < tft180_y_max);
   411   1      
@@ -542,7 +542,7 @@ stmt  level    source
   467   1          while(0>start)                                                              // 整数位不够  末�
              -�应该填充空格
   468   1          {
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 9   
 
   469   2              buff[end] = ' ';
   470   2              end++;
@@ -610,7 +610,7 @@ stmt  level    source
   524   4                      color = color | (((0x003f) & ((temp) >> 2)) << 5);
   525   4                      color = color | (0x001f & ((temp) >> 3));
   526   4                      data_buffer[i] = (color);
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 10  
 
   527   4                  }
   528   3                  else if(temp < threshold)
@@ -678,7 +678,7 @@ stmt  level    source
              -------------
   585          void tft180_init (void)
   586          {
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 11  
 
   587   1      #if (TFT180_USE_INTERFACE==SOFT_SPI)  
                    soft_spi_init(&tft180_spi, SPI_MODE0, TFT180_SOFT_SPI_DELAY, TFT180_SCL_PIN, TFT180_SDA_PIN, SOFT_SPI
@@ -746,7 +746,7 @@ stmt  level    source
   648   1      
   649   1          tft180_write_index(0xC5);
   650   1          tft180_write_8bit_data(0x0E);
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 12  
 
   651   1      
   652   1          tft180_write_index(0x36);
@@ -814,7 +814,7 @@ stmt  level    source
   710   1          tft180_write_8bit_data(0x01);
   711   1          tft180_write_index(0xF6);
   712   1          tft180_write_8bit_data(0x00);
-C251 COMPILER V5.60.0,  zf_device_tft180                                                   27/07/26  14:29:31  PAGE 13  
+C251 COMPILER V5.60.0,  zf_device_tft180                                                   29/07/26  01:04:24  PAGE 13  
 
   713   1      
   714   1          tft180_write_index(0x3A);
@@ -828,11 +828,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      5730     ------
+  ecode size           =      4557     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       890     ------
+  xdata size           =         8        818
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
