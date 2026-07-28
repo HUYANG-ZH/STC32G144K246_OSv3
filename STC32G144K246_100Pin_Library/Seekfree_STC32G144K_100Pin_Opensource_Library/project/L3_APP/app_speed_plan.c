@@ -14,7 +14,7 @@
 #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
 #define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
 
-static float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
+static volatile float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
 static volatile float speed_plan_linear_mps = 0.0f;
 
 void app_speed_plan_control_step(void);
@@ -89,7 +89,7 @@ static float app_speed_plan_ramp(float current, float target)
 static void app_speed_plan_register_packet(void)
 {
     (void)service_packet_add_variable("speed_plan_min_ratio",
-            &speed_plan_min_ratio, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
+            (float *)&speed_plan_min_ratio, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
 }
 
 void app_speed_plan_init(void)

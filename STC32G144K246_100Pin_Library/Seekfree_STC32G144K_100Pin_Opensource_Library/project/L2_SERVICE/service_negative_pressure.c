@@ -8,7 +8,7 @@
 #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
 #define NEGATIVE_PRESSURE_PACKET_COUNT      (1U)
 
-static uint8 negative_pressure_percent = 0U;
+static volatile uint8 negative_pressure_percent = 0U;
 static float negative_pressure_percent_config = 0.0f;
 static uint8 negative_pressure_config_percent = 0U;
 static volatile uint8 negative_pressure_requested_percent = 0U;

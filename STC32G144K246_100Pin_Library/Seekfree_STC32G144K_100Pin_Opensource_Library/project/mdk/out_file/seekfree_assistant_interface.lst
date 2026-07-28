@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  seekfree_assistant_interface                                       29/07/26  01:04:28  PAGE 1   
+C251 COMPILER V5.60.0,  seekfree_assistant_interface                                       29/07/26  01:27:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE seekfree_assistant_interface
@@ -53,41 +53,108 @@ stmt  level    source
              -***********/
    35          
    36          #include "seekfree_assistant.h"
-*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
-*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
-*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
-*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
-*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
-*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
-*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
-*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
-*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
-*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
-*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
-*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-C251 COMPILER V5.60.0,  seekfree_assistant_interface                                       29/07/26  01:04:28  PAGE 2   
+   37          
+   38          //-------------------------------------------------------------------------------------------------------
+             -------------
+   39          // 函数简介     逐飞助手发送函数
+   40          // 参数说明     *buff           需要发送的数据地址
+   41          // 参数说明     length          需要发送的长度
+   42          // 返回参数     uint32          剩余未发送数据长度
+   43          // 使用示例
+   44          //-------------------------------------------------------------------------------------------------------
+             -------------
+   45          uint32 (*seekfree_assistant_transfer_callback)   (const uint8 *buff, uint32 length);
+   46          
+   47          
+C251 COMPILER V5.60.0,  seekfree_assistant_interface                                       29/07/26  01:27:20  PAGE 2   
 
-*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
-*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
-*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
-             -pecifiers
-*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
+   48          //-------------------------------------------------------------------------------------------------------
+             -------------
+   49          // 函数简介     逐飞助手接收数据函数
+   50          // 参数说明     *buff           需要接收的数据地址
+   51          // 参数说明     length          要接收的数据最大长度
+   52          // 返回参数     uint32          接收到的数据长度
+   53          // 使用示例
+   54          //-------------------------------------------------------------------------------------------------------
+             -------------
+   55          uint32 (*seekfree_assistant_receive_callback)    (uint8 *buff, uint32 length);
+   56          
+   57          
+   58          //-------------------------------------------------------------------------------------------------------
+             -------------
+   59          // 函数简介     逐飞助手接口 初始化
+   60          // 参数说明
+   61          // 返回参数     void
+   62          // 使用示例     seekfree_assistant_interface_init(SEEKFREE_ASSISTANT_WIFI_SPI); 使用高速WIFI SPI�
+             -��块进行数据收发
+   63          // 备注         需要自行调用设备的初始化，例如使用无线转串口进行数据的收发
+             -，则需要自行调用无线转串口的初始化，然后再调用seekfree_assistant_interface_init完成逐飞助手
+             -的接口初始化
+   64          //-------------------------------------------------------------------------------------------------------
+             -------------
+   65          void seekfree_assistant_interface_init (seekfree_assistant_transfer_device_enum transfer_device)
+   66          {
+   67   1          switch(transfer_device)
+   68   1          {
+   69   2              case SEEKFREE_ASSISTANT_DEBUG_UART:
+   70   2              {
+   71   3                  seekfree_assistant_transfer_callback = debug_send_buffer;
+   72   3                  seekfree_assistant_receive_callback = debug_read_buffer;
+   73   3              }break;
+   74   2              
+   75   2              case SEEKFREE_ASSISTANT_WIRELESS_UART:
+   76   2              {
+   77   3                  // seekfree_assistant_transfer_callback = wireless_uart_send_buffer;
+   78   3                  // seekfree_assistant_receive_callback = wireless_uart_read_buffer;
+   79   3              }break;
+   80   2              
+   81   2      
+   82   2              case SEEKFREE_ASSISTANT_BLE6A20:
+   83   2              {
+   84   3                  // seekfree_assistant_transfer_callback = ble6a20_send_buffer;
+   85   3                  // seekfree_assistant_receive_callback = ble6a20_read_buffer;
+   86   3              }break;
+   87   2      
+   88   2                      
+   89   2              case SEEKFREE_ASSISTANT_WIFI_SPI:
+   90   2              {
+   91   3                  seekfree_assistant_transfer_callback = wifi_spi_send_buffer;
+   92   3                  seekfree_assistant_receive_callback = wifi_spi_read_buffer;
+   93   3              }break;
+   94   2              
+   95   2              case SEEKFREE_ASSISTANT_CUSTOM:
+   96   2              {         
+   97   3                  // 根据自己的需求 自行实现seekfree_assistant_transfer与seekfree_assistant_receive
+             -函数，完成数据的收发
+   98   3                  
+   99   3              }break;
+  100   2          }
+  101   1      }
+  102          
+  103          
 
-C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)
+
+C251 COMPILER V5.60.0,  seekfree_assistant_interface                                       29/07/26  01:27:20  PAGE 3   
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =        73     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =         8     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

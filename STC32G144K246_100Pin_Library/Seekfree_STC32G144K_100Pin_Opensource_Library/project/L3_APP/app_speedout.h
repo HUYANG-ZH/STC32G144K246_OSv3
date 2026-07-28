@@ -42,8 +42,8 @@ typedef struct
     float enabled;
 } app_speedout_data_t;
 
-extern app_speedout_config_t app_speedout_config;
-extern app_speedout_data_t app_speedout_data;
+extern volatile app_speedout_config_t app_speedout_config;
+extern volatile app_speedout_data_t app_speedout_data;
 
 void app_speedout_init(void);
 void app_speedout_debug(void);

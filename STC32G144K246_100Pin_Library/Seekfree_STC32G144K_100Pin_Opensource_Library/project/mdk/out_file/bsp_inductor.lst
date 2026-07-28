@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_inductor                                                       29/07/26  01:04:31  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_inductor                                                       29/07/26  01:27:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_inductor
@@ -12,39 +12,260 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_inductor.c LARG
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
-*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
-*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
-*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
-*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
-*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
-*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
-*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
-*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
-*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
-*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
-*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
-*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
-*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
-             -pecifiers
-*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
+    2          #include "bsp_inductor.h"
+    3          
+    4          #define ADC_CHANNEL_1 ADC2_CH3_P03
+    5          #define ADC_CHANNEL_2 ADC2_CH4_P04
+    6          #define ADC_CHANNEL_M ADC2_CH5_P05
+    7          #define ADC_CHANNEL_3 ADC2_CH6_P06
+    8          #define ADC_CHANNEL_4 ADC2_CH7_P07
+    9          
+   10          /*
+   11           * ADC2 的 DMA 格式：每通道占用 2 * samples + 4 字节，最后两个字节为硬件平均值。
+   12           * 0x0A 对应每通道 8 次转换；5 个通道一次扫描由 DMA 完成，CPU 不轮询转换完成�
+             -�。
+   13           */
+   14          #define BSP_INDUCTOR_DMA_CHANNEL_COUNT       (5U)
+   15          #define BSP_INDUCTOR_DMA_SAMPLES              (8U)
+   16          #define BSP_INDUCTOR_DMA_CFG2                 (0x0AU)
+   17          #define BSP_INDUCTOR_DMA_DATA_BYTES           ((BSP_INDUCTOR_DMA_SAMPLES * 2U) + 4U)
+   18          #define BSP_INDUCTOR_DMA_CHSW0                (0xF8U)     /* ADC2 CH3..CH7 */
+   19          
+   20          enum
+   21          {
+   22              BSP_INDUCTOR_DMA_CH1 = 0,
+   23              BSP_INDUCTOR_DMA_CH2,
+   24              BSP_INDUCTOR_DMA_CHM,
+   25              BSP_INDUCTOR_DMA_CH3,
+   26              BSP_INDUCTOR_DMA_CH4,
+   27          };
+   28          
+   29          typedef struct
+   30          {
+   31              inductor_rawdata_t raw;
+   32              uint32 sequence;
+   33              uint8 valid;
+   34          } bsp_inductor_snapshot_t;
+   35          
+   36          static uint8 xdata inductor_dma_buffer[BSP_INDUCTOR_DMA_CHANNEL_COUNT][BSP_INDUCTOR_DMA_DATA_BYTES];
+   37          static bsp_inductor_snapshot_t xdata inductor_snapshot[2];
+   38          static volatile uint8 inductor_published_index = 0U;
+   39          static volatile uint32 inductor_sequence = 0UL;
+   40          static volatile uint8 inductor_dma_active = 0U;
+   41          
+   42          static void bsp_inductor_dma_configure(void)
+   43          {
+   44   1          EAXFR = 1;
+   45   1          DMA_ADC2_STA = 0x00U;
+   46   1          /* Fresh samples matter to TIM4, but control timers at level 3 still preempt this IRQ. */
+   47   1          DMA_ADC2_CFG = 0x88U;      /* Completion interrupt, level 2. */
+   48   1          DMA_ADC2_RXAH = (uint8)((uint16)&inductor_dma_buffer[0][0] >> 8);
+   49   1          DMA_ADC2_RXAL = (uint8)((uint16)&inductor_dma_buffer[0][0]);
+   50   1          DMA_ADC2_CFG2 = BSP_INDUCTOR_DMA_CFG2;
+   51   1          DMA_ADC2_CHSW0 = BSP_INDUCTOR_DMA_CHSW0;
+   52   1          DMA_ADC2_CHSW1 = 0x00U;
+   53   1          DMA_ADC2_CR = 0x80U;
+   54   1      }
+C251 COMPILER V5.60.0,  bsp_inductor                                                       29/07/26  01:27:25  PAGE 2   
 
-C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)
+   55          
+   56          void bsp_inductor_init(void)
+   57          {
+   58   1          uint8 channel;
+   59   1          uint8 byte_index;
+   60   1          uint8 slot;
+   61   1      
+   62   1          adc_init(ADC_CHANNEL_1, ADC_12BIT);
+   63   1          adc_init(ADC_CHANNEL_2, ADC_12BIT);
+   64   1          adc_init(ADC_CHANNEL_M, ADC_12BIT);
+   65   1          adc_init(ADC_CHANNEL_3, ADC_12BIT);
+   66   1          adc_init(ADC_CHANNEL_4, ADC_12BIT);
+   67   1      
+   68   1          for(slot = 0U; slot < 2U; slot++)
+   69   1          {
+   70   2              inductor_snapshot[slot].raw.Channel_1 = 0U;
+   71   2              inductor_snapshot[slot].raw.Channel_2 = 0U;
+   72   2              inductor_snapshot[slot].raw.Channel_M = 0U;
+   73   2              inductor_snapshot[slot].raw.Channel_3 = 0U;
+   74   2              inductor_snapshot[slot].raw.Channel_4 = 0U;
+   75   2              inductor_snapshot[slot].sequence = 0UL;
+   76   2              inductor_snapshot[slot].valid = 0U;
+   77   2          }
+   78   1      
+   79   1          for(channel = 0U; channel < BSP_INDUCTOR_DMA_CHANNEL_COUNT; channel++)
+   80   1          {
+   81   2              for(byte_index = 0U; byte_index < BSP_INDUCTOR_DMA_DATA_BYTES; byte_index++)
+   82   2              {
+   83   3                  inductor_dma_buffer[channel][byte_index] = 0U;
+   84   3              }
+   85   2          }
+   86   1      
+   87   1          inductor_dma_active = 0U;
+   88   1          inductor_published_index = 0U;
+   89   1          inductor_sequence = 0UL;
+   90   1          bsp_inductor_dma_configure();
+   91   1          (void)bsp_inductor_request_sample();
+   92   1      }
+   93          
+   94          void bsp_inductor_debug(void)
+   95          {
+   96   1      }
+   97          
+   98          void bsp_inductor_get(inductor_rawdata_t* out_data)
+   99          {
+  100   1          (void)bsp_inductor_get_snapshot(out_data, NULL);
+  101   1      }
+  102          
+  103          uint8 bsp_inductor_get_snapshot(inductor_rawdata_t *out_data, uint32 *sequence)
+  104          {
+  105   1          uint8 ea_backup;
+  106   1          uint8 index;
+  107   1          uint8 valid;
+  108   1      
+  109   1          if(NULL == out_data)
+  110   1          {
+  111   2              return 0U;
+  112   2          }
+  113   1      
+  114   1          ea_backup = EA;
+  115   1          EA = 0;
+  116   1          index = inductor_published_index;
+  117   1          *out_data = inductor_snapshot[index].raw;
+  118   1          valid = inductor_snapshot[index].valid;
+  119   1          if(NULL != sequence)
+  120   1          {
+C251 COMPILER V5.60.0,  bsp_inductor                                                       29/07/26  01:27:25  PAGE 3   
+
+  121   2              *sequence = inductor_snapshot[index].sequence;
+  122   2          }
+  123   1          EA = ea_backup;
+  124   1          return valid;
+  125   1      }
+  126          
+  127          uint8 bsp_inductor_request_sample(void)
+  128          {
+  129   1          uint8 ea_backup;
+  130   1          uint8 started = 0U;
+  131   1      
+  132   1          ea_backup = EA;
+  133   1          EA = 0;
+  134   1          if(0U == inductor_dma_active)
+  135   1          {
+  136   2              EAXFR = 1;
+  137   2              DMA_ADC2_STA = 0x00U;
+  138   2              DMA_ADC2_CR = 0xC0U;  /* Enable + trigger one DMA scan. */
+  139   2              inductor_dma_active = 1U;
+  140   2              started = 1U;
+  141   2          }
+  142   1          EA = ea_backup;
+  143   1      
+  144   1          return started;
+  145   1      }
+  146          
+  147          void bsp_inductor_dma_irq_handler(void)
+  148          {
+  149   1          uint8 next_index;
+  150   1          uint8 ea_backup;
+  151   1          uint32 next_sequence;
+  152   1      
+  153   1          EAXFR = 1;
+  154   1          if(0U == (DMA_ADC2_STA & 0x01U))
+  155   1          {
+  156   2              return;
+  157   2          }
+  158   1      
+  159   1          DMA_ADC2_STA = 0x00U;
+  160   1          /* Write only the inactive slot.  A high-priority TIM4 can preempt this
+  161   1             low-priority DMA ISR, but it continues to read the old published slot. */
+  162   1          next_index = (uint8)(inductor_published_index ^ 1U);
+  163   1          inductor_snapshot[next_index].raw.Channel_1 =
+  164   1                  (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CH1][BSP_INDUCTOR_DMA_DATA_BYTES - 2U]
+             - << 8) |
+  165   1                  inductor_dma_buffer[BSP_INDUCTOR_DMA_CH1][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);
+  166   1          inductor_snapshot[next_index].raw.Channel_2 =
+  167   1                  (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CH2][BSP_INDUCTOR_DMA_DATA_BYTES - 2U]
+             - << 8) |
+  168   1                  inductor_dma_buffer[BSP_INDUCTOR_DMA_CH2][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);
+  169   1          inductor_snapshot[next_index].raw.Channel_M =
+  170   1                  (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CHM][BSP_INDUCTOR_DMA_DATA_BYTES - 2U]
+             - << 8) |
+  171   1                  inductor_dma_buffer[BSP_INDUCTOR_DMA_CHM][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);
+  172   1          inductor_snapshot[next_index].raw.Channel_3 =
+  173   1                  (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CH3][BSP_INDUCTOR_DMA_DATA_BYTES - 2U]
+             - << 8) |
+  174   1                  inductor_dma_buffer[BSP_INDUCTOR_DMA_CH3][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);
+  175   1          inductor_snapshot[next_index].raw.Channel_4 =
+  176   1                  (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CH4][BSP_INDUCTOR_DMA_DATA_BYTES - 2U]
+             - << 8) |
+  177   1                  inductor_dma_buffer[BSP_INDUCTOR_DMA_CH4][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);
+  178   1          next_sequence = inductor_sequence + 1UL;
+  179   1          inductor_snapshot[next_index].sequence = next_sequence;
+  180   1          inductor_snapshot[next_index].valid = 1U;
+  181   1      
+C251 COMPILER V5.60.0,  bsp_inductor                                                       29/07/26  01:27:25  PAGE 4   
+
+  182   1          /* Publish index and sequence as one short unpreemptable commit. */
+  183   1          ea_backup = EA;
+  184   1          EA = 0;
+  185   1          inductor_sequence = next_sequence;
+  186   1          inductor_published_index = next_index;
+  187   1          EA = ea_backup;
+  188   1          inductor_dma_active = 0U;
+  189   1      }
+  190          
+  191          uint8 bsp_inductor_sample_is_valid(void)
+  192          {
+  193   1          uint8 ea_backup;
+  194   1          uint8 valid;
+  195   1      
+  196   1          ea_backup = EA;
+  197   1          EA = 0;
+  198   1          valid = inductor_snapshot[inductor_published_index].valid;
+  199   1          EA = ea_backup;
+  200   1          return valid;
+  201   1      }
+  202          
+  203          uint8 bsp_inductor_is_busy(void)
+  204          {
+  205   1          return inductor_dma_active;
+  206   1      }
+  207          
+  208          void bsp_inductor_recover(void)
+  209          {
+  210   1          uint8 ea_backup;
+  211   1      
+  212   1          /* Recovery runs from background after a timeout.  It performs only
+  213   1             register writes; it never waits for ADC/DMA completion. */
+  214   1          ea_backup = EA;
+  215   1          EA = 0;
+  216   1          EAXFR = 1;
+  217   1          DMA_ADC2_CR = 0x00U;
+  218   1          DMA_ADC2_STA = 0x00U;
+  219   1          inductor_dma_active = 0U;
+  220   1          bsp_inductor_dma_configure();
+  221   1          EA = ea_backup;
+  222   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       848     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       136     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        21     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

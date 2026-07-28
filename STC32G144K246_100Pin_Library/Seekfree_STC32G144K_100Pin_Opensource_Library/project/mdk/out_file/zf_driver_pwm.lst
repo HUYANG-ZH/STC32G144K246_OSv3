@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:04:22  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:27:06  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_pwm
@@ -59,25 +59,6 @@ stmt  level    source
    40          #include "zf_driver_pwm.h"
    41          #include "zf_driver_gpio.h"
    42          #include "zf_driver_uart.h"
-*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
-*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
-*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
-*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
-*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
-*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
-*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:04:22  PAGE 2   
-
-*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
-*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
-*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
-*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
-*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
-*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
    43          #include "zf_driver_delay.h"
    44          
    45          // 引脚输出选择寄存器
@@ -85,6 +66,8 @@ stmt  level    source
    47          {
    48              0x7efeb2,
    49              0x7efeb6,
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:27:06  PAGE 2   
+
    50              0x7ef8b2,
    51              0x7ef8b6,
    52              0x7ef6b2,
@@ -134,8 +117,6 @@ stmt  level    source
    96              0x7ef6c8, 0x7ef6c9, 0x7ef6ca, 0x7ef6cb, // PWME
    97              0x7ef6e8, 0x7ef6e9, 0x7ef6ea, 0x7ef6eb, // PWMF
    98          };
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:04:22  PAGE 3   
-
    99          
   100          // 捕获比较使能寄存器
   101          const vuint32 PWM_CCER_ADDR[] = 
@@ -153,6 +134,8 @@ stmt  level    source
   113          { 
   114              0x7efed5, 0x7efed7, 0x7efed9, 0x7efedb,     // PWMA
   115              0x7efef5, 0x7efef7, 0x7efef9, 0x7efefb,     // PWMB
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:27:06  PAGE 3   
+
   116              0x7ef8d5, 0x7ef8d7, 0x7ef8d9, 0x7ef8db,     // PWMC
   117              0x7ef8f5, 0x7ef8f7, 0x7ef8f9, 0x7ef8fb,     // PWMD 
   118              0x7ef6d5, 0x7ef6d7, 0x7ef6d9, 0x7ef6db,     // PWME
@@ -202,8 +185,6 @@ stmt  level    source
   162              0x7ef6c2,   // PWME 
   163              0x7ef6e2,   // PWMF
   164          };
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:04:22  PAGE 4   
-
   165          
   166          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -219,37 +200,38 @@ stmt  level    source
              -------------
   175          void pwm_set_freq(pwm_channel_enum pin, uint32 freq, uint32 duty)
   176          {
-  177              uint32 match_temp = 0;
-  178              uint32 period_temp = 0;
-  179              uint16 freq_div = 0;
-  180                  
-  181                  // 如果是这一行报错 那你得去看看最大占空比是限定的多少 占空比写入错误
-  182              zf_assert(PWM_DUTY_MAX >= duty);
-  183                  
-  184              //分频计算，周期计算，占空比计算
-  185              freq_div = (system_clock / freq) >> 16;                                                             // 多少分频
-  186              period_temp = system_clock / freq;
-  187              period_temp = period_temp / (freq_div + 1) - 1;                                     // 周期
-  188          
-  189              if(duty != PWM_DUTY_MAX)
-  190              {
-  191                  match_temp = period_temp * ((float)duty / PWM_DUTY_MAX);        // 占空比
-*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_pwm.c: syntax error near 'float'
-  192              }
-  193              else
-  194              {
-  195                  match_temp = period_temp + 1;                                                           // duty为100%
-  196                  }
-  197          
-  198                  PWMX_PSCRH(pin) = (uint8)(freq_div >> 8);           // 设置预分频值
-  199                  PWMX_PSCRL(pin) = (uint8)freq_div;
-  200                  
-  201                  PWMX_ARRH(pin) = (uint8)(period_temp >> 8);             // 周期值 高8位
-  202                  PWMX_ARRL(pin) = (uint8)period_temp;                    // 周期值 低8位
-  203          
-  204              PWMX_CCRXH(pin) = match_temp >> 8;                          // 比较值 高8位
-  205              PWMX_CCRXL(pin) = (uint8)match_temp;                        // 比较值 低8位
-  206          }
+  177   1          uint32 match_temp = 0;
+  178   1          uint32 period_temp = 0;
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:27:06  PAGE 4   
+
+  179   1          uint16 freq_div = 0;
+  180   1              
+  181   1              // 如果是这一行报错 那你得去看看最大占空比是限定的多少 占空比写入错误
+  182   1          zf_assert(PWM_DUTY_MAX >= duty);
+  183   1              
+  184   1          //分频计算，周期计算，占空比计算
+  185   1          freq_div = (system_clock / freq) >> 16;                                                             // 多少分频
+  186   1          period_temp = system_clock / freq;
+  187   1          period_temp = period_temp / (freq_div + 1) - 1;                                     // 周期
+  188   1      
+  189   1          if(duty != PWM_DUTY_MAX)
+  190   1          {
+  191   2              match_temp = period_temp * ((float)duty / PWM_DUTY_MAX);        // 占空比
+  192   2          }
+  193   1          else
+  194   1          {
+  195   2              match_temp = period_temp + 1;                                                           // duty为100%
+  196   2              }
+  197   1      
+  198   1              PWMX_PSCRH(pin) = (uint8)(freq_div >> 8);           // 设置预分频值
+  199   1              PWMX_PSCRL(pin) = (uint8)freq_div;
+  200   1              
+  201   1              PWMX_ARRH(pin) = (uint8)(period_temp >> 8);             // 周期值 高8位
+  202   1              PWMX_ARRL(pin) = (uint8)period_temp;                    // 周期值 低8位
+  203   1      
+  204   1          PWMX_CCRXH(pin) = match_temp >> 8;                          // 比较值 高8位
+  205   1          PWMX_CCRXL(pin) = (uint8)match_temp;                        // 比较值 低8位
+  206   1      }
   207          
   208          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -264,33 +246,32 @@ stmt  level    source
              -------------
   216          void pwm_set_duty(pwm_channel_enum pin, uint32 duty)
   217          {
-  218              uint32 match_temp;
-  219              uint32 arr = (PWMX_ARRH(pin) << 8) | PWMX_ARRL(pin);
-  220                  
-  221                  // 如果是这一行报错 那你得去看看最大占空比是限定的多少 占空比写入错误
-  222              zf_assert(PWM_DUTY_MAX >= duty);
-  223                  
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:04:22  PAGE 5   
-
-  224              if(duty != PWM_DUTY_MAX)
-  225              {
-  226                  match_temp = arr * ((float)duty / PWM_DUTY_MAX);                                //占空比
-*** ERROR C25 IN LINE 226 OF ..\..\libraries\zf_driver\zf_driver_pwm.c: syntax error near 'float'
-  227              }
-  228              else
-  229              {
-  230                  match_temp = arr + 1;
-  231              }
-  232          
-  233              //设置捕获值|比较值
-  234              PWMX_CCRXH(pin) = (uint8)(match_temp >> 8);                         // 比较值 高8位
-  235              PWMX_CCRXL(pin) = (uint8)match_temp;                        // 比较值 低8位
-  236                  
-  237          }
+  218   1          uint32 match_temp;
+  219   1          uint32 arr = (PWMX_ARRH(pin) << 8) | PWMX_ARRL(pin);
+  220   1              
+  221   1              // 如果是这一行报错 那你得去看看最大占空比是限定的多少 占空比写入错误
+  222   1          zf_assert(PWM_DUTY_MAX >= duty);
+  223   1              
+  224   1          if(duty != PWM_DUTY_MAX)
+  225   1          {
+  226   2              match_temp = arr * ((float)duty / PWM_DUTY_MAX);                                //占空比
+  227   2          }
+  228   1          else
+  229   1          {
+  230   2              match_temp = arr + 1;
+  231   2          }
+  232   1      
+  233   1          //设置捕获值|比较值
+  234   1          PWMX_CCRXH(pin) = (uint8)(match_temp >> 8);                         // 比较值 高8位
+  235   1          PWMX_CCRXL(pin) = (uint8)match_temp;                        // 比较值 低8位
+  236   1              
+  237   1      }
   238          
   239          //-------------------------------------------------------------------------------------------------------
              -------------
   240          // 函数简介     PWM初始化
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:27:06  PAGE 5   
+
   241          // 参数说明     pin                         PWM通道号及引脚
   242          // 参数说明     freq            PWM频率
   243          // 参数说明     duty            PWM占空比
@@ -302,53 +283,50 @@ stmt  level    source
              -------------
   248          void pwm_init(pwm_channel_enum pin, uint32 freq, uint32 duty)
   249          {
-  250          
-  251              uint16 match_temp = 0;                                              // 占空比值
-  252              uint32 period_temp = 0;                                             // 周期值
-  253              uint16 freq_div = 0;                                                // 分频值
-  254              
-  255                  // 如果是这一行报错 那你得去看看最大占空比是限定的多少 占空比写入错误
-  256              zf_assert(PWM_DUTY_MAX >= duty);
-  257                  
-  258              gpio_init(pin  & 0xFF, GPO, 1, GPO_PUSH_PULL);                                              // GPIO需要设置为推挽输出
-  259          
-  260              //分频计算，周期计算，占空比计算
-  261              freq_div = (system_clock / freq) >> 16;                                                             // 分频值
-  262              period_temp = system_clock / freq;
-  263              period_temp = period_temp / (freq_div + 1) - 1;                                             // 周期值
-  264                  
-  265              if(duty != PWM_DUTY_MAX)
-  266              {           
-  267                  match_temp = period_temp * ((float)duty / PWM_DUTY_MAX);                // 占空比
-*** ERROR C25 IN LINE 267 OF ..\..\libraries\zf_driver\zf_driver_pwm.c: syntax error near 'float'
-  268              }
-  269              else
-  270              {
-  271                  match_temp = period_temp + 1;                                                                   // duty为100%
-  272              }
-  273          
-  274                  PWMX_PSCRH(pin) = (uint8)(freq_div >> 8);           // 设置预分频值
-  275                  PWMX_PSCRL(pin) = (uint8)freq_div;
-  276                  
-  277                  PWMX_ARRH(pin) = (uint8)(period_temp >> 8);             // 周期值 高8位
-  278                  PWMX_ARRL(pin) = (uint8)period_temp;                    // 周期值 低8位
-  279          
-  280              PWMX_CCRXH(pin) = (uint8)(match_temp >> 8);         // 比较值 高8位
-  281              PWMX_CCRXL(pin) = (uint8)match_temp;                        // 比较值 低8位
-  282          
-  283              PWMX_CCERX(pin) |= 1 << ((pin >> 11 & 0x01) * 4 + (pin >> 10 & 0x01) * 2);  // 使能N或者P通道
-  284          
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:04:22  PAGE 6   
-
-  285                  PWMX_CCMRX(pin) |= 0x06 << 4;                                   // 设置为PWM模式1
-  286                  PWMX_CCMRX(pin) |= 1 << 3;                                              // 开启PWM寄存器的预装载功
-  287              
-  288              PWMX_ENO(pin) |= 1 << ((((pin >> 11) & 0x03) * 2) + ((pin >> 10) & 0x01));          // 使能通道
-  289              PWMX_PS(pin)  |= ((pin >> 8) & 0x03) << (((pin >> 11) & 0x03) * 2);                         // 选择引脚
-  290              PWMX_BKR(pin) |= 0x80;                                                      // 主输出使能 相当于总开关
-  291              PWMX_CR1(pin) |= 0x01;                                                      // PWM开始计数
-  292          
-  293          #if 0
+  250   1      
+  251   1          uint16 match_temp = 0;                                              // 占空比值
+  252   1          uint32 period_temp = 0;                                             // 周期值
+  253   1          uint16 freq_div = 0;                                                // 分频值
+  254   1          
+  255   1              // 如果是这一行报错 那你得去看看最大占空比是限定的多少 占空比写入错误
+  256   1          zf_assert(PWM_DUTY_MAX >= duty);
+  257   1              
+  258   1          gpio_init(pin  & 0xFF, GPO, 1, GPO_PUSH_PULL);                                              // GPIO需要设置为推挽输出
+  259   1      
+  260   1          //分频计算，周期计算，占空比计算
+  261   1          freq_div = (system_clock / freq) >> 16;                                                             // 分频值
+  262   1          period_temp = system_clock / freq;
+  263   1          period_temp = period_temp / (freq_div + 1) - 1;                                             // 周期值
+  264   1              
+  265   1          if(duty != PWM_DUTY_MAX)
+  266   1          {           
+  267   2              match_temp = period_temp * ((float)duty / PWM_DUTY_MAX);                // 占空比
+  268   2          }
+  269   1          else
+  270   1          {
+  271   2              match_temp = period_temp + 1;                                                                   // duty为100%
+  272   2          }
+  273   1      
+  274   1              PWMX_PSCRH(pin) = (uint8)(freq_div >> 8);           // 设置预分频值
+  275   1              PWMX_PSCRL(pin) = (uint8)freq_div;
+  276   1              
+  277   1              PWMX_ARRH(pin) = (uint8)(period_temp >> 8);             // 周期值 高8位
+  278   1              PWMX_ARRL(pin) = (uint8)period_temp;                    // 周期值 低8位
+  279   1      
+  280   1          PWMX_CCRXH(pin) = (uint8)(match_temp >> 8);         // 比较值 高8位
+  281   1          PWMX_CCRXL(pin) = (uint8)match_temp;                        // 比较值 低8位
+  282   1      
+  283   1          PWMX_CCERX(pin) |= 1 << ((pin >> 11 & 0x01) * 4 + (pin >> 10 & 0x01) * 2);  // 使能N或者P通道
+  284   1      
+  285   1              PWMX_CCMRX(pin) |= 0x06 << 4;                                   // 设置为PWM模式1
+  286   1              PWMX_CCMRX(pin) |= 1 << 3;                                              // 开启PWM寄存器的预装载功
+  287   1          
+  288   1          PWMX_ENO(pin) |= 1 << ((((pin >> 11) & 0x03) * 2) + ((pin >> 10) & 0x01));          // 使能通道
+  289   1          PWMX_PS(pin)  |= ((pin >> 8) & 0x03) << (((pin >> 11) & 0x03) * 2);                         // 选择引脚
+  290   1          PWMX_BKR(pin) |= 0x80;                                                      // 主输出使能 相当于总开关
+  291   1          PWMX_CR1(pin) |= 0x01;                                                      // PWM开始计数
+  292   1      
+  293   1      #if 0
                    while(1)
                    {
                        printf("PWMX_PSCRH(pin) -> 0x%lX = 0x%X\r\n",  ((PWM_PSCR_ADDR[(pin >> 13 & 0x7)])), PWMX_PSCRH(p
@@ -360,6 +338,8 @@ stmt  level    source
                        printf("PWMX_ARRL(pin) -> 0x%lX = 0x%X\r\n",   (((PWM_ARR_ADDR[(pin >> 13 & 0x7)] + 1))), PWMX_AR
              -RL(pin));
                        printf("PWMX_CCRXH(pin) -> 0x%lX = 0x%X\r\n",  (((PWM_CCR_ADDR[((pin >> 13 & 0x7) * 4) + (pin >> 
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      29/07/26  01:27:06  PAGE 6   
+
              -11 & 0x3)]))), PWMX_CCRXH(pin));
                        printf("PWMX_CCRXL(pin) -> 0x%lX = 0x%X\r\n",  (((PWM_CCR_ADDR[((pin >> 13 & 0x7) * 4) + (pin >> 
              -11 & 0x3)] + 1))), PWMX_CCRXL(pin));
@@ -379,8 +359,29 @@ stmt  level    source
                        system_delay_ms(1000);
                    }
                #endif
-  312              
-  313          }
-*** ERROR C7 IN LINE 313 OF ..\..\libraries\zf_driver\zf_driver_pwm.c: compilation aborted
+  312   1          
+  313   1      }
 
-C251 COMPILATION COMPLETE.  12 WARNING(S),  9 ERROR(S)
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1591     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------         42
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       474     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               29/07/26  01:04:45  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               29/07/26  01:57:09  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -11,39 +11,110 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\user\main.c LARGE ROM(HUGE
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
-*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
-*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
-*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
-*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
-*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
-*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
-*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
-*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
-*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
-*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
-*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
-*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
-*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
-             -pecifiers
-*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
+    2          #include "sys_include.h"
+    3          #include "bsp_buzzer.h"
+    4          #include "service_timetick.h"
+    5          #include "service_function_queue.h"
+    6          #include "service_wireless_uart.h"
+    7          #include "service_packet.h"
+    8          #include "service_batterycheck.h"
+    9          #include "service_buzzer.h"
+   10          #include "service_imu.h"
+   11          #include "service_inductor.h"
+   12          #include "service_motor.h"
+   13          #include "service_negative_pressure.h"
+   14          #include "service_speed.h"
+   15          #include "service_tof.h"
+   16          #include "app_element.h"
+   17          #include "app_feedforward.h"
+   18          #include "app_inductor_preprocess.h"
+   19          #include "app_motion_preprocess.h"
+   20          #include "app_motion_postprocess.h"
+   21          #include "app_scheduler.h"
+   22          #include "app_speed_plan.h"
+   23          #include "app_speedout.h"
+   24          #include "app_boot_sequence.h"
+   25          #include "service_boot_request.h"
+   26          #include "service_button.h"
+   27          
+   28          #define BOOT_BUZZ_MS            (500UL)
+   29          
+   30          void main(void)
+   31          {
+   32   1          SystemStart();
+   33   1      
+   34   1          service_timetick_init();
+   35   1          service_function_queue_init();
+   36   1          app_scheduler_init();
+   37   1          service_wireless_uart_init();
+   38   1          service_packet_init();
+   39   1          service_batterycheck_init();
+   40   1          service_buzzer_init();
+   41   1          service_buzzer_stop();
+   42   1          service_imu_init();
+   43   1          service_tof_init();
+   44   1          service_motor_init();
+   45   1          service_negative_pressure_init();
+   46   1          service_speed_init();
+   47   1          app_inductor_preprocess_init();
+   48   1          app_motion_preprocess_init();
+   49   1          app_feedforward_init();
+   50   1          app_speed_plan_init();
+   51   1          app_element_init();
+   52   1          app_speedout_init();
+   53   1          app_motion_postprocess_init();
+   54   1          app_boot_sequence_init();
+   55   1          service_boot_request_init();
+   56   1          service_button_init();
+C251 COMPILER V5.60.0,  main                                                               29/07/26  01:57:09  PAGE 2   
 
-C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)
+   57   1      
+   58   1          wdt_init();
+   59   1      
+   60   1          bsp_buzzer_init();
+   61   1          bsp_buzzer_on();
+   62   1          system_delay_ms(BOOT_BUZZ_MS);
+   63   1          bsp_buzzer_off();
+   64   1      
+   65   1          while(1)
+   66   1          {
+   67   2              wdt_feed();
+   68   2              iic_async_process_all_timed(service_timetick_what());
+   69   2              service_imu_task();
+   70   2              service_tof_task();
+   71   2              service_batterycheck_task();
+   72   2              service_inductor_task();
+   73   2              service_boot_request_process();
+   74   2              service_function_queue_update();
+   75   2              service_packet_update();
+   76   2              app_scheduler_run();
+   77   2              app_element_pump_events();
+   78   2              service_negative_pressure_task();
+   79   2              service_buzzer_task();
+   80   2              service_button_task();
+   81   2          }
+   82   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       242     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         2     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

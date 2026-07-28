@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  01:04:43  PAGE 1   
+C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  01:27:46  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_scheduler
@@ -12,39 +12,193 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_scheduler.c LAR
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
-*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
-*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
-*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
-*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
-*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
-*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
-*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
-*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
-*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
-*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
-*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
-*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
-*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'spi_dma_async_callback': missing declaration s
-             -pecifiers
-*** WARNING C34 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 173 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 176 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 179 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 182 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 185 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 188 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: 'dat': missing declaration specifiers
-*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: syntax error near 'uint32'
-*** ERROR C7 IN LINE 191 OF ..\..\libraries\zf_driver\zf_driver_spi.h: compilation aborted
+    2          #include "app_scheduler.h"
+    3          #include "service_wireless_uart.h"
+    4          
+    5          typedef struct
+    6          {
+    7              void (*task_func)(void);
+    8              uint16 period_ms;
+    9              uint16 tick_count;
+   10              uint8 priority;
+   11              volatile uint8 ready;
+   12              uint8 used;
+   13          } app_scheduler_task_t;
+   14          
+   15          static app_scheduler_task_t app_scheduler_tasks[APP_SCHEDULER_TASK_MAX];
+   16          
+   17          static void app_scheduler_tick(void);
+   18          
+   19          //-------------------------------------------------------------------------------------------------------
+             -------------
+   20          // 函数简介     app 层任务调度器初始化
+   21          // 参数说明     void
+   22          // 返回参数     void
+   23          // 使用示例     app_scheduler_init();
+   24          // 备注信息     使用 TIM2_PIT 作为 1ms 调度心跳，中断回调只更新任务状态，不执�
+             -��任务函数
+   25          //-------------------------------------------------------------------------------------------------------
+             -------------
+   26          void app_scheduler_init(void)
+   27          {
+   28   1          uint8 i;
+   29   1      
+   30   1          for(i = 0; i < APP_SCHEDULER_TASK_MAX; i++)
+   31   1          {
+   32   2              app_scheduler_tasks[i].task_func = NULL;
+   33   2              app_scheduler_tasks[i].period_ms = 0;
+   34   2              app_scheduler_tasks[i].tick_count = 0;
+   35   2              app_scheduler_tasks[i].priority = 0;
+   36   2              app_scheduler_tasks[i].ready = 0;
+   37   2              app_scheduler_tasks[i].used = 0;
+   38   2          }
+   39   1      
+   40   1          pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
+   41   1          #if __DBGFLAG__
+   42   1          printf(">>[app_scheduler_init]\r\n");
+   43   1          wprint(">>[app_scheduler_init]\r\n");
+   44   1          #endif
+   45   1      }
+   46          
+   47          void app_scheduler_debug(void)
+   48          {
+   49   1      }
+   50          
+   51          //-------------------------------------------------------------------------------------------------------
+             -------------
+C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  01:27:46  PAGE 2   
 
-C251 COMPILATION COMPLETE.  20 WARNING(S),  13 ERROR(S)
+   52          // 函数简介     app 层任务注册
+   53          // 参数说明     id              任务编号，范围 0 - APP_SCHEDULER_TASK_MAX-1
+   54          // 参数说明     task_func       任务函数指针，任务内部不允许死延时
+   55          // 参数说明     priority        任务优先级，数值越大优先级越高
+   56          // 参数说明     period_ms       任务执行周期，单位 ms
+   57          // 返回参数     uint8           1：注册成功 0：注册失败
+   58          // 使用示例     app_scheduler_add(0, task_fast, 10, 10);
+   59          // 备注信息     任务重复注册会覆盖原任务配置
+   60          //-------------------------------------------------------------------------------------------------------
+             -------------
+   61          uint8 app_scheduler_add(uint8 id, void (*task_func)(void), uint8 priority, uint16 period_ms)
+   62          {
+   63   1          uint8 ea_backup;
+   64   1      
+   65   1          if((APP_SCHEDULER_TASK_MAX <= id) || (NULL == task_func) || (0U == period_ms))
+   66   1          {
+   67   2              return 0;
+   68   2          }
+   69   1      
+   70   1          ea_backup = EA;
+   71   1          EA = 0;
+   72   1      
+   73   1          app_scheduler_tasks[id].task_func = task_func;
+   74   1          app_scheduler_tasks[id].period_ms = period_ms;
+   75   1          app_scheduler_tasks[id].tick_count = 0;
+   76   1          app_scheduler_tasks[id].priority = priority;
+   77   1          app_scheduler_tasks[id].ready = 0;
+   78   1          app_scheduler_tasks[id].used = 1;
+   79   1      
+   80   1          EA = ea_backup;
+   81   1      
+   82   1          return 1;
+   83   1      }
+   84          
+   85          //-------------------------------------------------------------------------------------------------------
+             -------------
+   86          // 函数简介     app 层任务调度运行
+   87          // 参数说明     void
+   88          // 返回参数     void
+   89          // 使用示例     while(1) { app_scheduler_run(); }
+   90          // 备注信息     每次最多执行一个就绪任务，同优先级时任务编号小的先执行
+   91          //-------------------------------------------------------------------------------------------------------
+             -------------
+   92          void app_scheduler_run(void)
+   93          {
+   94   1          uint8 i;
+   95   1          uint8 selected = APP_SCHEDULER_TASK_MAX;
+   96   1          uint8 selected_priority = 0;
+   97   1          uint8 ea_backup;
+   98   1          void (*task_func)(void);
+   99   1      
+  100   1          for(i = 0; i < APP_SCHEDULER_TASK_MAX; i++)
+  101   1          {
+  102   2              if((0U != app_scheduler_tasks[i].used) && (0U != app_scheduler_tasks[i].ready))
+  103   2              {
+  104   3                  if((APP_SCHEDULER_TASK_MAX == selected) || (app_scheduler_tasks[i].priority > selected_priori
+             -ty))
+  105   3                  {
+  106   4                      selected = i;
+  107   4                      selected_priority = app_scheduler_tasks[i].priority;
+  108   4                  }
+  109   3              }
+  110   2          }
+  111   1      
+  112   1          if(APP_SCHEDULER_TASK_MAX == selected)
+  113   1          {
+C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  01:27:46  PAGE 3   
+
+  114   2              return;
+  115   2          }
+  116   1      
+  117   1          ea_backup = EA;
+  118   1          EA = 0;
+  119   1          app_scheduler_tasks[selected].ready = 0;
+  120   1          task_func = app_scheduler_tasks[selected].task_func;
+  121   1          EA = ea_backup;
+  122   1      
+  123   1          if(NULL != task_func)
+  124   1          {
+  125   2              task_func();
+  126   2          }
+  127   1      }
+  128          
+  129          //-------------------------------------------------------------------------------------------------------
+             -------------
+  130          // 函数简介     app 层任务调度器 1ms 心跳
+  131          // 参数说明     void
+  132          // 返回参数     void
+  133          // 使用示例     pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
+  134          // 备注信息     此函数运行在 TIM2 中断中，只更新 tick_count 和 ready 标志
+  135          //-------------------------------------------------------------------------------------------------------
+             -------------
+  136          static void app_scheduler_tick(void)
+  137          {
+  138   1          uint8 i;
+  139   1      
+  140   1          for(i = 0; i < APP_SCHEDULER_TASK_MAX; i++)
+  141   1          {
+  142   2              if((0U != app_scheduler_tasks[i].used) && (NULL != app_scheduler_tasks[i].task_func))
+  143   2              {
+  144   3                  app_scheduler_tasks[i].tick_count++;
+  145   3      
+  146   3                  if(app_scheduler_tasks[i].tick_count >= app_scheduler_tasks[i].period_ms)
+  147   3                  {
+  148   4                      app_scheduler_tasks[i].tick_count = 0;
+  149   4                      app_scheduler_tasks[i].ready = 1;
+  150   4                  }
+  151   3              }
+  152   2          }
+  153   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       613     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       110     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        25     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

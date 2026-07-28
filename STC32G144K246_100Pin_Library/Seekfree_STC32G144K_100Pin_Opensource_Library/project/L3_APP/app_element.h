@@ -86,9 +86,9 @@ typedef struct
 
 extern app_element_config_t app_element_config;
 
-extern float app_element_roundabout_bias_yaw_radps;
-extern uint8 app_element_roundabout_bias_active;
-extern float app_element_roundabout_feedforward_scale;
+extern volatile float app_element_roundabout_bias_yaw_radps;
+extern volatile uint8 app_element_roundabout_bias_active;
+extern volatile float app_element_roundabout_feedforward_scale;
 
 void app_element_init(void);
 void app_element_get_data(app_element_data_t *out_data);

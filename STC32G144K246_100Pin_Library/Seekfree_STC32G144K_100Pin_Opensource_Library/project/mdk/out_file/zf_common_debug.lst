@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:04:20  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:27:04  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_debug
@@ -59,38 +59,15 @@ stmt  level    source
    40          #include "zf_common_typedef.h"
    41          
    42          #include "zf_driver_uart.h"
-*** ERROR C52 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: use of undefined type 'UART_1'
-*** ERROR C25 IN LINE 83 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '='
-*** WARNING C34 IN LINE 84 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_2': missing declaration specifiers
-*** WARNING C34 IN LINE 85 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_3': missing declaration specifiers
-*** WARNING C34 IN LINE 86 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_4': missing declaration specifiers
-*** WARNING C34 IN LINE 87 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_5': missing declaration specifiers
-*** WARNING C34 IN LINE 88 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_6': missing declaration specifiers
-C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:04:20  PAGE 2   
-
-*** WARNING C34 IN LINE 89 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_7': missing declaration specifiers
-*** WARNING C34 IN LINE 90 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_8': missing declaration specifiers
-*** WARNING C34 IN LINE 91 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'UART_RESERVE': missing declaration specifiers
-*** ERROR C25 IN LINE 92 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near '}'
-*** WARNING C34 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 157 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 158 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'str': missing declaration specifiers
-*** WARNING C34 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 159 OF ..\..\libraries\zf_driver\zf_driver_uart.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 165 OF ..\..\libraries\zf_driver\zf_driver_uart.h: 'dat': missing declaration specifiers
    43          #include "zf_driver_usb_cdc.h"
-*** WARNING C34 IN LINE 51 OF ..\..\libraries\zf_driver\zf_driver_usb_cdc.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 51 OF ..\..\libraries\zf_driver\zf_driver_usb_cdc.h: syntax error near 'uint16'
-*** WARNING C34 IN LINE 52 OF ..\..\libraries\zf_driver\zf_driver_usb_cdc.h: 'str': missing declaration specifiers
-*** WARNING C34 IN LINE 54 OF ..\..\libraries\zf_driver\zf_driver_usb_cdc.h: 'handler': missing declaration specifiers
-*** WARNING C34 IN LINE 54 OF ..\..\libraries\zf_driver\zf_driver_usb_cdc.h: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 54 OF ..\..\libraries\zf_driver\zf_driver_usb_cdc.h: syntax error near 'uint16'
    44          #include "zf_driver_delay.h"
    45          
    46          
    47          #pragma warning disable = 183
    48          #pragma warning disable = 177
    49          
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:27:04  PAGE 2   
+
    50          
    51          #if DEBUG_UART_USE_INTERRUPT                                                    // 如果启用 debug uar
              -t 接收中断
@@ -113,11 +90,9 @@ stmt  level    source
    67          //-------------------------------------------------------------------------------------------------------
              -------------
    68          uint32 debug_send_buffer(const uint8 *buff, uint32 len)
-*** WARNING C34 IN LINE 68 OF ..\..\libraries\zf_common\zf_common_debug.c: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 68 OF ..\..\libraries\zf_common\zf_common_debug.c: syntax error near 'uint32'
    69          {
-   70              
-   71          #if(USER_USB_CDC)
+   70   1          
+   71   1      #if(USER_USB_CDC)
                    if(len > 0xFFFF)
                        {
                                usb_cdc_write_buffer(buff, 0xFFFF);
@@ -129,22 +104,20 @@ stmt  level    source
                        }
                    return 0;
                #else
-   83              if(len > 0xFFFF)
-   84                  {
-   85                          uart_write_buffer(DEBUG_UART_INDEX, buff, 0xFFFF);
-   86                          return  len - 0xFFFF;
-   87                  }
-C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:04:20  PAGE 3   
-
-   88                  else
-   89                  {
-   90                          uart_write_buffer(DEBUG_UART_INDEX, buff, (uint16)len);
-   91                  }
-   92              
-   93              return 0;
-   94          #endif
-   95          
-   96          }
+   83   1          if(len > 0xFFFF)
+   84   1              {
+   85   2                      uart_write_buffer(DEBUG_UART_INDEX, buff, 0xFFFF);
+   86   2                      return  len - 0xFFFF;
+   87   2              }
+   88   1              else
+   89   1              {
+   90   2                      uart_write_buffer(DEBUG_UART_INDEX, buff, (uint16)len);
+   91   2              }
+   92   1          
+   93   1          return 0;
+   94   1      #endif
+   95   1      
+   96   1      }
    97          
    98          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -157,12 +130,12 @@ stmt  level    source
   105          //-------------------------------------------------------------------------------------------------------
              -------------
   106          uint32 debug_read_buffer (uint8 *buff, uint32 len)
-*** WARNING C34 IN LINE 106 OF ..\..\libraries\zf_common\zf_common_debug.c: 'buff': missing declaration specifiers
-*** ERROR C25 IN LINE 106 OF ..\..\libraries\zf_common\zf_common_debug.c: syntax error near 'uint32'
   107          {
-  108              fifo_read_buffer(&debug_uart_fifo, buff, &len, FIFO_READ_AND_CLEAN);
-  109              return len;
-  110          }
+  108   1          fifo_read_buffer(&debug_uart_fifo, buff, &len, FIFO_READ_AND_CLEAN);
+  109   1          return len;
+  110   1      }
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:27:04  PAGE 3   
+
   111          extern uint8 test_count ;
   112          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -202,14 +175,12 @@ stmt  level    source
                    #else
   145                  void debug_interrupr_handler (uint8 dat)
   146                  {
-C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:04:20  PAGE 4   
-
-  147                      if(zf_debug_init_flag)
-  148                      {
-  149                          uart_query_byte(DEBUG_UART_INDEX, &dat);                    // 读取串口数据
-  150                          fifo_write_buffer(&debug_uart_fifo, &dat, 1);               // 存入 FIFO
-  151                      }
-  152                  }
+  147   1                  if(zf_debug_init_flag)
+  148   1                  {
+  149   2                      uart_query_byte(DEBUG_UART_INDEX, &dat);                    // 读取串口数据
+  150   2                      fifo_write_buffer(&debug_uart_fifo, &dat, 1);               // 存入 FIFO
+  151   2                  }
+  152   1              }
   153              #endif
   154          #endif
   155          
@@ -229,16 +200,18 @@ stmt  level    source
   166              //重定义printf 数字 只能输出uint16
   167              char putchar(char c)
   168              {
-  169                  #if(USER_USB_CDC)
+  169   1              #if(USER_USB_CDC)
                            usb_cdc_write_byte(c);
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:27:04  PAGE 4   
+
                            return c;
                        #else
-  173                      uart_write_byte(DEBUG_UART_INDEX, c);//把自己实现的串口打印一字节数据的函数
+  173   1                  uart_write_byte(DEBUG_UART_INDEX, c);//把自己实现的串口打印一字节数据的函数
              -替换到这里
-  174                      return c;
-  175                  #endif
-  176          
-  177              }
+  174   1                  return c;
+  175   1              #endif
+  176   1      
+  177   1          }
   178          #endif
   179          //-------------------------------------------------------------------------     // printf 重定向 此�
              -�分不允许用户更改
@@ -256,36 +229,31 @@ stmt  level    source
   190          //-------------------------------------------------------------------------------------------------------
              -------------
   191          void debug_assert_handler (uint8 pass, char *file, int line)
-*** WARNING C34 IN LINE 191 OF ..\..\libraries\zf_common\zf_common_debug.c: 'file': missing declaration specifiers
-*** ERROR C25 IN LINE 191 OF ..\..\libraries\zf_common\zf_common_debug.c: syntax error near 'int'
   192          {
-  193                  uint8 log_str[] = "Assert error";
-  194          
-  195                  while(!pass)
-  196                  {
-  197                          // 如果代码跳转到这里停住了
-  198                          // 一般你的函数参数传递出错了
-  199                          // 或者你自己调用的 zf_assert(x) 接口处报错了
-  200          
-  201                          // 如果调用了 debug_init 初始化了 log 输出
-  202                          // 就在对应串口输出去查看是哪个文件的哪一行报错
-  203          
-C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:04:20  PAGE 5   
-
-  204                          // 如果没有初始化 debug
-  205                          // 那就看看这个 file 的字符串值和 line 的行数
-  206                          // 那代表报错的文件路径名称和对应报错行数
-  207          
-  208                          // 再去调试看看是为什么参数出错
-  209          
-  210          
-  211                          printf("\r\n %s file %s line %d\r\n", log_str, file, line);
-  212          
-  213          
-  214                          system_delay_ms(500);
-*** ERROR C25 IN LINE 214 OF ..\..\libraries\zf_common\zf_common_debug.c: syntax error near '/'
-  215                  }
-  216          }
+  193   1              uint8 log_str[] = "Assert error";
+  194   1      
+  195   1              while(!pass)
+  196   1              {
+  197   2                      // 如果代码跳转到这里停住了
+  198   2                      // 一般你的函数参数传递出错了
+  199   2                      // 或者你自己调用的 zf_assert(x) 接口处报错了
+  200   2      
+  201   2                      // 如果调用了 debug_init 初始化了 log 输出
+  202   2                      // 就在对应串口输出去查看是哪个文件的哪一行报错
+  203   2      
+  204   2                      // 如果没有初始化 debug
+  205   2                      // 那就看看这个 file 的字符串值和 line 的行数
+  206   2                      // 那代表报错的文件路径名称和对应报错行数
+  207   2      
+  208   2                      // 再去调试看看是为什么参数出错
+  209   2      
+  210   2      
+  211   2                      printf("\r\n %s file %s line %d\r\n", log_str, file, line);
+  212   2      
+  213   2      
+  214   2                      system_delay_ms(500);
+  215   2              }
+  216   1      }
   217          
   218          
   219          //-------------------------------------------------------------------------------------------------------
@@ -299,38 +267,61 @@ stmt  level    source
              -------------
   226          void debug_init (void)
   227          {
-  228          #if(USER_USB_CDC)
+  228   1      #if(USER_USB_CDC)
                    usb_cdc_init();
                    #if DEBUG_UART_USE_INTERRUPT                                               // 条件编译 只有在�
+C251 COMPILER V5.60.0,  zf_common_debug                                                    29/07/26  01:27:04  PAGE 5   
+
              -��用串口中断才编译
                        fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);
                        usb_cdc_rx_interrupt(debug_interrupr_handler);
                    #endif
                #else
-  235              uint8 uartx = DEBUG_UART_INDEX;
-  236              
-  237              uart_init(
-  238                  DEBUG_UART_INDEX,                                                       // 在 zf_common_debug.h 
+  235   1          uint8 uartx = DEBUG_UART_INDEX;
+  236   1          
+  237   1          uart_init(
+  238   1              DEBUG_UART_INDEX,                                                       // 在 zf_common_debug.h 
              -中查看对应值
-  239                  DEBUG_UART_BAUDRATE,                                                    // 在 zf_common_debug.h 
+  239   1              DEBUG_UART_BAUDRATE,                                                    // 在 zf_common_debug.h 
              -中查看对应值
-  240                  DEBUG_UART_TX_PIN,                                                      // 在 zf_common_debug.h 
+  240   1              DEBUG_UART_TX_PIN,                                                      // 在 zf_common_debug.h 
              -中查看对应值
-  241                  DEBUG_UART_RX_PIN);                                                     // 在 zf_common_debug.h 
+  241   1              DEBUG_UART_RX_PIN);                                                     // 在 zf_common_debug.h 
              -中查看对应值
-  242              
-  243              #if DEBUG_UART_USE_INTERRUPT                                                // 条件编译 只有在
+  242   1          
+  243   1          #if DEBUG_UART_USE_INTERRUPT                                                // 条件编译 只有在
              -启用串口中断才编译
-  244                  fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);
-  245                  uart_rx_interrupt(DEBUG_UART_INDEX, 1, debug_interrupr_handler);                                 
+  244   1              fifo_init(&debug_uart_fifo, FIFO_DATA_8BIT, debug_uart_buffer, DEBUG_RING_BUFFER_LEN);
+  245   1              uart_rx_interrupt(DEBUG_UART_INDEX, 1, debug_interrupr_handler);                                 
              -    // 使能对应串口接收中断
-  246              #endif   
-  247          #endif
-  248          }
+  246   1          #endif   
+  247   1      #endif
+  248   1      }
   249          
   250          
   251          
   252          
-*** ERROR C7 IN LINE 252 OF ..\..\libraries\zf_common\zf_common_debug.c: compilation aborted
 
-C251 COMPILATION COMPLETE.  19 WARNING(S),  12 ERROR(S)
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       403     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       153         21
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        49     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

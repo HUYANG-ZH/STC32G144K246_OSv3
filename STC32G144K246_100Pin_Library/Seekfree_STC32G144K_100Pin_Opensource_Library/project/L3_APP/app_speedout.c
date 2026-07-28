@@ -22,7 +22,7 @@
 #define APP_SPEEDOUT_LEFT_PID_DIRECTION      SHARED_POS_PID_DIRECTION_DIRECT
 #define APP_SPEEDOUT_RIGHT_PID_DIRECTION     SHARED_POS_PID_DIRECTION_DIRECT
 
-app_speedout_config_t app_speedout_config =
+volatile app_speedout_config_t app_speedout_config =
 {
     {0.0f, APP_SPEEDOUT_DEFAULT_LEFT_KP, APP_SPEEDOUT_DEFAULT_LEFT_KI,
             APP_SPEEDOUT_DEFAULT_KD, APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT, APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT},
@@ -30,7 +30,7 @@ app_speedout_config_t app_speedout_config =
             APP_SPEEDOUT_DEFAULT_KD, APP_SPEEDOUT_DEFAULT_INTEGRAL_LIMIT, APP_SPEEDOUT_DEFAULT_OUTPUT_LIMIT}
 };
 
-app_speedout_data_t app_speedout_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+volatile app_speedout_data_t app_speedout_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 static shared_pos_pid_t speedout_left_pid;
 static shared_pos_pid_t speedout_right_pid;
@@ -76,7 +76,7 @@ static void app_speedout_publish_target(float left_mps, float right_mps, uint8 o
 static void app_speedout_packet_target_changed(void);
 static void app_speedout_consume_target(void);
 
-static float app_speedout_output_limit(app_speedout_pid_config_t *config)
+static float app_speedout_output_limit(volatile app_speedout_pid_config_t *config)
 {
     float real_limit;
 
@@ -104,7 +104,7 @@ static float app_speedout_limit_target(float target)
     return target;
 }
 
-static void app_speedout_sync_pid(shared_pos_pid_t *pid, app_speedout_pid_config_t *config,
+static void app_speedout_sync_pid(shared_pos_pid_t *pid, volatile app_speedout_pid_config_t *config,
         shared_pos_pid_direction_enum direction)
 {
     float output_limit;
@@ -163,17 +163,17 @@ static void app_speedout_restart_right_pid(void)
 
 static void app_speedout_register_packet(void)
 {
-    (void)service_packet_add_variable_with_callback("SLT", &app_speedout_config.left.target_mps,
+    (void)service_packet_add_variable_with_callback("SLT", (float *)&app_speedout_config.left.target_mps,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_packet_target_changed);
-    (void)service_packet_add_variable_with_callback("SLK", &app_speedout_config.left.kp,
+    (void)service_packet_add_variable_with_callback("SLK", (float *)&app_speedout_config.left.kp,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
-    (void)service_packet_add_variable_with_callback("SLI", &app_speedout_config.left.ki,
+    (void)service_packet_add_variable_with_callback("SLI", (float *)&app_speedout_config.left.ki,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_left_pid);
-    (void)service_packet_add_variable_with_callback("SRT", &app_speedout_config.right.target_mps,
+    (void)service_packet_add_variable_with_callback("SRT", (float *)&app_speedout_config.right.target_mps,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_packet_target_changed);
-    (void)service_packet_add_variable_with_callback("SRK", &app_speedout_config.right.kp,
+    (void)service_packet_add_variable_with_callback("SRK", (float *)&app_speedout_config.right.kp,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
-    (void)service_packet_add_variable_with_callback("SRI", &app_speedout_config.right.ki,
+    (void)service_packet_add_variable_with_callback("SRI", (float *)&app_speedout_config.right.ki,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
     (void)service_packet_add_action("speed_stop", app_speedout_request_stop, 0UL);
     (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
