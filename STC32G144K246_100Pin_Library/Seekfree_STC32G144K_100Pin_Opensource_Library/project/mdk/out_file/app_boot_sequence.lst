@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  01:57:09  PAGE 1   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:23:50  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_boot_sequence
 OBJECT MODULE PLACED IN .\out_file\app_boot_sequence.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_boot_sequence.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZ
-                    -E(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -E(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
                     -es\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_componen
                     -ts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_boot_sequence.lst) OBJECT
                     -(.\out_file\app_boot_sequence.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    53   1      }
    54          
    55          static void app_boot_task(void)
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  01:57:09  PAGE 2   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:23:50  PAGE 2   
 
    56          {
    57   1          uint32 now;
@@ -134,7 +134,7 @@ stmt  level    source
   119   1      
   120   1          wprint("boot_beep,1.000\r\n");
   121   1      
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  01:57:09  PAGE 3   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:23:50  PAGE 3   
 
   122   1          (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
   123   1                  APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
@@ -148,11 +148,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       426     ------
+  ecode size           =       503     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         6     ------
+  xdata size           =        10     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

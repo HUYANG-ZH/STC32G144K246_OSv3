@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_uart
 OBJECT MODULE PLACED IN .\out_file\zf_driver_uart.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_uart.c LARGE ROM(HUGE) WARNINGLEV
-                    -EL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
+                    -EL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
                     -..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librarie
                     -s\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_driver_uart.l
                     -st) OBJECT(.\out_file\zf_driver_uart.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    47          
    48          uart_callback_function uart_rx_handlers[8] = {0};
    49          
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 2   
 
    50          
    51          uint8 xdata uart_rx_buff[UART_RESERVE][1] = {0};
@@ -134,7 +134,7 @@ stmt  level    source
              -5)*0x30) \
   107              ))
   108          
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 3   
 
   109          // 接收通道寄存器
   110          #define DMA_URXR_CFG(uart_n)  \
@@ -202,7 +202,7 @@ stmt  level    source
   162              (*(unsigned char volatile far *)( \
   163                  (uart_n >= UART_1 && uart_n <= UART_4) ? (0x7efa8b + (uart_n)*0x04) : (0x7ef766 + (uart_n - UART_
              -5)*0x30) \
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 4   
 
   164              ))
   165          
@@ -270,7 +270,7 @@ stmt  level    source
   223   1          {
   224   2              return;
   225   2          }
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 5   
 
   226   1      
   227   1          if(state->head == state->tail)
@@ -338,7 +338,7 @@ stmt  level    source
   289   2              next_head = candidate_head;
   290   2              accepted++;
   291   2          }
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 6   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 6   
 
   292   1      
   293   1          EA = 0;
@@ -406,7 +406,7 @@ stmt  level    source
   355   1      
   356   1          if(0U == uart_index_is_valid(uart_n))
   357   1          {
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 7   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 7   
 
   358   2              return;
   359   2          }
@@ -474,7 +474,7 @@ stmt  level    source
   415   1          DMA_URXR_AMTH(uart_n) = (1 - 1) >> 8;                                                               // 设置接收的字节数
   416   1          DMA_URXR_RXAL(uart_n) = (uint8)((uint16)uart_rx_buff[uart_n]);              // 设置接收缓冲地址
   417   1          DMA_URXR_RXAH(uart_n) = (uint8)((uint16)uart_rx_buff[uart_n] >> 8); // 设置接收缓冲地址
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 8   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 8   
 
   418   1          DMA_URXR_CR(uart_n) = 0xA1;                                                                                 // 开启DMA RX接收中断，开启DMA RX接收，清空FIFO
   419   1      }
@@ -542,7 +542,7 @@ stmt  level    source
   477   1          DMA_URXR_STA(uart_n) &= (uint8)(~0x03U);
   478   1          uart_rx_start_buff(uart_n);
   479   1          return dat;
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 9   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 9   
 
   480   1      }
   481          
@@ -610,7 +610,7 @@ stmt  level    source
   538   1              DMA_URXT_STA(uart_n)  = 0x00;   // 清除DMA TX状态
   539   1              DMA_URXT_CR(uart_n)   = 0x00;   // 关闭DMA TX
   540   1                      
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 10  
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 10  
 
   541   1              DMA_URXR_CFG(uart_n)  = 0x00;   // 关闭DMA接收中断
   542   1              DMA_URXR_STA(uart_n)  = 0x00;   // 清除DMA RX状态
@@ -678,7 +678,7 @@ stmt  level    source
   598   4                      TMOD &= ~0x0F;
   599   4                      TL1 = brt;
   600   4                      TH1 = brt >> 8;
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 11  
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 11  
 
   601   4                      AUXR |= 0x40;
   602   4                      TR1 = 1;        
@@ -746,7 +746,7 @@ stmt  level    source
   664   4                      P_SW2  |= 0x01 << 0;
   665   4                      P_SWX1 |= 0x01 << 5;
   666   4                  }
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 12  
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 12  
 
   667   3                  //            IE2 |= 0x01 << 0;     //允许串行口2中断
   668   3                  
@@ -814,7 +814,7 @@ stmt  level    source
   730   4                      T4T3M |= 0xa0;
   731   4      
   732   4                      S4CFG |= 0x01;
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 13  
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 13  
 
   733   4                  }
   734   3                  S4CON |= 0x50;
@@ -882,7 +882,7 @@ stmt  level    source
   796   3                  else if((UART5_RX_P20 == rx_pin) && (UART5_TX_P21 == tx_pin))
   797   3                  {
   798   4                      P_SWX2 |= 0x03; 
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 14  
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 14  
 
   799   4                  }
   800   3                  break;
@@ -950,7 +950,7 @@ stmt  level    source
   862   3                  if((UART7_RX_P50 == rx_pin) && (UART7_TX_P51 == tx_pin))
   863   3                  {
   864   4                      P_SWX5 |= 0x00 << 4; 
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 15  
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 15  
 
   865   4                  }
   866   3                  else if((UART7_RX_PA4 == rx_pin) && (UART7_TX_PA5 == tx_pin))
@@ -1018,7 +1018,7 @@ stmt  level    source
   928   1          const uint8 tim_index_map[] = {TIM_1, TIM_2, TIM_3, TIM_4, TIM_5, TIM_6, TIM_7, TIM_8};
   929   1      
   930   1          if (uart_n < UART_1 || uart_n > UART_8)
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  01:27:08  PAGE 16  
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     29/07/26  19:15:04  PAGE 16  
 
   931   1          {
   932   2              return;
@@ -1033,11 +1033,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      5452     ------
+  ecode size           =      8681     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =      4224         32
+  xdata size           =      4347     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

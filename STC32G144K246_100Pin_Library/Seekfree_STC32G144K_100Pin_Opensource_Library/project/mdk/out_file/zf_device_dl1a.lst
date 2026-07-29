@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_dl1a
 OBJECT MODULE PLACED IN .\out_file\zf_device_dl1a.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_dl1a.c LARGE ROM(HUGE) WARNINGLEV
-                    -EL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
+                    -EL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;
                     -..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librarie
                     -s\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_device_dl1a.l
                     -st) OBJECT(.\out_file\zf_device_dl1a.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
              -***********/
    46          
    47          #include "zf_common_debug.h"
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 2   
 
    48          #include "zf_driver_delay.h"
    49          #include "zf_device_dl1a.h"
@@ -134,7 +134,7 @@ stmt  level    source
   102   1          uint8 tmp = 0;
   103   1          uint8 return_state = 0;
   104   1          volatile uint16 loop_count = 0;
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 3   
 
   105   1          
   106   1          do
@@ -202,7 +202,7 @@ stmt  level    source
   167          // 参数说明     vcsel_period_pclks      PCLK 值
   168          // 返回参数     uint32                  返回超时数值
   169          // 使用示例     dl1a_timeout_mclks_to_microseconds(timeout_period_mclks, vcsel_period_pclks);
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 4   
 
   170          // 备注信息     将序列步骤超时从具有给定 VCSEL 周期的 MCLK (以 PCLK 为单位)转换�
              -��微秒
@@ -270,7 +270,7 @@ stmt  level    source
   224   2              ls_byte = timeout_mclks - 1;
   225   2              
   226   2              while ((ls_byte & 0xFFFFFF00) > 0)
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 5   
 
   227   2              {
   228   3                  ls_byte >>= 1;
@@ -338,7 +338,7 @@ stmt  level    source
   286          //-------------------------------------------------------------------------------------------------------
              -------------
   287          // 函数简介     获取序列步骤超时设置
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 6   
 
   288          // 参数说明     enables         序列使能步骤结构体
   289          // 参数说明     timeouts        序列超时步骤结构体
@@ -406,7 +406,7 @@ stmt  level    source
   343   2              {
   344   3                  system_delay_ms(1);
   345   3                  dl1a_read_registers(DL1A_MSRC_CONFIG_TIMEOUT_MACROP, &data_buffer, 1);
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 7   
 
   346   3                  
   347   3                  if(DL1A_TIMEOUT_COUNT < loop_count ++)
@@ -474,7 +474,7 @@ stmt  level    source
   407   2              
   408   2              if(enables.dss)
   409   2              {
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 8   
 
   410   3                  used_budget_us += 2 * (timeouts.msrc_dss_tcc_us + DL1A_DSS_OVERHEAD);
   411   3              }
@@ -542,7 +542,7 @@ stmt  level    source
   471   1          dl1a_sequence_timeout_step_struct timeouts;
   472   1          
   473   1          // 开始和结束开销时间始终存在
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 9   
 
   474   1          uint32 budget_us = DL1A_GET_START_OVERHEAD + DL1A_END_OVERHEAD;
   475   1          
@@ -610,7 +610,7 @@ stmt  level    source
   533          // 参数说明     void
   534          // 返回参数     void
   535          // 使用示例     dl1a_get_distance();
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 10  
 
   536          // 备注信息     在开始单次射程测量后也调用此函数
   537          //-------------------------------------------------------------------------------------------------------
@@ -678,7 +678,7 @@ stmt  level    source
   595   1          {
   596   1              {0x88, 0x00},
   597   1              {0x80, 0x01},
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 11  
 
   598   1              {0xFF, 0x01},
   599   1              {0x00, 0x00},
@@ -746,7 +746,7 @@ stmt  level    source
   661   1              {0xFF, 0x01},
   662   1              {0x23, 0x34},
   663   1              {0x42, 0x00},
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 12  
 
   664   1              {0x44, 0xFF},
   665   1              {0x45, 0x26},
@@ -814,7 +814,7 @@ stmt  level    source
   727   2              reg_data_buffer = dl1a_read_register(DL1A_IO_VOLTAGE_CONFIG);         // 传感器默认 IO 为 1
              -.8V 模式
   728   2              dl1a_write_register(DL1A_IO_VOLTAGE_CONFIG, reg_data_buffer | 0x01);  // 配置 IO 为 2.8V 模�
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 13  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 13  
 
              -�
   729   2              
@@ -882,7 +882,7 @@ stmt  level    source
   790   4                      ref_spad_map[i / 8] &= ~(1 << (i % 8));
   791   4                  }
   792   3                  else if((ref_spad_map[i / 8] >> (i % 8)) & 0x1)
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 14  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 14  
 
   793   3                  {
   794   4                      data_buffer[3] ++;
@@ -950,7 +950,7 @@ stmt  level    source
   856   2              //        dl1a_write_register(0x42, 0x00);
   857   2              //        dl1a_write_register(0x44, 0xFF);
   858   2              //        dl1a_write_register(0x45, 0x26);
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 15  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 15  
 
   859   2              //        dl1a_write_register(0x46, 0x05);
   860   2              //        dl1a_write_register(0x40, 0x40);
@@ -1018,7 +1018,7 @@ stmt  level    source
   922   3                  return_state = 1;
   923   3                  printf( "DL1A perform single reference calibration error.\r\n");
   924   3                  break;
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  01:27:12  PAGE 16  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     29/07/26  19:15:08  PAGE 16  
 
   925   3              }
   926   2              
@@ -1053,13 +1053,13 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =       184     ------
-  ecode size           =      3258     ------
+  ecode size           =      4609     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         4        109
+  xdata size           =       173     ------
   xdata-const size     =    ------     ------
-  edata size           =    ------     ------
+  edata size           =         8     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------

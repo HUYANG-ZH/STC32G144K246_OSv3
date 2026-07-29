@@ -113,7 +113,7 @@ class DeviceStatus:
 class FlashOptions:
     port: str
     cold_recovery: bool = False
-    app_baud: int = 2_000_000
+    app_baud: int = 1_000_000
     app_baud_fallbacks: tuple[int, ...] = ()
     boot_baud: int | None = None
     byte_gap_ms: float = 1.0
@@ -130,7 +130,7 @@ class FlashOptions:
     def resolved_boot_baud(self) -> int:
         if self.boot_baud is not None:
             return self.boot_baud
-        return 2_000_000
+        return 1_000_000
 
     def app_baud_candidates(self) -> tuple[int, ...]:
         result: list[int] = []

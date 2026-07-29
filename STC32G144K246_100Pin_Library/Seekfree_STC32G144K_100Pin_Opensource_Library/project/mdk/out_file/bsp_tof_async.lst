@@ -1,9 +1,9 @@
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_tof_async
 OBJECT MODULE PLACED IN .\out_file\bsp_tof_async.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_tof_async.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_tof_async.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,
                     -SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\z
                     -f_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\s
                     -tc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\bsp_tof_async.lst) OBJECT(.\out_f
@@ -66,7 +66,7 @@ stmt  level    source
                    BSP_TOF_STATE_SAMPLE_STATUS_SUBMIT,
                    BSP_TOF_STATE_SAMPLE_STATUS_WAIT,
                    BSP_TOF_STATE_SAMPLE_DISTANCE_SUBMIT,
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 2   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 2   
 
                    BSP_TOF_STATE_SAMPLE_DISTANCE_WAIT,
                    BSP_TOF_STATE_ERROR,
@@ -134,7 +134,7 @@ stmt  level    source
                        {
                            bsp_tof_fail(IIC_ERROR_TIMEOUT);
                            return 2U;
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 3   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 3   
 
                        }
                        return 0U;
@@ -202,7 +202,7 @@ stmt  level    source
                        return;
                    }
                
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 4   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 4   
 
                    now = service_timetick_what();
                    switch(tof_state)
@@ -270,7 +270,7 @@ stmt  level    source
                                }
                            }
                            break;
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 5   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 5   
 
                
                        case BSP_TOF_STATE_MODEL_SUBMIT:
@@ -338,7 +338,7 @@ stmt  level    source
                                else if(tof_ready_poll_count++ >= BSP_TOF_READY_MAX_POLLS)
                                {
                                    bsp_tof_fail(IIC_ERROR_TIMEOUT);
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 6   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 6   
 
                                }
                                else
@@ -406,7 +406,7 @@ stmt  level    source
                        case BSP_TOF_STATE_SAMPLE_STATUS_WAIT:
                            if(0U != bsp_tof_transfer_succeeded())
                            {
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 7   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 7   
 
                                if(0x89U != tof_read_buffer[0])
                                {
@@ -474,7 +474,7 @@ stmt  level    source
                uint16 bsp_tof_async_get_distance_mm(void)
                {
                    return (0U != tof_ready) ? tof_distance_mm : BSP_TOF_INVALID_DISTANCE_MM;
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 8   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 8   
 
                }
                
@@ -542,7 +542,7 @@ stmt  level    source
   515          uint16 bsp_tof_async_get_distance_mm(void)
   516          {
   517   1          return (0U != tof_ready) ? dl1a_distance_mm : BSP_TOF_INVALID_DISTANCE_MM;
-C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  01:27:28  PAGE 9   
+C251 COMPILER V5.60.0,  bsp_tof_async                                                      29/07/26  21:23:37  PAGE 9   
 
   518   1      }
   519          
@@ -557,7 +557,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       137     ------
+  ecode size           =       166     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

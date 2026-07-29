@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  service_negative_pressure                                          29/07/26  01:57:04  PAGE 1   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          29/07/26  21:23:40  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_negative_pressure
 OBJECT MODULE PLACED IN .\out_file\service_negative_pressure.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_negative_pressure.c LARGE ROM(HUGE) WARNINGLEVE
-                    -L(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;.
+                    -L(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;.
                     -.\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries
                     -\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\service_negative_
                     -pressure.lst) OBJECT(.\out_file\service_negative_pressure.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    53   1          ea_backup = EA;
    54   1          EA = 0;
    55   1          negative_pressure_config_percent = percent;
-C251 COMPILER V5.60.0,  service_negative_pressure                                          29/07/26  01:57:04  PAGE 2   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          29/07/26  21:23:40  PAGE 2   
 
    56   1          negative_pressure_control_override = 0U;
    57   1          negative_pressure_requested_percent = percent;
@@ -134,7 +134,7 @@ stmt  level    source
   118   1          EA = 0;
   119   1          negative_pressure_requested_percent = percent;
   120   1          negative_pressure_request_pending = 1U;
-C251 COMPILER V5.60.0,  service_negative_pressure                                          29/07/26  01:57:04  PAGE 3   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          29/07/26  21:23:40  PAGE 3   
 
   121   1          EA = ea_backup;
   122   1      }
@@ -181,17 +181,16 @@ stmt  level    source
   163          {
   164   1          return negative_pressure_percent;
   165   1      }
-*** WARNING C183 IN LINE 27 OF ..\L2_SERVICE\service_negative_pressure.c: dead assignment eliminated
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       497     ------
+  ecode size           =       658     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         9     ------
+  xdata size           =        28     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -204,7 +203,5 @@ Module Information          Static   Overlayable
   hconst size          =       112     ------
 End of Module Information.
 
-C251 COMPILER V5.60.0,  service_negative_pressure                                          29/07/26  01:57:04  PAGE 4   
 
-
-C251 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

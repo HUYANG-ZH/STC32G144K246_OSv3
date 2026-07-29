@@ -35,7 +35,7 @@ def run() -> None:
     )
 
     class FastBootTUI(App):
-        TITLE = "STC32G144K246 FastBoot v1.0.22 Turbo — 2,000,000 baud"
+        TITLE = "STC32G144K246 FastBoot v1.0.22 Turbo — 1000000 baud"
         SUB_TITLE = "Page CRC Incremental · CRC32 · Recovery"
         CSS = """
         Screen {
@@ -144,7 +144,7 @@ def run() -> None:
                         yield Input(placeholder=r"D:\...\SEEKFREE.hex", id="hex")
                         yield Button("检查", id="plan")
                     yield Checkbox(
-                        "冷恢复/Bootloader 直连（2000000）",
+                        "冷恢复/Bootloader 直连（1000000）",
                         id="cold",
                         classes="check-row",
                     )

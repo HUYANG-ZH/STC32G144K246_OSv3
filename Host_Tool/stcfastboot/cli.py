@@ -15,7 +15,7 @@ from .engine import (
 
 def add_common_serial(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--port", required=True, help="串口，例如 COM7")
-    parser.add_argument("--cold-recovery", action="store_true", help="跳过 APP，2000000 直连 Bootloader")
+    parser.add_argument("--cold-recovery", action="store_true", help="跳过 APP，1000000 直连 Bootloader")
     parser.add_argument("--boot-baud", type=int, default=None)
 
 

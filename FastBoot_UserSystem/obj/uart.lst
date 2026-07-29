@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  uart                                                               24/07/26  17:47:23  PAGE 1   
+C251 COMPILER V5.60.0,  uart                                                               29/07/26  19:15:01  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE uart
 OBJECT MODULE PLACED IN .\obj\uart.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE src\uart.c XSMALL INTR2 NOCASE BROWSE DEBUG PRINT(.\obj\uart.lst) OBJ
-                    -ECT(.\obj\uart.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE src\uart.c XSMALL INTR2 NOCASE OPTIMIZE(0,SPEED) BROWSE DEBUG PRINT(.
+                    -\obj\uart.lst) OBJECT(.\obj\uart.obj) 
 
 stmt  level    source
 
@@ -28,121 +28,120 @@ stmt  level    source
    18   1      
    19   1          /*
    20   1           * Match the clock retained across the software reset.  Cold and hot entry
-   21   1           * therefore expose the same nominal 2,000,000 baud to the host instead of
-   22   1           * relying on the old 115200 -> ~300000 clock scaling side effect.
-   23   1           */
-   24   1          reload = bDfuHotEntry ? (WORD)UART_T1_RELOAD_HOT
-   25   1                                : (WORD)UART_T1_RELOAD_COLD;
-   26   1      
-   27   1          S1BRT = 0;
-   28   1          SCON = 0x52;
-   29   1      
-   30   1          TMOD &= ~0xf0;
-   31   1          T1x12 = 1;
-   32   1          TL1 = (BYTE)reload;
-   33   1          TH1 = (BYTE)(reload >> 8);
-   34   1          TR1 = 1;
-   35   1      
-   36   1          uart_recv_done();
-   37   1      }
+   21   1           * therefore expose the same nominal 1,000,000 baud to the host.
+   22   1           */
+   23   1          reload = bDfuHotEntry ? (WORD)UART_T1_RELOAD_HOT
+   24   1                                : (WORD)UART_T1_RELOAD_COLD;
+   25   1      
+   26   1          S1BRT = 0;
+   27   1          SCON = 0x52;
+   28   1      
+   29   1          TMOD &= ~0xf0;
+   30   1          T1x12 = 1;
+   31   1          TL1 = (BYTE)reload;
+   32   1          TH1 = (BYTE)(reload >> 8);
+   33   1          TR1 = 1;
+   34   1      
+   35   1          uart_recv_done();
+   36   1      }
+   37          
    38          
-   39          
-   40          void uart_isr(void)
-   41          {
-   42   1          BYTE dat;
-   43   1          
-   44   1          if (RI)
-   45   1          {
-   46   2              RI = 0;
-   47   2              
-   48   2              UartRecvSum += (dat = SBUF);
-   49   2              switch (UartRecvStep)
-   50   2              {
-   51   3              case 0:
-   52   3      L_CheckHead:
-   53   3                  UartRecvStep = ((UartRecvSum = dat) == '#');
-   54   3                  break;
-   55   3              case 1:
-   56   3                  UartRxBuffer[0] = dat;
-   57   3                  UartrecvIndex = 0;
-   58   3                  UartRecvStep++;
-C251 COMPILER V5.60.0,  uart                                                               24/07/26  17:47:23  PAGE 2   
+   39          void uart_isr(void)
+   40          {
+   41   1          BYTE dat;
+   42   1          
+   43   1          if (RI)
+   44   1          {
+   45   2              RI = 0;
+   46   2              
+   47   2              UartRecvSum += (dat = SBUF);
+   48   2              switch (UartRecvStep)
+   49   2              {
+   50   3              case 0:
+   51   3      L_CheckHead:
+   52   3                  UartRecvStep = ((UartRecvSum = dat) == '#');
+   53   3                  break;
+   54   3              case 1:
+   55   3                  UartRxBuffer[0] = dat;
+   56   3                  UartrecvIndex = 0;
+   57   3                  UartRecvStep++;
+   58   3                  break;
+C251 COMPILER V5.60.0,  uart                                                               29/07/26  19:15:01  PAGE 2   
 
-   59   3                  break;
-   60   3              case 2:
-   61   3                  UartRxBuffer[1 + UartrecvIndex++] = dat;
-   62   3                  if (UartrecvIndex >= UartRxBuffer[0])
-   63   3                      UartRecvStep++;
-   64   3                  break;
-   65   3              case 3:
-   66   3                  if (dat != '$') goto L_CheckHead;
-   67   3                  UartRecvStep++;
-   68   3                  break;
-   69   3              case 4:
-   70   3                  if (UartRecvSum != 0) goto L_CheckHead;
-   71   3                  bUartRxReady = 1;
-   72   3                  UartRecvStep++;
-   73   3                  break;
-   74   3              default:
-   75   3                  break;
-   76   3              }
-   77   2          }
-   78   1      }
+   59   3              case 2:
+   60   3                  UartRxBuffer[1 + UartrecvIndex++] = dat;
+   61   3                  if (UartrecvIndex >= UartRxBuffer[0])
+   62   3                      UartRecvStep++;
+   63   3                  break;
+   64   3              case 3:
+   65   3                  if (dat != '$') goto L_CheckHead;
+   66   3                  UartRecvStep++;
+   67   3                  break;
+   68   3              case 4:
+   69   3                  if (UartRecvSum != 0) goto L_CheckHead;
+   70   3                  bUartRxReady = 1;
+   71   3                  UartRecvStep++;
+   72   3                  break;
+   73   3              default:
+   74   3                  break;
+   75   3              }
+   76   2          }
+   77   1      }
+   78          
    79          
-   80          
-   81          static BYTE send(BYTE dat)
-   82          {
-   83   1          while (!TI);
-   84   1          TI = 0;
-   85   1          SBUF = dat;
-   86   1          
-   87   1          return dat;
-   88   1      }
-   89          
-   90          void uart_send(BYTE status, BYTE size)
-   91          {
-   92   1          BYTE sum;
-   93   1          BYTE i;
-   94   1          
-   95   1          sum = send('@');
-   96   1          sum += send(status);
-   97   1          sum += send(size);
-   98   1          if (size)
-   99   1          {
-  100   2              for (i = 0; i < size; i++)
-  101   2              {
-  102   3                  sum += send(UartTxBuffer[i]);
-  103   3              }
-  104   2          }
-  105   1          sum += send('$');
-  106   1          send(-sum);
-  107   1          
-  108   1          while (!TI);
-  109   1      }
-  110          
-  111          void uart_recv_done(void)
-  112          {
-  113   1          bUartRxReady = 0;
-  114   1          UartrecvIndex = 0;
-  115   1          UartRecvStep = 0;
-  116   1          UartRecvSum = 0;
-  117   1      }
+   80          static BYTE send(BYTE dat)
+   81          {
+   82   1          while (!TI);
+   83   1          TI = 0;
+   84   1          SBUF = dat;
+   85   1          
+   86   1          return dat;
+   87   1      }
+   88          
+   89          void uart_send(BYTE status, BYTE size)
+   90          {
+   91   1          BYTE sum;
+   92   1          BYTE i;
+   93   1          
+   94   1          sum = send('@');
+   95   1          sum += send(status);
+   96   1          sum += send(size);
+   97   1          if (size)
+   98   1          {
+   99   2              for (i = 0; i < size; i++)
+  100   2              {
+  101   3                  sum += send(UartTxBuffer[i]);
+  102   3              }
+  103   2          }
+  104   1          sum += send('$');
+  105   1          send(-sum);
+  106   1          
+  107   1          while (!TI);
+  108   1      }
+  109          
+  110          void uart_recv_done(void)
+  111          {
+  112   1          bUartRxReady = 0;
+  113   1          UartrecvIndex = 0;
+  114   1          UartRecvStep = 0;
+  115   1          UartRecvSum = 0;
+  116   1      }
+  117          
   118          
-  119          
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
-  code size            =       268     ------
+  code size            =       458     ------
   ecode size           =    ------     ------
-C251 COMPILER V5.60.0,  uart                                                               24/07/26  17:47:23  PAGE 3   
-
   data size            =    ------     ------
+C251 COMPILER V5.60.0,  uart                                                               29/07/26  19:15:01  PAGE 3   
+
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =    ------     ------
   xdata-const size     =    ------     ------
-  edata size           =       515     ------
+  edata size           =       523     ------
   bit size             =         1     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------

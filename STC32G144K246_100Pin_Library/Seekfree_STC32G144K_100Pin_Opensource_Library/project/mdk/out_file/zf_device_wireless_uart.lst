@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:27:11  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  21:23:31  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_wireless_uart
 OBJECT MODULE PLACED IN .\out_file\zf_device_wireless_uart.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_wireless_uart.c LARGE ROM(HUGE) W
-                    -ARNINGLEVEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
+                    -ARNINGLEVEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
                     -f_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..
                     -\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_devi
                     -ce_wireless_uart.lst) OBJECT(.\out_file\zf_device_wireless_uart.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    52   2              accepted_len = uart_write_buffer_async(WIRELESS_UART_INDEX, buff, request_len);
    53   2              buff += accepted_len;
    54   2              len -= accepted_len;
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:27:11  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  21:23:31  PAGE 2   
 
    55   2              if(accepted_len != request_len)
    56   2              {
@@ -134,7 +134,7 @@ stmt  level    source
   118   2              wireless_uart_rx_tail = (uint8)((tail + 1U) & WIRELESS_UART_BUFFER_MASK);
   119   2              data_len++;
   120   2          }
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:27:11  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  21:23:31  PAGE 3   
 
   121   1      
   122   1          return data_len;
@@ -190,7 +190,7 @@ stmt  level    source
                #endif
   172   1      
   173   1      #if (0 == WIRELESS_UART_AUTO_BAUD_RATE)
-  174   1          uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+  174   1          uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BAUD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
   175   1          uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
   176   1      #elif (1 == WIRELESS_UART_AUTO_BAUD_RATE)
                    uint8 rts_init_status;
@@ -202,11 +202,11 @@ stmt  level    source
                    wireless_auto_baud_data[2] = 3U;
                
                    rts_init_status = gpio_get_level(WIRELESS_UART_RTS_PIN);
-C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  01:27:11  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            29/07/26  21:23:31  PAGE 4   
 
                    gpio_init(WIRELESS_UART_RTS_PIN, GPO, rts_init_status, GPO_PUSH_PULL);
                
-                   uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+                   uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BAUD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
                    uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
                
                    system_delay_ms(5);
@@ -254,11 +254,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       569     ------
+  ecode size           =       821     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       132         21
+  xdata size           =       177     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

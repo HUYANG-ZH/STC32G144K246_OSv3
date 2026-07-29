@@ -171,7 +171,7 @@ uint8 wireless_uart_init(void)
 #endif
 
 #if (0 == WIRELESS_UART_AUTO_BAUD_RATE)
-    uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+    uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BAUD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
     uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
 #elif (1 == WIRELESS_UART_AUTO_BAUD_RATE)
     uint8 rts_init_status;
@@ -185,7 +185,7 @@ uint8 wireless_uart_init(void)
     rts_init_status = gpio_get_level(WIRELESS_UART_RTS_PIN);
     gpio_init(WIRELESS_UART_RTS_PIN, GPO, rts_init_status, GPO_PUSH_PULL);
 
-    uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+    uart_init(WIRELESS_UART_INDEX, WIRELESS_UART_BAUD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
     uart_rx_interrupt(WIRELESS_UART_INDEX, 1, wireless_uart_callback);
 
     system_delay_ms(5);

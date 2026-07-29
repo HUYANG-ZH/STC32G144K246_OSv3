@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 1   
+C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE dfu
 OBJECT MODULE PLACED IN .\obj\dfu.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE src\dfu.c XSMALL INTR2 NOCASE BROWSE DEBUG PRINT(.\obj\dfu.lst) OBJEC
-                    -T(.\obj\dfu.obj) 
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE src\dfu.c XSMALL INTR2 NOCASE OPTIMIZE(0,SPEED) BROWSE DEBUG PRINT(.\
+                    -obj\dfu.lst) OBJECT(.\obj\dfu.obj) 
 
 stmt  level    source
 
@@ -66,7 +66,7 @@ stmt  level    source
    56   1           * Cold-boot force entry: hold P3.3 low at power-on.
    57   1           * (EA=0 here, so the camera VSYNC on INT1/P3.3 never fires.)
    58   1           * Hot entry: APP wrote DfuTag then IAP_CONTR=0x28.
-C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 2   
+C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 2   
 
    59   1           * Recovery: interrupted update with IN_PROGRESS/VERIFIED state.
    60   1           */
@@ -134,7 +134,7 @@ stmt  level    source
   122   3                  break;
   123   3              }
   124   2              /* Fast dense block programming; final whole-image CRC32 is authoritative. */
-C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 3   
+C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 3   
 
   125   2              if (!iap_program_block(addr, ptr, size))
   126   2                  status = STATUS_PROGRAMERR;
@@ -202,7 +202,7 @@ stmt  level    source
   188   3                  addr += FLASH_PAGE_SIZE;
   189   3              }
   190   2              break;
-C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 4   
+C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 4   
 
   191   2      
   192   2          case DFU_CMD_STATUS:
@@ -256,14 +256,14 @@ stmt  level    source
 
 Module Information          Static   Overlayable
 ------------------------------------------------
-  code size            =      1033     ------
+  code size            =      1339     ------
   ecode size           =    ------     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =         4     ------
   xdata-const size     =    ------     ------
-  edata size           =    ------         20
+  edata size           =        41     ------
   bit size             =         1     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
@@ -271,7 +271,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-C251 COMPILER V5.60.0,  dfu                                                                24/07/26  17:47:23  PAGE 5   
+C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 5   
 
   hconst size          =    ------     ------
 End of Module Information.

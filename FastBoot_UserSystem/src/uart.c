@@ -18,8 +18,7 @@ void uart_init(void)
 
     /*
      * Match the clock retained across the software reset.  Cold and hot entry
-     * therefore expose the same nominal 2,000,000 baud to the host instead of
-     * relying on the old 115200 -> ~300000 clock scaling side effect.
+     * therefore expose the same nominal 1,000,000 baud to the host.
      */
     reload = bDfuHotEntry ? (WORD)UART_T1_RELOAD_HOT
                           : (WORD)UART_T1_RELOAD_COLD;

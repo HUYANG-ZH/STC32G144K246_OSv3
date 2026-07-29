@@ -1,9 +1,9 @@
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_imu
 OBJECT MODULE PLACED IN .\out_file\bsp_imu.obj
-COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_imu.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEED)
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_imu.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEED)
                     - BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driv
                     -er;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32g_
                     -usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\bsp_imu.lst) OBJECT(.\out_file\bsp_imu.
@@ -66,7 +66,7 @@ stmt  level    source
    52          static void bsp_imu_publish_fifo_frame(void);
    53          
    54          static int16 bsp_imu_make_i16(uint8 low, uint8 high)
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 2   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 2   
 
    55          {
    56   1          return (int16)(((uint16)high << 8) | low);
@@ -134,7 +134,7 @@ stmt  level    source
   118   2              return 0U;
   119   2          }
   120   1          s_bsp_imu_active_drdy_tick = s_bsp_imu_pending_drdy_tick;
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 3   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 3   
 
   121   1          s_bsp_imu_frame_pending = 0U;
   122   1          s_bsp_imu_transfer_active = 1U;
@@ -202,7 +202,7 @@ stmt  level    source
   184   3                      return f_sgn;
   185   3                  }
   186   2                  h_sig <<= 1;
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 4   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 4   
 
   187   2                  h_exp = 0U;
   188   2                  while(0U == (h_sig & 0x0400U))
@@ -270,7 +270,7 @@ stmt  level    source
   250   1          uint8 offset;
   251   1          uint8 tag;
   252   1          uint8 gyro_seen = 0U;
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 5   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 5   
 
   253   1          uint8 acc_seen = 0U;
   254   1          float ax;
@@ -338,7 +338,7 @@ stmt  level    source
   310   2              az = tfpu_mul(tfpu_int2float((long)sample->acc_z_raw), acc_scale);
   311   2      
   312   2              roll = bsp_imu_tfpu_atan2(ay, az);
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 6   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 6   
 
   313   2              ay2 = tfpu_mul(ay, ay);
   314   2              az2 = tfpu_mul(az, az);
@@ -406,7 +406,7 @@ stmt  level    source
   376   2          }
   377   1          for(i = 0U; i < BSP_IMU_FIFO_DMA_LENGTH; i++)
   378   1          {
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 7   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 7   
 
   379   2              s_bsp_imu_fifo_tx[i] = 0x00U;
   380   2          }
@@ -474,7 +474,7 @@ stmt  level    source
   442   1      }
   443          
   444          uint8 bsp_imu_get_latest_sample(bsp_imu_sample_t *out_data)
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 8   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 8   
 
   445          {
   446   1          uint8 index;
@@ -542,24 +542,20 @@ stmt  level    source
   508          {
   509   1          return s_bsp_imu_ready;
   510   1      }
-C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  01:27:24  PAGE 9   
+C251 COMPILER V5.60.0,  bsp_imu                                                            29/07/26  21:23:35  PAGE 9   
 
 *** WARNING C174 IN LINE 231 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_tfpu_asin': unreferenced 'static' function
 *** WARNING C174 IN LINE 168 OF ..\L1_BSP\bsp_imu.c: 'bsp_imu_fp16_to_float_bits': unreferenced 'static' function
-*** WARNING C177 IN LINE 78 OF ..\L1_BSP\bsp_imu.c: unreachable code
-*** WARNING C177 IN LINE 126 OF ..\L1_BSP\bsp_imu.c: unreachable code
-*** WARNING C177 IN LINE 131 OF ..\L1_BSP\bsp_imu.c: unreachable code
-*** WARNING C177 IN LINE 159 OF ..\L1_BSP\bsp_imu.c: unreachable code
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2660     ------
+  ecode size           =      3996     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       129        120
+  xdata size           =       331     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -573,4 +569,4 @@ Module Information          Static   Overlayable
 End of Module Information.
 
 
-C251 COMPILATION COMPLETE.  6 WARNING(S),  0 ERROR(S)
+C251 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

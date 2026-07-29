@@ -4,7 +4,7 @@
 #include "zf_common_typedef.h"
 
 #define WIRELESS_UART_INDEX              ( UART_8 )
-#define WIRELESS_UART_BUAD_RATE          ( 115200 )
+#define WIRELESS_UART_BAUD_RATE          ( 921600 )
 #define WIRELESS_UART_TX_PIN             ( UART8_RX_P92 )
 #define WIRELESS_UART_RX_PIN             ( UART8_TX_P93 )
 #define WIRELESS_UART_RTS_PIN            ( IO_P91 )

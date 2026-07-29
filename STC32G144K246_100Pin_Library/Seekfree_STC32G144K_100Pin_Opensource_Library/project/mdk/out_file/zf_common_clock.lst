@@ -1,10 +1,10 @@
-C251 COMPILER V5.60.0,  zf_common_clock                                                    29/07/26  01:27:03  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    29/07/26  19:14:59  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_clock
 OBJECT MODULE PLACED IN .\out_file\zf_common_clock.obj
 COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\..\libraries\zf_common\zf_common_clock.c LARGE ROM(HUGE) WARNINGLE
-                    -VEL(3) OPTIMIZE(8,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
+                    -VEL(3) OPTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
                     -;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librari
                     -es\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\zf_common_clock
                     -.lst) OBJECT(.\out_file\zf_common_clock.obj) 
@@ -66,7 +66,7 @@ stmt  level    source
    47          
    48          
    49          void clock_init (uint32 clock)                                              // 核心时钟初始化
-C251 COMPILER V5.60.0,  zf_common_clock                                                    29/07/26  01:27:03  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    29/07/26  19:14:59  PAGE 2   
 
    50          {
    51   1          uint8 pll_div = ((clock / 1000000UL - 78) / 3);
@@ -134,7 +134,7 @@ stmt  level    source
                    // 先设置好时钟，最后切换外部高速晶振
                    CLKSEL = 1 << 0 | 1 << 2;   // 选择外部高速晶振, 内部HPLL1输出/2
                
-C251 COMPILER V5.60.0,  zf_common_clock                                                    29/07/26  01:27:03  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    29/07/26  19:14:59  PAGE 3   
 
                #endif
   115   1      
@@ -171,11 +171,11 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       272     ------
+  ecode size           =       418     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         4          1
+  xdata size           =         9     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
