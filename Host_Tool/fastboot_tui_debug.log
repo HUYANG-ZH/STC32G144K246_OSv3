@@ -1,5 +1,5 @@
 操作：Turbo 增量升级
-异常：could not open port 'COM11': PermissionError(13, '拒绝访问。', None, 5)
+异常：用户取消操作
 
 Traceback (most recent call last):
   File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\tui.py", line 460, in worker_flash_image
@@ -7,16 +7,8 @@ Traceback (most recent call last):
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 762, in flash
     self.enter_bootloader()
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 461, in enter_bootloader
-    with self._open_serial(baud) as ser:
-         ^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 398, in _open_serial
-    return serial.Serial(self.options.port, baud, timeout=0.05, write_timeout=1.0)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\Anaconda3\Lib\site-packages\serial\serialwin32.py", line 33, in __init__
-    super(Serial, self).__init__(*args, **kwargs)
-  File "D:\Anaconda3\Lib\site-packages\serial\serialutil.py", line 244, in __init__
-    self.open()
-  File "D:\Anaconda3\Lib\site-packages\serial\serialwin32.py", line 64, in open
-    raise SerialException("could not open port {!r}: {!r}".format(self.portstr, ctypes.WinError()))
-serial.serialutil.SerialException: could not open port 'COM11': PermissionError(13, '拒绝访问。', None, 5)
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 465, in enter_bootloader
+    self._check_cancel()
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 389, in _check_cancel
+    raise OperationCancelled("用户取消操作")
+stcfastboot.engine.OperationCancelled: 用户取消操作

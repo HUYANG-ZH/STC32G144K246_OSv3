@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:23:50  PAGE 1   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:56:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_boot_sequence
@@ -66,7 +66,7 @@ stmt  level    source
    53   1      }
    54          
    55          static void app_boot_task(void)
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:23:50  PAGE 2   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:56:29  PAGE 2   
 
    56          {
    57   1          uint32 now;
@@ -134,21 +134,21 @@ stmt  level    source
   119   1      
   120   1          wprint("boot_beep,1.000\r\n");
   121   1      
-C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:23:50  PAGE 3   
+C251 COMPILER V5.60.0,  app_boot_sequence                                                  29/07/26  21:56:29  PAGE 3   
 
   122   1          (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
   123   1                  APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
   124   1          #if __DBGFLAG__
-  125   1          printf(">>[app_boot_sequence_init]\r\n");
-  126   1          wprint(">>[app_boot_sequence_init]\r\n");
-  127   1          #endif
+                   printf(">>[app_boot_sequence_init]\r\n");
+                   wprint(">>[app_boot_sequence_init]\r\n");
+                   #endif
   128   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       503     ------
+  ecode size           =       479     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -162,7 +162,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       190     ------
+  hconst size          =       161     ------
 End of Module Information.
 
 

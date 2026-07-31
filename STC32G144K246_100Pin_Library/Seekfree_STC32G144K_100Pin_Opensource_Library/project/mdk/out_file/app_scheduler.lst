@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  21:23:48  PAGE 1   
+C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  21:56:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_scheduler
@@ -55,9 +55,9 @@ stmt  level    source
    39   1      
    40   1          pit_ms_init(TIM2_PIT, 1, app_scheduler_tick);
    41   1          #if __DBGFLAG__
-   42   1          printf(">>[app_scheduler_init]\r\n");
-   43   1          wprint(">>[app_scheduler_init]\r\n");
-   44   1          #endif
+                   printf(">>[app_scheduler_init]\r\n");
+                   wprint(">>[app_scheduler_init]\r\n");
+                   #endif
    45   1      }
    46          
    47          void app_scheduler_debug(void)
@@ -66,7 +66,7 @@ stmt  level    source
    50          
    51          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  21:23:48  PAGE 2   
+C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  21:56:27  PAGE 2   
 
    52          // 函数简介     app 层任务注册
    53          // 参数说明     id              任务编号，范围 0 - APP_SCHEDULER_TASK_MAX-1
@@ -134,7 +134,7 @@ stmt  level    source
   111   1      
   112   1          if(APP_SCHEDULER_TASK_MAX == selected)
   113   1          {
-C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  21:23:48  PAGE 3   
+C251 COMPILER V5.60.0,  app_scheduler                                                      29/07/26  21:56:27  PAGE 3   
 
   114   2              return;
   115   2          }
@@ -183,7 +183,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1099     ------
+  ecode size           =      1075     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -197,7 +197,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        25     ------
+  hconst size          =    ------     ------
 End of Module Information.
 
 

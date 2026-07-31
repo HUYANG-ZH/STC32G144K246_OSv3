@@ -4,8 +4,8 @@
 #define ADC_CHANNEL_1 ADC2_CH3_P03
 #define ADC_CHANNEL_2 ADC2_CH4_P04
 #define ADC_CHANNEL_M ADC2_CH5_P05
-#define ADC_CHANNEL_3 ADC2_CH6_P06
-#define ADC_CHANNEL_4 ADC2_CH7_P07
+#define ADC_CHANNEL_3 ADC2_CH7_P07
+#define ADC_CHANNEL_4 ADC2_CH6_P06
 
 /*
  * ADC2 的 DMA 格式：每通道占用 2 * samples + 4 字节，最后两个字节为硬件平均值。
@@ -22,8 +22,8 @@ enum
     BSP_INDUCTOR_DMA_CH1 = 0,
     BSP_INDUCTOR_DMA_CH2,
     BSP_INDUCTOR_DMA_CHM,
-    BSP_INDUCTOR_DMA_CH3,
     BSP_INDUCTOR_DMA_CH4,
+    BSP_INDUCTOR_DMA_CH3,
 };
 
 typedef struct

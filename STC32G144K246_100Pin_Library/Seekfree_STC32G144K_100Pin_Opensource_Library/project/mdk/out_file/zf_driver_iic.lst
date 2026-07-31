@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_iic
@@ -66,7 +66,7 @@ stmt  level    source
    47          
    48          #define IIC_CMD_STOP                   (0x06U)
    49          #define IIC_CMD_START_SEND_ACK         (0x09U)
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 2   
 
    50          #define IIC_CMD_SEND_ACK_COMBINED      (0x0AU)
    51          #define IIC_CMD_RECV_SEND_ACK          (0x0BU)
@@ -134,7 +134,7 @@ stmt  level    source
   113   2              input_enable_register = (uint8 volatile far *)(0x7efe30 + ((pin >> 4) - 1));
   114   2          }
   115   1          else
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 3   
 
   116   1          {
   117   2              input_enable_register = (uint8 volatile far *)(0x7ef9e0 + ((pin >> 4) - 9));
@@ -202,7 +202,7 @@ stmt  level    source
   177          static void iic_hw_set_aux (iic_index_enum iic_n, uint8 value)
   178          {
   179   1          if(IIC_1 == iic_n) I2CMSAUX = value;
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 4   
 
   180   1          else               I2C2MSAUX = value;
   181   1      }
@@ -270,7 +270,7 @@ stmt  level    source
   241   2      
   242   2              case IIC_NUM:
   243   2              default:
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 5   
 
   244   2              {
   245   3                  return 0;
@@ -338,7 +338,7 @@ stmt  level    source
   303          
   304          static uint32 iic_calculate_actual_speed (uint16 divider)
   305          {
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 6   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 6   
 
   306   1          uint32 denominator = ((uint32)divider * 4U) + 8U;
   307   1          return system_clock / denominator;
@@ -406,7 +406,7 @@ stmt  level    source
   365   1          EA = 0;
   366   1          iic_info[iic_n].locked = 0;
   367   1          EA = ea_backup;
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 7   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 7   
 
   368   1      }
   369          
@@ -474,7 +474,7 @@ stmt  level    source
   425   1          if(0U == iic_try_lock(iic_n))
   426   1          {
   427   2              iic_set_last_status(iic_n, IIC_ERROR_BUSY);
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 8   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 8   
 
   428   2              return IIC_ERROR_BUSY;
   429   2          }
@@ -542,7 +542,7 @@ stmt  level    source
   488   2          }
   489   1      
   490   1          EAXFR = 1;
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 9   
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 9   
 
   491   1          async_info = &iic_async_info[iic_n];
   492   1          hw_status = iic_hw_get_status(iic_n);
@@ -610,7 +610,7 @@ stmt  level    source
   553   3                  }
   554   2                  break;
   555   2      
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 10  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 10  
 
   556   2              case IIC_ASYNC_STATE_START_READ:
   557   2                  if(0U != (hw_status & IIC_STATUS_ACK_IN))
@@ -678,7 +678,7 @@ stmt  level    source
   619   1          return (iic_index_is_valid(iic_n) &&
   620   1                  (IIC_ASYNC_STATE_IDLE != iic_async_info[iic_n].state)) ? 1U : 0U;
   621   1      }
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 11  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 11  
 
   622          
   623          iic_status_enum iic_async_get_status (iic_index_enum iic_n)
@@ -746,7 +746,7 @@ stmt  level    source
   678   1      
   679   1          iic_hw_clear_if(iic_n);
   680   1          return IIC_SUCCESS;
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 12  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 12  
 
   681   1      }
   682          
@@ -814,7 +814,7 @@ stmt  level    source
   742   1      
   743   1          if((0 == gpio_get_level(scl_pin)) || (0 == gpio_get_level(sda_pin)))
   744   1          {
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 13  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 13  
 
   745   2              return IIC_ERROR_BUS_STUCK;
   746   2          }
@@ -882,7 +882,7 @@ stmt  level    source
   802   1          iic_hw_set_tx(iic_n, value);
   803   1          status = iic_execute_command(iic_n, IIC_CMD_SEND_ACK_COMBINED);
   804   1          if(IIC_SUCCESS != status)
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 14  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 14  
 
   805   1          {
   806   2              return status;
@@ -950,7 +950,7 @@ stmt  level    source
   860   1          iic_status_enum status = IIC_SUCCESS;
   861   1          iic_status_enum stop_status;
   862   1          uint8 started = 0;
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 15  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 15  
 
   863   1          uint8 value;
   864   1          uint8 index;
@@ -1018,7 +1018,7 @@ stmt  level    source
   924   4                      status = iic_send_byte(iic_n, write8[count]);
   925   4                      if(IIC_SUCCESS != status) goto transaction_fail;
   926   4                  }
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 16  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 16  
 
   927   3              }
   928   2              else if(IIC_DATA_16BIT == write_width)
@@ -1086,7 +1086,7 @@ stmt  level    source
   990   2              if(IIC_ERROR_TIMEOUT == status)
   991   2              {
   992   3                  // 硬件命令已卡住时不再追加 STOP 命令，直接关闭模块并恢复总线。
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 17  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 17  
 
   993   3                  iic_recover_bus_internal(iic_n);
   994   3              }
@@ -1154,7 +1154,7 @@ stmt  level    source
  1053   1      
  1054   1          /* Runtime initialization must be bounded.  Do not enter the legacy
  1055   1             GPIO-pulse recovery loop here: the active ToF path reports BUS_STUCK
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 18  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 18  
 
  1056   1             and retries through its background state machine instead. */
  1057   1          if((0 == gpio_get_level(iic_info[iic_n].scl_pin)) ||
@@ -1222,7 +1222,7 @@ stmt  level    source
  1113          {
  1114   1          return (iic_index_is_valid(iic_n) && iic_info[iic_n].initialized) ? iic_info[iic_n].actual_speed : 0U
              -;
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 19  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 19  
 
  1115   1      }
  1116          
@@ -1290,7 +1290,7 @@ stmt  level    source
  1171          {
  1172   1          uint8 prefix[2];
  1173   1          prefix[0] = (uint8)(register_name >> 8);
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 20  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 20  
 
  1174   1          prefix[1] = (uint8)register_name;
  1175   1          iic_transaction_engine(iic_n, addr, prefix, 2, &dat, 1, IIC_DATA_16BIT, NULL, 0, IIC_DATA_NONE, 0);
@@ -1358,7 +1358,7 @@ stmt  level    source
              - uint32 len)
  1233          {
  1234   1          uint8 prefix[2];
-C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  19:15:03  PAGE 21  
+C251 COMPILER V5.60.0,  zf_driver_iic                                                      29/07/26  21:56:05  PAGE 21  
 
  1235   1          prefix[0] = (uint8)(register_name >> 8);
  1236   1          prefix[1] = (uint8)register_name;

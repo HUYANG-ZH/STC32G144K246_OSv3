@@ -14,8 +14,8 @@
 #define APP_INDUCTOR_STARTUP_GRACE_TICK         (1000UL)
 #define APP_INDUCTOR_MAX_SAMPLE_AGE_TICK        (500UL)
 // [4]is middle inductor
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {850U, 1000U, 1000U, 750U, 100U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 3000U, 3100U, 4095U, 4095U};
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {50U, 50U, 50U, 50U, 100U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2600U, 1000U, 1000U, 2560U, 4095U};
 
 static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
 static float inductor_cal_max[APP_INDUCTOR_CHANNEL_COUNT];

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -66,7 +66,7 @@ stmt  level    source
    51              uint32 sequence;
    52              uint8 owner;
    53          } app_speedout_target_mailbox_t;
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 2   
 
    54          
    55          #define APP_SPEEDOUT_TARGET_OWNER_NONE        (0U)
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          pid->output_limit_enable = ZF_ENABLE;
   118   1          pid->output_min = -output_limit;
   119   1          pid->output_max = output_limit;
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 3   
 
   120   1          pid->integral_limit_enable = (0.0f < config->integral_limit) ? ZF_ENABLE : ZF_DISABLE;
   121   1          pid->integral_min = -config->integral_limit;
@@ -202,7 +202,7 @@ stmt  level    source
   178   1          (void)service_packet_add_action("speed_stop", app_speedout_request_stop, 0UL);
   179   1          (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
   180   1          (void)service_packet_add_action("start", app_speedout_start_action, 0UL);
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 4   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 4   
 
   181   1      }
   182          
@@ -246,9 +246,9 @@ stmt  level    source
   218   1          pit_ms_init(APP_SPEEDOUT_PIT, APP_SPEEDOUT_PERIOD_MS, app_speedout_tick);
   219   1          interrupt_set_priority(TIM5_IRQn, 3U);
   220   1          #if __DBGFLAG__
-  221   1          printf(">>[app_speedout_init]\r\n");
-  222   1          wprint(">>[app_speedout_init]\r\n");
-  223   1          #endif
+                   printf(">>[app_speedout_init]\r\n");
+                   wprint(">>[app_speedout_init]\r\n");
+                   #endif
   224   1      }
   225          
   226          void app_speedout_debug(void)
@@ -270,7 +270,7 @@ stmt  level    source
   242   1          app_speedout_data.left_pwm = 0.0f;
   243   1          app_speedout_data.right_pwm = 0.0f;
   244   1          app_speedout_data.enabled = 0.0f;
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 5   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 5   
 
   245   1          speedout_last_enabled = 0U;
   246   1          app_speedout_clear_pid();
@@ -338,7 +338,7 @@ stmt  level    source
   308   1          result = speedout_safety_inhibit;
   309   1          EA = ea_backup;
   310   1          return result;
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 6   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 6   
 
   311   1      }
   312          
@@ -406,7 +406,7 @@ stmt  level    source
   374          static void app_speedout_consume_target(void)
   375          {
   376   1          app_speedout_target_mailbox_t snapshot;
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 7   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 7   
 
   377   1          uint8 ea_backup;
   378   1      
@@ -474,7 +474,7 @@ stmt  level    source
   440   2              app_speedout_data.right_actual_mps = speed.right_mps;
   441   2              app_speedout_data.left_target_mps = left_target;
   442   2              app_speedout_data.right_target_mps = right_target;
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 8   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 8   
 
   443   2              app_speedout_data.left_pwm = 0.0f;
   444   2              app_speedout_data.right_pwm = 0.0f;
@@ -540,10 +540,10 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      3542     ------
+  ecode size           =      3518     ------
   data size            =    ------     ------
   idata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:23:49  PAGE 9   
+C251 COMPILER V5.60.0,  app_speedout                                                       29/07/26  21:56:28  PAGE 9   
 
   pdata size           =    ------     ------
   xdata size           =       404     ------
@@ -556,7 +556,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       257     ------
+  hconst size          =       233     ------
 End of Module Information.
 
 

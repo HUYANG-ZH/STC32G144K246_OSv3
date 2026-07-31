@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/07/26  21:23:46  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -27,8 +27,8 @@ stmt  level    source
    14          #define APP_INDUCTOR_STARTUP_GRACE_TICK         (1000UL)
    15          #define APP_INDUCTOR_MAX_SAMPLE_AGE_TICK        (500UL)
    16          // [4]is middle inductor
-   17          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {850U, 1000U, 1000U, 750U, 100U};
-   18          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {4095U, 3000U, 3100U, 4095U, 4095U
+   17          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {50U, 50U, 50U, 50U, 100U};
+   18          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2600U, 1000U, 1000U, 2560U, 4095U
              -};
    19          
    20          static float inductor_cal_min[APP_INDUCTOR_CHANNEL_COUNT];
@@ -66,7 +66,7 @@ stmt  level    source
    52          static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
    53          static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
    54          static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/07/26  21:23:46  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 2   
 
    55          
    56          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
@@ -134,7 +134,7 @@ stmt  level    source
   118   1          EA = ea_backup;
   119   1      }
   120          
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/07/26  21:23:46  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 3   
 
   121          static void app_inductor_update_output(void)
   122          {
@@ -202,7 +202,7 @@ stmt  level    source
   183   2          }
   184   1          EA = ea_backup;
   185   1      }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/07/26  21:23:46  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 4   
 
   186          
   187          static void app_inductor_preprocess_tick(void)
@@ -270,7 +270,7 @@ stmt  level    source
   249   3                  inductor_history[i][inductor_history_index] = sample[i];
   250   3              }
   251   2      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/07/26  21:23:46  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 5   
 
   252   2              inductor_history_index++;
   253   2              if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
@@ -338,7 +338,7 @@ stmt  level    source
              -eprocess_sync_calibration);
   311   1          (void)service_packet_add_variable_with_callback("ind_max0", &inductor_cal_max[0], 1U, app_inductor_pr
              -eprocess_sync_calibration);
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/07/26  21:23:46  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 6   
 
   312   1          (void)service_packet_add_variable_with_callback("ind_max1", &inductor_cal_max[1], 1U, app_inductor_pr
              -eprocess_sync_calibration);
@@ -354,9 +354,9 @@ stmt  level    source
              -ick);
   319   1          interrupt_set_priority(TIM4_IRQn, 3U);
   320   1          #if __DBGFLAG__
-  321   1          printf(">>[app_inductor_preprocess_init]\r\n");
-  322   1          wprint(">>[app_inductor_preprocess_init]\r\n");
-  323   1          #endif
+                   printf(">>[app_inductor_preprocess_init]\r\n");
+                   wprint(">>[app_inductor_preprocess_init]\r\n");
+                   #endif
   324   1      }
   325          
   326          void app_inductor_preprocess_debug(void)
@@ -401,13 +401,13 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      3854     ------
+  ecode size           =      3830     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =       476     ------
   xdata-const size     =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            29/07/26  21:23:46  PAGE 7   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 7   
 
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -417,7 +417,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       291     ------
+  hconst size          =       256     ------
 End of Module Information.
 
 
