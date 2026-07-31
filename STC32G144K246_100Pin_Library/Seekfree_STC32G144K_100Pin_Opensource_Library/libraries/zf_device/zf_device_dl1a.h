@@ -164,6 +164,8 @@
 
 #define DL1A_MIN_TIMING_BUDGET                              ( 20000 )
 
+#define DL1A_RANGE_STATUS_NO_UPDATE                         ( 255U )
+
 #define DL1A_GET_START_OVERHEAD                             ( 1910 )
 #define DL1A_SET_START_OVERHEAD                             ( 1320 )
 #define DL1A_END_OVERHEAD                                   ( 960  )
@@ -203,6 +205,7 @@ typedef struct
 
 extern uint8 dl1a_finsh_flag;
 extern uint16 dl1a_distance_mm;
+extern uint8 dl1a_range_status;
 
 void   dl1a_get_distance (void);
 

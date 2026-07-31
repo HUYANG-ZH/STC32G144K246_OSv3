@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  23:53:22  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    52          static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
    53          static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
    54          static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  23:53:22  PAGE 2   
 
    55          
    56          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
@@ -134,7 +134,7 @@ stmt  level    source
   118   1          EA = ea_backup;
   119   1      }
   120          
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  23:53:22  PAGE 3   
 
   121          static void app_inductor_update_output(void)
   122          {
@@ -202,7 +202,7 @@ stmt  level    source
   183   2          }
   184   1          EA = ea_backup;
   185   1      }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  23:53:22  PAGE 4   
 
   186          
   187          static void app_inductor_preprocess_tick(void)
@@ -270,7 +270,7 @@ stmt  level    source
   249   3                  inductor_history[i][inductor_history_index] = sample[i];
   250   3              }
   251   2      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  23:53:22  PAGE 5   
 
   252   2              inductor_history_index++;
   253   2              if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
@@ -338,7 +338,7 @@ stmt  level    source
              -eprocess_sync_calibration);
   311   1          (void)service_packet_add_variable_with_callback("ind_max0", &inductor_cal_max[0], 1U, app_inductor_pr
              -eprocess_sync_calibration);
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  23:53:22  PAGE 6   
 
   312   1          (void)service_packet_add_variable_with_callback("ind_max1", &inductor_cal_max[1], 1U, app_inductor_pr
              -eprocess_sync_calibration);
@@ -407,7 +407,7 @@ Module Information          Static   Overlayable
   pdata size           =    ------     ------
   xdata size           =       476     ------
   xdata-const size     =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  20:33:22  PAGE 7   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            31/07/26  23:53:22  PAGE 7   
 
   edata size           =    ------     ------
   bit size             =    ------     ------

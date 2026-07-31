@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               31/07/26  20:41:26  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               01/08/26  00:06:57  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -38,72 +38,87 @@ stmt  level    source
    26          #include "service_button.h"
    27          
    28          #define BOOT_BUZZ_MS            (500UL)
-   29          
-   30          void main(void)
-   31          {
-   32   1          SystemStart();
-   33   1      
-   34   1          service_timetick_init();
-   35   1          service_function_queue_init();
-   36   1          app_scheduler_init();
-   37   1          service_wireless_uart_init();
-   38   1          service_packet_init();
-   39   1          service_batterycheck_init();
-   40   1          service_buzzer_init();
-   41   1          service_buzzer_stop();
-   42   1          service_imu_init();
-   43   1          service_tof_init();
-   44   1          service_motor_init();
-   45   1          service_negative_pressure_init();
-   46   1          service_speed_init();
-   47   1          app_inductor_preprocess_init();
-   48   1          app_motion_preprocess_init();
-   49   1          app_feedforward_init();
-   50   1          app_speed_plan_init();
-   51   1          app_element_init();
-   52   1          app_speedout_init();
-   53   1          app_motion_postprocess_init();
-   54   1          app_boot_sequence_init();
-   55   1          service_boot_request_init();
-   56   1          service_button_init();
-C251 COMPILER V5.60.0,  main                                                               31/07/26  20:41:26  PAGE 2   
+   29          #define MAIN_TOF_REPORT_PERIOD_TICK (333UL)   // 约30Hz, 0.1ms/tick
+   30          
+   31          void main(void)
+   32          {
+   33   1          uint32 tof_report_last_tick;
+   34   1          uint32 now;
+   35   1          uint16 tof_distance_mm;
+   36   1          uint8 tof_range_status;
+   37   1      
+   38   1          SystemStart();
+   39   1      
+   40   1          service_timetick_init();
+   41   1          tof_report_last_tick = service_timetick_what();
+   42   1          service_function_queue_init();
+   43   1          app_scheduler_init();
+   44   1          service_wireless_uart_init();
+   45   1          service_packet_init();
+   46   1          service_batterycheck_init();
+   47   1          service_buzzer_init();
+   48   1          service_buzzer_stop();
+   49   1          service_imu_init();
+   50   1          service_tof_init();
+   51   1          service_motor_init();
+   52   1          service_negative_pressure_init();
+   53   1          service_speed_init();
+   54   1          app_inductor_preprocess_init();
+   55   1          app_motion_preprocess_init();
+   56   1          app_feedforward_init();
+C251 COMPILER V5.60.0,  main                                                               01/08/26  00:06:57  PAGE 2   
 
-   57   1      
-   58   1          wdt_init();
-   59   1      
-   60   1          bsp_buzzer_init();
-   61   1          bsp_buzzer_on();
-   62   1          system_delay_ms(BOOT_BUZZ_MS);
-   63   1          bsp_buzzer_off();
+   57   1          app_speed_plan_init();
+   58   1          app_element_init();
+   59   1          app_speedout_init();
+   60   1          app_motion_postprocess_init();
+   61   1          app_boot_sequence_init();
+   62   1          service_boot_request_init();
+   63   1          service_button_init();
    64   1      
-   65   1          while(1)
-   66   1          {
-   67   2              wdt_feed();
-   68   2              iic_async_process_all_timed(service_timetick_what());
-   69   2              service_imu_task();
-   70   2              service_tof_task();
-   71   2              service_batterycheck_task();
-   72   2              service_inductor_task();
-   73   2              service_boot_request_process();
-   74   2              service_function_queue_update();
-   75   2              service_packet_update();
-   76   2              app_scheduler_run();
-   77   2              app_element_pump_events();
-   78   2              service_negative_pressure_task();
-   79   2              service_buzzer_task();
-   80   2              service_button_task();
-   81   2          }
-   82   1      }
+   65   1          wdt_init();
+   66   1      
+   67   1          bsp_buzzer_init();
+   68   1          bsp_buzzer_on();
+   69   1          system_delay_ms(BOOT_BUZZ_MS);
+   70   1          bsp_buzzer_off();
+   71   1      
+   72   1          while(1)
+   73   1          {
+   74   2              wdt_feed();
+   75   2              iic_async_process_all_timed(service_timetick_what());
+   76   2              service_imu_task();
+   77   2              service_tof_task();
+   78   2              now = service_timetick_what();
+   79   2              if((uint32)(now - tof_report_last_tick) >= MAIN_TOF_REPORT_PERIOD_TICK)
+   80   2              {
+   81   3                  tof_report_last_tick = now;
+   82   3                  tof_distance_mm = service_tof_get_distance_mm();
+   83   3                  tof_range_status = service_tof_get_range_status();
+   84   3                  wprint("tof_distance_mm,%u,%u\r\n", tof_distance_mm, (uint16)tof_range_status);
+   85   3              }
+   86   2              service_batterycheck_task();
+   87   2              service_inductor_task();
+   88   2              service_boot_request_process();
+   89   2              service_function_queue_update();
+   90   2              service_packet_update();
+   91   2              app_scheduler_run();
+   92   2              app_element_pump_events();
+   93   2              service_negative_pressure_task();
+   94   2              service_buzzer_task();
+   95   2              service_button_task();
+   96   2          }
+   97   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       251     ------
+  ecode size           =       382     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =    ------     ------
+  xdata size           =        11     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -113,7 +128,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =         2     ------
+  hconst size          =        26     ------
 End of Module Information.
 
 

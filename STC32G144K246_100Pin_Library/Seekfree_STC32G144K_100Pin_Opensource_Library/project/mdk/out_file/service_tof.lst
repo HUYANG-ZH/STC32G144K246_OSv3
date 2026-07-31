@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_tof                                                        29/07/26  21:56:22  PAGE 1   
+C251 COMPILER V5.60.0,  service_tof                                                        31/07/26  23:53:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_tof
@@ -24,78 +24,87 @@ stmt  level    source
    11          void service_tof_init(void)
    12          {
    13   1      #if SERVICE_TOF_ENABLE
-                   (void)bsp_tof_init();
-                   service_tof_last_request_tick = service_timetick_what();
-                   #if __DBGFLAG__
+   14   1          (void)bsp_tof_init();
+   15   1          service_tof_last_request_tick = service_timetick_what();
+   16   1          #if __DBGFLAG__
                    printf(">>[service_tof_init]\r\n");
                    wprint(">>[service_tof_init]\r\n");
                    #endif
-               #else
-   21   1          service_tof_last_request_tick = 0UL;
-   22   1      #endif
+   20   1      #else
+                   service_tof_last_request_tick = 0UL;
+               #endif
    23   1      }
    24          
    25          void service_tof_task(void)
    26          {
    27   1      #if SERVICE_TOF_ENABLE
-                   uint32 now;
-               
-                   bsp_tof_process();
-                   if(0U == bsp_tof_is_ready())
-                   {
-                       return;
-                   }
-               
-                   now = service_timetick_what();
-                   if((uint32)(now - service_tof_last_request_tick) >= SERVICE_TOF_SAMPLE_PERIOD_TICK)
-                   {
-                       if(0U != bsp_tof_request_sample())
-                       {
-                           service_tof_last_request_tick = now;
-                       }
-                   }
-               #endif
+   28   1          uint32 now;
+   29   1      
+   30   1          bsp_tof_process();
+   31   1          if(0U == bsp_tof_is_ready())
+   32   1          {
+   33   2              return;
+   34   2          }
+   35   1      
+   36   1          now = service_timetick_what();
+   37   1          if((uint32)(now - service_tof_last_request_tick) >= SERVICE_TOF_SAMPLE_PERIOD_TICK)
+   38   1          {
+   39   2              if(0U != bsp_tof_request_sample())
+   40   2              {
+   41   3                  service_tof_last_request_tick = now;
+   42   3              }
+   43   2          }
+   44   1      #endif
    45   1      }
    46          
    47          uint8 service_tof_is_ready(void)
    48          {
    49   1      #if SERVICE_TOF_ENABLE
-                   return bsp_tof_is_ready();
-               #else
-   52   1          return 0U;
-   53   1      #endif
+   50   1          return bsp_tof_is_ready();
+   51   1      #else
+                   return 0U;
+               #endif
    54   1      }
    55          
-C251 COMPILER V5.60.0,  service_tof                                                        29/07/26  21:56:22  PAGE 2   
+C251 COMPILER V5.60.0,  service_tof                                                        31/07/26  23:53:20  PAGE 2   
 
    56          uint8 service_tof_get_last_error(void)
    57          {
    58   1      #if SERVICE_TOF_ENABLE
-                   return bsp_tof_get_last_error();
-               #else
-   61   1          return 0U;
-   62   1      #endif
+   59   1          return bsp_tof_get_last_error();
+   60   1      #else
+                   return 0U;
+               #endif
    63   1      }
    64          
    65          uint16 service_tof_get_distance_mm(void)
    66          {
    67   1      #if SERVICE_TOF_ENABLE
-                   (void)bsp_tof_request_sample();
-                   return bsp_tof_get_distance_mm();
-               #else
-   71   1          return BSP_TOF_INVALID_DISTANCE_MM;
-   72   1      #endif
+   68   1          (void)bsp_tof_request_sample();
+   69   1          return bsp_tof_get_distance_mm();
+   70   1      #else
+                   return BSP_TOF_INVALID_DISTANCE_MM;
+               #endif
    73   1      }
+   74          
+   75          uint8 service_tof_get_range_status(void)
+   76          {
+   77   1      #if SERVICE_TOF_ENABLE
+   78   1          return bsp_tof_get_range_status();
+   79   1      #else
+                   return BSP_TOF_RANGE_STATUS_NO_UPDATE;
+               #endif
+   82   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =        23     ------
+  ecode size           =       128     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =         4     ------
+  xdata size           =         8     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

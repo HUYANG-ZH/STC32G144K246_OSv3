@@ -59,6 +59,7 @@
 static  uint8   dl1a_init_flag = 0;
 uint8 dl1a_finsh_flag = 0;
 uint16 dl1a_distance_mm = 8192;
+uint8 dl1a_range_status = DL1A_RANGE_STATUS_NO_UPDATE;
 
 #if (DL1A_USE_INTERFACE==SOFT_IIC)
 	static soft_iic_info_struct dl1a_iic_struct;
@@ -535,29 +536,68 @@ static void dl1a_set_signal_rate_limit (float limit_mcps)
 // 使用示例     dl1a_get_distance();
 // 备注信息     在开始单次射程测量后也调用此函数
 //-------------------------------------------------------------------------------------------------------------------
+static uint8 dl1a_parse_range_status(uint8 raw_status)
+{
+    uint8 device_range_status;
+
+    /* RESULT_RANGE_STATUS[6:3] is the VL53L0X device status field. */
+    device_range_status = (uint8)((raw_status & 0x78U) >> 3);
+
+    /* Map the device status to standard RangeStatus values. Limit-check
+       results such as sigma fail are not recomputed by this lightweight path. */
+    if((0U == device_range_status) ||
+            (5U == device_range_status) ||
+            (7U == device_range_status) ||
+            (device_range_status >= 12U))
+    {
+        return DL1A_RANGE_STATUS_NO_UPDATE;
+    }
+    if(device_range_status <= 3U)
+    {
+        return 5U;       /* Hardware fail */
+    }
+    if((6U == device_range_status) || (9U == device_range_status))
+    {
+        return 4U;       /* Phase fail */
+    }
+    if((8U == device_range_status) || (10U == device_range_status))
+    {
+        return 3U;       /* Min range fail */
+    }
+    if(4U == device_range_status)
+    {
+        return 2U;       /* Signal fail */
+    }
+
+    return 0U;           /* Range valid (device status 11) */
+}
+
 void dl1a_get_distance (void)
 {
     if(dl1a_init_flag)
     {
-        uint8 reg_databuffer[3];
+        uint8 reg_databuffer[12];
+        uint8 interrupt_status;
         
         dl1a_read_registers(DL1A_RESULT_INTERRUPT_STATUS, reg_databuffer, 1);
-        
-        if(0 != (reg_databuffer[0] & 0x07))
+
+        interrupt_status = reg_databuffer[0];
+        if((0U != (interrupt_status & 0x07U)) ||
+                (0U != (interrupt_status & 0x10U)))
         {
-            // 假设线性度校正增益为默认值 1000 且未启用分数范围
-            dl1a_read_registers(DL1A_RESULT_RANGE_STATUS + 10, reg_databuffer, 2);
-            dl1a_distance_mm = ((uint16)reg_databuffer[0] << 8);
-            dl1a_distance_mm |= reg_databuffer[1];
-            
+            /* Read RangeStatus (0x14) and final range (0x1E/0x1F) together. */
+            dl1a_read_registers(DL1A_RESULT_RANGE_STATUS, reg_databuffer, 12);
+            dl1a_range_status = dl1a_parse_range_status(reg_databuffer[0]);
+
+            if(0U != (interrupt_status & 0x07U))
+            {
+                // 假设线性度校正增益为默认值 1000 且未启用分数范围
+                dl1a_distance_mm = ((uint16)reg_databuffer[10] << 8);
+                dl1a_distance_mm |= reg_databuffer[11];
+            }
+
             dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
             dl1a_finsh_flag = 1;
-        }
-        
-        if(reg_databuffer[0] & 0x10)
-        {
-            dl1a_read_registers(DL1A_RESULT_RANGE_STATUS + 10, reg_databuffer, 2);
-            dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
         }
     }
 }
@@ -590,7 +630,7 @@ uint8 dl1a_init (void)
     uint8 ref_spad_map[6];
     uint8 data_buffer[7];
     uint16 i = 0;
-    
+
     const uint8 code temp_buff1[][2] =  	// BUFF1
     {
         {0x88, 0x00},
@@ -698,6 +738,10 @@ uint8 dl1a_init (void)
         {0xFF, 0x00},
         {0x80, 0x00}
     };
+
+    dl1a_finsh_flag = 0;
+    dl1a_distance_mm = 8192;
+    dl1a_range_status = DL1A_RANGE_STATUS_NO_UPDATE;
     
     memset(ref_spad_map, 0, 6);
     memset(data_buffer, 0, 7);

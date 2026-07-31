@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_tof                                                            29/07/26  21:56:14  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_tof                                                            31/07/26  23:53:15  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_tof
@@ -41,16 +41,21 @@ stmt  level    source
    28   1          return bsp_tof_async_get_distance_mm();
    29   1      }
    30          
-   31          uint8 bsp_tof_get_last_error(void)
+   31          uint8 bsp_tof_get_range_status(void)
    32          {
-   33   1          return bsp_tof_async_get_last_error();
+   33   1          return bsp_tof_async_get_range_status();
    34   1      }
+   35          
+   36          uint8 bsp_tof_get_last_error(void)
+   37          {
+   38   1          return bsp_tof_async_get_last_error();
+   39   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =        30     ------
+  ecode size           =        35     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -62,6 +67,8 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
+C251 COMPILER V5.60.0,  bsp_tof                                                            31/07/26  23:53:15  PAGE 2   
+
   huge data size       =    ------     ------
   const size           =    ------     ------
   hconst size          =    ------     ------

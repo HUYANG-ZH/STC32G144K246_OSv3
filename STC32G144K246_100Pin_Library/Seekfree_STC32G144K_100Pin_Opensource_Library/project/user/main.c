@@ -26,12 +26,19 @@
 #include "service_button.h"
 
 #define BOOT_BUZZ_MS            (500UL)
+#define MAIN_TOF_REPORT_PERIOD_TICK (333UL)   // 约30Hz, 0.1ms/tick
 
 void main(void)
 {
+    uint32 tof_report_last_tick;
+    uint32 now;
+    uint16 tof_distance_mm;
+    uint8 tof_range_status;
+
     SystemStart();
 
     service_timetick_init();
+    tof_report_last_tick = service_timetick_what();
     service_function_queue_init();
     app_scheduler_init();
     service_wireless_uart_init();
@@ -68,6 +75,14 @@ void main(void)
         iic_async_process_all_timed(service_timetick_what());
         service_imu_task();
         service_tof_task();
+        now = service_timetick_what();
+        if((uint32)(now - tof_report_last_tick) >= MAIN_TOF_REPORT_PERIOD_TICK)
+        {
+            tof_report_last_tick = now;
+            tof_distance_mm = service_tof_get_distance_mm();
+            tof_range_status = service_tof_get_range_status();
+            wprint("tof_distance_mm,%u,%u\r\n", tof_distance_mm, (uint16)tof_range_status);
+        }
         service_batterycheck_task();
         service_inductor_task();
         service_boot_request_process();

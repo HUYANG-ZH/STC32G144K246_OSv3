@@ -71,3 +71,12 @@ uint16 service_tof_get_distance_mm(void)
     return BSP_TOF_INVALID_DISTANCE_MM;
 #endif
 }
+
+uint8 service_tof_get_range_status(void)
+{
+#if SERVICE_TOF_ENABLE
+    return bsp_tof_get_range_status();
+#else
+    return BSP_TOF_RANGE_STATUS_NO_UPDATE;
+#endif
+}

@@ -451,6 +451,11 @@ uint16 bsp_tof_async_get_distance_mm(void)
     return (0U != tof_ready) ? tof_distance_mm : BSP_TOF_INVALID_DISTANCE_MM;
 }
 
+uint8 bsp_tof_async_get_range_status(void)
+{
+    return BSP_TOF_RANGE_STATUS_NO_UPDATE;
+}
+
 uint8 bsp_tof_async_get_last_error(void)
 {
     return tof_last_error;
@@ -515,6 +520,11 @@ uint8 bsp_tof_async_request_sample(void)
 uint16 bsp_tof_async_get_distance_mm(void)
 {
     return (0U != tof_ready) ? dl1a_distance_mm : BSP_TOF_INVALID_DISTANCE_MM;
+}
+
+uint8 bsp_tof_async_get_range_status(void)
+{
+    return (0U != tof_ready) ? dl1a_range_status : BSP_TOF_RANGE_STATUS_NO_UPDATE;
 }
 
 uint8 bsp_tof_async_get_last_error(void)

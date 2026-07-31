@@ -8,6 +8,7 @@ void bsp_tof_async_process(void);
 uint8 bsp_tof_async_is_ready(void);
 uint8 bsp_tof_async_request_sample(void);
 uint16 bsp_tof_async_get_distance_mm(void);
+uint8 bsp_tof_async_get_range_status(void);
 uint8 bsp_tof_async_get_last_error(void);
 
 #endif

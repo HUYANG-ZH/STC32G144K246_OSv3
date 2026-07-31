@@ -11,12 +11,14 @@
 #endif
 
 #define BSP_TOF_INVALID_DISTANCE_MM    (8192U)
+#define BSP_TOF_RANGE_STATUS_NO_UPDATE (255U)
 
 uint8 bsp_tof_init(void);
 void bsp_tof_process(void);
 uint8 bsp_tof_is_ready(void);
 uint8 bsp_tof_request_sample(void);
 uint16 bsp_tof_get_distance_mm(void);
+uint8 bsp_tof_get_range_status(void);
 uint8 bsp_tof_get_last_error(void);
 
 #endif

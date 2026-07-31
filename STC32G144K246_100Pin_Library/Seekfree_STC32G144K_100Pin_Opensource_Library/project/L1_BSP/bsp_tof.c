@@ -28,6 +28,11 @@ uint16 bsp_tof_get_distance_mm(void)
     return bsp_tof_async_get_distance_mm();
 }
 
+uint8 bsp_tof_get_range_status(void)
+{
+    return bsp_tof_async_get_range_status();
+}
+
 uint8 bsp_tof_get_last_error(void)
 {
     return bsp_tof_async_get_last_error();

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 1   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_packet
@@ -66,7 +66,7 @@ stmt  level    source
    53          static volatile uint32 packet_read_miss_total = 0U;
    54          static volatile uint32 packet_write_total = 0U;
    55          static volatile uint32 packet_write_ok_total = 0U;
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 2   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 2   
 
    56          static volatile uint32 packet_write_miss_total = 0U;
    57          static volatile uint32 packet_write_parse_fail_total = 0U;
@@ -134,7 +134,7 @@ stmt  level    source
   111          // 参数说明     text            字符串当前位置
   112          // 返回参数     char *          跳过分隔符后的字符串位置
   113          // 使用示例     内部调用，用户无需关心
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 3   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 3   
 
   114          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -202,7 +202,7 @@ stmt  level    source
   170   2              if(0 == strcmp(packet_actions[i].name, name))
   171   2              {
   172   3                  return &packet_actions[i];
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 4   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 4   
 
   173   3              }
   174   2          }
@@ -270,7 +270,7 @@ stmt  level    source
   236   2              temp_index++;
   237   2          }
   238   1      
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 5   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 5   
 
   239   1          while(0U != temp_index)
   240   1          {
@@ -338,7 +338,7 @@ stmt  level    source
   302   2              digit_value = tfpu_int2float((long)((uint8)(*text) - (uint8)'0'));
   303   2              if(0U == fraction_found)
   304   2              {
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 6   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 6   
 
   305   3                  integer_part = tfpu_add(tfpu_mul(integer_part, SERVICE_PACKET_FLOAT_DIGIT_BASE), digit_value)
              -;
@@ -406,7 +406,7 @@ stmt  level    source
   365          //-------------------------------------------------------------------------------------------------------
              -------------
   366          // 函数简介     解析浮点数列表
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 7   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 7   
 
   367          // 参数说明     text            数值字符串
   368          // 参数说明     out_value       解析结果保存地址
@@ -474,7 +474,7 @@ stmt  level    source
   429   2      
   430   2              if('\0' == delimiter)
   431   2              {
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 8   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 8   
 
   432   3                  return (i == (value_count - 1U));
   433   3              }
@@ -542,7 +542,7 @@ stmt  level    source
   491   1          variable = service_packet_find_variable(name);
   492   1          if(NULL == variable)
   493   1          {
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 9   
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 9   
 
   494   2              packet_read_miss_total++;
   495   2              service_packet_save_miss_name(name);
@@ -610,7 +610,7 @@ stmt  level    source
   555          
   556          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 10  
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 10  
 
   557          // 函数简介     处理触发指令
   558          // 参数说明     name            操作名称
@@ -678,7 +678,7 @@ stmt  level    source
   615   2          }
   616   1          else
   617   1          {
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 11  
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 11  
 
   618   2              value_text = NULL;
   619   2          }
@@ -746,7 +746,7 @@ stmt  level    source
   676          // 使用示例     内部调用，用户无需关心
   677          // 备注信息     检测到完整 $$...@@ 帧后自动解析执行
   678          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 12  
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 12  
 
              -------------
   679          static void service_packet_input_char(char value)
@@ -814,7 +814,7 @@ stmt  level    source
   740          // 参数说明     void
   741          // 返回参数     void
   742          // 使用示例     service_packet_init();
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 13  
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 13  
 
   743          // 备注信息     初始化后需要通过 service_packet_add_variable/action 注册变量和动作
   744          //-------------------------------------------------------------------------------------------------------
@@ -882,7 +882,7 @@ stmt  level    source
   802          // 参数说明     value_count     变量包含的 float 数量
   803          // 返回参数     uint8           1：注册成功 0：注册失败
   804          // 使用示例     service_packet_add_variable("speed", speed_value, 2);
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 14  
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 14  
 
   805          // 备注信息     相同名称重复注册时会更新变量地址和数量
   806          //-------------------------------------------------------------------------------------------------------
@@ -950,7 +950,7 @@ stmt  level    source
   864   1          action = service_packet_find_action(name);
   865   1          if(NULL != action)
   866   1          {
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 15  
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 15  
 
   867   2              action->func = func;
   868   2              action->delay_ms = delay_ms;
@@ -1019,7 +1019,7 @@ Module Information          Static   Overlayable
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
-C251 COMPILER V5.60.0,  service_packet                                                     29/07/26  21:56:19  PAGE 16  
+C251 COMPILER V5.60.0,  service_packet                                                     31/07/26  23:53:18  PAGE 16  
 
   far data size        =    ------     ------
   huge data size       =    ------     ------
