@@ -2,9 +2,8 @@
 #include "bsp_include.h"
 #include "service_tof.h"
 #include "service_timetick.h"
-#include "service_wireless_uart.h"
 
-#define SERVICE_TOF_SAMPLE_PERIOD_TICK      (500UL)
+#define SERVICE_TOF_INVALID_DISTANCE_THRESHOLD_MM (1000U)
 
 static uint32 service_tof_last_request_tick = 0UL;
 
@@ -13,10 +12,6 @@ void service_tof_init(void)
 #if SERVICE_TOF_ENABLE
     (void)bsp_tof_init();
     service_tof_last_request_tick = service_timetick_what();
-    #if __DBGFLAG__
-    printf(">>[service_tof_init]\r\n");
-    wprint(">>[service_tof_init]\r\n");
-    #endif
 #else
     service_tof_last_request_tick = 0UL;
 #endif
@@ -34,7 +29,7 @@ void service_tof_task(void)
     }
 
     now = service_timetick_what();
-    if((uint32)(now - service_tof_last_request_tick) >= SERVICE_TOF_SAMPLE_PERIOD_TICK)
+    if((uint32)(now - service_tof_last_request_tick) >= SERVICE_TOF_PERIOD_TICK)
     {
         if(0U != bsp_tof_request_sample())
         {
@@ -65,8 +60,19 @@ uint8 service_tof_get_last_error(void)
 uint16 service_tof_get_distance_mm(void)
 {
 #if SERVICE_TOF_ENABLE
-    (void)bsp_tof_request_sample();
-    return bsp_tof_get_distance_mm();
+    uint16 distance_mm;
+    uint8 range_status;
+
+    distance_mm = bsp_tof_get_distance_mm();
+    range_status = bsp_tof_get_range_status();
+
+    if((0U != range_status) &&
+            (distance_mm > SERVICE_TOF_INVALID_DISTANCE_THRESHOLD_MM))
+    {
+        return 0U;
+    }
+
+    return distance_mm;
 #else
     return BSP_TOF_INVALID_DISTANCE_MM;
 #endif

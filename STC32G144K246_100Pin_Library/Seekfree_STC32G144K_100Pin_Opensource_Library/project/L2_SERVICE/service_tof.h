@@ -8,6 +8,8 @@
 #define SERVICE_TOF_ENABLE             (1U)
 #endif
 
+#define SERVICE_TOF_PERIOD_TICK        (333UL)   /* 约30Hz, 0.1ms/tick */
+
 void service_tof_init(void);
 void service_tof_task(void);
 uint8 service_tof_is_ready(void);

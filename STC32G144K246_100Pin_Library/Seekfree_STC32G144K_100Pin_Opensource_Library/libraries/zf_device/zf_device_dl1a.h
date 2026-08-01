@@ -61,7 +61,7 @@
 	#define DL1A_SCL_PIN                ( IO_P52 )
 	#define DL1A_SDA_PIN                ( IO_P53 )
 #elif (DL1A_USE_INTERFACE==HARDWARE_IIC)
-	#define DL1A_IIC_SPEED              ( 100*1000 )
+	#define DL1A_IIC_SPEED              ( 400*1000 )
 	#define DL1A_IIC                    ( IIC_1 )
 	#define DL1A_SCL_PIN                ( IIC1_CH3_SCL_P77 )
 	#define DL1A_SDA_PIN                ( IIC1_CH3_SDA_P76 )

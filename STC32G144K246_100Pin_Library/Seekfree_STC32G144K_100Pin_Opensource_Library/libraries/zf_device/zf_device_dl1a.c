@@ -941,7 +941,7 @@ uint8 dl1a_init (void)
         dl1a_write_register(DL1A_GPIO_HV_MUX_ACTIVE_HIGH, reg_data_buffer & ~0x10);
         dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
         
-        measurement_timing_budget_us  = dl1a_get_measurement_timing_budget();
+        measurement_timing_budget_us = 33300UL;
         
         // 默认情况下禁用 MSRC 和 TCC
         // MSRC = Minimum Signal Rate Check
