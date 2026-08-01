@@ -7,6 +7,7 @@
 #include "service_packet.h"
 #include "service_batterycheck.h"
 #include "service_buzzer.h"
+#include "service_led.h"
 #include "service_imu.h"
 #include "service_inductor.h"
 #include "service_motor.h"
@@ -39,6 +40,7 @@ void main(void)
     service_batterycheck_init();
     service_buzzer_init();
     service_buzzer_stop();
+    service_led_init();
     service_imu_init();
     service_tof_init();
     service_motor_init();
@@ -77,6 +79,7 @@ void main(void)
         app_element_pump_events();
         service_negative_pressure_task();
         service_buzzer_task();
+        service_led_task();
         service_button_task();
     }
 }
