@@ -536,7 +536,7 @@ static void dl1a_set_signal_rate_limit (float limit_mcps)
 // 使用示例     dl1a_get_distance();
 // 备注信息     在开始单次射程测量后也调用此函数
 //-------------------------------------------------------------------------------------------------------------------
-static uint8 dl1a_parse_range_status(uint8 raw_status)
+uint8 dl1a_parse_range_status(uint8 raw_status)
 {
     uint8 device_range_status;
 
@@ -582,18 +582,19 @@ void dl1a_get_distance (void)
         dl1a_read_registers(DL1A_RESULT_INTERRUPT_STATUS, reg_databuffer, 1);
 
         interrupt_status = reg_databuffer[0];
-        if((0U != (interrupt_status & 0x07U)) ||
-                (0U != (interrupt_status & 0x10U)))
+        if(0U != (interrupt_status & 0x07U))
         {
             /* Read RangeStatus (0x14) and final range (0x1E/0x1F) together. */
             dl1a_read_registers(DL1A_RESULT_RANGE_STATUS, reg_databuffer, 12);
             dl1a_range_status = dl1a_parse_range_status(reg_databuffer[0]);
 
-            if(0U != (interrupt_status & 0x07U))
+            // 假设线性度校正增益为默认值 1000 且未启用分数范围
+            dl1a_distance_mm = ((uint16)reg_databuffer[10] << 8);
+            dl1a_distance_mm |= reg_databuffer[11];
+            if(dl1a_distance_mm > 8191U)
             {
-                // 假设线性度校正增益为默认值 1000 且未启用分数范围
-                dl1a_distance_mm = ((uint16)reg_databuffer[10] << 8);
-                dl1a_distance_mm |= reg_databuffer[11];
+                dl1a_distance_mm = 8192U;
+                dl1a_range_status = DL1A_RANGE_STATUS_NO_UPDATE;
             }
 
             dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);

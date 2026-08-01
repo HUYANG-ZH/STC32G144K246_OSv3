@@ -34,6 +34,13 @@ void service_tof_task(void)
         if(0U != bsp_tof_request_sample())
         {
             service_tof_last_request_tick = now;
+#if SERVICE_TOF_DEBUG_PRINT_ENABLE
+            /* 与 30Hz 采样节拍同步输出, VOFA+ RawData 文本协议:
+               首字段为通道名, 距离+range_status 双通道 */
+            printf("tof_distance_mm,%u,tof_range_status,%u\r\n",
+                    (unsigned int)bsp_tof_get_distance_mm(),
+                    (unsigned int)bsp_tof_get_range_status());
+#endif
         }
     }
 #endif
@@ -66,7 +73,7 @@ uint16 service_tof_get_distance_mm(void)
     distance_mm = bsp_tof_get_distance_mm();
     range_status = bsp_tof_get_range_status();
 
-    if((0U != range_status) &&
+    if((0U != range_status) ||
             (distance_mm > SERVICE_TOF_INVALID_DISTANCE_THRESHOLD_MM))
     {
         return 0U;

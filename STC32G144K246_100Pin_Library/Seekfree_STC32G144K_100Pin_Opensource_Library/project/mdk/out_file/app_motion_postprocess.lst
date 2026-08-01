@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          };
    52          
    53          static shared_pos_pid_t motion_postprocess_yaw_pid;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 2   
 
    54          static shared_lpf_t motion_postprocess_gyro_z_lpf;
    55          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          uint8 ea_backup;
   118   1      
   119   1          ea_backup = EA;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 3   
 
   120   1          EA = 0;
   121   1          app_motion_postprocess_sync_pid();
@@ -202,7 +202,7 @@ stmt  level    source
   183   2          }
   184   1      
   185   1          /*
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 4   
 
   186   1           * SPI DMA may complete slower than the 1 ms control tick.  A stale frame
   187   1           * must not be filtered repeatedly: doing so changes the LPF state without
@@ -270,7 +270,7 @@ stmt  level    source
   246   1          motion_postprocess_imu_fault = 0U;
   247   1          app_motion_postprocess_sync_pid();
   248   1          shared_pos_pid_init(&motion_postprocess_yaw_pid);
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 5   
 
   249   1          motion_postprocess_last_enabled =
   250   1                  (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
@@ -338,7 +338,7 @@ stmt  level    source
   310          {
   311   1          uint8 enabled;
   312   1          float raw_error;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 6   
 
   313   1          float processed_error;
   314   1          float static_feedforward_speed;
@@ -406,7 +406,7 @@ stmt  level    source
   376   3                  else if(feedback_yaw_rate_radps < -limit)
   377   3                  {
   378   4                      feedback_yaw_rate_radps = -limit;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 7   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 7   
 
   379   4                  }
   380   3      
@@ -474,7 +474,7 @@ stmt  level    source
   440   2              if(print_tick >= 200U)
   441   2              {
   442   3                  print_tick = 0U;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  16:46:42  PAGE 8   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             01/08/26  18:58:12  PAGE 8   
 
   443   3              }
   444   2          }

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  16:46:38  PAGE 1   
+C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  21:17:56  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_tof
@@ -47,66 +47,73 @@ stmt  level    source
    34   2              if(0U != bsp_tof_request_sample())
    35   2              {
    36   3                  service_tof_last_request_tick = now;
-   37   3              }
-   38   2          }
-   39   1      #endif
-   40   1      }
-   41          
-   42          uint8 service_tof_is_ready(void)
-   43          {
-   44   1      #if SERVICE_TOF_ENABLE
-   45   1          return bsp_tof_is_ready();
-   46   1      #else
+   37   3      #if SERVICE_TOF_DEBUG_PRINT_ENABLE
+   38   3                  /* 与 30Hz 采样节拍同步输出, VOFA+ RawData 文本协议:
+   39   3                     首字段为通道名, 距离+range_status 双通道 */
+   40   3                  printf("tof_distance_mm,%u,tof_range_status,%u\r\n",
+   41   3                          (unsigned int)bsp_tof_get_distance_mm(),
+   42   3                          (unsigned int)bsp_tof_get_range_status());
+   43   3      #endif
+   44   3              }
+   45   2          }
+   46   1      #endif
+   47   1      }
+   48          
+   49          uint8 service_tof_is_ready(void)
+   50          {
+   51   1      #if SERVICE_TOF_ENABLE
+   52   1          return bsp_tof_is_ready();
+   53   1      #else
                    return 0U;
                #endif
-   49   1      }
-   50          
-   51          uint8 service_tof_get_last_error(void)
-   52          {
-   53   1      #if SERVICE_TOF_ENABLE
-   54   1          return bsp_tof_get_last_error();
-   55   1      #else
-C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  16:46:38  PAGE 2   
+C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  21:17:56  PAGE 2   
 
+   56   1      }
+   57          
+   58          uint8 service_tof_get_last_error(void)
+   59          {
+   60   1      #if SERVICE_TOF_ENABLE
+   61   1          return bsp_tof_get_last_error();
+   62   1      #else
                    return 0U;
                #endif
-   58   1      }
-   59          
-   60          uint16 service_tof_get_distance_mm(void)
-   61          {
-   62   1      #if SERVICE_TOF_ENABLE
-   63   1          uint16 distance_mm;
-   64   1          uint8 range_status;
-   65   1      
-   66   1          distance_mm = bsp_tof_get_distance_mm();
-   67   1          range_status = bsp_tof_get_range_status();
-   68   1      
-   69   1          if((0U != range_status) &&
-   70   1                  (distance_mm > SERVICE_TOF_INVALID_DISTANCE_THRESHOLD_MM))
-   71   1          {
-   72   2              return 0U;
-   73   2          }
-   74   1      
-   75   1          return distance_mm;
-   76   1      #else
+   65   1      }
+   66          
+   67          uint16 service_tof_get_distance_mm(void)
+   68          {
+   69   1      #if SERVICE_TOF_ENABLE
+   70   1          uint16 distance_mm;
+   71   1          uint8 range_status;
+   72   1      
+   73   1          distance_mm = bsp_tof_get_distance_mm();
+   74   1          range_status = bsp_tof_get_range_status();
+   75   1      
+   76   1          if((0U != range_status) ||
+   77   1                  (distance_mm > SERVICE_TOF_INVALID_DISTANCE_THRESHOLD_MM))
+   78   1          {
+   79   2              return 0U;
+   80   2          }
+   81   1      
+   82   1          return distance_mm;
+   83   1      #else
                    return BSP_TOF_INVALID_DISTANCE_MM;
                #endif
-   79   1      }
-   80          
-   81          uint8 service_tof_get_range_status(void)
-   82          {
-   83   1      #if SERVICE_TOF_ENABLE
-   84   1          return bsp_tof_get_range_status();
-   85   1      #else
+   86   1      }
+   87          
+   88          uint8 service_tof_get_range_status(void)
+   89          {
+   90   1      #if SERVICE_TOF_ENABLE
+   91   1          return bsp_tof_get_range_status();
+   92   1      #else
                    return BSP_TOF_RANGE_STATUS_NO_UPDATE;
                #endif
-   88   1      }
+   95   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       171     ------
+  ecode size           =       211     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -120,7 +127,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =         9     ------
+  hconst size          =        50     ------
 End of Module Information.
 
 

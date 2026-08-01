@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_dl1a
@@ -66,7 +66,7 @@ stmt  level    source
              -***********/
    46          
    47          #include "zf_common_debug.h"
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 2   
 
    48          #include "zf_driver_delay.h"
    49          #include "zf_device_dl1a.h"
@@ -134,7 +134,7 @@ stmt  level    source
   102          {
   103   1          uint8 tmp = 0;
   104   1          uint8 return_state = 0;
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 3   
 
   105   1          volatile uint16 loop_count = 0;
   106   1          
@@ -202,7 +202,7 @@ stmt  level    source
   167          // 参数说明     timeout_period_mclks    超时周期 MCLKs
   168          // 参数说明     vcsel_period_pclks      PCLK 值
   169          // 返回参数     uint32                  返回超时数值
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 4   
 
   170          // 使用示例     dl1a_timeout_mclks_to_microseconds(timeout_period_mclks, vcsel_period_pclks);
   171          // 备注信息     将序列步骤超时从具有给定 VCSEL 周期的 MCLK (以 PCLK 为单位)转换�
@@ -270,7 +270,7 @@ stmt  level    source
   224   2              // 格式: (LSByte * 2 ^ MSByte) + 1
   225   2              ls_byte = timeout_mclks - 1;
   226   2              
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 5   
 
   227   2              while ((ls_byte & 0xFFFFFF00) > 0)
   228   2              {
@@ -338,7 +338,7 @@ stmt  level    source
   286          
   287          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 6   
 
   288          // 函数简介     获取序列步骤超时设置
   289          // 参数说明     enables         序列使能步骤结构体
@@ -406,7 +406,7 @@ stmt  level    source
   343   2              while(0 == (data_buffer & 0x07))
   344   2              {
   345   3                  system_delay_ms(1);
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 7   
 
   346   3                  dl1a_read_registers(DL1A_MSRC_CONFIG_TIMEOUT_MACROP, &data_buffer, 1);
   347   3                  
@@ -474,7 +474,7 @@ stmt  level    source
   407   3              }
   408   2              
   409   2              if(enables.dss)
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 8   
 
   410   2              {
   411   3                  used_budget_us += 2 * (timeouts.msrc_dss_tcc_us + DL1A_DSS_OVERHEAD);
@@ -542,7 +542,7 @@ stmt  level    source
   471   1          dl1a_sequence_enables_step_struct enables;
   472   1          dl1a_sequence_timeout_step_struct timeouts;
   473   1          
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 9   
 
   474   1          // 开始和结束开销时间始终存在
   475   1          uint32 budget_us = DL1A_GET_START_OVERHEAD + DL1A_END_OVERHEAD;
@@ -610,13 +610,13 @@ stmt  level    source
   533          // 函数简介     返回以毫米为单位的范围读数
   534          // 参数说明     void
   535          // 返回参数     void
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 10  
 
   536          // 使用示例     dl1a_get_distance();
   537          // 备注信息     在开始单次射程测量后也调用此函数
   538          //-------------------------------------------------------------------------------------------------------
              -------------
-  539          static uint8 dl1a_parse_range_status(uint8 raw_status)
+  539          uint8 dl1a_parse_range_status(uint8 raw_status)
   540          {
   541   1          uint8 device_range_status;
   542   1      
@@ -662,438 +662,439 @@ stmt  level    source
   582   2              dl1a_read_registers(DL1A_RESULT_INTERRUPT_STATUS, reg_databuffer, 1);
   583   2      
   584   2              interrupt_status = reg_databuffer[0];
-  585   2              if((0U != (interrupt_status & 0x07U)) ||
-  586   2                      (0U != (interrupt_status & 0x10U)))
-  587   2              {
-  588   3                  /* Read RangeStatus (0x14) and final range (0x1E/0x1F) together. */
-  589   3                  dl1a_read_registers(DL1A_RESULT_RANGE_STATUS, reg_databuffer, 12);
-  590   3                  dl1a_range_status = dl1a_parse_range_status(reg_databuffer[0]);
-  591   3      
-  592   3                  if(0U != (interrupt_status & 0x07U))
-  593   3                  {
-  594   4                      // 假设线性度校正增益为默认值 1000 且未启用分数范围
-  595   4                      dl1a_distance_mm = ((uint16)reg_databuffer[10] << 8);
-  596   4                      dl1a_distance_mm |= reg_databuffer[11];
-  597   4                  }
-  598   3      
-  599   3                  dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
-  600   3                  dl1a_finsh_flag = 1;
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 11  
+  585   2              if(0U != (interrupt_status & 0x07U))
+  586   2              {
+  587   3                  /* Read RangeStatus (0x14) and final range (0x1E/0x1F) together. */
+  588   3                  dl1a_read_registers(DL1A_RESULT_RANGE_STATUS, reg_databuffer, 12);
+  589   3                  dl1a_range_status = dl1a_parse_range_status(reg_databuffer[0]);
+  590   3      
+  591   3                  // 假设线性度校正增益为默认值 1000 且未启用分数范围
+  592   3                  dl1a_distance_mm = ((uint16)reg_databuffer[10] << 8);
+  593   3                  dl1a_distance_mm |= reg_databuffer[11];
+  594   3                  if(dl1a_distance_mm > 8191U)
+  595   3                  {
+  596   4                      dl1a_distance_mm = 8192U;
+  597   4                      dl1a_range_status = DL1A_RANGE_STATUS_NO_UPDATE;
+  598   4                  }
+  599   3      
+  600   3                  dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 11  
 
-  601   3              }
-  602   2          }
-  603   1      }
-  604          
-  605          //-------------------------------------------------------------------------------------------------------
+  601   3                  dl1a_finsh_flag = 1;
+  602   3              }
+  603   2          }
+  604   1      }
+  605          
+  606          //-------------------------------------------------------------------------------------------------------
              -------------
-  606          // 函数简介     DL1A INT 中断响应处理函数
-  607          // 参数说明     void
-  608          // 返回参数     void
-  609          // 使用示例     dl1a_int_handler();
-  610          // 备注信息     本函数需要在 DL1A_INT_PIN 对应的外部中断处理函数中调用
-  611          //-------------------------------------------------------------------------------------------------------
+  607          // 函数简介     DL1A INT 中断响应处理函数
+  608          // 参数说明     void
+  609          // 返回参数     void
+  610          // 使用示例     dl1a_int_handler();
+  611          // 备注信息     本函数需要在 DL1A_INT_PIN 对应的外部中断处理函数中调用
+  612          //-------------------------------------------------------------------------------------------------------
              -------------
-  612          void dl1a_int_handler (void)
-  613          {
-  614   1      #if DL1A_INT_ENABLE
+  613          void dl1a_int_handler (void)
+  614          {
+  615   1      #if DL1A_INT_ENABLE
                    dl1a_get_distance();
                #endif
-  617   1      }
-  618          // 函数简介     初始化 DL1A
-  619          // 参数说明     void
-  620          // 返回参数     uint8           1-初始化失败 0-初始化成功
-  621          // 使用示例     dl1a_init();
-  622          // 备注信息
-  623          //-------------------------------------------------------------------------------------------------------
+  618   1      }
+  619          // 函数简介     初始化 DL1A
+  620          // 参数说明     void
+  621          // 返回参数     uint8           1-初始化失败 0-初始化成功
+  622          // 使用示例     dl1a_init();
+  623          // 备注信息
+  624          //-------------------------------------------------------------------------------------------------------
              -------------
-  624          uint8 dl1a_init (void)
-  625          {
-  626   1          uint32 measurement_timing_budget_us;
-  627   1          uint8 stop_variable = 0;
-  628   1          uint8 return_state = 0;
-  629   1          uint8 reg_data_buffer = 0;
-  630   1          uint8 ref_spad_map[6];
-  631   1          uint8 data_buffer[7];
-  632   1          uint16 i = 0;
-  633   1      
-  634   1          const uint8 code temp_buff1[][2] =          // BUFF1
-  635   1          {
-  636   1              {0x88, 0x00},
-  637   1              {0x80, 0x01},
-  638   1              {0xFF, 0x01},
-  639   1              {0x00, 0x00},
-  640   1          };
-  641   1          
-  642   1          const uint8 code temp_buff2[][2] =          // BUFF2
-  643   1          {
-  644   1              {0x00, 0x01},
-  645   1              {0xFF, 0x00},
-  646   1              {0x80, 0x00},
-  647   1          };
-  648   1          
-  649   1          const uint8 code temp_buff3[][2] =          // BUFF3
-  650   1          {
-  651   1              {0xFF, 0x01},
-  652   1              {DL1A_DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00},
-  653   1              {DL1A_DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD, 0x2C },
-  654   1              {0xFF, 0x00},
-  655   1              {DL1A_GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4},
-  656   1          };
-  657   1      
-  658   1          const uint8 code temp_buff4[][2] =          // BUFF4
-  659   1          {
-  660   1              {0xFF, 0x01},
-  661   1              {0x00, 0x00},
-  662   1              {0xFF, 0x00},
-  663   1              {0x09, 0x00},
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 12  
+  625          uint8 dl1a_init (void)
+  626          {
+  627   1          uint32 measurement_timing_budget_us;
+  628   1          uint8 stop_variable = 0;
+  629   1          uint8 return_state = 0;
+  630   1          uint8 reg_data_buffer = 0;
+  631   1          uint8 ref_spad_map[6];
+  632   1          uint8 data_buffer[7];
+  633   1          uint16 i = 0;
+  634   1      
+  635   1          const uint8 code temp_buff1[][2] =          // BUFF1
+  636   1          {
+  637   1              {0x88, 0x00},
+  638   1              {0x80, 0x01},
+  639   1              {0xFF, 0x01},
+  640   1              {0x00, 0x00},
+  641   1          };
+  642   1          
+  643   1          const uint8 code temp_buff2[][2] =          // BUFF2
+  644   1          {
+  645   1              {0x00, 0x01},
+  646   1              {0xFF, 0x00},
+  647   1              {0x80, 0x00},
+  648   1          };
+  649   1          
+  650   1          const uint8 code temp_buff3[][2] =          // BUFF3
+  651   1          {
+  652   1              {0xFF, 0x01},
+  653   1              {DL1A_DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00},
+  654   1              {DL1A_DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD, 0x2C },
+  655   1              {0xFF, 0x00},
+  656   1              {DL1A_GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4},
+  657   1          };
+  658   1      
+  659   1          const uint8 code temp_buff4[][2] =          // BUFF4
+  660   1          {
+  661   1              {0xFF, 0x01},
+  662   1              {0x00, 0x00},
+  663   1              {0xFF, 0x00},
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 12  
 
-  664   1              {0x10, 0x00},
-  665   1              {0x11, 0x00},
-  666   1              {0x24, 0x01},
-  667   1              {0x25, 0xFF},
-  668   1              {0x75, 0x00},
-  669   1              {0xFF, 0x01},
-  670   1              {0x4E, 0x2C},
-  671   1              {0x48, 0x00},
-  672   1              {0x30, 0x20},
-  673   1              {0xFF, 0x00},
-  674   1              {0x30, 0x09},
-  675   1              {0x54, 0x00},
-  676   1              {0x31, 0x04},
-  677   1              {0x32, 0x03},
-  678   1              {0x40, 0x83},
-  679   1              {0x46, 0x25},
-  680   1              {0x60, 0x00},
-  681   1              {0x27, 0x00},
-  682   1              {0x50, 0x06},
-  683   1              {0x51, 0x00},
-  684   1              {0x52, 0x96},
-  685   1              {0x56, 0x08},
-  686   1              {0x57, 0x30},
-  687   1              {0x61, 0x00},
-  688   1              {0x62, 0x00},
-  689   1              {0x64, 0x00},
-  690   1              {0x65, 0x00},
-  691   1              {0x66, 0xA0},
-  692   1              {0xFF, 0x01},
-  693   1              {0x22, 0x32},
-  694   1              {0x47, 0x14},
-  695   1              {0x49, 0xFF},
-  696   1              {0x4A, 0x00},
-  697   1              {0xFF, 0x00},
-  698   1              {0x7A, 0x0A},
-  699   1              {0x7B, 0x00},
-  700   1              {0x78, 0x21},
-  701   1              {0xFF, 0x01},
-  702   1              {0x23, 0x34},
-  703   1              {0x42, 0x00},
-  704   1              {0x44, 0xFF},
-  705   1              {0x45, 0x26},
-  706   1              {0x46, 0x05},
-  707   1              {0x40, 0x40},
-  708   1              {0x0E, 0x06},
-  709   1              {0x20, 0x1A},
-  710   1              {0x43, 0x40},
-  711   1              {0xFF, 0x00},
-  712   1              {0x34, 0x03},
-  713   1              {0x35, 0x44},
-  714   1              {0xFF, 0x01},
-  715   1              {0x31, 0x04},
-  716   1              {0x4B, 0x09},
-  717   1              {0x4C, 0x05},
-  718   1              {0x4D, 0x04},
-  719   1              {0xFF, 0x00},
-  720   1              {0x44, 0x00},
-  721   1              {0x45, 0x20},
-  722   1              {0x47, 0x08},
-  723   1              {0x48, 0x28},
-  724   1              {0x67, 0x00},
-  725   1              {0x70, 0x04},
-  726   1              {0x71, 0x01},
-  727   1              {0x72, 0xFE},
-  728   1              {0x76, 0x00},
-  729   1              {0x77, 0x00},
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 13  
+  664   1              {0x09, 0x00},
+  665   1              {0x10, 0x00},
+  666   1              {0x11, 0x00},
+  667   1              {0x24, 0x01},
+  668   1              {0x25, 0xFF},
+  669   1              {0x75, 0x00},
+  670   1              {0xFF, 0x01},
+  671   1              {0x4E, 0x2C},
+  672   1              {0x48, 0x00},
+  673   1              {0x30, 0x20},
+  674   1              {0xFF, 0x00},
+  675   1              {0x30, 0x09},
+  676   1              {0x54, 0x00},
+  677   1              {0x31, 0x04},
+  678   1              {0x32, 0x03},
+  679   1              {0x40, 0x83},
+  680   1              {0x46, 0x25},
+  681   1              {0x60, 0x00},
+  682   1              {0x27, 0x00},
+  683   1              {0x50, 0x06},
+  684   1              {0x51, 0x00},
+  685   1              {0x52, 0x96},
+  686   1              {0x56, 0x08},
+  687   1              {0x57, 0x30},
+  688   1              {0x61, 0x00},
+  689   1              {0x62, 0x00},
+  690   1              {0x64, 0x00},
+  691   1              {0x65, 0x00},
+  692   1              {0x66, 0xA0},
+  693   1              {0xFF, 0x01},
+  694   1              {0x22, 0x32},
+  695   1              {0x47, 0x14},
+  696   1              {0x49, 0xFF},
+  697   1              {0x4A, 0x00},
+  698   1              {0xFF, 0x00},
+  699   1              {0x7A, 0x0A},
+  700   1              {0x7B, 0x00},
+  701   1              {0x78, 0x21},
+  702   1              {0xFF, 0x01},
+  703   1              {0x23, 0x34},
+  704   1              {0x42, 0x00},
+  705   1              {0x44, 0xFF},
+  706   1              {0x45, 0x26},
+  707   1              {0x46, 0x05},
+  708   1              {0x40, 0x40},
+  709   1              {0x0E, 0x06},
+  710   1              {0x20, 0x1A},
+  711   1              {0x43, 0x40},
+  712   1              {0xFF, 0x00},
+  713   1              {0x34, 0x03},
+  714   1              {0x35, 0x44},
+  715   1              {0xFF, 0x01},
+  716   1              {0x31, 0x04},
+  717   1              {0x4B, 0x09},
+  718   1              {0x4C, 0x05},
+  719   1              {0x4D, 0x04},
+  720   1              {0xFF, 0x00},
+  721   1              {0x44, 0x00},
+  722   1              {0x45, 0x20},
+  723   1              {0x47, 0x08},
+  724   1              {0x48, 0x28},
+  725   1              {0x67, 0x00},
+  726   1              {0x70, 0x04},
+  727   1              {0x71, 0x01},
+  728   1              {0x72, 0xFE},
+  729   1              {0x76, 0x00},
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 13  
 
-  730   1              {0xFF, 0x01},
-  731   1              {0x0D, 0x01},
-  732   1              {0xFF, 0x00},
-  733   1              {0x80, 0x01},
-  734   1              {0x01, 0xF8},
-  735   1              {0xFF, 0x01},
-  736   1              {0x8E, 0x01},
-  737   1              {0x00, 0x01},
-  738   1              {0xFF, 0x00},
-  739   1              {0x80, 0x00}
-  740   1          };
-  741   1      
-  742   1          dl1a_finsh_flag = 0;
-  743   1          dl1a_distance_mm = 8192;
-  744   1          dl1a_range_status = DL1A_RANGE_STATUS_NO_UPDATE;
-  745   1          
-  746   1          memset(ref_spad_map, 0, 6);
-  747   1          memset(data_buffer, 0, 7);
-  748   1          
-  749   1      #if (DL1A_USE_INTERFACE==SOFT_IIC)
+  730   1              {0x77, 0x00},
+  731   1              {0xFF, 0x01},
+  732   1              {0x0D, 0x01},
+  733   1              {0xFF, 0x00},
+  734   1              {0x80, 0x01},
+  735   1              {0x01, 0xF8},
+  736   1              {0xFF, 0x01},
+  737   1              {0x8E, 0x01},
+  738   1              {0x00, 0x01},
+  739   1              {0xFF, 0x00},
+  740   1              {0x80, 0x00}
+  741   1          };
+  742   1      
+  743   1          dl1a_finsh_flag = 0;
+  744   1          dl1a_distance_mm = 8192;
+  745   1          dl1a_range_status = DL1A_RANGE_STATUS_NO_UPDATE;
+  746   1          
+  747   1          memset(ref_spad_map, 0, 6);
+  748   1          memset(data_buffer, 0, 7);
+  749   1          
+  750   1      #if (DL1A_USE_INTERFACE==SOFT_IIC)
                    soft_iic_init(&dl1a_iic_struct, DL1A_DEV_ADDR, DL1A_SOFT_IIC_DELAY, DL1A_SCL_PIN, DL1A_SDA_PIN);
                #elif (DL1A_USE_INTERFACE==HARDWARE_IIC)
-  752   1          iic_init(DL1A_IIC, DL1A_DEV_ADDR, DL1A_IIC_SPEED, DL1A_SCL_PIN, DL1A_SDA_PIN);
-  753   1      #endif
-  754   1          
-  755   1      #if DL1A_XS_ENABLE
+  753   1          iic_init(DL1A_IIC, DL1A_DEV_ADDR, DL1A_IIC_SPEED, DL1A_SCL_PIN, DL1A_SDA_PIN);
+  754   1      #endif
+  755   1          
+  756   1      #if DL1A_XS_ENABLE
                    gpio_init(DL1A_XS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
                #endif
-  758   1          
-  759   1          do
-  760   1          {
-  761   2          
-  762   2      #if DL1A_XS_ENABLE
+  759   1          
+  760   1          do
+  761   1          {
+  762   2          
+  763   2      #if DL1A_XS_ENABLE
                        system_delay_ms(100);
                        gpio_low(DL1A_XS_PIN);
                        system_delay_ms(50);
                        gpio_high(DL1A_XS_PIN);
                        system_delay_ms(100);
                #endif
-  769   2              
-  770   2              // -------------------------------- DL1A 启动初始化 --------------------------------
-  771   2              reg_data_buffer = dl1a_read_register(DL1A_IO_VOLTAGE_CONFIG);         // 传感器默认 IO 为 1
+  770   2              
+  771   2              // -------------------------------- DL1A 启动初始化 --------------------------------
+  772   2              reg_data_buffer = dl1a_read_register(DL1A_IO_VOLTAGE_CONFIG);         // 传感器默认 IO 为 1
              -.8V 模式
-  772   2              dl1a_write_register(DL1A_IO_VOLTAGE_CONFIG, reg_data_buffer | 0x01);  // 配置 IO 为 2.8V 模�
+  773   2              dl1a_write_register(DL1A_IO_VOLTAGE_CONFIG, reg_data_buffer | 0x01);  // 配置 IO 为 2.8V 模�
              -�
-  773   2              
-  774   2              for(i = 0; i < (sizeof(temp_buff1) / 2); i++)
-  775   2              {
-  776   3                  dl1a_write_register(temp_buff1[i][0], temp_buff1[i][1]);
-  777   3              }
-  778   2              
-  779   2              //        dl1a_write_register(0x88, 0x00);                                         // 设置为�
+  774   2              
+  775   2              for(i = 0; i < (sizeof(temp_buff1) / 2); i++)
+  776   2              {
+  777   3                  dl1a_write_register(temp_buff1[i][0], temp_buff1[i][1]);
+  778   3              }
+  779   2              
+  780   2              //        dl1a_write_register(0x88, 0x00);                                         // 设置为�
              -�准 IIC 模式
-  780   2              //        dl1a_write_register(0x80, 0x01);
-  781   2              //        dl1a_write_register(0xFF, 0x01);
-  782   2              //        dl1a_write_register(0x00, 0x00);
-  783   2              
-  784   2              dl1a_read_registers(0x91, &stop_variable, 1);
-  785   2              
-  786   2              for(i = 0; i < (sizeof(temp_buff2) / 2); i++)
-  787   2              {
-  788   3                  dl1a_write_register(temp_buff2[i][0], temp_buff2[i][1]);
-  789   3              }
-  790   2              
-  791   2              //        dl1a_write_register(0x00, 0x01);
-  792   2              //        dl1a_write_register(0xFF, 0x00);
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 14  
+  781   2              //        dl1a_write_register(0x80, 0x01);
+  782   2              //        dl1a_write_register(0xFF, 0x01);
+  783   2              //        dl1a_write_register(0x00, 0x00);
+  784   2              
+  785   2              dl1a_read_registers(0x91, &stop_variable, 1);
+  786   2              
+  787   2              for(i = 0; i < (sizeof(temp_buff2) / 2); i++)
+  788   2              {
+  789   3                  dl1a_write_register(temp_buff2[i][0], temp_buff2[i][1]);
+  790   3              }
+  791   2              
+  792   2              //        dl1a_write_register(0x00, 0x01);
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 14  
 
-  793   2              //        dl1a_write_register(0x80, 0x00);
-  794   2              
-  795   2              // 禁用 SIGNAL_RATE_MSRC(bit1) 和 SIGNAL_RATE_PRE_RANGE(bit4) 限制检查
-  796   2              reg_data_buffer = dl1a_read_register(DL1A_MSRC_CONFIG);
-  797   2              dl1a_write_register(DL1A_MSRC_CONFIG, reg_data_buffer | 0x12);
-  798   2              
-  799   2              dl1a_set_signal_rate_limit(DL1A_DEFAULT_RATE_LIMIT);                  // 设置信号速率限制
-  800   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xFF);
-  801   2              // -------------------------------- DL1A 启动初始化 --------------------------------
-  802   2              
-  803   2              // -------------------------------- DL1A 配置初始化 --------------------------------
-  804   2              if(dl1a_get_spad_info(&data_buffer[0], &data_buffer[1]))
-  805   2              {
-  806   3                  return_state = 1;
-  807   3                  printf( "DL1A self check error.\r\n");
-  808   3                  break;
-  809   3              }
-  810   2              
-  811   2              // 从 GLOBAL_CONFIG_SPAD_ENABLES_REF_[0-6] 获取 SPAD map (RefGoodSpadMap) 数据
-  812   2              dl1a_read_registers(DL1A_GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6);
-  813   2              
-  814   2              for(i = 0; i < (sizeof(temp_buff3) / 2); i++)
-  815   2              {
-  816   3                  dl1a_write_register(temp_buff3[i][0], temp_buff3[i][1]);
-  817   3              }
-  818   2              
-  819   2              //        dl1a_write_register(0xFF, 0x01);
-  820   2              //        dl1a_write_register(DL1A_DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00);
-  821   2              //        dl1a_write_register(DL1A_DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD, 0x2C);
-  822   2              //        dl1a_write_register(0xFF, 0x00);
-  823   2              //        dl1a_write_register(DL1A_GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4);
-  824   2              
-  825   2              data_buffer[2] = data_buffer[1] ? 12 : 0; // 12 is the first aperture spad
-  826   2              
-  827   2              for(i = 0; 48 > i; i ++)
-  828   2              {
-  829   3                  if(i < data_buffer[2] || data_buffer[3] == data_buffer[0])
-  830   3                  {
-  831   4                      // 此位低于应启用的第一个位
-  832   4                      // 或者 (eference_spad_count) 位已启用
-  833   4                      // 因此此位为零
-  834   4                      ref_spad_map[i / 8] &= ~(1 << (i % 8));
-  835   4                  }
-  836   3                  else if((ref_spad_map[i / 8] >> (i % 8)) & 0x1)
-  837   3                  {
-  838   4                      data_buffer[3] ++;
-  839   4                  }
-  840   3              }
-  841   2              
-  842   2              data_buffer[0] = DL1A_GLOBAL_CONFIG_SPAD_ENABLES_REF_0;
-  843   2              
-  844   2              for(i = 1; 7 > i; i ++)
-  845   2              {
-  846   3                  data_buffer[1] = ref_spad_map[i - 1];
-  847   3              }
-  848   2              
-  849   2              dl1a_write_array(data_buffer, 7);
-  850   2              
-  851   2              for(i = 0; i < (sizeof(temp_buff4) / 2); i++)
-  852   2              {
-  853   3                  dl1a_write_register(temp_buff4[i][0], temp_buff4[i][1]);
-  854   3              }
-  855   2              
-  856   2              //        // 默认转换设置 version 02/11/2015_v36
-  857   2              //        dl1a_write_register(0xFF, 0x01);
-  858   2              //        dl1a_write_register(0x00, 0x00);
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 15  
+  793   2              //        dl1a_write_register(0xFF, 0x00);
+  794   2              //        dl1a_write_register(0x80, 0x00);
+  795   2              
+  796   2              // 禁用 SIGNAL_RATE_MSRC(bit1) 和 SIGNAL_RATE_PRE_RANGE(bit4) 限制检查
+  797   2              reg_data_buffer = dl1a_read_register(DL1A_MSRC_CONFIG);
+  798   2              dl1a_write_register(DL1A_MSRC_CONFIG, reg_data_buffer | 0x12);
+  799   2              
+  800   2              dl1a_set_signal_rate_limit(DL1A_DEFAULT_RATE_LIMIT);                  // 设置信号速率限制
+  801   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xFF);
+  802   2              // -------------------------------- DL1A 启动初始化 --------------------------------
+  803   2              
+  804   2              // -------------------------------- DL1A 配置初始化 --------------------------------
+  805   2              if(dl1a_get_spad_info(&data_buffer[0], &data_buffer[1]))
+  806   2              {
+  807   3                  return_state = 1;
+  808   3                  printf( "DL1A self check error.\r\n");
+  809   3                  break;
+  810   3              }
+  811   2              
+  812   2              // 从 GLOBAL_CONFIG_SPAD_ENABLES_REF_[0-6] 获取 SPAD map (RefGoodSpadMap) 数据
+  813   2              dl1a_read_registers(DL1A_GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6);
+  814   2              
+  815   2              for(i = 0; i < (sizeof(temp_buff3) / 2); i++)
+  816   2              {
+  817   3                  dl1a_write_register(temp_buff3[i][0], temp_buff3[i][1]);
+  818   3              }
+  819   2              
+  820   2              //        dl1a_write_register(0xFF, 0x01);
+  821   2              //        dl1a_write_register(DL1A_DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00);
+  822   2              //        dl1a_write_register(DL1A_DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD, 0x2C);
+  823   2              //        dl1a_write_register(0xFF, 0x00);
+  824   2              //        dl1a_write_register(DL1A_GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4);
+  825   2              
+  826   2              data_buffer[2] = data_buffer[1] ? 12 : 0; // 12 is the first aperture spad
+  827   2              
+  828   2              for(i = 0; 48 > i; i ++)
+  829   2              {
+  830   3                  if(i < data_buffer[2] || data_buffer[3] == data_buffer[0])
+  831   3                  {
+  832   4                      // 此位低于应启用的第一个位
+  833   4                      // 或者 (eference_spad_count) 位已启用
+  834   4                      // 因此此位为零
+  835   4                      ref_spad_map[i / 8] &= ~(1 << (i % 8));
+  836   4                  }
+  837   3                  else if((ref_spad_map[i / 8] >> (i % 8)) & 0x1)
+  838   3                  {
+  839   4                      data_buffer[3] ++;
+  840   4                  }
+  841   3              }
+  842   2              
+  843   2              data_buffer[0] = DL1A_GLOBAL_CONFIG_SPAD_ENABLES_REF_0;
+  844   2              
+  845   2              for(i = 1; 7 > i; i ++)
+  846   2              {
+  847   3                  data_buffer[1] = ref_spad_map[i - 1];
+  848   3              }
+  849   2              
+  850   2              dl1a_write_array(data_buffer, 7);
+  851   2              
+  852   2              for(i = 0; i < (sizeof(temp_buff4) / 2); i++)
+  853   2              {
+  854   3                  dl1a_write_register(temp_buff4[i][0], temp_buff4[i][1]);
+  855   3              }
+  856   2              
+  857   2              //        // 默认转换设置 version 02/11/2015_v36
+  858   2              //        dl1a_write_register(0xFF, 0x01);
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 15  
 
-  859   2              //        dl1a_write_register(0xFF, 0x00);
-  860   2              //        dl1a_write_register(0x09, 0x00);
-  861   2              //        dl1a_write_register(0x10, 0x00);
-  862   2              //        dl1a_write_register(0x11, 0x00);
-  863   2              //        dl1a_write_register(0x24, 0x01);
-  864   2              //        dl1a_write_register(0x25, 0xFF);
-  865   2              //        dl1a_write_register(0x75, 0x00);
-  866   2              //        dl1a_write_register(0xFF, 0x01);
-  867   2              //        dl1a_write_register(0x4E, 0x2C);
-  868   2              //        dl1a_write_register(0x48, 0x00);
-  869   2              //        dl1a_write_register(0x30, 0x20);
-  870   2              //        dl1a_write_register(0xFF, 0x00);
-  871   2              //        dl1a_write_register(0x30, 0x09);
-  872   2              //        dl1a_write_register(0x54, 0x00);
-  873   2              //        dl1a_write_register(0x31, 0x04);
-  874   2              //        dl1a_write_register(0x32, 0x03);
-  875   2              //        dl1a_write_register(0x40, 0x83);
-  876   2              //        dl1a_write_register(0x46, 0x25);
-  877   2              //        dl1a_write_register(0x60, 0x00);
-  878   2              //        dl1a_write_register(0x27, 0x00);
-  879   2              //        dl1a_write_register(0x50, 0x06);
-  880   2              //        dl1a_write_register(0x51, 0x00);
-  881   2              //        dl1a_write_register(0x52, 0x96);
-  882   2              //        dl1a_write_register(0x56, 0x08);
-  883   2              //        dl1a_write_register(0x57, 0x30);
-  884   2              //        dl1a_write_register(0x61, 0x00);
-  885   2              //        dl1a_write_register(0x62, 0x00);
-  886   2              //        dl1a_write_register(0x64, 0x00);
-  887   2              //        dl1a_write_register(0x65, 0x00);
-  888   2              //        dl1a_write_register(0x66, 0xA0);
-  889   2              //        dl1a_write_register(0xFF, 0x01);
-  890   2              //        dl1a_write_register(0x22, 0x32);
-  891   2              //        dl1a_write_register(0x47, 0x14);
-  892   2              //        dl1a_write_register(0x49, 0xFF);
-  893   2              //        dl1a_write_register(0x4A, 0x00);
-  894   2              //        dl1a_write_register(0xFF, 0x00);
-  895   2              //        dl1a_write_register(0x7A, 0x0A);
-  896   2              //        dl1a_write_register(0x7B, 0x00);
-  897   2              //        dl1a_write_register(0x78, 0x21);
-  898   2              //        dl1a_write_register(0xFF, 0x01);
-  899   2              //        dl1a_write_register(0x23, 0x34);
-  900   2              //        dl1a_write_register(0x42, 0x00);
-  901   2              //        dl1a_write_register(0x44, 0xFF);
-  902   2              //        dl1a_write_register(0x45, 0x26);
-  903   2              //        dl1a_write_register(0x46, 0x05);
-  904   2              //        dl1a_write_register(0x40, 0x40);
-  905   2              //        dl1a_write_register(0x0E, 0x06);
-  906   2              //        dl1a_write_register(0x20, 0x1A);
-  907   2              //        dl1a_write_register(0x43, 0x40);
-  908   2              //        dl1a_write_register(0xFF, 0x00);
-  909   2              //        dl1a_write_register(0x34, 0x03);
-  910   2              //        dl1a_write_register(0x35, 0x44);
-  911   2              //        dl1a_write_register(0xFF, 0x01);
-  912   2              //        dl1a_write_register(0x31, 0x04);
-  913   2              //        dl1a_write_register(0x4B, 0x09);
-  914   2              //        dl1a_write_register(0x4C, 0x05);
-  915   2              //        dl1a_write_register(0x4D, 0x04);
-  916   2              //        dl1a_write_register(0xFF, 0x00);
-  917   2              //        dl1a_write_register(0x44, 0x00);
-  918   2              //        dl1a_write_register(0x45, 0x20);
-  919   2              //        dl1a_write_register(0x47, 0x08);
-  920   2              //        dl1a_write_register(0x48, 0x28);
-  921   2              //        dl1a_write_register(0x67, 0x00);
-  922   2              //        dl1a_write_register(0x70, 0x04);
-  923   2              //        dl1a_write_register(0x71, 0x01);
-  924   2              //        dl1a_write_register(0x72, 0xFE);
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 16  
+  859   2              //        dl1a_write_register(0x00, 0x00);
+  860   2              //        dl1a_write_register(0xFF, 0x00);
+  861   2              //        dl1a_write_register(0x09, 0x00);
+  862   2              //        dl1a_write_register(0x10, 0x00);
+  863   2              //        dl1a_write_register(0x11, 0x00);
+  864   2              //        dl1a_write_register(0x24, 0x01);
+  865   2              //        dl1a_write_register(0x25, 0xFF);
+  866   2              //        dl1a_write_register(0x75, 0x00);
+  867   2              //        dl1a_write_register(0xFF, 0x01);
+  868   2              //        dl1a_write_register(0x4E, 0x2C);
+  869   2              //        dl1a_write_register(0x48, 0x00);
+  870   2              //        dl1a_write_register(0x30, 0x20);
+  871   2              //        dl1a_write_register(0xFF, 0x00);
+  872   2              //        dl1a_write_register(0x30, 0x09);
+  873   2              //        dl1a_write_register(0x54, 0x00);
+  874   2              //        dl1a_write_register(0x31, 0x04);
+  875   2              //        dl1a_write_register(0x32, 0x03);
+  876   2              //        dl1a_write_register(0x40, 0x83);
+  877   2              //        dl1a_write_register(0x46, 0x25);
+  878   2              //        dl1a_write_register(0x60, 0x00);
+  879   2              //        dl1a_write_register(0x27, 0x00);
+  880   2              //        dl1a_write_register(0x50, 0x06);
+  881   2              //        dl1a_write_register(0x51, 0x00);
+  882   2              //        dl1a_write_register(0x52, 0x96);
+  883   2              //        dl1a_write_register(0x56, 0x08);
+  884   2              //        dl1a_write_register(0x57, 0x30);
+  885   2              //        dl1a_write_register(0x61, 0x00);
+  886   2              //        dl1a_write_register(0x62, 0x00);
+  887   2              //        dl1a_write_register(0x64, 0x00);
+  888   2              //        dl1a_write_register(0x65, 0x00);
+  889   2              //        dl1a_write_register(0x66, 0xA0);
+  890   2              //        dl1a_write_register(0xFF, 0x01);
+  891   2              //        dl1a_write_register(0x22, 0x32);
+  892   2              //        dl1a_write_register(0x47, 0x14);
+  893   2              //        dl1a_write_register(0x49, 0xFF);
+  894   2              //        dl1a_write_register(0x4A, 0x00);
+  895   2              //        dl1a_write_register(0xFF, 0x00);
+  896   2              //        dl1a_write_register(0x7A, 0x0A);
+  897   2              //        dl1a_write_register(0x7B, 0x00);
+  898   2              //        dl1a_write_register(0x78, 0x21);
+  899   2              //        dl1a_write_register(0xFF, 0x01);
+  900   2              //        dl1a_write_register(0x23, 0x34);
+  901   2              //        dl1a_write_register(0x42, 0x00);
+  902   2              //        dl1a_write_register(0x44, 0xFF);
+  903   2              //        dl1a_write_register(0x45, 0x26);
+  904   2              //        dl1a_write_register(0x46, 0x05);
+  905   2              //        dl1a_write_register(0x40, 0x40);
+  906   2              //        dl1a_write_register(0x0E, 0x06);
+  907   2              //        dl1a_write_register(0x20, 0x1A);
+  908   2              //        dl1a_write_register(0x43, 0x40);
+  909   2              //        dl1a_write_register(0xFF, 0x00);
+  910   2              //        dl1a_write_register(0x34, 0x03);
+  911   2              //        dl1a_write_register(0x35, 0x44);
+  912   2              //        dl1a_write_register(0xFF, 0x01);
+  913   2              //        dl1a_write_register(0x31, 0x04);
+  914   2              //        dl1a_write_register(0x4B, 0x09);
+  915   2              //        dl1a_write_register(0x4C, 0x05);
+  916   2              //        dl1a_write_register(0x4D, 0x04);
+  917   2              //        dl1a_write_register(0xFF, 0x00);
+  918   2              //        dl1a_write_register(0x44, 0x00);
+  919   2              //        dl1a_write_register(0x45, 0x20);
+  920   2              //        dl1a_write_register(0x47, 0x08);
+  921   2              //        dl1a_write_register(0x48, 0x28);
+  922   2              //        dl1a_write_register(0x67, 0x00);
+  923   2              //        dl1a_write_register(0x70, 0x04);
+  924   2              //        dl1a_write_register(0x71, 0x01);
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 16  
 
-  925   2              //        dl1a_write_register(0x76, 0x00);
-  926   2              //        dl1a_write_register(0x77, 0x00);
-  927   2              //        dl1a_write_register(0xFF, 0x01);
-  928   2              //        dl1a_write_register(0x0D, 0x01);
-  929   2              //        dl1a_write_register(0xFF, 0x00);
-  930   2              //        dl1a_write_register(0x80, 0x01);
-  931   2              //        dl1a_write_register(0x01, 0xF8);
-  932   2              //        dl1a_write_register(0xFF, 0x01);
-  933   2              //        dl1a_write_register(0x8E, 0x01);
-  934   2              //        dl1a_write_register(0x00, 0x01);
-  935   2              //        dl1a_write_register(0xFF, 0x00);
-  936   2              //        dl1a_write_register(0x80, 0x00);
-  937   2              
-  938   2              // 将中断配置设置为新样品就绪
-  939   2              dl1a_write_register(DL1A_SYSTEM_INTERRUPT_GPIO_CONFIG, 0x04);
-  940   2              reg_data_buffer = dl1a_read_register(DL1A_GPIO_HV_MUX_ACTIVE_HIGH);
-  941   2              dl1a_write_register(DL1A_GPIO_HV_MUX_ACTIVE_HIGH, reg_data_buffer & ~0x10);
-  942   2              dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
-  943   2              
-  944   2              measurement_timing_budget_us = 33300UL;
-  945   2              
-  946   2              // 默认情况下禁用 MSRC 和 TCC
-  947   2              // MSRC = Minimum Signal Rate Check
-  948   2              // TCC = Target CentreCheck
-  949   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xE8);
-  950   2              dl1a_set_measurement_timing_budget(measurement_timing_budget_us);    // 重新计算时序预算
-  951   2              // -------------------------------- DL1A 配置初始化 --------------------------------
-  952   2              
-  953   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x01);
-  954   2              
-  955   2              if(dl1a_perform_single_ref_calibration(0x40))
-  956   2              {
-  957   3                  return_state = 1;
-  958   3                  printf( "DL1A perform single reference calibration error.\r\n");
-  959   3                  break;
-  960   3              }
-  961   2              
-  962   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x02);
-  963   2              
-  964   2              if(dl1a_perform_single_ref_calibration(0x00))
-  965   2              {
-  966   3                  return_state = 1;
-  967   3                  printf( "DL1A perform single reference calibration error.\r\n");
-  968   3                  break;
-  969   3              }
-  970   2              
-  971   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xE8);           // 恢复以前的序列配置
-  972   2              
-  973   2              system_delay_ms(100);
-  974   2              
-  975   2              dl1a_write_register(0x80, 0x01);
-  976   2              dl1a_write_register(0xFF, 0x01);
-  977   2              dl1a_write_register(0x00, 0x00);
-  978   2              dl1a_write_register(0x91, stop_variable);
-  979   2              dl1a_write_register(0x00, 0x01);
-  980   2              dl1a_write_register(0xFF, 0x00);
-  981   2              dl1a_write_register(0x80, 0x00);
-  982   2              
-  983   2              dl1a_write_register(DL1A_SYSRANGE_START, 0x02);
-  984   2              dl1a_init_flag = 1;
-  985   2              
-  986   2      #if DL1A_INT_ENABLE
+  925   2              //        dl1a_write_register(0x72, 0xFE);
+  926   2              //        dl1a_write_register(0x76, 0x00);
+  927   2              //        dl1a_write_register(0x77, 0x00);
+  928   2              //        dl1a_write_register(0xFF, 0x01);
+  929   2              //        dl1a_write_register(0x0D, 0x01);
+  930   2              //        dl1a_write_register(0xFF, 0x00);
+  931   2              //        dl1a_write_register(0x80, 0x01);
+  932   2              //        dl1a_write_register(0x01, 0xF8);
+  933   2              //        dl1a_write_register(0xFF, 0x01);
+  934   2              //        dl1a_write_register(0x8E, 0x01);
+  935   2              //        dl1a_write_register(0x00, 0x01);
+  936   2              //        dl1a_write_register(0xFF, 0x00);
+  937   2              //        dl1a_write_register(0x80, 0x00);
+  938   2              
+  939   2              // 将中断配置设置为新样品就绪
+  940   2              dl1a_write_register(DL1A_SYSTEM_INTERRUPT_GPIO_CONFIG, 0x04);
+  941   2              reg_data_buffer = dl1a_read_register(DL1A_GPIO_HV_MUX_ACTIVE_HIGH);
+  942   2              dl1a_write_register(DL1A_GPIO_HV_MUX_ACTIVE_HIGH, reg_data_buffer & ~0x10);
+  943   2              dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
+  944   2              
+  945   2              measurement_timing_budget_us = 33300UL;
+  946   2              
+  947   2              // 默认情况下禁用 MSRC 和 TCC
+  948   2              // MSRC = Minimum Signal Rate Check
+  949   2              // TCC = Target CentreCheck
+  950   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xE8);
+  951   2              dl1a_set_measurement_timing_budget(measurement_timing_budget_us);    // 重新计算时序预算
+  952   2              // -------------------------------- DL1A 配置初始化 --------------------------------
+  953   2              
+  954   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x01);
+  955   2              
+  956   2              if(dl1a_perform_single_ref_calibration(0x40))
+  957   2              {
+  958   3                  return_state = 1;
+  959   3                  printf( "DL1A perform single reference calibration error.\r\n");
+  960   3                  break;
+  961   3              }
+  962   2              
+  963   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x02);
+  964   2              
+  965   2              if(dl1a_perform_single_ref_calibration(0x00))
+  966   2              {
+  967   3                  return_state = 1;
+  968   3                  printf( "DL1A perform single reference calibration error.\r\n");
+  969   3                  break;
+  970   3              }
+  971   2              
+  972   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xE8);           // 恢复以前的序列配置
+  973   2              
+  974   2              system_delay_ms(100);
+  975   2              
+  976   2              dl1a_write_register(0x80, 0x01);
+  977   2              dl1a_write_register(0xFF, 0x01);
+  978   2              dl1a_write_register(0x00, 0x00);
+  979   2              dl1a_write_register(0x91, stop_variable);
+  980   2              dl1a_write_register(0x00, 0x01);
+  981   2              dl1a_write_register(0xFF, 0x00);
+  982   2              dl1a_write_register(0x80, 0x00);
+  983   2              
+  984   2              dl1a_write_register(DL1A_SYSRANGE_START, 0x02);
+  985   2              dl1a_init_flag = 1;
+  986   2              
+  987   2      #if DL1A_INT_ENABLE
                        exti_init(DL1A_INT_PIN, EXTI_TRIGGER_FALLING);
                        dl1a_int_handler();
                        dl1a_finsh_flag = 0;
-               #endif
-C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  16:46:28  PAGE 17  
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     01/08/26  18:57:58  PAGE 17  
 
-  991   2              set_tof_type(TOF_DL1A, dl1a_int_handler);
-  992   2          }
-  993   1          while(0);
-  994   1          
-  995   1          return return_state;
-  996   1      }
+               #endif
+  992   2              set_tof_type(TOF_DL1A, dl1a_int_handler);
+  993   2          }
+  994   1          while(0);
+  995   1          
+  996   1          return return_state;
+  997   1      }
 *** WARNING C174 IN LINE 469 OF ..\..\libraries\zf_device\zf_device_dl1a.c: 'dl1a_get_measurement_timing_budget': unrefe
              -renced 'static' function
 
@@ -1101,7 +1102,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =       184     ------
-  ecode size           =      4760     ------
+  ecode size           =      4772     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------

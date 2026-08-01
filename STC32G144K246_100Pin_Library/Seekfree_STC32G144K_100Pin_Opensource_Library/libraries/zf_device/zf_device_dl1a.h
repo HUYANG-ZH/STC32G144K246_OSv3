@@ -207,6 +207,7 @@ extern uint8 dl1a_finsh_flag;
 extern uint16 dl1a_distance_mm;
 extern uint8 dl1a_range_status;
 
+uint8  dl1a_parse_range_status(uint8 raw_status);
 void   dl1a_get_distance (void);
 
 uint8  dl1a_init         (void);

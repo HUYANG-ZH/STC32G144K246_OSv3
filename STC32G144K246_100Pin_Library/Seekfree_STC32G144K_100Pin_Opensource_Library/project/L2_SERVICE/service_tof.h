@@ -10,6 +10,10 @@
 
 #define SERVICE_TOF_PERIOD_TICK        (333UL)   /* 约30Hz, 0.1ms/tick */
 
+#ifndef SERVICE_TOF_DEBUG_PRINT_ENABLE
+#define SERVICE_TOF_DEBUG_PRINT_ENABLE (1U)      /* 1: 30Hz 同步 printf 距离数据 (VOFA+ 文本协议) */
+#endif
+
 void service_tof_init(void);
 void service_tof_task(void);
 uint8 service_tof_is_ready(void);
