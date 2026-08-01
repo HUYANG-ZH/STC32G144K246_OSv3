@@ -60,6 +60,7 @@ static uint8 motion_postprocess_imu_seen = 0U;
 static uint8 motion_postprocess_imu_fault = 0U;
 static uint8 motion_postprocess_last_enabled = 0U;
 static float motion_post_target_yaw_rate_override = 0.0f;
+static float motion_postprocess_yaw_debug_enable = 0.0f;
 static float motion_postprocess_rate_limited_yaw_rate = 0.0f;
 static uint8 motion_postprocess_rate_limit_ready = 0U;
 
@@ -144,6 +145,8 @@ static void app_motion_postprocess_register_packet(void)
             &app_motion_postprocess_config.enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("motion_post_target_yaw_rate",
             &motion_post_target_yaw_rate_override, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("motion_post_yaw_debug",
+            &motion_postprocess_yaw_debug_enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("motion_post_rate_limit",
             &app_motion_postprocess_config.rate_limit, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
 }
@@ -215,7 +218,11 @@ void app_motion_postprocess_imu_step(void)
             app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_IMU);
         }
     }
-    app_element_imu_task(&imu);
+    /* 角速度环调试模式下关闭元素识别, 防止台架旋转触发圆筒/环岛状态机 */
+    if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    {
+        app_element_imu_task(&imu);
+    }
     if(0U != imu_available)
     {
         app_attitude_update(&imu);
@@ -300,7 +307,11 @@ void app_motion_postprocess_get_data(app_motion_postprocess_data_t *out_data)
 void app_motion_postprocess_control_step(void)
 {
     app_motion_preprocess_control_step();
-    app_element_control_step();
+    /* 角速度环调试模式下关闭电感元素检测 */
+    if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    {
+        app_element_control_step();
+    }
     app_feedforward_control_step();
     app_speed_plan_control_step();
     app_motion_postprocess_compute_step();
@@ -333,65 +344,77 @@ static void app_motion_postprocess_compute_step(void)
     processed_error = raw_error;
     static_feedforward_speed = feedforward.feedforward;
     linear_mps = app_speed_plan_get_linear_mps();
-    feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
 
-    /* 角速度目标变化率限幅 */
-    if((app_motion_postprocess_config.rate_limit > 0.0f) && (0U != motion_postprocess_rate_limit_ready))
+    if(motion_postprocess_yaw_debug_enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
     {
-        float max_delta = tfpu_mul(app_motion_postprocess_config.rate_limit,
-                APP_MOTION_POSTPROCESS_DT_SECOND);
-        float delta = tfpu_sub(feedback_yaw_rate_radps, motion_postprocess_rate_limited_yaw_rate);
-
-        if(delta > max_delta)
-        {
-            delta = max_delta;
-        }
-        else if(delta < -max_delta)
-        {
-            delta = -max_delta;
-        }
-
-        feedback_yaw_rate_radps = tfpu_add(motion_postprocess_rate_limited_yaw_rate, delta);
+        /* 角速度环调试模式: 关闭电感导航, 目标角速度由无线
+           $$W,motion_post_target_yaw_rate,%f@ 直接指派 (rad/s) */
+        feedback_yaw_rate_radps = motion_post_target_yaw_rate_override;
+        static_feedforward_speed = 0.0f;
     }
-    motion_postprocess_rate_limited_yaw_rate = feedback_yaw_rate_radps;
-    motion_postprocess_rate_limit_ready = 1U;
+    else
+    {
+        feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
+
+        /* 角速度目标变化率限幅 */
+        if((app_motion_postprocess_config.rate_limit > 0.0f) && (0U != motion_postprocess_rate_limit_ready))
+        {
+            float max_delta = tfpu_mul(app_motion_postprocess_config.rate_limit,
+                    APP_MOTION_POSTPROCESS_DT_SECOND);
+            float delta = tfpu_sub(feedback_yaw_rate_radps, motion_postprocess_rate_limited_yaw_rate);
+
+            if(delta > max_delta)
+            {
+                delta = max_delta;
+            }
+            else if(delta < -max_delta)
+            {
+                delta = -max_delta;
+            }
+
+            feedback_yaw_rate_radps = tfpu_add(motion_postprocess_rate_limited_yaw_rate, delta);
+        }
+        motion_postprocess_rate_limited_yaw_rate = feedback_yaw_rate_radps;
+        motion_postprocess_rate_limit_ready = 1U;
+
+        /* 圆筒元素：降角速度增益+限幅+关前馈 */
+        {
+            app_element_data_t element;
+            app_element_get_data(&element);
+            if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
+            {
+                float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
+
+                feedback_yaw_rate_radps = tfpu_mul(12.0f, raw_error);
+                if(feedback_yaw_rate_radps > limit)
+                {
+                    feedback_yaw_rate_radps = limit;
+                }
+                else if(feedback_yaw_rate_radps < -limit)
+                {
+                    feedback_yaw_rate_radps = -limit;
+                }
+
+                static_feedforward_speed = 0.0f;
+            }
+
+        }
+
+        target_yaw_rate_radps = feedback_yaw_rate_radps;
+
+        /* 环岛元素：角速度偏置融合 */
+        if(0U != app_element_roundabout_bias_active)
+        {
+            target_yaw_rate_radps = tfpu_add(target_yaw_rate_radps,
+                    tfpu_mul(APP_ELEMENT_ROUNDABOUT_BIAS_BLEND, app_element_roundabout_bias_yaw_radps));
+            feedback_yaw_rate_radps = target_yaw_rate_radps;
+        }
+    }
 
     feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
             static_feedforward_speed);
     actual_yaw_rate_radps = tfpu_mul(gyro_z, APP_MOTION_POSTPROCESS_DEG_TO_RAD);
 
-    /* 圆筒元素：降角速度增益+限幅+关前馈 */
-    {
-        app_element_data_t element;
-        app_element_get_data(&element);
-        if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
-        {
-            float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
-
-            feedback_yaw_rate_radps = tfpu_mul(12.0f, raw_error);
-            if(feedback_yaw_rate_radps > limit)
-            {
-                feedback_yaw_rate_radps = limit;
-            }
-            else if(feedback_yaw_rate_radps < -limit)
-            {
-                feedback_yaw_rate_radps = -limit;
-            }
-
-            static_feedforward_speed = 0.0f;
-        }
-
-    }
-
-    target_yaw_rate_radps = feedback_yaw_rate_radps;
-
-    /* 环岛元素：角速度偏置融合 */
-    if(0U != app_element_roundabout_bias_active)
-    {
-        target_yaw_rate_radps = tfpu_add(target_yaw_rate_radps,
-                tfpu_mul(APP_ELEMENT_ROUNDABOUT_BIAS_BLEND, app_element_roundabout_bias_yaw_radps));
-        feedback_yaw_rate_radps = target_yaw_rate_radps;
-    }
     enabled = (app_motion_postprocess_config.enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD) ? 1U : 0U;
 
     if(0U == enabled)

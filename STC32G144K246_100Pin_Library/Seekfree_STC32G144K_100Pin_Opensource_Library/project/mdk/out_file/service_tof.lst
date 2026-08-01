@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  21:17:56  PAGE 1   
+C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  21:22:48  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_tof
@@ -48,12 +48,12 @@ stmt  level    source
    35   2              {
    36   3                  service_tof_last_request_tick = now;
    37   3      #if SERVICE_TOF_DEBUG_PRINT_ENABLE
-   38   3                  /* 与 30Hz 采样节拍同步输出, VOFA+ RawData 文本协议:
-   39   3                     首字段为通道名, 距离+range_status 双通道 */
-   40   3                  printf("tof_distance_mm,%u,tof_range_status,%u\r\n",
-   41   3                          (unsigned int)bsp_tof_get_distance_mm(),
-   42   3                          (unsigned int)bsp_tof_get_range_status());
-   43   3      #endif
+                           /* 与 30Hz 采样节拍同步输出, VOFA+ RawData 文本协议:
+                              首字段为通道名, 距离+range_status 双通道 */
+                           printf("tof_distance_mm,%u,tof_range_status,%u\r\n",
+                                   (unsigned int)bsp_tof_get_distance_mm(),
+                                   (unsigned int)bsp_tof_get_range_status());
+               #endif
    44   3              }
    45   2          }
    46   1      #endif
@@ -66,7 +66,7 @@ stmt  level    source
    53   1      #else
                    return 0U;
                #endif
-C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  21:17:56  PAGE 2   
+C251 COMPILER V5.60.0,  service_tof                                                        01/08/26  21:22:48  PAGE 2   
 
    56   1      }
    57          
@@ -113,7 +113,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       211     ------
+  ecode size           =       171     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -127,7 +127,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        50     ------
+  hconst size          =         9     ------
 End of Module Information.
 
 

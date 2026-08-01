@@ -894,11 +894,11 @@ void service_packet_update(void)
     uint8 i;
     uint8 chunk_count;
     uint8 read_buffer[SERVICE_PACKET_RX_READ_SIZE];
-    uint8 read_length;
+    uint16 read_length;
 
     for(chunk_count = 0U; chunk_count < SERVICE_PACKET_MAX_CHUNKS_PER_UPDATE; chunk_count++)
     {
-        read_length = (uint8)service_wireless_uart_read_buffer(read_buffer, SERVICE_PACKET_RX_READ_SIZE);
+        read_length = service_wireless_uart_read_buffer(read_buffer, SERVICE_PACKET_RX_READ_SIZE);
         packet_rx_byte_total += read_length;
 
         for(i = 0; i < read_length; i++)
