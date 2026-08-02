@@ -132,6 +132,10 @@ void dfu_events(void)
         addr = APP_LOGICAL_BEGIN;
         while (addr < AP_SIZE)
         {
+            /* A 512B page erase takes ~5ms; the WDT window is ~35ms (120MHz,
+               PS=7), so feed the watchdog every page or a full-flash erase
+               would reset the chip mid-operation. */
+            WDT_CONTR |= 0x10;
             if (!iap_erase_page(addr))
             {
                 status = STATUS_ERASEERR;

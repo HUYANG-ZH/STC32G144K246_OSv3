@@ -1,0 +1,153 @@
+C251 COMPILER V5.60.0,  shared_kalman                                                      02/08/26  16:43:37  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE shared_kalman
+OBJECT MODULE PLACED IN .\out_file\shared_kalman.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\LL_Shared_Source\shared_kalman.c LARGE ROM(HUGE) WARNINGLEVEL(3) O
+                    -PTIMIZE(0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\l
+                    -ibraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_co
+                    -mponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\shared_kalman.lst) OBJE
+                    -CT(.\out_file\shared_kalman.obj) 
+
+stmt  level    source
+
+    1          #include "shared_kalman.h"
+    2          #include "sys_tfpu.h"
+    3          
+    4          void shared_kalman_init(shared_kalman_t *filter,
+    5                  float angle,
+    6                  float q_angle,
+    7                  float q_bias,
+    8                  float r_measure)
+    9          {
+   10   1          if(NULL == filter)
+   11   1          {
+   12   2              return;
+   13   2          }
+   14   1      
+   15   1          filter->angle = angle;
+   16   1          filter->bias = 0.0f;
+   17   1          filter->rate = 0.0f;
+   18   1          filter->p00 = 0.0f;
+   19   1          filter->p01 = 0.0f;
+   20   1          filter->p10 = 0.0f;
+   21   1          filter->p11 = 0.0f;
+   22   1          filter->q_angle = q_angle;
+   23   1          filter->q_bias = q_bias;
+   24   1          filter->r_measure = r_measure;
+   25   1          filter->initialized = 1U;
+   26   1      }
+   27          
+   28          void shared_kalman_reset(shared_kalman_t *filter, float angle)
+   29          {
+   30   1          if(NULL == filter)
+   31   1          {
+   32   2              return;
+   33   2          }
+   34   1      
+   35   1          filter->angle = angle;
+   36   1          filter->bias = 0.0f;
+   37   1          filter->rate = 0.0f;
+   38   1          filter->p00 = 0.0f;
+   39   1          filter->p01 = 0.0f;
+   40   1          filter->p10 = 0.0f;
+   41   1          filter->p11 = 0.0f;
+   42   1          filter->initialized = 1U;
+   43   1      }
+   44          
+   45          float shared_kalman_update(shared_kalman_t *filter,
+   46                  float measured_angle,
+   47                  float gyro_rate,
+   48                  float dt)
+   49          {
+   50   1          float p00_temp;
+   51   1          float p01_temp;
+   52   1          float s;
+   53   1          float k0;
+   54   1          float k1;
+   55   1          float innovation;
+C251 COMPILER V5.60.0,  shared_kalman                                                      02/08/26  16:43:37  PAGE 2   
+
+   56   1      
+   57   1          if(NULL == filter)
+   58   1          {
+   59   2              return 0.0f;
+   60   2          }
+   61   1          if(0U == filter->initialized)
+   62   1          {
+   63   2              shared_kalman_init(filter, measured_angle,
+   64   2                      filter->q_angle, filter->q_bias, filter->r_measure);
+   65   2              return filter->angle;
+   66   2          }
+   67   1          if(dt <= 0.0f)
+   68   1          {
+   69   2              dt = 0.0001f;
+   70   2          }
+   71   1      
+   72   1          /* Time update: angle is driven by the bias-corrected gyro rate. */
+   73   1          filter->rate = tfpu_sub(gyro_rate, filter->bias);
+   74   1          filter->angle = tfpu_add(filter->angle, tfpu_mul(dt, filter->rate));
+   75   1          filter->p00 = tfpu_add(filter->p00,
+   76   1                  tfpu_mul(dt, tfpu_add(tfpu_sub(tfpu_mul(dt, filter->p11), filter->p01),
+   77   1                          tfpu_add(tfpu_sub(0.0f, filter->p10), filter->q_angle))));
+   78   1          filter->p01 = tfpu_sub(filter->p01, tfpu_mul(dt, filter->p11));
+   79   1          filter->p10 = tfpu_sub(filter->p10, tfpu_mul(dt, filter->p11));
+   80   1          filter->p11 = tfpu_add(filter->p11, tfpu_mul(filter->q_bias, dt));
+   81   1      
+   82   1          /* Measurement update: accelerometer-derived angle corrects drift. */
+   83   1          s = tfpu_add(filter->p00, filter->r_measure);
+   84   1          if(s <= 0.0f)
+   85   1          {
+   86   2              return filter->angle;
+   87   2          }
+   88   1          k0 = tfpu_div(filter->p00, s);
+   89   1          k1 = tfpu_div(filter->p10, s);
+   90   1          innovation = tfpu_sub(measured_angle, filter->angle);
+   91   1          filter->angle = tfpu_add(filter->angle, tfpu_mul(k0, innovation));
+   92   1          filter->bias = tfpu_add(filter->bias, tfpu_mul(k1, innovation));
+   93   1      
+   94   1          p00_temp = filter->p00;
+   95   1          p01_temp = filter->p01;
+   96   1          filter->p00 = tfpu_sub(filter->p00, tfpu_mul(k0, p00_temp));
+   97   1          filter->p01 = tfpu_sub(filter->p01, tfpu_mul(k0, p01_temp));
+   98   1          filter->p10 = tfpu_sub(filter->p10, tfpu_mul(k1, p00_temp));
+   99   1          filter->p11 = tfpu_sub(filter->p11, tfpu_mul(k1, p01_temp));
+  100   1      
+  101   1          return filter->angle;
+  102   1      }
+  103          
+  104          float shared_kalman_get_angle(const shared_kalman_t *filter)
+  105          {
+  106   1          if(NULL == filter)
+  107   1          {
+  108   2              return 0.0f;
+  109   2          }
+  110   1      
+  111   1          return filter->angle;
+  112   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      2129     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        72     ------
+C251 COMPILER V5.60.0,  shared_kalman                                                      02/08/26  16:43:37  PAGE 3   
+
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

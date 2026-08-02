@@ -171,11 +171,13 @@ void app_motion_postprocess_imu_step(void)
     service_imu_sample_t imu;
     uint8 ea_backup;
     uint8 imu_available;
+    uint8 imu_fresh;
     uint32 now;
 
     service_imu_update();
     now = service_timetick_what();
     imu_available = service_imu_get_latest_sample(&imu);
+    imu_fresh = 0U;
     if(0U == imu_available)
     {
         imu.gyro_x = 0.0f;
@@ -200,6 +202,7 @@ void app_motion_postprocess_imu_step(void)
         motion_postprocess_imu_last_sequence = imu.sequence;
         motion_postprocess_imu_last_fresh_tick = imu.timestamp_tick;
         motion_postprocess_imu_seen = 1U;
+        imu_fresh = 1U;
         if(0U != motion_postprocess_imu_fault)
         {
             motion_postprocess_imu_fault = 0U;
@@ -223,7 +226,7 @@ void app_motion_postprocess_imu_step(void)
     {
         app_element_imu_task(&imu);
     }
-    if(0U != imu_available)
+    if(0U != imu_fresh)
     {
         app_attitude_update(&imu);
     }
@@ -251,6 +254,7 @@ void app_motion_postprocess_init(void)
     motion_postprocess_imu_start_tick = now;
     motion_postprocess_imu_seen = ((0U != imu.valid) && (0U != imu.sequence)) ? 1U : 0U;
     motion_postprocess_imu_fault = 0U;
+    app_attitude_init();
     app_motion_postprocess_sync_pid();
     shared_pos_pid_init(&motion_postprocess_yaw_pid);
     motion_postprocess_last_enabled =

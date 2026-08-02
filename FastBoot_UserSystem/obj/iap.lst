@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  iap                                                                29/07/26  19:15:00  PAGE 1   
+C251 COMPILER V5.60.0,  iap                                                                02/08/26  18:11:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE iap
@@ -66,7 +66,7 @@ stmt  level    source
    56   2              if (iap_read_byte(physical + (DWORD)offset) != 0xffU)
    57   2                  return 0;
    58   2          }
-C251 COMPILER V5.60.0,  iap                                                                29/07/26  19:15:00  PAGE 2   
+C251 COMPILER V5.60.0,  iap                                                                02/08/26  18:11:20  PAGE 2   
 
    59   1          return 1;
    60   1      }
@@ -116,69 +116,85 @@ stmt  level    source
   104   2                  iap_program_physical(physical, *src_ptr);
   105   2              physical++;
   106   2              src_ptr++;
-  107   2          }
-  108   1          return 1;
-  109   1      }
-  110          
-  111          BOOL iap_erase_page(DWORD addr)
-  112          {
-  113   1          if (!iap_check_addr(addr))
-  114   1              return 0;
-  115   1          if ((addr & (FLASH_PAGE_SIZE - 1UL)) != 0UL)
-  116   1              return 0;
-  117   1          if (addr > (AP_SIZE - FLASH_PAGE_SIZE))
-  118   1              return 0;
-  119   1      
-  120   1          /* Final full-image CRC32 is the authoritative verification. */
-  121   1          iap_erase_physical(addr + IAP_BASE);
-  122   1          return 1;
-  123   1      }
-  124          
-C251 COMPILER V5.60.0,  iap                                                                29/07/26  19:15:00  PAGE 3   
+  107   2      
+  108   2              /* Defensive WDT feed every 64 bytes: a 249-byte PROGRAM frame already
+  109   2                 fits the ~35ms window, but this keeps the margin large. */
+  110   2              if ((size & 0x3fU) == 0U)
+  111   2              {
+  112   3                  WDT_CONTR |= 0x10;
+  113   3              }
+  114   2          }
+  115   1          return 1;
+  116   1      }
+  117          
+  118          BOOL iap_erase_page(DWORD addr)
+  119          {
+  120   1          if (!iap_check_addr(addr))
+  121   1              return 0;
+  122   1          if ((addr & (FLASH_PAGE_SIZE - 1UL)) != 0UL)
+  123   1              return 0;
+  124   1          if (addr > (AP_SIZE - FLASH_PAGE_SIZE))
+C251 COMPILER V5.60.0,  iap                                                                02/08/26  18:11:20  PAGE 3   
 
-  125          BOOL iap_crc32(DWORD addr, DWORD length, DWORD *result)
-  126          {
-  127   1          DWORD crc;
-  128   1          BYTE value;
-  129   1      
-  130   1          if ((length == 0UL) || !iap_check_addr(addr))
-  131   1              return 0;
-  132   1          if (length > (AP_SIZE - addr))
-  133   1              return 0;
-  134   1      
-  135   1          crc = 0xffffffffUL;
-  136   1          addr += IAP_BASE;
-  137   1          while (length--)
-  138   1          {
-  139   2              value = iap_read_byte(addr++);
-  140   2              crc ^= (DWORD)value;
-  141   2              crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
-  142   2              crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
-  143   2          }
-  144   1          *result = crc ^ 0xffffffffUL;
-  145   1          return 1;
-  146   1      }
-  147          
-  148          BOOL iap_meta_erase(void)
-  149          {
-  150   1          /* Metadata is tiny and safety-critical, so retain full erase verification. */
-  151   1          return iap_erase_physical_checked(UPDATE_META_PHYSICAL);
-  152   1      }
-  153          
-  154          BOOL iap_meta_write(BYTE offset, BYTE value)
-  155          {
-  156   1          return iap_write_physical_checked(UPDATE_META_PHYSICAL + (DWORD)offset, value);
-  157   1      }
-  158          
-  159          BYTE iap_meta_read(BYTE offset)
-  160          {
-  161   1          return iap_read_byte(UPDATE_META_PHYSICAL + (DWORD)offset);
+  125   1              return 0;
+  126   1      
+  127   1          /* Final full-image CRC32 is the authoritative verification. */
+  128   1          iap_erase_physical(addr + IAP_BASE);
+  129   1          return 1;
+  130   1      }
+  131          
+  132          BOOL iap_crc32(DWORD addr, DWORD length, DWORD *result)
+  133          {
+  134   1          DWORD crc;
+  135   1          BYTE value;
+  136   1      
+  137   1          if ((length == 0UL) || !iap_check_addr(addr))
+  138   1              return 0;
+  139   1          if (length > (AP_SIZE - addr))
+  140   1              return 0;
+  141   1      
+  142   1          crc = 0xffffffffUL;
+  143   1          addr += IAP_BASE;
+  144   1          while (length--)
+  145   1          {
+  146   2              value = iap_read_byte(addr++);
+  147   2              crc ^= (DWORD)value;
+  148   2              crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
+  149   2              crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
+  150   2      
+  151   2              /* Feed the WDT every 512 bytes (~0.5-2ms per page, well inside the
+  152   2                 ~35ms window at 120MHz).  This covers CRC32(0xa6),
+  153   2                 UPDATE_VERIFY(0xa9) and PAGE_CRC_TABLE(0xab), all of which call
+  154   2                 iap_crc32 and would otherwise reset the chip mid-calculation. */
+  155   2              if ((length & 0x1ffUL) == 0UL)
+  156   2              {
+  157   3                  WDT_CONTR |= 0x10;
+  158   3              }
+  159   2          }
+  160   1          *result = crc ^ 0xffffffffUL;
+  161   1          return 1;
   162   1      }
+  163          
+  164          BOOL iap_meta_erase(void)
+  165          {
+  166   1          /* Metadata is tiny and safety-critical, so retain full erase verification. */
+  167   1          return iap_erase_physical_checked(UPDATE_META_PHYSICAL);
+  168   1      }
+  169          
+  170          BOOL iap_meta_write(BYTE offset, BYTE value)
+  171          {
+  172   1          return iap_write_physical_checked(UPDATE_META_PHYSICAL + (DWORD)offset, value);
+  173   1      }
+  174          
+  175          BYTE iap_meta_read(BYTE offset)
+  176          {
+  177   1          return iap_read_byte(UPDATE_META_PHYSICAL + (DWORD)offset);
+  178   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
-  code size            =       887     ------
+  code size            =       923     ------
   ecode size           =    ------     ------
   data size            =    ------     ------
   idata size           =    ------     ------
@@ -187,6 +203,8 @@ Module Information          Static   Overlayable
   xdata-const size     =    ------     ------
   edata size           =        63     ------
   bit size             =    ------     ------
+C251 COMPILER V5.60.0,  iap                                                                02/08/26  18:11:20  PAGE 4   
+
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------

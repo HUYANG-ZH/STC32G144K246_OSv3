@@ -19,6 +19,7 @@
 #include "app_inductor_preprocess.h"
 #include "app_motion_preprocess.h"
 #include "app_motion_postprocess.h"
+#include "app_attitude.h"
 #include "app_scheduler.h"
 #include "app_speed_plan.h"
 #include "app_speedout.h"
@@ -27,6 +28,29 @@
 #include "service_button.h"
 
 #define BOOT_BUZZ_MS            (500UL)
+#define ATTITUDE_VOFA_PERIOD_TICK (100UL)  /* 10 ms, 100 Hz; 0.1 ms/tick */
+
+static void main_attitude_vofa_output(void)
+{
+    static uint32 last_output_tick = 0UL;
+    uint32 now;
+    app_attitude_data_t attitude;
+
+    now = service_timetick_what();
+    if((uint32)(now - last_output_tick) < ATTITUDE_VOFA_PERIOD_TICK)
+    {
+        return;
+    }
+    last_output_tick = now;
+
+    app_attitude_get_data(&attitude);
+    if(0U != attitude.valid)
+    {
+        /* VOFA+ RawData text: roll, pitch, yaw, CRLF.  Wired printf UART. */
+        printf("%.3f,%.3f,%.3f\r\n",
+                attitude.roll_deg, attitude.pitch_deg, attitude.yaw_deg);
+    }
+}
 
 void main(void)
 {
@@ -69,6 +93,7 @@ void main(void)
         wdt_feed();
         iic_async_process_all_timed(service_timetick_what());
         service_imu_task();
+        main_attitude_vofa_output();
         service_tof_task();
         service_batterycheck_task();
         service_inductor_task();

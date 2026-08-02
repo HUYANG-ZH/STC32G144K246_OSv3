@@ -8,12 +8,12 @@
  * Timer1 divisor 12 gives exact 1,000,000 baud and IAP_TPS must be 48.
  *
  * Hot entry (SEEKFREE APP writes DfuFlag then IAP_CONTR=0x28): software reset
- * preserves the APP's 124 MHz clock. The STC integer Timer1 formula used by
- * the SEEKFREE UART driver selects divisor 31 for a requested 1,000,000 baud,
- * producing exactly 1,000,000 baud (0% error). The PC opens the port at
- * 1,000,000; this baud rate is exact on both cold and hot entry because
- * FOSC_COLD/4 and FOSC_HOT/4 are integer multiples of 1,000,000.
- * IAP_TPS must remain 124 for Flash programming at the retained clock.
+ * preserves the APP's clock. The APP currently configures 120 MHz
+ * (project/L0_SYS/sys_start.c, SYSTEM_CLOCK_120M), so FOSC_HOT MUST stay in
+ * sync with sys_start.c: 120 MHz / 4 = 30 -> exact 1,000,000 baud (0% error).
+ * WARNING: if the APP main clock changes (SYSTEM_CLOCK_* in sys_start.c),
+ * update FOSC_HOT and IAP_TPS_HOT here at the same time.
+ * IAP_TPS must remain 120 for Flash programming at the retained clock.
  *
  * Force-pin entry (P3.3 low at power-on) forces DFU mode.
  * Safe on cold boot: FastBoot runs with EA=0, so the camera VSYNC
@@ -23,7 +23,7 @@
  * from the running APP.
  */
 #define FOSC_COLD               48000000UL
-#define FOSC_HOT                124000000UL
+#define FOSC_HOT                120000000UL
 #define UART_BAUD               1000000UL
 #define UART_T1_DIV_COLD        (FOSC_COLD / UART_BAUD / 4UL)
 #define UART_T1_DIV_HOT         (FOSC_HOT / UART_BAUD / 4UL)
@@ -31,7 +31,7 @@
 #define UART_T1_RELOAD_HOT      (65536UL - UART_T1_DIV_HOT)
 
 #define IAP_TPS_COLD            48U
-#define IAP_TPS_HOT             124U
+#define IAP_TPS_HOT             120U
 
 //#define DEBUG
 

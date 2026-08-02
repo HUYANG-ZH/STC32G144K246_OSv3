@@ -317,7 +317,7 @@ void DMA_UART1_IRQHandler(void) interrupt DMA_UR1R_VECTOR
         // 程序自动下载
         if (uart_dat == 0x7F)
         {
-            if (dwon_count++ > 20)
+            if (dwon_count++ > 50)
             {
                 IAP_CONTR = 0x60;
             }

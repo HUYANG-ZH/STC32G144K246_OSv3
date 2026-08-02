@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_attitude                                                       01/08/26  18:58:09  PAGE 1   
+C251 COMPILER V5.60.0,  app_attitude                                                       02/08/26  16:45:30  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_attitude
@@ -12,78 +12,227 @@ COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_attitude.c LARG
 stmt  level    source
 
     1          #include "zf_common_headfile.h"
-    2          #include "shared_lpf.h"
-    3          #include "service_imu.h"
-    4          #include "app_attitude.h"
-    5          
-    6          static shared_lpf_t attitude_gyro_z_lpf;
-    7          static volatile app_attitude_data_t attitude_data;
-    8          
-    9          void app_attitude_init(void)
-   10          {
-   11   1          float gyro_z;
-   12   1      
-   13   1          gyro_z = service_imu_read_gyro_z();
-   14   1          shared_lpf_init(&attitude_gyro_z_lpf, APP_ATTITUDE_GYRO_LPF_ALPHA_DEFAULT, gyro_z);
-   15   1          attitude_data.gyro_z = gyro_z;
-   16   1      }
-   17          
-   18          void app_attitude_update(const service_imu_sample_t *imu)
-   19          {
-   20   1          uint8 ea_backup;
-   21   1          float gyro_z;
-   22   1      
-   23   1          if(NULL == imu)
-   24   1          {
-   25   2              return;
-   26   2          }
-   27   1      
-   28   1          gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, imu->gyro_z);
-   29   1          ea_backup = EA;
-   30   1          EA = 0;
-   31   1          attitude_data.gyro_z = gyro_z;
-   32   1          EA = ea_backup;
-   33   1      }
-   34          
-   35          void app_attitude_task(void)
-   36          {
-   37   1          uint8 ea_backup;
-   38   1          float gyro_z;
-   39   1      
-   40   1          gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, service_imu_read_gyro_z());
-   41   1      
-   42   1          ea_backup = EA;
-   43   1          EA = 0;
-   44   1          attitude_data.gyro_z = gyro_z;
-   45   1          EA = ea_backup;
-   46   1      }
-   47          
-   48          void app_attitude_get_data(app_attitude_data_t *out_data)
-   49          {
-   50   1          uint8 ea_backup;
-   51   1      
-   52   1          if(NULL == out_data)
-   53   1          {
-   54   2              return;
-   55   2          }
-C251 COMPILER V5.60.0,  app_attitude                                                       01/08/26  18:58:09  PAGE 2   
+    2          #include "sys_tfpu.h"
+    3          #include "shared_lpf.h"
+    4          #include "shared_kalman.h"
+    5          #include "service_imu.h"
+    6          #include "app_attitude.h"
+    7          
+    8          static shared_lpf_t attitude_gyro_z_lpf;
+    9          static shared_kalman_t attitude_roll_kalman;
+   10          static shared_kalman_t attitude_pitch_kalman;
+   11          static volatile app_attitude_data_t attitude_data;
+   12          static uint32 attitude_last_sequence = 0UL;
+   13          static uint32 attitude_last_timestamp_tick = 0UL;
+   14          static uint8 attitude_kalman_ready = 0U;
+   15          
+   16          #define APP_ATTITUDE_PI                  (3.1415926f)
+   17          #define APP_ATTITUDE_HALF_PI             (1.5707963f)
+   18          #define APP_ATTITUDE_RAD_TO_DEG          (57.2957795f)
+   19          #define APP_ATTITUDE_TICK_TO_SECOND      (0.0001f)
+   20          
+   21          static float app_attitude_atan2(float y, float x)
+   22          {
+   23   1          float value;
+   24   1      
+   25   1          if(x > 0.0f)
+   26   1          {
+   27   2              value = tfpu_atan(tfpu_div(y, x));
+   28   2          }
+   29   1          else if(x < 0.0f)
+   30   1          {
+   31   2              value = tfpu_atan(tfpu_div(y, x));
+   32   2              value = (y >= 0.0f) ? tfpu_add(value, APP_ATTITUDE_PI) :
+   33   2                      tfpu_sub(value, APP_ATTITUDE_PI);
+   34   2          }
+   35   1          else if(y > 0.0f)
+   36   1          {
+   37   2              value = APP_ATTITUDE_HALF_PI;
+   38   2          }
+   39   1          else if(y < 0.0f)
+   40   1          {
+   41   2              value = tfpu_sub(0.0f, APP_ATTITUDE_HALF_PI);
+   42   2          }
+   43   1          else
+   44   1          {
+   45   2              value = 0.0f;
+   46   2          }
+   47   1      
+   48   1          return value;
+   49   1      }
+   50          
+   51          static void app_attitude_get_accel_angles(const service_imu_sample_t *imu,
+   52                  float *roll_deg,
+   53                  float *pitch_deg)
+   54          {
+   55   1          float ay2;
+C251 COMPILER V5.60.0,  app_attitude                                                       02/08/26  16:45:30  PAGE 2   
 
-   56   1      
-   57   1          ea_backup = EA;
-   58   1          EA = 0;
-   59   1          out_data->gyro_z = attitude_data.gyro_z;
-   60   1          EA = ea_backup;
-   61   1      }
+   56   1          float az2;
+   57   1          float pitch_denominator;
+   58   1          float roll_rad;
+   59   1          float pitch_rad;
+   60   1      
+   61   1          if((NULL == imu) || (NULL == roll_deg) || (NULL == pitch_deg))
+   62   1          {
+   63   2              return;
+   64   2          }
+   65   1      
+   66   1          roll_rad = app_attitude_atan2(imu->acc_y_g, imu->acc_z_g);
+   67   1          ay2 = tfpu_mul(imu->acc_y_g, imu->acc_y_g);
+   68   1          az2 = tfpu_mul(imu->acc_z_g, imu->acc_z_g);
+   69   1          pitch_denominator = tfpu_sqrt(tfpu_add(ay2, az2));
+   70   1          pitch_rad = app_attitude_atan2(tfpu_sub(0.0f, imu->acc_x_g),
+   71   1                  pitch_denominator);
+   72   1          *roll_deg = tfpu_mul(roll_rad, APP_ATTITUDE_RAD_TO_DEG);
+   73   1          *pitch_deg = tfpu_mul(pitch_rad, APP_ATTITUDE_RAD_TO_DEG);
+   74   1      }
+   75          
+   76          static float app_attitude_get_dt(const service_imu_sample_t *imu)
+   77          {
+   78   1          uint32 delta_tick;
+   79   1          float dt;
+   80   1      
+   81   1          if(NULL == imu)
+   82   1          {
+   83   2              return 0.0001f;
+   84   2          }
+   85   1          delta_tick = imu->timestamp_tick - attitude_last_timestamp_tick;
+   86   1          if(0UL == delta_tick)
+   87   1          {
+   88   2              return 0.0001f;
+   89   2          }
+   90   1          dt = tfpu_mul(tfpu_int2float((long)delta_tick),
+   91   1                  APP_ATTITUDE_TICK_TO_SECOND);
+   92   1          if(APP_ATTITUDE_DT_MAX_SECOND < dt)
+   93   1          {
+   94   2              dt = APP_ATTITUDE_DT_MAX_SECOND;
+   95   2          }
+   96   1          return dt;
+   97   1      }
+   98          
+   99          void app_attitude_init(void)
+  100          {
+  101   1          shared_lpf_init(&attitude_gyro_z_lpf,
+  102   1                  APP_ATTITUDE_GYRO_Z_LPF_ALPHA_DEFAULT, 0.0f);
+  103   1          attitude_last_sequence = 0UL;
+  104   1          attitude_last_timestamp_tick = 0UL;
+  105   1          attitude_kalman_ready = 0U;
+  106   1          attitude_data.roll_deg = 0.0f;
+  107   1          attitude_data.pitch_deg = 0.0f;
+  108   1          attitude_data.yaw_deg = 0.0f;
+  109   1          attitude_data.gyro_z = 0.0f;
+  110   1          attitude_data.sequence = 0UL;
+  111   1          attitude_data.timestamp_tick = 0UL;
+  112   1          attitude_data.valid = 0U;
+  113   1      }
+  114          
+  115          void app_attitude_update(const service_imu_sample_t *imu)
+  116          {
+  117   1          uint8 ea_backup;
+  118   1          float accel_roll_deg;
+  119   1          float accel_pitch_deg;
+  120   1          float dt;
+  121   1          float gyro_z;
+C251 COMPILER V5.60.0,  app_attitude                                                       02/08/26  16:45:30  PAGE 3   
+
+  122   1      
+  123   1          if((NULL == imu) || (0U == imu->valid) || (0UL == imu->sequence) ||
+  124   1             (imu->sequence == attitude_last_sequence))
+  125   1          {
+  126   2              return;
+  127   2          }
+  128   1      
+  129   1          app_attitude_get_accel_angles(imu, &accel_roll_deg, &accel_pitch_deg);
+  130   1          gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, imu->gyro_z);
+  131   1          if(0U == attitude_kalman_ready)
+  132   1          {
+  133   2              shared_kalman_init(&attitude_roll_kalman, accel_roll_deg,
+  134   2                      APP_ATTITUDE_KALMAN_Q_ANGLE_DEFAULT,
+  135   2                      APP_ATTITUDE_KALMAN_Q_BIAS_DEFAULT,
+  136   2                      APP_ATTITUDE_KALMAN_R_MEASURE_DEFAULT);
+  137   2              shared_kalman_init(&attitude_pitch_kalman, accel_pitch_deg,
+  138   2                      APP_ATTITUDE_KALMAN_Q_ANGLE_DEFAULT,
+  139   2                      APP_ATTITUDE_KALMAN_Q_BIAS_DEFAULT,
+  140   2                      APP_ATTITUDE_KALMAN_R_MEASURE_DEFAULT);
+  141   2              attitude_data.roll_deg = accel_roll_deg;
+  142   2              attitude_data.pitch_deg = accel_pitch_deg;
+  143   2              attitude_data.yaw_deg = 0.0f;
+  144   2              attitude_kalman_ready = 1U;
+  145   2          }
+  146   1          else
+  147   1          {
+  148   2              dt = app_attitude_get_dt(imu);
+  149   2              attitude_data.roll_deg = shared_kalman_update(&attitude_roll_kalman,
+  150   2                      accel_roll_deg, imu->gyro_x, dt);
+  151   2              attitude_data.pitch_deg = shared_kalman_update(&attitude_pitch_kalman,
+  152   2                      accel_pitch_deg, imu->gyro_y, dt);
+  153   2              attitude_data.yaw_deg = tfpu_add(attitude_data.yaw_deg,
+  154   2                      tfpu_mul(gyro_z, dt));
+  155   2              if(180.0f < attitude_data.yaw_deg)
+  156   2              {
+  157   3                  attitude_data.yaw_deg = tfpu_sub(attitude_data.yaw_deg, 360.0f);
+  158   3              }
+  159   2              else if(-180.0f > attitude_data.yaw_deg)
+  160   2              {
+  161   3                  attitude_data.yaw_deg = tfpu_add(attitude_data.yaw_deg, 360.0f);
+  162   3              }
+  163   2          }
+  164   1          attitude_last_sequence = imu->sequence;
+  165   1          attitude_last_timestamp_tick = imu->timestamp_tick;
+  166   1      
+  167   1          ea_backup = EA;
+  168   1          EA = 0;
+  169   1          attitude_data.gyro_z = gyro_z;
+  170   1          attitude_data.sequence = imu->sequence;
+  171   1          attitude_data.timestamp_tick = imu->timestamp_tick;
+  172   1          attitude_data.valid = 1U;
+  173   1          EA = ea_backup;
+  174   1      }
+  175          
+  176          void app_attitude_task(void)
+  177          {
+  178   1          service_imu_sample_t imu;
+  179   1      
+  180   1          /* Compatibility entry point; update() rejects duplicate frame sequences. */
+  181   1          if(0U != service_imu_get_latest_sample(&imu))
+  182   1          {
+  183   2              app_attitude_update(&imu);
+  184   2          }
+  185   1      }
+  186          
+  187          void app_attitude_get_data(app_attitude_data_t *out_data)
+C251 COMPILER V5.60.0,  app_attitude                                                       02/08/26  16:45:30  PAGE 4   
+
+  188          {
+  189   1          uint8 ea_backup;
+  190   1      
+  191   1          if(NULL == out_data)
+  192   1          {
+  193   2              return;
+  194   2          }
+  195   1      
+  196   1          ea_backup = EA;
+  197   1          EA = 0;
+  198   1          out_data->roll_deg = attitude_data.roll_deg;
+  199   1          out_data->pitch_deg = attitude_data.pitch_deg;
+  200   1          out_data->yaw_deg = attitude_data.yaw_deg;
+  201   1          out_data->gyro_z = attitude_data.gyro_z;
+  202   1          out_data->sequence = attitude_data.sequence;
+  203   1          out_data->timestamp_tick = attitude_data.timestamp_tick;
+  204   1          out_data->valid = attitude_data.valid;
+  205   1          EA = ea_backup;
+  206   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       317     ------
+  ecode size           =      2271     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        35     ------
+  xdata size           =       267     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -93,7 +242,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =    ------     ------
+  hconst size          =        24     ------
 End of Module Information.
 
 

@@ -51,7 +51,7 @@ FLASH_PAGE_SIZE = 0x200
 RESET_VECTOR = 0xFF0000
 RESET_VECTOR_COMMIT_SIZE = 3
 PROGRAM_PAYLOAD = 249
-PAGE_CRC_BATCH = 60
+PAGE_CRC_BATCH = 30
 
 LogCallback = Callable[[str], None]
 ProgressCallback = Callable[[str, int, int], None]
@@ -121,7 +121,7 @@ class FlashOptions:
     ack_timeout: float = 2.0
     response_timeout: float = 3.0
     erase_timeout: float = 4.0
-    verify_timeout: float = 30.0
+    verify_timeout: float = 5.0
     handoff_delay: float = 0.45
     reboot_delay: float = 1.0
     retries: int = 3
@@ -441,6 +441,31 @@ class FastBootEngine:
         except Exception:
             return False
 
+    def _probe_device_alive(self, ser) -> None:
+        """After a failed DFU request, distinguish "transient noise" from
+        "device rebooted back into the APP".
+
+        A watchdog reset before UPDATE_BEGIN makes the chip boot the APP again
+        (no recovery flag yet), so retrying DFU frames would burn
+        retries x timeout on every batch.  A read-only CONNECT probe answers
+        that in under a second.
+        """
+        try:
+            status, _payload, _raw = self._request(
+                ser, build_request(DFU_CMD_CONNECT),
+                min(self.options.response_timeout, 0.8),
+                "掉线探测 CONNECT",
+            )
+            if status == STATUS_OK:
+                self.log("设备仍在 Bootloader 中（瞬时故障，非复位）")
+                return
+        except Exception:
+            pass
+        raise FastBootError(
+            "设备已离开 Bootloader（可能在整区操作期间看门狗复位回 APP）。"
+            "请重新运行升级命令再次进入 DFU。"
+        )
+
     def enter_bootloader(self) -> None:
         if self.options.cold_recovery:
             self.log(f"冷恢复/直连模式：跳过 APP，Bootloader @ {self.options.resolved_boot_baud()}")
@@ -567,10 +592,17 @@ class FastBootEngine:
                 address=logical,
                 payload=bytes((len(batch),)),
             )
-            status, payload, _raw = self._request(
-                ser, frame, self.options.verify_timeout,
-                f"PAGE_CRC_TABLE 0x{batch[0]:06X}",
-            )
+            try:
+                status, payload, _raw = self._request(
+                    ser, frame, self.options.verify_timeout,
+                    f"PAGE_CRC_TABLE 0x{batch[0]:06X}",
+                )
+            except FastBootError:
+                # A watchdog reset during scanning boots the APP (no recovery
+                # flag yet).  Probe once instead of silently burning
+                # retries x timeout on every remaining batch.
+                self._probe_device_alive(ser)
+                raise
             if status != STATUS_OK or len(payload) != len(batch) * 4:
                 raise FastBootError(
                     f"页面 CRC 表响应错误：状态 0x{status:02X}，"

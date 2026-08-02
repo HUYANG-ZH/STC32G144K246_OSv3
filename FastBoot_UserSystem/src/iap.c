@@ -104,6 +104,13 @@ BOOL iap_program_block(DWORD addr, BYTE near *src_ptr, BYTE size)
             iap_program_physical(physical, *src_ptr);
         physical++;
         src_ptr++;
+
+        /* Defensive WDT feed every 64 bytes: a 249-byte PROGRAM frame already
+           fits the ~35ms window, but this keeps the margin large. */
+        if ((size & 0x3fU) == 0U)
+        {
+            WDT_CONTR |= 0x10;
+        }
     }
     return 1;
 }
@@ -140,6 +147,15 @@ BOOL iap_crc32(DWORD addr, DWORD length, DWORD *result)
         crc ^= (DWORD)value;
         crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
         crc = (crc >> 4) ^ crc32_nibble_table[(BYTE)(crc & 0x0fUL)];
+
+        /* Feed the WDT every 512 bytes (~0.5-2ms per page, well inside the
+           ~35ms window at 120MHz).  This covers CRC32(0xa6),
+           UPDATE_VERIFY(0xa9) and PAGE_CRC_TABLE(0xab), all of which call
+           iap_crc32 and would otherwise reset the chip mid-calculation. */
+        if ((length & 0x1ffUL) == 0UL)
+        {
+            WDT_CONTR |= 0x10;
+        }
     }
     *result = crc ^ 0xffffffffUL;
     return 1;

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 1   
+C251 COMPILER V5.60.0,  dfu                                                                02/08/26  18:11:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE dfu
@@ -66,7 +66,7 @@ stmt  level    source
    56   1           * Cold-boot force entry: hold P3.3 low at power-on.
    57   1           * (EA=0 here, so the camera VSYNC on INT1/P3.3 never fires.)
    58   1           * Hot entry: APP wrote DfuTag then IAP_CONTR=0x28.
-C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 2   
+C251 COMPILER V5.60.0,  dfu                                                                02/08/26  18:11:20  PAGE 2   
 
    59   1           * Recovery: interrupted update with IN_PROGRESS/VERIFIED state.
    60   1           */
@@ -134,7 +134,7 @@ stmt  level    source
   122   3                  break;
   123   3              }
   124   2              /* Fast dense block programming; final whole-image CRC32 is authoritative. */
-C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 3   
+C251 COMPILER V5.60.0,  dfu                                                                02/08/26  18:11:20  PAGE 3   
 
   125   2              if (!iap_program_block(addr, ptr, size))
   126   2                  status = STATUS_PROGRAMERR;
@@ -146,117 +146,121 @@ stmt  level    source
   132   2              addr = APP_LOGICAL_BEGIN;
   133   2              while (addr < AP_SIZE)
   134   2              {
-  135   3                  if (!iap_erase_page(addr))
-  136   3                  {
-  137   4                      status = STATUS_ERASEERR;
-  138   4                      break;
-  139   4                  }
-  140   3                  addr += FLASH_PAGE_SIZE;
-  141   3              }
-  142   2              break;
-  143   2      
-  144   2          case DFU_CMD_ERASE_PAGE:
-  145   2              if (!update_write_allowed()) { status = STATUS_STATEERR; break; }
-  146   2              if (UartRxBuffer[0] != 6U) { status = STATUS_ERRORWRAP; break; }
-  147   2              if (!iap_erase_page(addr))
-  148   2                  status = STATUS_ERASEERR;
-  149   2              break;
-  150   2      
-  151   2          case DFU_CMD_CRC32:
-  152   2              if (UartRxBuffer[0] != 9U) { status = STATUS_ERRORWRAP; break; }
-  153   2              value32 = get_dword(&UartRxBuffer[6]);
-  154   2              if (!iap_crc32(addr, value32, &image_crc))
-  155   2              {
-  156   3                  status = STATUS_OUTOFRANGE;
-  157   3                  break;
-  158   3              }
-  159   2              put_dword(&UartTxBuffer[0], image_crc);
-  160   2              ret = 4;
-  161   2              break;
-  162   2      
-  163   2          case DFU_CMD_PAGE_CRC_TABLE:
-  164   2              if (UartRxBuffer[0] != 6U) { status = STATUS_ERRORWRAP; break; }
-  165   2              if ((size == 0U) || (size > 60U)) { status = STATUS_OUTOFRANGE; break; }
-  166   2              if (!iap_check_addr(addr)) { status = STATUS_OUTOFRANGE; break; }
-  167   2              if ((addr & (FLASH_PAGE_SIZE - 1UL)) != 0UL)
-  168   2              {
-  169   3                  status = STATUS_OUTOFRANGE;
-  170   3                  break;
-  171   3              }
-  172   2              if ((DWORD)size > ((AP_SIZE - addr) / FLASH_PAGE_SIZE))
-  173   2              {
-  174   3                  status = STATUS_OUTOFRANGE;
-  175   3                  break;
-  176   3              }
-  177   2              ret = 0U;
-  178   2              while (size--)
-  179   2              {
-  180   3                  if (!iap_crc32(addr, FLASH_PAGE_SIZE, &value32))
-  181   3                  {
-  182   4                      status = STATUS_OUTOFRANGE;
-  183   4                      ret = 0U;
-  184   4                      break;
-  185   4                  }
-  186   3                  put_dword(&UartTxBuffer[ret], value32);
-  187   3                  ret = (BYTE)(ret + 4U);
-  188   3                  addr += FLASH_PAGE_SIZE;
-  189   3              }
-  190   2              break;
-C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 4   
+  135   3                  /* A 512B page erase takes ~5ms; the WDT window is ~35ms (120MHz,
+  136   3                     PS=7), so feed the watchdog every page or a full-flash erase
+  137   3                     would reset the chip mid-operation. */
+  138   3                  WDT_CONTR |= 0x10;
+  139   3                  if (!iap_erase_page(addr))
+  140   3                  {
+  141   4                      status = STATUS_ERASEERR;
+  142   4                      break;
+  143   4                  }
+  144   3                  addr += FLASH_PAGE_SIZE;
+  145   3              }
+  146   2              break;
+  147   2      
+  148   2          case DFU_CMD_ERASE_PAGE:
+  149   2              if (!update_write_allowed()) { status = STATUS_STATEERR; break; }
+  150   2              if (UartRxBuffer[0] != 6U) { status = STATUS_ERRORWRAP; break; }
+  151   2              if (!iap_erase_page(addr))
+  152   2                  status = STATUS_ERASEERR;
+  153   2              break;
+  154   2      
+  155   2          case DFU_CMD_CRC32:
+  156   2              if (UartRxBuffer[0] != 9U) { status = STATUS_ERRORWRAP; break; }
+  157   2              value32 = get_dword(&UartRxBuffer[6]);
+  158   2              if (!iap_crc32(addr, value32, &image_crc))
+  159   2              {
+  160   3                  status = STATUS_OUTOFRANGE;
+  161   3                  break;
+  162   3              }
+  163   2              put_dword(&UartTxBuffer[0], image_crc);
+  164   2              ret = 4;
+  165   2              break;
+  166   2      
+  167   2          case DFU_CMD_PAGE_CRC_TABLE:
+  168   2              if (UartRxBuffer[0] != 6U) { status = STATUS_ERRORWRAP; break; }
+  169   2              if ((size == 0U) || (size > 60U)) { status = STATUS_OUTOFRANGE; break; }
+  170   2              if (!iap_check_addr(addr)) { status = STATUS_OUTOFRANGE; break; }
+  171   2              if ((addr & (FLASH_PAGE_SIZE - 1UL)) != 0UL)
+  172   2              {
+  173   3                  status = STATUS_OUTOFRANGE;
+  174   3                  break;
+  175   3              }
+  176   2              if ((DWORD)size > ((AP_SIZE - addr) / FLASH_PAGE_SIZE))
+  177   2              {
+  178   3                  status = STATUS_OUTOFRANGE;
+  179   3                  break;
+  180   3              }
+  181   2              ret = 0U;
+  182   2              while (size--)
+  183   2              {
+  184   3                  if (!iap_crc32(addr, FLASH_PAGE_SIZE, &value32))
+  185   3                  {
+  186   4                      status = STATUS_OUTOFRANGE;
+  187   4                      ret = 0U;
+  188   4                      break;
+  189   4                  }
+  190   3                  put_dword(&UartTxBuffer[ret], value32);
+C251 COMPILER V5.60.0,  dfu                                                                02/08/26  18:11:20  PAGE 4   
 
-  191   2      
-  192   2          case DFU_CMD_STATUS:
-  193   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
-  194   2              update_state = update_get_status(&image_size, &image_crc);
-  195   2              UartTxBuffer[0] = 1U;
-  196   2              UartTxBuffer[1] = update_state;
-  197   2              put_dword(&UartTxBuffer[2], image_size);
-  198   2              put_dword(&UartTxBuffer[6], image_crc);
-  199   2              ret = 10;
-  200   2              break;
-  201   2      
-  202   2          case DFU_CMD_UPDATE_BEGIN:
-  203   2              if (UartRxBuffer[0] != 9U) { status = STATUS_ERRORWRAP; break; }
-  204   2              image_size = get_dword(&UartRxBuffer[2]);
-  205   2              image_crc = get_dword(&UartRxBuffer[6]);
-  206   2              if (!update_begin(image_size, image_crc))
-  207   2                  status = STATUS_METAERR;
-  208   2              break;
-  209   2      
-  210   2          case DFU_CMD_UPDATE_VERIFY:
-  211   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
-  212   2              image_crc = 0UL;
-  213   2              if (!update_verify(&image_crc))
-  214   2                  status = STATUS_CRCERR;
-  215   2              put_dword(&UartTxBuffer[0], image_crc);
-  216   2              ret = 4;
-  217   2              break;
-  218   2      
-  219   2          case DFU_CMD_UPDATE_COMMIT:
-  220   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
-  221   2              if (!update_commit())
-  222   2                  status = STATUS_STATEERR;
-  223   2              break;
-  224   2      
-  225   2          case DFU_CMD_REBOOT:
-  226   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
-  227   2              IAP_CONTR = 0x20U;
-  228   2              while (1);
-  229   2              break;
-  230   2      
-  231   2          default:
-  232   2              status = STATUS_ERRORCMD;
+  191   3                  ret = (BYTE)(ret + 4U);
+  192   3                  addr += FLASH_PAGE_SIZE;
+  193   3              }
+  194   2              break;
+  195   2      
+  196   2          case DFU_CMD_STATUS:
+  197   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  198   2              update_state = update_get_status(&image_size, &image_crc);
+  199   2              UartTxBuffer[0] = 1U;
+  200   2              UartTxBuffer[1] = update_state;
+  201   2              put_dword(&UartTxBuffer[2], image_size);
+  202   2              put_dword(&UartTxBuffer[6], image_crc);
+  203   2              ret = 10;
+  204   2              break;
+  205   2      
+  206   2          case DFU_CMD_UPDATE_BEGIN:
+  207   2              if (UartRxBuffer[0] != 9U) { status = STATUS_ERRORWRAP; break; }
+  208   2              image_size = get_dword(&UartRxBuffer[2]);
+  209   2              image_crc = get_dword(&UartRxBuffer[6]);
+  210   2              if (!update_begin(image_size, image_crc))
+  211   2                  status = STATUS_METAERR;
+  212   2              break;
+  213   2      
+  214   2          case DFU_CMD_UPDATE_VERIFY:
+  215   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  216   2              image_crc = 0UL;
+  217   2              if (!update_verify(&image_crc))
+  218   2                  status = STATUS_CRCERR;
+  219   2              put_dword(&UartTxBuffer[0], image_crc);
+  220   2              ret = 4;
+  221   2              break;
+  222   2      
+  223   2          case DFU_CMD_UPDATE_COMMIT:
+  224   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  225   2              if (!update_commit())
+  226   2                  status = STATUS_STATEERR;
+  227   2              break;
+  228   2      
+  229   2          case DFU_CMD_REBOOT:
+  230   2              if (UartRxBuffer[0] != 1U) { status = STATUS_ERRORWRAP; break; }
+  231   2              IAP_CONTR = 0x20U;
+  232   2              while (1);
   233   2              break;
-  234   2          }
-  235   1      
-  236   1          uart_send(status, ret);
-  237   1          uart_recv_done();
-  238   1      }
+  234   2      
+  235   2          default:
+  236   2              status = STATUS_ERRORCMD;
+  237   2              break;
+  238   2          }
+  239   1      
+  240   1          uart_send(status, ret);
+  241   1          uart_recv_done();
+  242   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
-  code size            =      1339     ------
+  code size            =      1342     ------
   ecode size           =    ------     ------
   data size            =    ------     ------
   idata size           =    ------     ------
@@ -267,12 +271,12 @@ Module Information          Static   Overlayable
   bit size             =         1     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
+C251 COMPILER V5.60.0,  dfu                                                                02/08/26  18:11:20  PAGE 5   
+
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-C251 COMPILER V5.60.0,  dfu                                                                29/07/26  19:15:01  PAGE 5   
-
   hconst size          =    ------     ------
 End of Module Information.
 
