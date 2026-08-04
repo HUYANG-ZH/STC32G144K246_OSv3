@@ -21,9 +21,6 @@
 
 #define BSP_TOF_CONFIG_BYTES                (135U)
 #define BSP_TOF_TRANSFER_BYTES              (BSP_TOF_CONFIG_BYTES + 2U)
-#define BSP_TOF_XS_HIGH_WAIT_TICK           (500UL)
-#define BSP_TOF_XS_LOW_WAIT_TICK            (100UL)
-#define BSP_TOF_XS_BOOT_WAIT_TICK           (500UL)
 #define BSP_TOF_READY_POLL_TICK             (10UL)
 #define BSP_TOF_READY_MAX_POLLS              (1000U)
 #define BSP_TOF_RETRY_WAIT_TICK              (10000UL)
@@ -32,9 +29,6 @@
 typedef enum
 {
     BSP_TOF_STATE_IDLE = 0,
-    BSP_TOF_STATE_XS_HIGH_WAIT,
-    BSP_TOF_STATE_XS_LOW_WAIT,
-    BSP_TOF_STATE_XS_BOOT_WAIT,
     BSP_TOF_STATE_IIC_INIT,
     BSP_TOF_STATE_FIRMWARE_SUBMIT,
     BSP_TOF_STATE_FIRMWARE_WAIT,
@@ -55,6 +49,7 @@ typedef enum
     BSP_TOF_STATE_SAMPLE_DISTANCE_SUBMIT,
     BSP_TOF_STATE_SAMPLE_DISTANCE_WAIT,
     BSP_TOF_STATE_ERROR,
+    BSP_TOF_STATE_INIT_FAILED,
 } bsp_tof_state_enum;
 
 static uint8 xdata tof_transfer_buffer[BSP_TOF_TRANSFER_BYTES];
@@ -69,6 +64,7 @@ static uint8 tof_ready = 0U;
 static uint8 tof_sample_requested = 0U;
 static uint8 tof_last_error = 0U;
 static uint8 tof_submit_busy_pending = 0U;
+static uint8 tof_init_failed = 0U;   /* 未初始化TOF的标记: 开机读固件状态失败后置1, 不再重试 */
 static bsp_tof_state_enum tof_state = BSP_TOF_STATE_IDLE;
 
 static uint8 bsp_tof_deadline_reached(uint32 now)
@@ -90,6 +86,17 @@ static void bsp_tof_fail(iic_status_enum status)
     tof_submit_busy_pending = 0U;
     tof_retry_deadline_tick = service_timetick_what() + BSP_TOF_RETRY_WAIT_TICK;
     tof_state = BSP_TOF_STATE_ERROR;
+}
+
+/* 开机初始化失败: 留下未初始化TOF的标记, 进入终端状态, 不再重试, 系统继续其余初始化 */
+static void bsp_tof_mark_init_failed(iic_status_enum status)
+{
+    tof_init_failed = 1U;
+    tof_last_error = (uint8)status;
+    tof_ready = 0U;
+    tof_sample_requested = 0U;
+    tof_submit_busy_pending = 0U;
+    tof_state = BSP_TOF_STATE_INIT_FAILED;
 }
 
 static uint8 bsp_tof_submit(uint16 reg, uint8 write_len, uint8 read_len)
@@ -164,13 +171,10 @@ uint8 bsp_tof_async_init(void)
     tof_retry_deadline_tick = 0UL;
     tof_submit_busy_deadline_tick = 0UL;
     tof_submit_busy_pending = 0U;
+    tof_init_failed = 0U;
     set_tof_type(TOF_DL1B, 0);
 
-#if DL1B_XS_ENABLE
-    gpio_init(DL1B_XS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
-#endif
-    tof_deadline_tick = service_timetick_what() + BSP_TOF_XS_HIGH_WAIT_TICK;
-    tof_state = BSP_TOF_STATE_XS_HIGH_WAIT;
+    tof_state = BSP_TOF_STATE_IIC_INIT;
     return 1U;
 }
 
@@ -188,35 +192,6 @@ void bsp_tof_async_process(void)
     now = service_timetick_what();
     switch(tof_state)
     {
-        case BSP_TOF_STATE_XS_HIGH_WAIT:
-            if(0U != bsp_tof_deadline_reached(now))
-            {
-#if DL1B_XS_ENABLE
-                gpio_low(DL1B_XS_PIN);
-#endif
-                tof_deadline_tick = now + BSP_TOF_XS_LOW_WAIT_TICK;
-                tof_state = BSP_TOF_STATE_XS_LOW_WAIT;
-            }
-            break;
-
-        case BSP_TOF_STATE_XS_LOW_WAIT:
-            if(0U != bsp_tof_deadline_reached(now))
-            {
-#if DL1B_XS_ENABLE
-                gpio_high(DL1B_XS_PIN);
-#endif
-                tof_deadline_tick = now + BSP_TOF_XS_BOOT_WAIT_TICK;
-                tof_state = BSP_TOF_STATE_XS_BOOT_WAIT;
-            }
-            break;
-
-        case BSP_TOF_STATE_XS_BOOT_WAIT:
-            if(0U != bsp_tof_deadline_reached(now))
-            {
-                tof_state = BSP_TOF_STATE_IIC_INIT;
-            }
-            break;
-
         case BSP_TOF_STATE_IIC_INIT:
             status = iic_init(DL1B_IIC, DL1B_DEV_ADDR, DL1B_IIC_SPEED,
                     DL1B_SCL_PIN, DL1B_SDA_PIN);
@@ -239,16 +214,24 @@ void bsp_tof_async_process(void)
             break;
 
         case BSP_TOF_STATE_FIRMWARE_WAIT:
-            if(0U != bsp_tof_transfer_succeeded())
+            if(0U != iic_async_is_busy(DL1B_IIC))
             {
-                if(0U == (tof_read_buffer[0] & 0x01U))
-                {
-                    bsp_tof_fail(IIC_ERROR_NACK);
-                }
-                else
-                {
-                    tof_state = BSP_TOF_STATE_MODEL_SUBMIT;
-                }
+                break;
+            }
+            status = iic_async_get_status(DL1B_IIC);
+            if(IIC_SUCCESS != status)
+            {
+                /* 开机读固件状态失败(IIC传输错误): 留下未初始化标记, 不再重试, 继续后续初始化 */
+                bsp_tof_mark_init_failed(status);
+            }
+            else if(0U == (tof_read_buffer[0] & 0x01U))
+            {
+                /* 开机读固件状态无效(模块未就绪): 同上处理 */
+                bsp_tof_mark_init_failed(IIC_ERROR_NACK);
+            }
+            else
+            {
+                tof_state = BSP_TOF_STATE_MODEL_SUBMIT;
             }
             break;
 
@@ -424,6 +407,10 @@ void bsp_tof_async_process(void)
             }
             break;
 
+        case BSP_TOF_STATE_INIT_FAILED:
+            /* 终端状态: 保持未初始化标记, 不再重试, 其余系统照常运行 */
+            break;
+
         case BSP_TOF_STATE_IDLE:
         default:
             break;
@@ -459,6 +446,12 @@ uint8 bsp_tof_async_get_range_status(void)
 uint8 bsp_tof_async_get_last_error(void)
 {
     return tof_last_error;
+}
+
+/* 查询未初始化TOF标记: 1 = 开机初始化失败(TOF 不可用), 0 = 正常 */
+uint8 bsp_tof_async_init_failed(void)
+{
+    return tof_init_failed;
 }
 
 /* ------------------------------------------------------------------ */
@@ -763,6 +756,12 @@ uint8 bsp_tof_async_get_range_status(void)
 uint8 bsp_tof_async_get_last_error(void)
 {
     return tof_last_error;
+}
+
+/* 查询未初始化TOF标记: 1 = 初始化失败/未就绪(TOF 不可用), 0 = 正常 */
+uint8 bsp_tof_async_init_failed(void)
+{
+    return (0U == tof_ready) ? 1U : 0U;
 }
 
 #endif

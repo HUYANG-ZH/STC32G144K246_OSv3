@@ -1,0 +1,68 @@
+C251 COMPILER V5.60.0,  service_delay                                                      03/08/26  22:48:14  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_delay
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L2_SERVICE_service_delay.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_delay.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZ
+                    -E(8,SPEED) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
+                    -e;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\librar
+                    -ies\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\L2_SE
+                    -RVICE_service_delay.lst) OBJECT(.\out_file\o8_audit\L2_SERVICE_service_delay.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_timetick.h"
+    3          #include "service_delay.h"
+    4          
+    5          #define SERVICE_DELAY_TICKS_PER_MS      (10UL)
+    6          #define SERVICE_DELAY_US_PER_TICK       (100UL)
+    7          
+    8          static void service_delay_ticks(uint32 ticks)
+    9          {
+   10   1          uint32 start_tick;
+   11   1      
+   12   1          if(0UL == ticks)
+   13   1          {
+   14   2              return;
+   15   2          }
+   16   1      
+   17   1          start_tick = service_timetick_what();
+   18   1          while((uint32)(service_timetick_what() - start_tick) < ticks)
+   19   1          {
+   20   2          }
+   21   1      }
+   22          
+   23          void service_delay_ms(uint32 ms)
+   24          {
+   25   1          service_delay_ticks(ms * SERVICE_DELAY_TICKS_PER_MS);
+   26   1      }
+   27          
+   28          void service_delay_us(uint32 us)
+   29          {
+   30   1          service_delay_ticks((us + SERVICE_DELAY_US_PER_TICK - 1UL) / SERVICE_DELAY_US_PER_TICK);
+   31   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =        81     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------          4
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

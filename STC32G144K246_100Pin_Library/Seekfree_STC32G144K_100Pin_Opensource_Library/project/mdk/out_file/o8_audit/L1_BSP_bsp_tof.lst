@@ -1,0 +1,78 @@
+C251 COMPILER V5.60.0,  bsp_tof                                                            03/08/26  22:48:13  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_tof
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L1_BSP_bsp_tof.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_tof.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEED)
+                    - OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\li
+                    -braries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_com
+                    -ponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\L1_BSP_bsp_tof.
+                    -lst) OBJECT(.\out_file\o8_audit\L1_BSP_bsp_tof.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_tof.h"
+    3          #include "bsp_tof_async.h"
+    4          
+    5          /* Public compatibility facade: every runtime operation is now a snapshot operation. */
+    6          uint8 bsp_tof_init(void)
+    7          {
+    8   1          return bsp_tof_async_init();
+    9   1      }
+   10          
+   11          void bsp_tof_process(void)
+   12          {
+   13   1          bsp_tof_async_process();
+   14   1      }
+   15          
+   16          uint8 bsp_tof_is_ready(void)
+   17          {
+   18   1          return bsp_tof_async_is_ready();
+   19   1      }
+   20          
+   21          uint8 bsp_tof_request_sample(void)
+   22          {
+   23   1          return bsp_tof_async_request_sample();
+   24   1      }
+   25          
+   26          uint16 bsp_tof_get_distance_mm(void)
+   27          {
+   28   1          return bsp_tof_async_get_distance_mm();
+   29   1      }
+   30          
+   31          uint8 bsp_tof_get_range_status(void)
+   32          {
+   33   1          return bsp_tof_async_get_range_status();
+   34   1      }
+   35          
+   36          uint8 bsp_tof_get_last_error(void)
+   37          {
+   38   1          return bsp_tof_async_get_last_error();
+   39   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =        28     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+C251 COMPILER V5.60.0,  bsp_tof                                                            03/08/26  22:48:13  PAGE 2   
+
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,124 @@
+C251 COMPILER V5.60.0,  main                                                               03/08/26  22:48:24  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\out_file\o8_audit\user_main.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\user\main.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEED) OBJE
+                    -CTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -es\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_componen
+                    -ts\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\user_main.lst) OBJEC
+                    -T(.\out_file\o8_audit\user_main.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "sys_include.h"
+    3          #include "bsp_buzzer.h"
+    4          #include "service_timetick.h"
+    5          #include "service_function_queue.h"
+    6          #include "service_wireless_uart.h"
+    7          #include "service_packet.h"
+    8          #include "service_batterycheck.h"
+    9          #include "service_buzzer.h"
+   10          #include "service_led.h"
+   11          #include "service_imu.h"
+   12          #include "service_inductor.h"
+   13          #include "service_motor.h"
+   14          #include "service_negative_pressure.h"
+   15          #include "service_speed.h"
+   16          #include "service_tof.h"
+   17          #include "app_element.h"
+   18          #include "app_feedforward.h"
+   19          #include "app_inductor_preprocess.h"
+   20          #include "app_motion_preprocess.h"
+   21          #include "app_motion_postprocess.h"
+   22          #include "app_scheduler.h"
+   23          #include "app_speed_plan.h"
+   24          #include "app_speedout.h"
+   25          #include "app_boot_sequence.h"
+   26          #include "service_boot_request.h"
+   27          #include "service_button.h"
+   28          
+   29          #define BOOT_BUZZ_MS            (500UL)
+   30          
+   31          void main(void)
+   32          {
+   33   1          SystemStart();
+   34   1      
+   35   1          service_timetick_init();
+   36   1          service_function_queue_init();
+   37   1          app_scheduler_init();
+   38   1          service_wireless_uart_init();
+   39   1          service_packet_init();
+   40   1          service_batterycheck_init();
+   41   1          service_buzzer_init();
+   42   1          service_buzzer_stop();
+   43   1          service_led_init();
+   44   1          service_imu_init();
+   45   1          service_tof_init();
+   46   1          service_motor_init();
+   47   1          service_negative_pressure_init();
+   48   1          service_speed_init();
+   49   1          app_inductor_preprocess_init();
+   50   1          app_motion_preprocess_init();
+   51   1          app_feedforward_init();
+   52   1          app_speed_plan_init();
+   53   1          app_element_init();
+   54   1          app_speedout_init();
+   55   1          app_motion_postprocess_init();
+C251 COMPILER V5.60.0,  main                                                               03/08/26  22:48:24  PAGE 2   
+
+   56   1          app_boot_sequence_init();
+   57   1          service_boot_request_init();
+   58   1          service_button_init();
+   59   1      
+   60   1          wdt_init();
+   61   1      
+   62   1          bsp_buzzer_init();
+   63   1          bsp_buzzer_on();
+   64   1          system_delay_ms(BOOT_BUZZ_MS);
+   65   1          bsp_buzzer_off();
+   66   1          while(1)
+   67   1          {
+   68   2              wdt_feed();
+   69   2              iic_async_process_all_timed(service_timetick_what());
+   70   2              service_imu_task();
+   71   2              service_tof_task();
+   72   2              service_batterycheck_task();
+   73   2              service_inductor_task();
+   74   2              service_boot_request_process();
+   75   2              service_function_queue_update();
+   76   2              service_packet_update();
+   77   2              app_scheduler_run();
+   78   2              app_element_pump_events();
+   79   2              service_negative_pressure_task();
+   80   2              service_buzzer_task();
+   81   2              service_led_task();
+   82   2              service_button_task();
+   83   2              service_negative_pressure_set_percent(40);
+   84   2          }
+   85   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       264     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         2     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

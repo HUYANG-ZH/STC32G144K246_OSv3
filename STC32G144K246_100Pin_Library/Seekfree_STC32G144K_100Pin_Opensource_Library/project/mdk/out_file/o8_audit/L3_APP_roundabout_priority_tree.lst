@@ -1,0 +1,82 @@
+C251 COMPILER V5.60.0,  roundabout_priority_tree                                           03/08/26  22:48:20  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE roundabout_priority_tree
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L3_APP_roundabout_priority_tree.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\roundabout_priority_tree.c LARGE ROM(HUGE) WARNINGLEVEL(3) 
+                    -OPTIMIZE(8,SPEED) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
+                    -f_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..
+                    -\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audi
+                    -t\L3_APP_roundabout_priority_tree.lst) OBJECT(.\out_file\o8_audit\L3_APP_roundabout_priority_tree.obj) 
+
+stmt  level    source
+
+    1          #include "sys_tfpu.h"
+    2          #include "roundabout_priority_tree.h"
+    3          
+    4          #define ROUNDABOUT_SCORE_THRESHOLD    (31860.0f)
+    5          
+    6          /*
+    7           * 单帧环岛评分模型，输入顺序保持为 (y1, x1, x2, y2, M)。
+    8           *
+    9           * 函数名保留原接口名称，确保 app_element 中现有的姿态、确认次数、
+   10           * 死区和状态机等附加判断逻辑完全不变。
+   11           */
+   12          uint8 roundabout_priority_tree_predict(float y1, float x1, float x2, float y2, float m)
+   13          {
+   14   1          float score;
+   15   1          float inner;
+   16   1          float term;
+   17   1      
+   18   1          score = tfpu_mul(192.2f, y1);
+   19   1          term = tfpu_mul(110.3f, x2);
+   20   1          score = tfpu_add(score, term);
+   21   1      
+   22   1          /* y2 * (243.9 - 0.803*x1 - 0.985*M) */
+   23   1          inner = 243.9f;
+   24   1          term = tfpu_mul(0.803f, x1);
+   25   1          inner = tfpu_sub(inner, term);
+   26   1          term = tfpu_mul(0.985f, m);
+   27   1          inner = tfpu_sub(inner, term);
+   28   1          term = tfpu_mul(y2, inner);
+   29   1          score = tfpu_add(score, term);
+   30   1      
+   31   1          /* M * (342.0 - 1.718*x2 - 2.236*M) */
+   32   1          inner = 342.0f;
+   33   1          term = tfpu_mul(1.718f, x2);
+   34   1          inner = tfpu_sub(inner, term);
+   35   1          term = tfpu_mul(2.236f, m);
+   36   1          inner = tfpu_sub(inner, term);
+   37   1          term = tfpu_mul(m, inner);
+   38   1          score = tfpu_add(score, term);
+   39   1      
+   40   1          return (score >= ROUNDABOUT_SCORE_THRESHOLD) ? 1U : 0U;
+   41   1      }
+*** WARNING C183 IN LINE 23 OF ..\L3_APP\roundabout_priority_tree.c: dead assignment eliminated
+*** WARNING C183 IN LINE 32 OF ..\L3_APP\roundabout_priority_tree.c: dead assignment eliminated
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       388     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------         20
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+C251 COMPILER V5.60.0,  roundabout_priority_tree                                           03/08/26  22:48:20  PAGE 2   
+
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

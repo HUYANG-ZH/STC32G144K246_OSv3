@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               02/08/26  00:42:44  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               04/08/26  18:02:48  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -66,7 +66,7 @@ stmt  level    source
    53   2          }
    54   1          else
    55   1          {
-C251 COMPILER V5.60.0,  service_batterycheck                                               02/08/26  00:42:44  PAGE 2   
+C251 COMPILER V5.60.0,  service_batterycheck                                               04/08/26  18:02:48  PAGE 2   
 
    56   2              wprint("battery_voltage,pending\r\n");
    57   2          }
@@ -81,9 +81,9 @@ stmt  level    source
    66   1          batterycheck_valid = 0U;
    67   1          (void)service_packet_add_action("battery_voltage", service_batterycheck_voltage_reply, 0UL);
    68   1          #if __DBGFLAG__
-                   printf(">>[service_batterycheck_init]\r\n");
-                   wprint(">>[service_batterycheck_init]\r\n");
-                   #endif
+   69   1          printf(">>[service_batterycheck_init]\r\n");
+   70   1          wprint(">>[service_batterycheck_init]\r\n");
+   71   1          #endif
    72   1      }
    73          
    74          void service_batterycheck_debug(void)
@@ -134,7 +134,7 @@ stmt  level    source
   119          
   120          void service_batterycheck_get_raw(uint16 *rawdata)
   121          {
-C251 COMPILER V5.60.0,  service_batterycheck                                               02/08/26  00:42:44  PAGE 3   
+C251 COMPILER V5.60.0,  service_batterycheck                                               04/08/26  18:02:48  PAGE 3   
 
   122   1          bsp_battery_get_raw(rawdata);
   123   1      }
@@ -157,7 +157,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       555     ------
+  ecode size           =       579     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -171,7 +171,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       153     ------
+  hconst size          =       185     ------
 End of Module Information.
 
 

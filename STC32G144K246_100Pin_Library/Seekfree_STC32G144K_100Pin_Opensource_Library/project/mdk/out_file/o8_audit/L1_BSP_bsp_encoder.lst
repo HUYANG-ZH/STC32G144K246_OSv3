@@ -1,0 +1,104 @@
+C251 COMPILER V5.60.0,  bsp_encoder                                                        03/08/26  22:48:12  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_encoder
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L1_BSP_bsp_encoder.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_encoder.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SP
+                    -EED) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\.
+                    -.\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf
+                    -_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\L1_BSP_bsp_
+                    -encoder.lst) OBJECT(.\out_file\o8_audit\L1_BSP_bsp_encoder.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_encoder.h"
+    3          #include "zf_driver_encoder.h"
+    4          
+    5          #ifndef BSP_ENCODER_LEFT_INDEX
+    6          #define BSP_ENCODER_LEFT_INDEX         PWME_ENCODER
+    7          #endif
+    8          
+    9          #ifndef BSP_ENCODER_LEFT_PULSE_PIN
+   10          #define BSP_ENCODER_LEFT_PULSE_PIN     PWME_ENCODER_CH1P_PA0
+   11          #endif
+   12          
+   13          #ifndef BSP_ENCODER_LEFT_DIR_PIN
+   14          #define BSP_ENCODER_LEFT_DIR_PIN       PWME_ENCODER_CH2P_PA2
+   15          #endif
+   16          
+   17          #ifndef BSP_ENCODER_LEFT_SIGN
+   18          #define BSP_ENCODER_LEFT_SIGN          (1)
+   19          #endif
+   20          
+   21          #ifndef BSP_ENCODER_RIGHT_INDEX
+   22          #define BSP_ENCODER_RIGHT_INDEX        PWMF_ENCODER
+   23          #endif
+   24          
+   25          #ifndef BSP_ENCODER_RIGHT_PULSE_PIN
+   26          #define BSP_ENCODER_RIGHT_PULSE_PIN    PWMF_ENCODER_CH1_PA1
+   27          #endif
+   28          
+   29          #ifndef BSP_ENCODER_RIGHT_DIR_PIN
+   30          #define BSP_ENCODER_RIGHT_DIR_PIN      PWMF_ENCODER_CH2_PA3
+   31          #endif
+   32          
+   33          #ifndef BSP_ENCODER_RIGHT_SIGN
+   34          #define BSP_ENCODER_RIGHT_SIGN          (-1)
+   35          #endif
+   36          
+   37          void bsp_encoder_init(void)
+   38          {
+   39   1          encoder_dir_init(BSP_ENCODER_LEFT_INDEX, BSP_ENCODER_LEFT_PULSE_PIN, BSP_ENCODER_LEFT_DIR_PIN);
+   40   1          encoder_dir_init(BSP_ENCODER_RIGHT_INDEX, BSP_ENCODER_RIGHT_PULSE_PIN, BSP_ENCODER_RIGHT_DIR_PIN);
+   41   1          bsp_encoder_clear();
+   42   1      }
+   43          
+   44          void bsp_encoder_debug(void)
+   45          {
+   46   1      }
+   47          
+   48          void bsp_encoder_clear(void)
+   49          {
+   50   1          encoder_clear_count(BSP_ENCODER_LEFT_INDEX);
+   51   1          encoder_clear_count(BSP_ENCODER_RIGHT_INDEX);
+   52   1      }
+   53          
+   54          void bsp_encoder_get_delta(bsp_encoder_count_t *out_count)
+   55          {
+C251 COMPILER V5.60.0,  bsp_encoder                                                        03/08/26  22:48:12  PAGE 2   
+
+   56   1          if(NULL == out_count)
+   57   1          {
+   58   2              return;
+   59   2          }
+   60   1      
+   61   1          out_count->left = encoder_get_count(BSP_ENCODER_LEFT_INDEX) * BSP_ENCODER_LEFT_SIGN;
+   62   1          out_count->right = encoder_get_count(BSP_ENCODER_RIGHT_INDEX) * BSP_ENCODER_RIGHT_SIGN;
+   63   1      
+   64   1          bsp_encoder_clear();
+   65   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       102     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -20,5 +20,6 @@ uint8 bsp_tof_request_sample(void);
 uint16 bsp_tof_get_distance_mm(void);
 uint8 bsp_tof_get_range_status(void);
 uint8 bsp_tof_get_last_error(void);
+uint8 bsp_tof_init_failed(void);
 
 #endif

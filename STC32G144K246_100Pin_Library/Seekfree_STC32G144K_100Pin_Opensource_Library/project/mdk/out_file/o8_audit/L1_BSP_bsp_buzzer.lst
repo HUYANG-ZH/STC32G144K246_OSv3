@@ -1,0 +1,74 @@
+C251 COMPILER V5.60.0,  bsp_buzzer                                                         03/08/26  22:48:11  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_buzzer
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L1_BSP_bsp_buzzer.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_buzzer.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPE
+                    -ED) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..
+                    -\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_
+                    -components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\L1_BSP_bsp_b
+                    -uzzer.lst) OBJECT(.\out_file\o8_audit\L1_BSP_bsp_buzzer.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_buzzer.h"
+    3          
+    4          #define BSP_BUZZER_INACTIVE_LEVEL   ((GPIO_HIGH == BSP_BUZZER_ACTIVE_LEVEL) ? GPIO_LOW : GPIO_HIGH)
+    5          
+    6          void bsp_buzzer_init(void)
+    7          {
+    8   1          gpio_init(BSP_BUZZER_PIN, GPO, BSP_BUZZER_ACTIVE_LEVEL, GPO_PUSH_PULL);
+    9   1      }
+   10          
+   11          void bsp_buzzer_debug(void)
+   12          {
+   13   1      }
+   14          
+   15          void bsp_buzzer_on(void)
+   16          {
+   17   1          gpio_set_level(BSP_BUZZER_PIN, BSP_BUZZER_ACTIVE_LEVEL);
+   18   1      }
+   19          
+   20          void bsp_buzzer_off(void)
+   21          {
+   22   1          gpio_set_level(BSP_BUZZER_PIN, BSP_BUZZER_INACTIVE_LEVEL);
+   23   1      }
+   24          
+   25          void bsp_buzzer_set(uint8 enable)
+   26          {
+   27   1          if(0U != enable)
+   28   1          {
+   29   2              bsp_buzzer_on();
+   30   2          }
+   31   1          else
+   32   1          {
+   33   2              bsp_buzzer_off();
+   34   2          }
+   35   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =        55     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+C251 COMPILER V5.60.0,  bsp_buzzer                                                         03/08/26  22:48:11  PAGE 2   
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

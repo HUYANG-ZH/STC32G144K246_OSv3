@@ -37,3 +37,8 @@ uint8 bsp_tof_get_last_error(void)
 {
     return bsp_tof_async_get_last_error();
 }
+
+uint8 bsp_tof_init_failed(void)
+{
+    return bsp_tof_async_init_failed();
+}

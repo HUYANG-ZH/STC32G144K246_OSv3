@@ -10,7 +10,9 @@
 #include "app_inductor_preprocess.h"
 #include "app_speedout.h"
 #include "service_negative_pressure.h"
+#include "service_tof.h"
 #include "app_feedforward.h"
+#include "app_attitude.h"
 #include "app_motion_preprocess.h"
 #include "roundabout_priority_tree.h"
 #include "app_element.h"
@@ -41,7 +43,8 @@
 #define APP_ELEMENT_DEG_TO_RAD                  (0.0174532925f)
 #define APP_ELEMENT_PACKET_SINGLE_COUNT         (1U)
 
-#define APP_ELEMENT_SEESAW_CONFIRM_COUNT        (3U)
+#define APP_ELEMENT_SEESAW_CONFIRM_COUNT        (2U)
+#define APP_ELEMENT_SEESAW_PITCH_THRESHOLD_DEG  (15.0f)
 #define APP_ELEMENT_SEESAW_DEAD_MS              (500UL)
 #define APP_ELEMENT_SEESAW_DEAD_TICK            (APP_ELEMENT_SEESAW_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
@@ -52,6 +55,7 @@
 #define APP_ELEMENT_SEESAW_SLOWDOWN_SPEED_MPS   (1.4f)
 
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
+#define APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM (200U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_ROUNDABOUT_TASK_ID          (4U)
@@ -131,8 +135,6 @@ static uint8 element_cylinder_bucket_count = 0U;
 static volatile uint8 element_seesaw_confirm = 0U;
 static volatile uint8 element_seesaw_dead = 0U;
 static uint32 element_seesaw_dead_start_tick = 0U;
-static volatile uint8 element_seesaw_gz_high = 0U;
-static uint32 element_seesaw_gz_high_tick = 0U;
 static volatile uint8 element_seesaw_active = 0U;
 static uint32 element_seesaw_active_start_tick = 0U;
 static volatile float element_seesaw_event = 0.0f;
@@ -267,7 +269,6 @@ static void app_element_reset(void)
     element_cylinder_bucket_count = 0U;
     element_seesaw_confirm = 0U;
     element_seesaw_dead = 0U;
-    element_seesaw_gz_high = 0U;
     element_seesaw_active = 0U;
     element_seesaw_event = 0.0f;
     element_seesaw_slowdown_active = 0U;
@@ -549,9 +550,10 @@ static void app_element_roundabout_found(uint32 now)
 
 void app_element_control_step(void)
 {
-    app_inductor_preprocess_data_t inductor;
     uint32 now;
     uint8 roundabout_detected;
+    uint16 tof_distance_mm;
+    app_inductor_preprocess_data_t inductor;
 
     now = service_timetick_what();
 
@@ -573,14 +575,16 @@ void app_element_control_step(void)
         return;
     }
 
+    /* 环岛判据 = TOF 距离超出阈值 且 电感评分函数判定为环岛 (两者同时满足才计入确认) */
+    tof_distance_mm = service_tof_get_distance_mm();
     app_inductor_preprocess_get_data(&inductor);
-
-    roundabout_detected = roundabout_priority_tree_predict(
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
+    roundabout_detected = ((tof_distance_mm > APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM) &&
+            (0U != roundabout_priority_tree_predict(
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]))) ? 1U : 0U;
     if(0U != roundabout_detected)
     {
         if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
@@ -858,9 +862,10 @@ static void app_element_seesaw_found(uint32 now)
     element_realtime_event_flags |= ELEMENT_EVENT_SEESAW_FOUND;
 }
 
-static void app_element_seesaw_update(uint32 now)
+static void app_element_seesaw_update(uint32 now, uint8 attitude_fresh)
 {
     app_inductor_preprocess_data_t inductor;
+    app_attitude_data_t attitude;
     int32 score;
 
     /* 死区检查 */
@@ -874,6 +879,19 @@ static void app_element_seesaw_update(uint32 now)
         return;
     }
 
+    /* 连续帧判定只消费本次新到的解算姿态，禁止把同一帧重复计数。 */
+    if(0U == attitude_fresh)
+    {
+        return;
+    }
+
+    app_attitude_get_data(&attitude);
+    if((0U == attitude.valid) || (attitude.sequence != element_imu_last_sequence))
+    {
+        element_seesaw_confirm = 0U;
+        return;
+    }
+
     app_inductor_preprocess_get_data(&inductor);
 
     score = (int32)(-81 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1]
@@ -883,7 +901,8 @@ static void app_element_seesaw_update(uint32 now)
                     +159 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M])
             - 2 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M] * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
 
-    if((score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD) && (0U != element_seesaw_gz_high))
+    if((score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD) &&
+            (attitude.pitch_deg >= APP_ELEMENT_SEESAW_PITCH_THRESHOLD_DEG))
     {
         element_seesaw_confirm++;
         if(element_seesaw_confirm >= APP_ELEMENT_SEESAW_CONFIRM_COUNT)
@@ -1030,18 +1049,6 @@ void app_element_imu_task(const service_imu_sample_t *imu)
         EA = ea_backup;
     }
 
-    /* 追踪gz是否在50ms内出现过>120°/s（供跷跷板检测） */
-    if((0U != sample_fresh) && ((imu->gyro_z > 120.0f) || (imu->gyro_z < -120.0f)))
-    {
-        element_seesaw_gz_high = 1U;
-        element_seesaw_gz_high_tick = now;
-    }
-    else if((0U != element_seesaw_gz_high) &&
-            ((uint32)(now - element_seesaw_gz_high_tick) > 50U * APP_ELEMENT_TICK_PER_MS))
-    {
-        element_seesaw_gz_high = 0U;
-    }
-
     /* 注：gx 阻挡追踪、环岛 gz 积分、退出、EXIT_WAIT 距离积分、偏置到期清除
        已移至 app_element_roundabout_imu_step() 在 TIM7 中断内硬实时执行 */
 
@@ -1056,7 +1063,7 @@ void app_element_imu_task(const service_imu_sample_t *imu)
     }
 
     /* 跷跷板检测 */
-    app_element_seesaw_update(now);
+    app_element_seesaw_update(now, sample_fresh);
 
     /* 跷跷板动作到期清除（100ms后释放控制，死区保留到500ms自动到期） */
     if((0U != element_seesaw_active) &&

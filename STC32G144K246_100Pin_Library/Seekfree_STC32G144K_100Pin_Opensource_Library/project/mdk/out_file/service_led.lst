@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_led                                                        02/08/26  01:03:41  PAGE 1   
+C251 COMPILER V5.60.0,  service_led                                                        04/08/26  18:02:49  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_led
@@ -63,10 +63,10 @@ stmt  level    source
    50   1          service_led_blink_ms(SERVICE_LED_STOP_BLINK_ON_MS,
    51   1                  SERVICE_LED_STOP_BLINK_OFF_MS, 0UL);
    52   1          #if __DBGFLAG__
-                   printf(">>[service_led_init]\r\n");
-                   wprint(">>[service_led_init]\r\n");
-                   #endif
-C251 COMPILER V5.60.0,  service_led                                                        02/08/26  01:03:41  PAGE 2   
+   53   1          printf(">>[service_led_init]\r\n");
+   54   1          wprint(">>[service_led_init]\r\n");
+   55   1          #endif
+C251 COMPILER V5.60.0,  service_led                                                        04/08/26  18:02:49  PAGE 2   
 
    56   1      }
    57          
@@ -134,7 +134,7 @@ stmt  level    source
   119   2              return;
   120   2          }
   121   1      
-C251 COMPILER V5.60.0,  service_led                                                        02/08/26  01:03:41  PAGE 3   
+C251 COMPILER V5.60.0,  service_led                                                        04/08/26  18:02:49  PAGE 3   
 
   122   1          bsp_led_on();
   123   1          led_is_on = 1U;
@@ -202,7 +202,7 @@ stmt  level    source
   185   1          started = (0U != started) ? 1U : 0U;
   186   1      
   187   1          if((0U == led_status_valid) || (led_status_started != started))
-C251 COMPILER V5.60.0,  service_led                                                        02/08/26  01:03:41  PAGE 4   
+C251 COMPILER V5.60.0,  service_led                                                        04/08/26  18:02:49  PAGE 4   
 
   188   1          {
   189   2              led_status_valid = 1U;
@@ -237,7 +237,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       975     ------
+  ecode size           =       999     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
@@ -251,7 +251,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        87     ------
+  hconst size          =       110     ------
 End of Module Information.
 
 

@@ -37,7 +37,7 @@
 #define __HEADFILE_H_
 
 // 初始化调试输出
-#define __DBGFLAG__ (0)
+#define __DBGFLAG__ (1)
 
 #pragma warning disable = 115
 #pragma warning disable = 188

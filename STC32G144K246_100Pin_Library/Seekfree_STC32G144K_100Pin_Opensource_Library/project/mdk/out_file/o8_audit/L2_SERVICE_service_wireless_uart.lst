@@ -1,0 +1,372 @@
+C251 COMPILER V5.60.0,  service_wireless_uart                                              03/08/26  22:48:17  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_wireless_uart
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L2_SERVICE_service_wireless_uart.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_wireless_uart.c LARGE ROM(HUGE) WARNINGLEVEL(3)
+                    - OPTIMIZE(8,SPEED) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\
+                    -zf_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\.
+                    -.\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_aud
+                    -it\L2_SERVICE_service_wireless_uart.lst) OBJECT(.\out_file\o8_audit\L2_SERVICE_service_wireless_uart.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "zf_common_interrupt.h"
+    3          #include "zf_device_wireless_uart.h"
+    4          #include "service_wireless_uart.h"
+    5          #include <stdarg.h>
+    6          
+    7          #define WPRINT_BUFFER_SIZE              (128U)
+    8          #define WPRINT_FLOAT_DEFAULT_PRECISION  (3U)
+    9          #define WPRINT_FLOAT_MAX_PRECISION      (6U)
+   10          #define SERVICE_WIRELESS_UART_DMA_PRIORITY (3U)
+   11          
+   12          static char xdata wprint_buffer[WPRINT_BUFFER_SIZE];
+   13          static volatile uint8 wprint_busy = 0U;
+   14          
+   15          static void wprint_put_char(char *buffer, uint16 *index, char value)
+   16          {
+   17   1          if(*index < (WPRINT_BUFFER_SIZE - 1U))
+   18   1          {
+   19   2              buffer[*index] = value;
+   20   2              (*index)++;
+   21   2          }
+   22   1      }
+   23          
+   24          static void wprint_put_string(char *buffer, uint16 *index, const char *text)
+   25          {
+   26   1          if(NULL == text)
+   27   1          {
+   28   2              text = "(null)";
+   29   2          }
+   30   1      
+   31   1          while('\0' != *text)
+   32   1          {
+   33   2              wprint_put_char(buffer, index, *text);
+   34   2              text++;
+   35   2          }
+   36   1      }
+   37          
+   38          static void wprint_put_unsigned(char *buffer, uint16 *index, uint32 value, uint8 base, uint8 uppercase)
+   39          {
+   40   1          char temp[11];
+   41   1          uint8 temp_index = 0;
+   42   1          const char *digits = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+   43   1      
+   44   1          if(0U == value)
+   45   1          {
+   46   2              wprint_put_char(buffer, index, '0');
+   47   2              return;
+   48   2          }
+   49   1      
+   50   1          while(0U != value)
+   51   1          {
+   52   2              temp[temp_index] = digits[value % base];
+   53   2              temp_index++;
+   54   2              value /= base;
+   55   2          }
+C251 COMPILER V5.60.0,  service_wireless_uart                                              03/08/26  22:48:17  PAGE 2   
+
+   56   1      
+   57   1          while(0U != temp_index)
+   58   1          {
+   59   2              temp_index--;
+   60   2              wprint_put_char(buffer, index, temp[temp_index]);
+   61   2          }
+   62   1      }
+   63          
+   64          static void wprint_put_signed(char *buffer, uint16 *index, int32 value)
+   65          {
+   66   1          uint32 abs_value;
+   67   1      
+   68   1          if(0 > value)
+   69   1          {
+   70   2              wprint_put_char(buffer, index, '-');
+   71   2              abs_value = (uint32)(-(value + 1));
+   72   2              abs_value++;
+   73   2          }
+   74   1          else
+   75   1          {
+   76   2              abs_value = (uint32)value;
+   77   2          }
+   78   1      
+   79   1          wprint_put_unsigned(buffer, index, abs_value, 10U, 0U);
+   80   1      }
+   81          
+   82          static uint32 wprint_get_scale(uint8 precision)
+   83          {
+   84   1          uint32 scale = 1U;
+   85   1      
+   86   1          while(0U != precision)
+   87   1          {
+   88   2              scale *= 10U;
+   89   2              precision--;
+   90   2          }
+   91   1      
+   92   1          return scale;
+   93   1      }
+   94          
+   95          static void wprint_put_float(char *buffer, uint16 *index, double value, uint8 precision)
+   96          {
+   97   1          uint8 i;
+   98   1          uint32 scale;
+   99   1          uint32 integer_part;
+  100   1          uint32 fraction_part;
+  101   1          double fraction_value;
+  102   1          uint32 divisor;
+  103   1      
+  104   1          if(precision > WPRINT_FLOAT_MAX_PRECISION)
+  105   1          {
+  106   2              precision = WPRINT_FLOAT_MAX_PRECISION;
+  107   2          }
+  108   1      
+  109   1          if(0.0 > value)
+  110   1          {
+  111   2              wprint_put_char(buffer, index, '-');
+  112   2              value = 0.0 - value;
+  113   2          }
+  114   1      
+  115   1          integer_part = (uint32)value;
+  116   1          scale = wprint_get_scale(precision);
+  117   1          fraction_value = value - (double)integer_part;
+  118   1          fraction_part = (uint32)((fraction_value * (double)scale) + 0.5);
+  119   1      
+  120   1          if(fraction_part >= scale)
+  121   1          {
+C251 COMPILER V5.60.0,  service_wireless_uart                                              03/08/26  22:48:17  PAGE 3   
+
+  122   2              integer_part++;
+  123   2              fraction_part -= scale;
+  124   2          }
+  125   1      
+  126   1          wprint_put_unsigned(buffer, index, integer_part, 10U, 0U);
+  127   1      
+  128   1          if(0U == precision)
+  129   1          {
+  130   2              return;
+  131   2          }
+  132   1      
+  133   1          wprint_put_char(buffer, index, '.');
+  134   1          divisor = scale / 10U;
+  135   1      
+  136   1          for(i = 0; i < precision; i++)
+  137   1          {
+  138   2              wprint_put_char(buffer, index, (char)('0' + (fraction_part / divisor)));
+  139   2              fraction_part %= divisor;
+  140   2              divisor /= 10U;
+  141   2          }
+  142   1      }
+  143          
+  144          static uint16 wprint_format(char *buffer, const char *format, va_list args)
+  145          {
+  146   1          char specifier;
+  147   1          uint8 precision;
+  148   1          uint16 index = 0;
+  149   1      
+  150   1          while('\0' != *format)
+  151   1          {
+  152   2              if('%' != *format)
+  153   2              {
+  154   3                  wprint_put_char(buffer, &index, *format);
+  155   3                  format++;
+  156   3                  continue;
+  157   3              }
+  158   2      
+  159   2              format++;
+  160   2              if('\0' == *format)
+  161   2              {
+  162   3                  wprint_put_char(buffer, &index, '%');
+  163   3                  break;
+  164   3              }
+  165   2      
+  166   2              precision = WPRINT_FLOAT_DEFAULT_PRECISION;
+  167   2      
+  168   2              if('%' == *format)
+  169   2              {
+  170   3                  wprint_put_char(buffer, &index, '%');
+  171   3                  format++;
+  172   3                  continue;
+  173   3              }
+  174   2      
+  175   2              if('.' == *format)
+  176   2              {
+  177   3                  format++;
+  178   3                  if(('0' <= *format) && ('9' >= *format))
+  179   3                  {
+  180   4                      precision = (uint8)(*format - '0');
+  181   4                      if(precision > WPRINT_FLOAT_MAX_PRECISION)
+  182   4                      {
+  183   5                          precision = WPRINT_FLOAT_MAX_PRECISION;
+  184   5                      }
+  185   4                      format++;
+  186   4                  }
+  187   3                  else
+C251 COMPILER V5.60.0,  service_wireless_uart                                              03/08/26  22:48:17  PAGE 4   
+
+  188   3                  {
+  189   4                      wprint_put_char(buffer, &index, '%');
+  190   4                      wprint_put_char(buffer, &index, '.');
+  191   4                      continue;
+  192   4                  }
+  193   3              }
+  194   2      
+  195   2              if('\0' == *format)
+  196   2              {
+  197   3                  wprint_put_char(buffer, &index, '%');
+  198   3                  break;
+  199   3              }
+  200   2      
+  201   2              specifier = *format;
+  202   2      
+  203   2              switch(specifier)
+  204   2              {
+  205   3                  case 'c':
+  206   3                      wprint_put_char(buffer, &index, (char)va_arg(args, int));
+  207   3                      break;
+  208   3      
+  209   3                  case 's':
+  210   3                      wprint_put_string(buffer, &index, va_arg(args, char *));
+  211   3                      break;
+  212   3      
+  213   3                  case 'd':
+  214   3                  case 'i':
+  215   3                      wprint_put_signed(buffer, &index, (int32)va_arg(args, int));
+  216   3                      break;
+  217   3      
+  218   3                  case 'u':
+  219   3                      wprint_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 10U, 0U);
+  220   3                      break;
+  221   3      
+  222   3                  case 'x':
+  223   3                      wprint_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 0U);
+  224   3                      break;
+  225   3      
+  226   3                  case 'X':
+  227   3                      wprint_put_unsigned(buffer, &index, (uint32)va_arg(args, unsigned int), 16U, 1U);
+  228   3                      break;
+  229   3      
+  230   3                  case 'f':
+  231   3                      wprint_put_float(buffer, &index, va_arg(args, double), precision);
+  232   3                      break;
+  233   3      
+  234   3                  default:
+  235   3                      wprint_put_char(buffer, &index, '%');
+  236   3                      wprint_put_char(buffer, &index, specifier);
+  237   3                      break;
+  238   3              }
+  239   2      
+  240   2              if('\0' != *format)
+  241   2              {
+  242   3                  format++;
+  243   3              }
+  244   2          }
+  245   1      
+  246   1          buffer[index] = '\0';
+  247   1          return index;
+  248   1      }
+  249          
+  250          uint32 service_wireless_uart_send_buffer(const uint8 *buff, uint32 len)
+  251          {
+  252   1          if(NULL == buff)
+  253   1          {
+C251 COMPILER V5.60.0,  service_wireless_uart                                              03/08/26  22:48:17  PAGE 5   
+
+  254   2              return len;
+  255   2          }
+  256   1      
+  257   1          return wireless_uart_send_buffer(buff, len);
+  258   1      }
+  259          
+  260          void service_wireless_uart_init(void)
+  261          {
+  262   1          (void)wireless_uart_init();
+  263   1          if(WIRELESS_UART_INDEX == UART_8)
+  264   1          {
+  265   2              interrupt_set_priority(UART8_DMA_IRQn, SERVICE_WIRELESS_UART_DMA_PRIORITY);
+  266   2          }
+  267   1          #if __DBGFLAG__
+                   printf(">>[service_wireless_uart_init]\r\n");
+                   wprint(">>[service_wireless_uart_init]\r\n");
+                   #endif
+  271   1      }
+  272          
+  273          void service_wireless_uart_debug(void)
+  274          {
+  275   1          printf("[wireless_uart:send start.]\r\n");
+  276   1          wprint("[wireless_uart:] success.\r\n");
+  277   1          printf("[wireless_uart:send end.]\r\n");
+  278   1      }
+  279          
+  280          uint32 service_wireless_uart_read_buffer(uint8 *buff, uint32 len)
+  281          {
+  282   1          if(NULL == buff)
+  283   1          {
+  284   2              return 0U;
+  285   2          }
+  286   1      
+  287   1          return wireless_uart_read_buffer(buff, len);
+  288   1      }
+  289          
+  290          uint32 wprint(const char *format, ...)
+  291          {
+  292   1          uint16 length;
+  293   1          uint32 unsent;
+  294   1          uint8 ea_backup;
+  295   1          va_list args;
+  296   1      
+  297   1          if(NULL == format)
+  298   1          {
+  299   2              return 0U;
+  300   2          }
+  301   1      
+  302   1          // Logging must never wait.  A re-entrant call (for example an accidental
+  303   1          // ISR log) is discarded rather than corrupting the shared formatter.
+  304   1          ea_backup = EA;
+  305   1          EA = 0;
+  306   1          if(0U != wprint_busy)
+  307   1          {
+  308   2              EA = ea_backup;
+  309   2              return 0U;
+  310   2          }
+  311   1          wprint_busy = 1U;
+  312   1          EA = ea_backup;
+  313   1      
+  314   1          va_start(args, format);
+  315   1          length = wprint_format(wprint_buffer, format, args);
+  316   1          va_end(args);
+  317   1      
+  318   1          unsent = service_wireless_uart_send_buffer((const uint8 *)wprint_buffer, (uint32)length);
+  319   1      
+C251 COMPILER V5.60.0,  service_wireless_uart                                              03/08/26  22:48:17  PAGE 6   
+
+  320   1          ea_backup = EA;
+  321   1          EA = 0;
+  322   1          wprint_busy = 0U;
+  323   1          EA = ea_backup;
+  324   1          return unsent;
+  325   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      2275     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       129        128
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       133     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

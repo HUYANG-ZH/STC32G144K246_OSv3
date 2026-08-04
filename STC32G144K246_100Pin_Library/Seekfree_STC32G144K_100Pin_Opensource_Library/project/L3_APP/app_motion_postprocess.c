@@ -221,14 +221,15 @@ void app_motion_postprocess_imu_step(void)
             app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_IMU);
         }
     }
+    if(0U != imu_fresh)
+    {
+        app_attitude_update(&imu);
+    }
+    /* 先发布本帧 Kalman 姿态，再交给元素模块使用当前 pitch 判定跷跷板。 */
     /* 角速度环调试模式下关闭元素识别, 防止台架旋转触发圆筒/环岛状态机 */
     if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
     {
         app_element_imu_task(&imu);
-    }
-    if(0U != imu_fresh)
-    {
-        app_attitude_update(&imu);
     }
 }
 

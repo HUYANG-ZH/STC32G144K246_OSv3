@@ -18,6 +18,7 @@ void service_tof_init(void);
 void service_tof_task(void);
 uint8 service_tof_is_ready(void);
 uint8 service_tof_get_last_error(void);
+uint8 service_tof_init_failed(void);
 uint16 service_tof_get_distance_mm(void);
 uint8 service_tof_get_range_status(void);
 

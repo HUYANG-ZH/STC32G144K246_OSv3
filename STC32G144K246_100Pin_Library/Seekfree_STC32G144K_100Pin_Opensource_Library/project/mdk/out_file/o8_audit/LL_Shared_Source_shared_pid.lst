@@ -1,0 +1,588 @@
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE shared_pid
+OBJECT MODULE PLACED IN .\out_file\o8_audit\LL_Shared_Source_shared_pid.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\LL_Shared_Source\shared_pid.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTI
+                    -MIZE(8,SPEED) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_de
+                    -vice;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\lib
+                    -raries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\LL
+                    -_Shared_Source_shared_pid.lst) OBJECT(.\out_file\o8_audit\LL_Shared_Source_shared_pid.obj) 
+
+stmt  level    source
+
+    1          #include "shared_pid.h"
+    2          
+    3          static void shared_pid_fix_config(shared_pid_t *pid);
+    4          static void shared_pid_fix_limit(float *min_value, float *max_value);
+    5          static float shared_pid_abs(float value);
+    6          static float shared_pid_clamp(float value, float min_value, float max_value);
+    7          static float shared_pid_limit_output(const shared_pid_t *pid, float output);
+    8          static float shared_pid_limit_delta(const shared_pid_t *pid, float delta);
+    9          static float shared_pid_apply_deadband(float error, float deadband);
+   10          static float shared_pid_get_direction_sign(const shared_pid_t *pid);
+   11          static float shared_pid_update_target(shared_pid_t *pid, float target, float dt);
+   12          static float shared_pid_update_common(shared_pid_t *pid, float error, float feedback, float dt, uint8 fee
+             -dback_valid);
+   13          
+   14          //-------------------------------------------------------------------------------------------------------
+             -------------
+   15          // 函数简介     初始化增量式 PID 控制器
+   16          // 参数说明     pid             PID 控制器对象指针
+   17          // 返回参数     void
+   18          // 使用示例     shared_pid_init(&pid);
+   19          //-------------------------------------------------------------------------------------------------------
+             -------------
+   20          void shared_pid_init(shared_pid_t *pid)
+   21          {
+   22   1          if(NULL == pid)
+   23   1          {
+   24   2              return;
+   25   2          }
+   26   1      
+   27   1          shared_pid_fix_config(pid);
+   28   1      
+   29   1          pid->output = shared_pid_limit_output(pid, 0.0f);
+   30   1          pid->ramp_target = 0.0f;
+   31   1          pid->last_error = 0.0f;
+   32   1          pid->prev_error = 0.0f;
+   33   1          pid->last_feedback = 0.0f;
+   34   1          pid->prev_feedback = 0.0f;
+   35   1          pid->initialized = ZF_FALSE;
+   36   1          pid->target_initialized = ZF_FALSE;
+   37   1          pid->feedback_initialized = ZF_FALSE;
+   38   1      }
+   39          
+   40          //-------------------------------------------------------------------------------------------------------
+             -------------
+   41          // 函数简介     复位增量式 PID 控制器输出与历史状态
+   42          // 参数说明     pid             PID 控制器对象指针
+   43          // 参数说明     output          复位后的输出值
+   44          // 返回参数     void
+   45          // 使用示例     shared_pid_reset(&pid, 0.0f);
+   46          //-------------------------------------------------------------------------------------------------------
+             -------------
+   47          void shared_pid_reset(shared_pid_t *pid, float output)
+   48          {
+   49   1          if(NULL == pid)
+   50   1          {
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 2   
+
+   51   2              return;
+   52   2          }
+   53   1      
+   54   1          shared_pid_fix_config(pid);
+   55   1      
+   56   1          pid->output = shared_pid_limit_output(pid, output);
+   57   1          pid->ramp_target = 0.0f;
+   58   1          pid->last_error = 0.0f;
+   59   1          pid->prev_error = 0.0f;
+   60   1          pid->last_feedback = 0.0f;
+   61   1          pid->prev_feedback = 0.0f;
+   62   1          pid->initialized = ZF_FALSE;
+   63   1          pid->target_initialized = ZF_FALSE;
+   64   1          pid->feedback_initialized = ZF_FALSE;
+   65   1      }
+   66          
+   67          //-------------------------------------------------------------------------------------------------------
+             -------------
+   68          // 函数简介     按指定目标和反馈复位增量式 PID 控制器状态
+   69          // 参数说明     pid             PID 控制器对象指针
+   70          // 参数说明     output          复位后的输出值
+   71          // 参数说明     target          当前目标值
+   72          // 参数说明     feedback        当前反馈值
+   73          // 返回参数     void
+   74          // 使用示例     shared_pid_reset_state(&pid, 0.0f, target, feedback);
+   75          //-------------------------------------------------------------------------------------------------------
+             -------------
+   76          void shared_pid_reset_state(shared_pid_t *pid, float output, float target, float feedback)
+   77          {
+   78   1          float error;
+   79   1      
+   80   1          if(NULL == pid)
+   81   1          {
+   82   2              return;
+   83   2          }
+   84   1      
+   85   1          shared_pid_fix_config(pid);
+   86   1      
+   87   1          error = shared_pid_get_direction_sign(pid) * (target - feedback);
+   88   1          error = shared_pid_apply_deadband(error, pid->deadband);
+   89   1      
+   90   1          pid->output = shared_pid_limit_output(pid, output);
+   91   1          pid->ramp_target = target;
+   92   1          pid->last_error = error;
+   93   1          pid->prev_error = error;
+   94   1          pid->last_feedback = feedback;
+   95   1          pid->prev_feedback = feedback;
+   96   1          pid->initialized = ZF_TRUE;
+   97   1          pid->target_initialized = ZF_TRUE;
+   98   1          pid->feedback_initialized = ZF_TRUE;
+   99   1      }
+  100          
+  101          //-------------------------------------------------------------------------------------------------------
+             -------------
+  102          // 函数简介     通过目标值与反馈值更新增量式 PID 控制器
+  103          // 参数说明     pid             PID 控制器对象指针
+  104          // 参数说明     target          目标值
+  105          // 参数说明     feedback        反馈值
+  106          // 参数说明     dt              距离上次更新的时间 单位秒
+  107          // 返回参数     float           本次 PID 输出值
+  108          // 使用示例     output = shared_pid_update(&pid, target, feedback, 0.005f);
+  109          //-------------------------------------------------------------------------------------------------------
+             -------------
+  110          float shared_pid_update(shared_pid_t *pid, float target, float feedback, float dt)
+  111          {
+  112   1          float use_target;
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 3   
+
+  113   1          float error;
+  114   1      
+  115   1          if(NULL == pid)
+  116   1          {
+  117   2              return 0.0f;
+  118   2          }
+  119   1          if(dt <= 0.0f)
+  120   1          {
+  121   2              return pid->output;
+  122   2          }
+  123   1      
+  124   1          shared_pid_fix_config(pid);
+  125   1      
+  126   1          use_target = shared_pid_update_target(pid, target, dt);
+  127   1          error = shared_pid_get_direction_sign(pid) * (use_target - feedback);
+  128   1      
+  129   1          return shared_pid_update_common(pid, error, feedback, dt, ZF_TRUE);
+  130   1      }
+  131          
+  132          //-------------------------------------------------------------------------------------------------------
+             -------------
+  133          // 函数简介     通过误差值更新增量式 PID 控制器
+  134          // 参数说明     pid             PID 控制器对象指针
+  135          // 参数说明     error           本次误差值
+  136          // 参数说明     dt              距离上次更新的时间 单位秒
+  137          // 返回参数     float           本次 PID 输出值
+  138          // 使用示例     output = shared_pid_update_error(&pid, error, 0.005f);
+  139          //-------------------------------------------------------------------------------------------------------
+             -------------
+  140          float shared_pid_update_error(shared_pid_t *pid, float error, float dt)
+  141          {
+  142   1          if(NULL == pid)
+  143   1          {
+  144   2              return 0.0f;
+  145   2          }
+  146   1          if(dt <= 0.0f)
+  147   1          {
+  148   2              return pid->output;
+  149   2          }
+  150   1      
+  151   1          shared_pid_fix_config(pid);
+  152   1      
+  153   1          pid->target_initialized = ZF_FALSE;
+  154   1          pid->feedback_initialized = ZF_FALSE;
+  155   1      
+  156   1          return shared_pid_update_common(pid, error, 0.0f, dt, ZF_FALSE);
+  157   1      }
+  158          
+  159          //-------------------------------------------------------------------------------------------------------
+             -------------
+  160          // 函数简介     获取增量式 PID 控制器当前输出值
+  161          // 参数说明     pid             PID 控制器对象指针
+  162          // 返回参数     float           当前输出值
+  163          // 使用示例     output = shared_pid_get(&pid);
+  164          //-------------------------------------------------------------------------------------------------------
+             -------------
+  165          float shared_pid_get(const shared_pid_t *pid)
+  166          {
+  167   1          if(NULL == pid)
+  168   1          {
+  169   2              return 0.0f;
+  170   2          }
+  171   1      
+  172   1          return pid->output;
+  173   1      }
+  174          
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 4   
+
+  175          //-------------------------------------------------------------------------------------------------------
+             -------------
+  176          // 函数简介     修正增量式 PID 控制器配置参数
+  177          // 参数说明     pid             PID 控制器对象指针
+  178          // 返回参数     void
+  179          // 使用示例     shared_pid_fix_config(&pid);
+  180          //-------------------------------------------------------------------------------------------------------
+             -------------
+  181          static void shared_pid_fix_config(shared_pid_t *pid)
+  182          {
+  183   1          if(NULL == pid)
+  184   1          {
+  185   2              return;
+  186   2          }
+  187   1      
+  188   1          pid->output_limit_enable = pid->output_limit_enable ? ZF_ENABLE : ZF_DISABLE;
+  189   1          pid->delta_limit_enable = pid->delta_limit_enable ? ZF_ENABLE : ZF_DISABLE;
+  190   1          pid->conditional_integral_enable = pid->conditional_integral_enable ? ZF_ENABLE : ZF_DISABLE;
+  191   1      
+  192   1          if(SHARED_PID_DIRECTION_REVERSE != pid->direction)
+  193   1          {
+  194   2              pid->direction = SHARED_PID_DIRECTION_DIRECT;
+  195   2          }
+  196   1      
+  197   1          if(SHARED_PID_DERIVATIVE_ON_ERROR != pid->derivative_mode)
+  198   1          {
+  199   2              pid->derivative_mode = SHARED_PID_DERIVATIVE_ON_FEEDBACK;
+  200   2          }
+  201   1      
+  202   1          if(pid->deadband < 0.0f)
+  203   1          {
+  204   2              pid->deadband = 0.0f;
+  205   2          }
+  206   1          if(pid->setpoint_rate < 0.0f)
+  207   1          {
+  208   2              pid->setpoint_rate = 0.0f;
+  209   2          }
+  210   1          if(pid->integral_separation < 0.0f)
+  211   1          {
+  212   2              pid->integral_separation = 0.0f;
+  213   2          }
+  214   1      
+  215   1          shared_pid_fix_limit(&pid->output_min, &pid->output_max);
+  216   1          shared_pid_fix_limit(&pid->delta_min, &pid->delta_max);
+  217   1      }
+  218          
+  219          //-------------------------------------------------------------------------------------------------------
+             -------------
+  220          // 函数简介     修正限幅上下限顺序
+  221          // 参数说明     min_value       最小值指针
+  222          // 参数说明     max_value       最大值指针
+  223          // 返回参数     void
+  224          // 使用示例     shared_pid_fix_limit(&min_value, &max_value);
+  225          //-------------------------------------------------------------------------------------------------------
+             -------------
+  226          static void shared_pid_fix_limit(float *min_value, float *max_value)
+  227          {
+  228   1          float temp;
+  229   1      
+  230   1          if((NULL == min_value) || (NULL == max_value))
+  231   1          {
+  232   2              return;
+  233   2          }
+  234   1      
+  235   1          if(*max_value < *min_value)
+  236   1          {
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 5   
+
+  237   2              temp = *min_value;
+  238   2              *min_value = *max_value;
+  239   2              *max_value = temp;
+  240   2          }
+  241   1      }
+  242          
+  243          //-------------------------------------------------------------------------------------------------------
+             -------------
+  244          // 函数简介     获取浮点数绝对值
+  245          // 参数说明     value           输入值
+  246          // 返回参数     float           绝对值
+  247          // 使用示例     value = shared_pid_abs(value);
+  248          //-------------------------------------------------------------------------------------------------------
+             -------------
+  249          static float shared_pid_abs(float value)
+  250          {
+  251   1          if(value < 0.0f)
+  252   1          {
+  253   2              value = -value;
+  254   2          }
+  255   1      
+  256   1          return value;
+  257   1      }
+  258          
+  259          //-------------------------------------------------------------------------------------------------------
+             -------------
+  260          // 函数简介     限制浮点数范围
+  261          // 参数说明     value           输入值
+  262          // 参数说明     min_value       最小值
+  263          // 参数说明     max_value       最大值
+  264          // 返回参数     float           限制后的值
+  265          // 使用示例     value = shared_pid_clamp(value, min_value, max_value);
+  266          //-------------------------------------------------------------------------------------------------------
+             -------------
+  267          static float shared_pid_clamp(float value, float min_value, float max_value)
+  268          {
+  269   1          if(value < min_value)
+  270   1          {
+  271   2              value = min_value;
+  272   2          }
+  273   1          else if(max_value < value)
+  274   1          {
+  275   2              value = max_value;
+  276   2          }
+  277   1      
+  278   1          return value;
+  279   1      }
+  280          
+  281          //-------------------------------------------------------------------------------------------------------
+             -------------
+  282          // 函数简介     根据配置限制 PID 输出值
+  283          // 参数说明     pid             PID 控制器对象指针
+  284          // 参数说明     output          待限制的输出值
+  285          // 返回参数     float           限制后的输出值
+  286          // 使用示例     output = shared_pid_limit_output(&pid, output);
+  287          //-------------------------------------------------------------------------------------------------------
+             -------------
+  288          static float shared_pid_limit_output(const shared_pid_t *pid, float output)
+  289          {
+  290   1          if((NULL != pid) && (ZF_ENABLE == pid->output_limit_enable))
+  291   1          {
+  292   2              output = shared_pid_clamp(output, pid->output_min, pid->output_max);
+  293   2          }
+  294   1      
+  295   1          return output;
+  296   1      }
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 6   
+
+  297          
+  298          //-------------------------------------------------------------------------------------------------------
+             -------------
+  299          // 函数简介     根据配置限制 PID 单次输出增量
+  300          // 参数说明     pid             PID 控制器对象指针
+  301          // 参数说明     delta           待限制的输出增量
+  302          // 返回参数     float           限制后的输出增量
+  303          // 使用示例     delta = shared_pid_limit_delta(&pid, delta);
+  304          //-------------------------------------------------------------------------------------------------------
+             -------------
+  305          static float shared_pid_limit_delta(const shared_pid_t *pid, float delta)
+  306          {
+  307   1          if((NULL != pid) && (ZF_ENABLE == pid->delta_limit_enable))
+  308   1          {
+  309   2              delta = shared_pid_clamp(delta, pid->delta_min, pid->delta_max);
+  310   2          }
+  311   1      
+  312   1          return delta;
+  313   1      }
+  314          
+  315          //-------------------------------------------------------------------------------------------------------
+             -------------
+  316          // 函数简介     应用 PID 误差死区
+  317          // 参数说明     error           原始误差
+  318          // 参数说明     deadband        死区范围
+  319          // 返回参数     float           处理后的误差
+  320          // 使用示例     error = shared_pid_apply_deadband(error, deadband);
+  321          //-------------------------------------------------------------------------------------------------------
+             -------------
+  322          static float shared_pid_apply_deadband(float error, float deadband)
+  323          {
+  324   1          if((0.0f < deadband) && (shared_pid_abs(error) <= deadband))
+  325   1          {
+  326   2              error = 0.0f;
+  327   2          }
+  328   1      
+  329   1          return error;
+  330   1      }
+  331          
+  332          //-------------------------------------------------------------------------------------------------------
+             -------------
+  333          // 函数简介     获取 PID 控制方向系数
+  334          // 参数说明     pid             PID 控制器对象指针
+  335          // 返回参数     float           控制方向系数
+  336          // 使用示例     sign = shared_pid_get_direction_sign(&pid);
+  337          //-------------------------------------------------------------------------------------------------------
+             -------------
+  338          static float shared_pid_get_direction_sign(const shared_pid_t *pid)
+  339          {
+  340   1          if((NULL != pid) && (SHARED_PID_DIRECTION_REVERSE == pid->direction))
+  341   1          {
+  342   2              return -1.0f;
+  343   2          }
+  344   1      
+  345   1          return 1.0f;
+  346   1      }
+  347          
+  348          //-------------------------------------------------------------------------------------------------------
+             -------------
+  349          // 函数简介     更新目标斜坡值
+  350          // 参数说明     pid             PID 控制器对象指针
+  351          // 参数说明     target          原始目标值
+  352          // 参数说明     dt              距离上次更新的时间 单位秒
+  353          // 返回参数     float           斜坡处理后的目标值
+  354          // 使用示例     target = shared_pid_update_target(&pid, target, dt);
+  355          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 7   
+
+             -------------
+  356          static float shared_pid_update_target(shared_pid_t *pid, float target, float dt)
+  357          {
+  358   1          float max_step;
+  359   1          float delta;
+  360   1      
+  361   1          if(NULL == pid)
+  362   1          {
+  363   2              return target;
+  364   2          }
+  365   1      
+  366   1          if((ZF_FALSE == pid->target_initialized) || (pid->setpoint_rate <= 0.0f))
+  367   1          {
+  368   2              pid->ramp_target = target;
+  369   2              pid->target_initialized = ZF_TRUE;
+  370   2              return target;
+  371   2          }
+  372   1      
+  373   1          max_step = pid->setpoint_rate * dt;
+  374   1          delta = target - pid->ramp_target;
+  375   1      
+  376   1          if(shared_pid_abs(delta) <= max_step)
+  377   1          {
+  378   2              pid->ramp_target = target;
+  379   2          }
+  380   1          else if(0.0f < delta)
+  381   1          {
+  382   2              pid->ramp_target += max_step;
+  383   2          }
+  384   1          else
+  385   1          {
+  386   2              pid->ramp_target -= max_step;
+  387   2          }
+  388   1      
+  389   1          return pid->ramp_target;
+  390   1      }
+  391          
+  392          //-------------------------------------------------------------------------------------------------------
+             -------------
+  393          // 函数简介     执行增量式 PID 核心计算
+  394          // 参数说明     pid             PID 控制器对象指针
+  395          // 参数说明     error           本次误差值
+  396          // 参数说明     feedback        本次反馈值
+  397          // 参数说明     dt              距离上次更新的时间 单位秒
+  398          // 参数说明     feedback_valid  反馈值是否有效
+  399          // 返回参数     float           本次 PID 输出值
+  400          // 使用示例     output = shared_pid_update_common(&pid, error, feedback, dt, ZF_TRUE);
+  401          //-------------------------------------------------------------------------------------------------------
+             -------------
+  402          static float shared_pid_update_common(shared_pid_t *pid, float error, float feedback, float dt, uint8 fee
+             -dback_valid)
+  403          {
+  404   1          uint8 first_update;
+  405   1          uint8 first_feedback;
+  406   1          uint8 integral_enable;
+  407   1          float direction_sign;
+  408   1          float p_delta;
+  409   1          float i_delta;
+  410   1          float d_delta;
+  411   1          float total_delta;
+  412   1          float second_diff;
+  413   1      
+  414   1          if(NULL == pid)
+  415   1          {
+  416   2              return 0.0f;
+  417   2          }
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 8   
+
+  418   1      
+  419   1          first_update = (ZF_FALSE == pid->initialized) ? ZF_TRUE : ZF_FALSE;
+  420   1          first_feedback = (ZF_FALSE == pid->feedback_initialized) ? ZF_TRUE : ZF_FALSE;
+  421   1          integral_enable = ZF_TRUE;
+  422   1          direction_sign = shared_pid_get_direction_sign(pid);
+  423   1      
+  424   1          error = shared_pid_apply_deadband(error, pid->deadband);
+  425   1      
+  426   1          p_delta = pid->kp * (error - pid->last_error);
+  427   1          i_delta = pid->ki * error * dt;
+  428   1          d_delta = 0.0f;
+  429   1      
+  430   1          if((0.0f < pid->integral_separation) && (pid->integral_separation < shared_pid_abs(error)))
+  431   1          {
+  432   2              integral_enable = ZF_FALSE;
+  433   2          }
+  434   1      
+  435   1          if((ZF_ENABLE == pid->conditional_integral_enable) && (ZF_ENABLE == pid->output_limit_enable))
+  436   1          {
+  437   2              if(((pid->output_max <= pid->output) && (0.0f < i_delta)) ||
+  438   2                      ((pid->output <= pid->output_min) && (i_delta < 0.0f)))
+  439   2              {
+  440   3                  integral_enable = ZF_FALSE;
+  441   3              }
+  442   2          }
+  443   1      
+  444   1          if(ZF_FALSE == integral_enable)
+  445   1          {
+  446   2              i_delta = 0.0f;
+  447   2          }
+  448   1      
+  449   1          if(ZF_FALSE == first_update)
+  450   1          {
+  451   2              if((ZF_TRUE == feedback_valid) && (SHARED_PID_DERIVATIVE_ON_FEEDBACK == pid->derivative_mode))
+  452   2              {
+  453   3                  if(ZF_FALSE == first_feedback)
+  454   3                  {
+  455   4                      second_diff = feedback - 2.0f * pid->last_feedback + pid->prev_feedback;
+  456   4                      d_delta = -direction_sign * pid->kd * second_diff / dt;
+  457   4                  }
+  458   3              }
+  459   2              else
+  460   2              {
+  461   3                  second_diff = error - 2.0f * pid->last_error + pid->prev_error;
+  462   3                  d_delta = pid->kd * second_diff / dt;
+  463   3              }
+  464   2          }
+  465   1      
+  466   1          total_delta = p_delta + i_delta + d_delta;
+  467   1          total_delta = shared_pid_limit_delta(pid, total_delta);
+  468   1      
+  469   1          pid->output = shared_pid_limit_output(pid, pid->output + total_delta);
+  470   1      
+  471   1          if(ZF_TRUE == first_update)
+  472   1          {
+  473   2              pid->prev_error = error;
+  474   2              pid->last_error = error;
+  475   2              pid->prev_feedback = feedback;
+  476   2              pid->last_feedback = feedback;
+  477   2              pid->initialized = ZF_TRUE;
+  478   2              pid->feedback_initialized = feedback_valid;
+  479   2          }
+  480   1          else
+  481   1          {
+  482   2              pid->prev_error = pid->last_error;
+  483   2              pid->last_error = error;
+C251 COMPILER V5.60.0,  shared_pid                                                         03/08/26  22:48:23  PAGE 9   
+
+  484   2              if(ZF_TRUE == feedback_valid)
+  485   2              {
+  486   3                  if(ZF_TRUE == first_feedback)
+  487   3                  {
+  488   4                      pid->prev_feedback = feedback;
+  489   4                      pid->last_feedback = feedback;
+  490   4                  }
+  491   3                  else
+  492   3                  {
+  493   4                      pid->prev_feedback = pid->last_feedback;
+  494   4                      pid->last_feedback = feedback;
+  495   4                  }
+  496   3                  pid->feedback_initialized = ZF_TRUE;
+  497   3              }
+  498   2          }
+  499   1      
+  500   1          return pid->output;
+  501   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      2597     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------        108
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

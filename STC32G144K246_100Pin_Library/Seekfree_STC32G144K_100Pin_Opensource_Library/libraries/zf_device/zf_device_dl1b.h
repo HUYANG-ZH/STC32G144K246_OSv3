@@ -71,7 +71,7 @@
 //====================================================硬件 IIC 驱动====================================================
 #endif
 
-#define DL1B_XS_ENABLE              ( 1  )                                      // 启用参考工程的 XSHUT 引脚
+#define DL1B_XS_ENABLE              ( 0  )                                      // 未连接 XSHUT 引脚, 关闭 XS 逻辑
 #if DL1B_XS_ENABLE
 	#define DL1B_XS_PIN             ( IO_P60 )
 #endif

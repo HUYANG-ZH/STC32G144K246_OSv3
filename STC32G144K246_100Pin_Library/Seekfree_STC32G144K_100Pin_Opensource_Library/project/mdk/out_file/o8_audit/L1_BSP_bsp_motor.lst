@@ -1,0 +1,117 @@
+C251 COMPILER V5.60.0,  bsp_motor                                                          03/08/26  22:48:12  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_motor
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L1_BSP_bsp_motor.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_motor.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEE
+                    -D) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\
+                    -libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_c
+                    -omponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\L1_BSP_bsp_mo
+                    -tor.lst) OBJECT(.\out_file\o8_audit\L1_BSP_bsp_motor.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_motor.h"
+    3          
+    4          #define BSP_MOTOR_PWM_FREQ_HZ       (10000U)
+    5          #define BSP_MOTOR_INIT_DUTY         (0U)
+    6          
+    7          #define BSP_MOTOR_LEFT_PWM_CH       PWMC_CH1P_P80
+    8          #define BSP_MOTOR_LEFT_DIR_PIN      IO_P62
+    9          
+   10          #define BSP_MOTOR_RIGHT_PWM_CH      PWMC_CH2P_P82
+   11          #define BSP_MOTOR_RIGHT_DIR_PIN     IO_P83
+   12          
+   13          #define BSP_MOTOR_NSLEEP_PIN        IO_P61
+   14          #define BSP_MOTOR_INIT_DIR_LEVEL    GPIO_LOW
+   15          #define BSP_MOTOR_NSLEEP_ACTIVE     GPIO_HIGH
+   16          #define BSP_MOTOR_NSLEEP_INACTIVE   GPIO_LOW
+   17          
+   18          static uint32 bsp_motor_limit_duty(uint32 duty)
+   19          {
+   20   1          if(PWM_DUTY_MAX < duty)
+   21   1          {
+   22   2              return PWM_DUTY_MAX;
+   23   2          }
+   24   1      
+   25   1          return duty;
+   26   1      }
+   27          
+   28          void bsp_motor_init(void)
+   29          {
+   30   1          gpio_init(BSP_MOTOR_NSLEEP_PIN, GPO, BSP_MOTOR_NSLEEP_INACTIVE, GPO_PUSH_PULL);
+   31   1          gpio_init(BSP_MOTOR_LEFT_DIR_PIN, GPO, BSP_MOTOR_INIT_DIR_LEVEL, GPO_PUSH_PULL);
+   32   1          gpio_init(BSP_MOTOR_RIGHT_DIR_PIN, GPO, BSP_MOTOR_INIT_DIR_LEVEL, GPO_PUSH_PULL);
+   33   1      
+   34   1          pwm_init(BSP_MOTOR_LEFT_PWM_CH, BSP_MOTOR_PWM_FREQ_HZ, BSP_MOTOR_INIT_DUTY);
+   35   1          pwm_init(BSP_MOTOR_RIGHT_PWM_CH, BSP_MOTOR_PWM_FREQ_HZ, BSP_MOTOR_INIT_DUTY);
+   36   1      }
+   37          
+   38          void bsp_motor_debug(void)
+   39          {
+   40   1      }
+   41          
+   42          void bsp_motor_set_left_pwm(uint32 duty)
+   43          {
+   44   1          pwm_set_duty(BSP_MOTOR_LEFT_PWM_CH, bsp_motor_limit_duty(duty));
+   45   1      }
+   46          
+   47          void bsp_motor_set_right_pwm(uint32 duty)
+   48          {
+   49   1          pwm_set_duty(BSP_MOTOR_RIGHT_PWM_CH, bsp_motor_limit_duty(duty));
+   50   1      }
+   51          
+   52          void bsp_motor_set_pwm(uint32 left_duty, uint32 right_duty)
+   53          {
+   54   1          bsp_motor_set_left_pwm(left_duty);
+   55   1          bsp_motor_set_right_pwm(right_duty);
+C251 COMPILER V5.60.0,  bsp_motor                                                          03/08/26  22:48:12  PAGE 2   
+
+   56   1      }
+   57          
+   58          void bsp_motor_set_left_dir(uint8 level)
+   59          {
+   60   1          gpio_set_level(BSP_MOTOR_LEFT_DIR_PIN, level);
+   61   1      }
+   62          
+   63          void bsp_motor_set_right_dir(uint8 level)
+   64          {
+   65   1          gpio_set_level(BSP_MOTOR_RIGHT_DIR_PIN, level);
+   66   1      }
+   67          
+   68          void bsp_motor_set_dir(uint8 left_level, uint8 right_level)
+   69          {
+   70   1          bsp_motor_set_left_dir(left_level);
+   71   1          bsp_motor_set_right_dir(right_level);
+   72   1      }
+   73          
+   74          void bsp_motor_set_nsleep(uint8 enable)
+   75          {
+   76   1          gpio_set_level(BSP_MOTOR_NSLEEP_PIN, (0U != enable) ? BSP_MOTOR_NSLEEP_ACTIVE : BSP_MOTOR_NSLEEP_INAC
+             -TIVE);
+   77   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       220     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

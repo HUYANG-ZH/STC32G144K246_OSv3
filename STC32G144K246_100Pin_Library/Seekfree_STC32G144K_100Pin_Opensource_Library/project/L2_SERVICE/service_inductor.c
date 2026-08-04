@@ -2,8 +2,11 @@
 #include "bsp_include.h"
 #include "service_timetick.h"
 #include "service_inductor.h"
+#include "service_wireless_uart.h"
 
-#define SERVICE_INDUCTOR_DMA_TIMEOUT_TICK      (100UL)
+#define SERVICE_INDUCTOR_DMA_TIMEOUT_TICK      (10000UL)
+#define SERVICE_INDUCTOR_DEBUG_ENABLE          (0U)
+#define SERVICE_INDUCTOR_DEBUG_PERIOD_TICK     (1000UL)  /* 10 Hz，0.1 ms/tick */
 
 static uint32 service_inductor_last_sequence = 0UL;
 static uint32 service_inductor_last_progress_tick = 0UL;
@@ -19,6 +22,27 @@ void service_inductor_init(void)
 
 void service_inductor_debug(void)
 {
+    static uint32 last_debug_tick = 0UL;
+    uint32 now;
+    service_inductor_data_t snapshot;
+
+    now = service_timetick_what();
+    if((uint32)(now - last_debug_tick) < SERVICE_INDUCTOR_DEBUG_PERIOD_TICK)
+    {
+        return;
+    }
+    last_debug_tick = now;
+
+    if(0U != service_inductor_get_snapshot(&snapshot, NULL))
+    {
+        /* 电感调试模式：输出 CH1、CH2、CH3、CH4、M 五路原始 ADC 值。 */
+        wprint("%u,%u,%u,%u,%u\r\n",
+                snapshot.channel_1,
+                snapshot.channel_2,
+                snapshot.channel_3,
+                snapshot.channel_4,
+                snapshot.channel_m);
+    }
 }
 
 void service_inductor_get_data(service_inductor_data_t *out_data)
@@ -105,4 +129,8 @@ void service_inductor_task(void)
         bsp_inductor_recover();
         service_inductor_last_progress_tick = now;
     }
+
+#if (SERVICE_INDUCTOR_DEBUG_ENABLE != 0U)
+    service_inductor_debug();
+#endif
 }

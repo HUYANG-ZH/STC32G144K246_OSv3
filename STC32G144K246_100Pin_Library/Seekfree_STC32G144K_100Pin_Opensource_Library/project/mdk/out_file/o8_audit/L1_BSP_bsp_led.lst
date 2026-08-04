@@ -1,0 +1,75 @@
+C251 COMPILER V5.60.0,  bsp_led                                                            03/08/26  22:48:11  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_led
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L1_BSP_bsp_led.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L1_BSP\bsp_led.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(8,SPEED)
+                    - OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\li
+                    -braries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_com
+                    -ponents\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audit\L1_BSP_bsp_led.
+                    -lst) OBJECT(.\out_file\o8_audit\L1_BSP_bsp_led.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_led.h"
+    3          
+    4          #define BSP_LED_INACTIVE_LEVEL    ((GPIO_HIGH == BSP_LED_ACTIVE_LEVEL) ? GPIO_LOW : GPIO_HIGH)
+    5          
+    6          void bsp_led_init(void)
+    7          {
+    8   1          /* P23 is active low: initialize it high so the LED is off. */
+    9   1          gpio_init(BSP_LED_PIN, GPO, BSP_LED_INACTIVE_LEVEL, GPO_PUSH_PULL);
+   10   1      }
+   11          
+   12          void bsp_led_debug(void)
+   13          {
+   14   1      }
+   15          
+   16          void bsp_led_on(void)
+   17          {
+   18   1          gpio_set_level(BSP_LED_PIN, BSP_LED_ACTIVE_LEVEL);
+   19   1      }
+   20          
+   21          void bsp_led_off(void)
+   22          {
+   23   1          gpio_set_level(BSP_LED_PIN, BSP_LED_INACTIVE_LEVEL);
+   24   1      }
+   25          
+   26          void bsp_led_set(uint8 enable)
+   27          {
+   28   1          if(0U != enable)
+   29   1          {
+   30   2              bsp_led_on();
+   31   2          }
+   32   1          else
+   33   1          {
+   34   2              bsp_led_off();
+   35   2          }
+   36   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =        55     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+C251 COMPILER V5.60.0,  bsp_led                                                            03/08/26  22:48:11  PAGE 2   
+
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

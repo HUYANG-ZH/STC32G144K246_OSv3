@@ -4,6 +4,8 @@
 #include "service_timetick.h"
 
 #define SERVICE_TOF_INVALID_DISTANCE_THRESHOLD_MM (1000U)
+/* TOF 读取值异常时输出的特征值 7777, 便于上位机识别异常数据 (而非 0, 避免与真实 0 距离混淆) */
+#define SERVICE_TOF_ABNORMAL_DISTANCE_MM          (7777U)
 
 static uint32 service_tof_last_request_tick = 0UL;
 
@@ -64,6 +66,16 @@ uint8 service_tof_get_last_error(void)
 #endif
 }
 
+/* 查询未初始化TOF标记: 1 = 开机初始化失败(TOF 不可用), 0 = 正常 */
+uint8 service_tof_init_failed(void)
+{
+#if SERVICE_TOF_ENABLE
+    return bsp_tof_init_failed();
+#else
+    return 1U;
+#endif
+}
+
 uint16 service_tof_get_distance_mm(void)
 {
 #if SERVICE_TOF_ENABLE
@@ -76,7 +88,8 @@ uint16 service_tof_get_distance_mm(void)
     if((0U != range_status) ||
             (distance_mm > SERVICE_TOF_INVALID_DISTANCE_THRESHOLD_MM))
     {
-        return 0U;
+        /* 读取异常 (测距未完成或超量程): 不再输出 0, 改为输出特征值 7777 */
+        return SERVICE_TOF_ABNORMAL_DISTANCE_MM;
     }
 
     return distance_mm;

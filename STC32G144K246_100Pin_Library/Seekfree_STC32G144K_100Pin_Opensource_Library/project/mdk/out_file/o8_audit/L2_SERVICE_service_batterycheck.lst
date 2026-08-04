@@ -1,0 +1,178 @@
+C251 COMPILER V5.60.0,  service_batterycheck                                               03/08/26  22:48:13  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
+OBJECT MODULE PLACED IN .\out_file\o8_audit\L2_SERVICE_service_batterycheck.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L2_SERVICE\service_batterycheck.c LARGE ROM(HUGE) WARNINGLEVEL(3) 
+                    -OPTIMIZE(8,SPEED) OBJECTADVANCED BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\z
+                    -f_device;..\..\libraries\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..
+                    -\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\o8_audi
+                    -t\L2_SERVICE_service_batterycheck.lst) OBJECT(.\out_file\o8_audit\L2_SERVICE_service_batterycheck.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "bsp_include.h"
+    3          #include "service_batterycheck.h"
+    4          #include "service_packet.h"
+    5          #include "service_timetick.h"
+    6          #include "service_wireless_uart.h"
+    7          
+    8          #define BATTERYCHECK_PERIOD_TICK        (1000UL)
+    9          #define BATTERYCHECK_DMA_TIMEOUT_TICK   (100UL)
+   10          
+   11          static float batterycheck_voltage = 0.0f;
+   12          static uint32 batterycheck_last_request_tick = 0UL;
+   13          static uint32 batterycheck_last_sequence = 0UL;
+   14          static uint8 batterycheck_valid = 0U;
+   15          
+   16          static void service_batterycheck_refresh_snapshot(void);
+   17          static void service_batterycheck_request_next(void);
+   18          static void service_batterycheck_voltage_reply(void);
+   19          
+   20          static void service_batterycheck_refresh_snapshot(void)
+   21          {
+   22   1          uint16 rawdata;
+   23   1          uint32 sequence;
+   24   1      
+   25   1          if(0U == bsp_battery_get_snapshot(&rawdata, &sequence))
+   26   1          {
+   27   2              return;
+   28   2          }
+   29   1      
+   30   1          if((0U == batterycheck_valid) || (sequence != batterycheck_last_sequence))
+   31   1          {
+   32   2              bsp_battery_vol(&batterycheck_voltage);
+   33   2              batterycheck_last_sequence = sequence;
+   34   2              batterycheck_valid = 1U;
+   35   2          }
+   36   1      }
+   37          
+   38          static void service_batterycheck_request_next(void)
+   39          {
+   40   1          if(0U != bsp_battery_request_sample())
+   41   1          {
+   42   2              batterycheck_last_request_tick = service_timetick_what();
+   43   2          }
+   44   1      }
+   45          
+   46          static void service_batterycheck_voltage_reply(void)
+   47          {
+   48   1          service_batterycheck_refresh_snapshot();
+   49   1          service_batterycheck_request_next();
+   50   1          if(0U != batterycheck_valid)
+   51   1          {
+   52   2              wprint("battery_voltage,%.3f\r\n", batterycheck_voltage);
+   53   2          }
+   54   1          else
+   55   1          {
+C251 COMPILER V5.60.0,  service_batterycheck                                               03/08/26  22:48:13  PAGE 2   
+
+   56   2              wprint("battery_voltage,pending\r\n");
+   57   2          }
+   58   1      }
+   59          
+   60          void service_batterycheck_init(void)
+   61          {
+   62   1          bsp_battery_init();
+   63   1          batterycheck_voltage = 0.0f;
+   64   1          batterycheck_last_request_tick = service_timetick_what();
+   65   1          batterycheck_last_sequence = 0UL;
+   66   1          batterycheck_valid = 0U;
+   67   1          (void)service_packet_add_action("battery_voltage", service_batterycheck_voltage_reply, 0UL);
+   68   1          #if __DBGFLAG__
+                   printf(">>[service_batterycheck_init]\r\n");
+                   wprint(">>[service_batterycheck_init]\r\n");
+                   #endif
+   72   1      }
+   73          
+   74          void service_batterycheck_debug(void)
+   75          {
+   76   1          service_batterycheck_refresh_snapshot();
+   77   1          if(0U != batterycheck_valid)
+   78   1          {
+   79   2              printf("[batterycheck:voltage=%.4f]\r\n", batterycheck_voltage);
+   80   2          }
+   81   1          else
+   82   1          {
+   83   2              printf("[batterycheck:pending]\r\n");
+   84   2          }
+   85   1      }
+   86          
+   87          void service_batterycheck_task(void)
+   88          {
+   89   1          uint32 now;
+   90   1      
+   91   1          service_batterycheck_refresh_snapshot();
+   92   1          now = service_timetick_what();
+   93   1          if(0U != bsp_battery_is_busy())
+   94   1          {
+   95   2              if((uint32)(now - batterycheck_last_request_tick) >= BATTERYCHECK_DMA_TIMEOUT_TICK)
+   96   2              {
+   97   3                  bsp_battery_recover();
+   98   3                  service_batterycheck_request_next();
+   99   3              }
+  100   2              return;
+  101   2          }
+  102   1      
+  103   1          if((uint32)(now - batterycheck_last_request_tick) >= BATTERYCHECK_PERIOD_TICK)
+  104   1          {
+  105   2              service_batterycheck_request_next();
+  106   2          }
+  107   1      }
+  108          
+  109          uint8 service_batterycheck_is_valid(void)
+  110          {
+  111   1          service_batterycheck_refresh_snapshot();
+  112   1          return batterycheck_valid;
+  113   1      }
+  114          
+  115          uint8 service_batterycheck_raw_is_valid(void)
+  116          {
+  117   1          return bsp_battery_sample_is_valid();
+  118   1      }
+  119          
+  120          void service_batterycheck_get_raw(uint16 *rawdata)
+  121          {
+C251 COMPILER V5.60.0,  service_batterycheck                                               03/08/26  22:48:13  PAGE 3   
+
+  122   1          bsp_battery_get_raw(rawdata);
+  123   1      }
+  124          
+  125          uint8 service_batterycheck_get_raw_snapshot(uint16 *rawdata, uint32 *sequence)
+  126          {
+  127   1          return bsp_battery_get_snapshot(rawdata, sequence);
+  128   1      }
+  129          
+  130          void service_batterycheck_get_voltage(float *voltage)
+  131          {
+  132   1          service_batterycheck_refresh_snapshot();
+  133   1          if(NULL != voltage)
+  134   1          {
+  135   2              *voltage = batterycheck_voltage;
+  136   2          }
+  137   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       458     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        13          6
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       153     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
