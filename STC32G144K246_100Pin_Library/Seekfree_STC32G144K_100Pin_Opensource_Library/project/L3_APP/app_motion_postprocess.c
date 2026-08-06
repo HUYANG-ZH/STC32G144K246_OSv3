@@ -227,10 +227,10 @@ void app_motion_postprocess_imu_step(void)
     }
     /* 先发布本帧 Kalman 姿态，再交给元素模块使用当前 pitch 判定跷跷板。 */
     /* 角速度环调试模式下关闭元素识别, 防止台架旋转触发圆筒/环岛状态机 */
-    if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
-    {
-        app_element_imu_task(&imu);
-    }
+    // if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    // {
+    //     app_element_imu_task(&imu);   // 元素识别关闭
+    // }
 }
 
 void app_motion_postprocess_init(void)
@@ -313,10 +313,10 @@ void app_motion_postprocess_control_step(void)
 {
     app_motion_preprocess_control_step();
     /* 角速度环调试模式下关闭电感元素检测 */
-    if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
-    {
-        app_element_control_step();
-    }
+    // if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    // {
+    //     app_element_control_step();   // 元素识别关闭
+    // }
     app_feedforward_control_step();
     app_speed_plan_control_step();
     app_motion_postprocess_compute_step();

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              04/08/26  18:02:59  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              05/08/26  21:41:54  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_preprocess
@@ -19,8 +19,8 @@ stmt  level    source
     6          #include "service_wireless_uart.h"
     7          
     8          #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
-    9          #define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.35f)     // x轴差比融合权重
-   10          #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.0f)      // y轴差比融合权重
+    9          #define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.25f)     // x轴差比融合权重
+   10          #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.2f)      // y轴差比融合权重
    11          #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
    12          #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
    13          #define APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN    (13.62f)     // 默认角速度增益，单位 rad
@@ -66,7 +66,7 @@ stmt  level    source
    51          // 备注信息     使用 APP_MOTION_PREPROCESS_PIT 每 APP_MOTION_PREPROCESS_PERIOD_MS ms 更新一次
    52          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              04/08/26  18:02:59  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              05/08/26  21:41:54  PAGE 2   
 
    53          void app_motion_preprocess_init(void)
    54          {
@@ -135,7 +135,7 @@ stmt  level    source
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              04/08/26  18:02:59  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              05/08/26  21:41:54  PAGE 3   
 
   ecode size           =       689     ------
   data size            =    ------     ------
