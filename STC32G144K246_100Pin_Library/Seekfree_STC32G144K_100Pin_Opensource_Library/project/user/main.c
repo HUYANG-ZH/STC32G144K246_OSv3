@@ -55,7 +55,6 @@ void main(void)
     app_speedout_init();
     app_motion_postprocess_init();
     app_boot_sequence_init();
-    app_battery_guard_init();
     service_boot_request_init();
     service_button_init();
 
@@ -65,6 +64,8 @@ void main(void)
     bsp_buzzer_on();
     system_delay_ms(BOOT_BUZZ_MS);
     bsp_buzzer_off();
+    /* 欠压守卫放在阻塞性开机流程之后启动, 避免阻塞期内采样停滞被误判失效 */
+    app_battery_guard_init();
     while(1)
     {
         wdt_feed();

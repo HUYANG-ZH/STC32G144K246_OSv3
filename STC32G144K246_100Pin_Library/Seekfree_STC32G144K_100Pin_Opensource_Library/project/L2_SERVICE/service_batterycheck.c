@@ -16,7 +16,7 @@ static uint32 batterycheck_last_request_tick = 0UL;
 static uint32 batterycheck_last_sequence = 0UL;
 static uint8 batterycheck_valid = 0U;
 static shared_lpf_t batterycheck_voltage_lpf;
-static uint8 batterycheck_lpf_ready = 0U;
+static volatile uint8 batterycheck_lpf_ready = 0U;
 
 static void service_batterycheck_refresh_snapshot(void);
 static void service_batterycheck_request_next(void);
@@ -167,4 +167,10 @@ float service_batterycheck_get_filtered_voltage(void)
         voltage = batterycheck_voltage;
     }
     return voltage;
+}
+
+/* 滤波已就绪标记: 1 = 主循环至少发布过一次滤波电压(首帧), 0 = 尚未(初值 0.0 不可用于判定) */
+uint8 service_batterycheck_filter_ready(void)
+{
+    return batterycheck_lpf_ready;
 }
