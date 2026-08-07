@@ -14,5 +14,7 @@ uint8 bsp_battery_get_snapshot(uint16 *rawdata, uint32 *sequence);
 uint8 bsp_battery_is_busy(void);
 void bsp_battery_recover(void);
 void bsp_battery_vol(float *vol);
+/* 由已取回的原始采样值直接换算电压, 避免二次读快照 */
+float bsp_battery_vol_from_raw(uint16 rawdata);
 
 #endif

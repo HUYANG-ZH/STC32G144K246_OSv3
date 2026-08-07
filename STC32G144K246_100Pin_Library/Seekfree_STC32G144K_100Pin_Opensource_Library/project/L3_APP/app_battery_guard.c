@@ -1,15 +1,17 @@
 #include "zf_common_headfile.h"
 #include "service_batterycheck.h"
 #include "service_timetick.h"
+#include "service_wireless_uart.h"
 #include "app_feedforward.h"
 #include "app_motion_postprocess.h"
 #include "app_speedout.h"
 #include "app_battery_guard.h"
 
-#define APP_BATTERY_GUARD_PIT                  TIM8_PIT
+/* TIM9: TIM8 已被 UART8 波特率发生器占用, 不可用作 PIT */
+#define APP_BATTERY_GUARD_PIT                  TIM9_PIT
 #define APP_BATTERY_GUARD_PERIOD_MS            (10U)
-/* ceil(11.0 V * 4096 / 36.4737); compare raw ADC data in the timer. */
-#define APP_BATTERY_GUARD_LOW_RAW              (1236U)
+/* 欠压阈值 10.4V(等价 raw ≈ 1191), 比较的是发布链路的滤波后电压 */
+#define APP_BATTERY_GUARD_LOW_VOLTAGE          (10.4f)
 #define APP_BATTERY_GUARD_STARTUP_GRACE_TICK    (3000UL)
 #define APP_BATTERY_GUARD_MAX_SAMPLE_AGE_TICK   (1500UL)
 
@@ -18,14 +20,14 @@
 
 static volatile uint8 battery_guard_triggered = 0U;
 static volatile uint8 battery_guard_report_pending = 0U;
-static volatile uint16 battery_guard_trip_raw = 0U;
+static volatile float battery_guard_trip_voltage = 0.0f;
 static volatile uint8 battery_guard_reason = 0U;
 static uint32 battery_guard_last_sequence = 0UL;
 static uint32 battery_guard_last_fresh_tick = 0UL;
 static uint32 battery_guard_start_tick = 0UL;
 static uint8 battery_guard_sample_seen = 0U;
 
-static void app_battery_guard_trip(uint16 rawdata, uint8 reason)
+static void app_battery_guard_trip(float voltage, uint8 reason)
 {
     if(0U != battery_guard_triggered)
     {
@@ -33,7 +35,7 @@ static void app_battery_guard_trip(uint16 rawdata, uint8 reason)
     }
 
     battery_guard_triggered = 1U;
-    battery_guard_trip_raw = rawdata;
+    battery_guard_trip_voltage = voltage;
     battery_guard_reason = reason;
     battery_guard_report_pending = 1U;
     /* An interlock cannot be overridden by a concurrent START command. */
@@ -46,6 +48,7 @@ static void app_battery_guard_tick(void)
     uint16 rawdata = 0U;
     uint32 sequence;
     uint32 now;
+    float voltage;
 
     if(0U != battery_guard_triggered)
     {
@@ -60,9 +63,11 @@ static void app_battery_guard_tick(void)
             battery_guard_last_sequence = sequence;
             battery_guard_last_fresh_tick = now;
             battery_guard_sample_seen = 1U;
-            if(rawdata < APP_BATTERY_GUARD_LOW_RAW)
+            /* 使用发布链路的滤波后电压做欠压判断 */
+            voltage = service_batterycheck_get_filtered_voltage();
+            if(voltage < APP_BATTERY_GUARD_LOW_VOLTAGE)
             {
-                app_battery_guard_trip(rawdata, APP_BATTERY_GUARD_REASON_LOW_VOLTAGE);
+                app_battery_guard_trip(voltage, APP_BATTERY_GUARD_REASON_LOW_VOLTAGE);
             }
             return;
         }
@@ -71,12 +76,12 @@ static void app_battery_guard_tick(void)
     if((0U == battery_guard_sample_seen) &&
             ((uint32)(now - battery_guard_start_tick) >= APP_BATTERY_GUARD_STARTUP_GRACE_TICK))
     {
-        app_battery_guard_trip(0U, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
+        app_battery_guard_trip(0.0f, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
     }
     else if((0U != battery_guard_sample_seen) &&
             ((uint32)(now - battery_guard_last_fresh_tick) >= APP_BATTERY_GUARD_MAX_SAMPLE_AGE_TICK))
     {
-        app_battery_guard_trip(rawdata, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
+        app_battery_guard_trip(0.0f, APP_BATTERY_GUARD_REASON_STALE_SAMPLE);
     }
 }
 
@@ -84,16 +89,42 @@ void app_battery_guard_init(void)
 {
     battery_guard_triggered = 0U;
     battery_guard_report_pending = 0U;
-    battery_guard_trip_raw = 0U;
+    battery_guard_trip_voltage = 0.0f;
     battery_guard_reason = 0U;
     battery_guard_last_sequence = 0UL;
     battery_guard_last_fresh_tick = service_timetick_what();
     battery_guard_start_tick = battery_guard_last_fresh_tick;
     battery_guard_sample_seen = 0U;
     pit_ms_init(APP_BATTERY_GUARD_PIT, APP_BATTERY_GUARD_PERIOD_MS, app_battery_guard_tick);
-    interrupt_set_priority(TIM8_IRQn, 3U);
+    interrupt_set_priority(TIM9_IRQn, 3U);
 }
 
 void app_battery_guard_pump_events(void)
 {
+    uint8 ea_backup;
+    uint8 pending;
+    uint8 reason;
+    float voltage;
+
+    ea_backup = EA;
+    EA = 0;
+    pending = battery_guard_report_pending;
+    battery_guard_report_pending = 0U;
+    reason = battery_guard_reason;
+    voltage = battery_guard_trip_voltage;
+    EA = ea_backup;
+
+    if(0U == pending)
+    {
+        return;
+    }
+
+    /* 有线报警 */
+    printf("[battery_guard] alarm, reason=%u(%s), voltage=%.2fV\r\n",
+            (unsigned int)reason,
+            (APP_BATTERY_GUARD_REASON_LOW_VOLTAGE == reason) ? "low_voltage" : "stale_sample",
+            (double)voltage);
+    /* 无线报警: reason 1=欠压 2=采样失效 */
+    wprint("battery_alarm,1.000,%u,%.2f\r\n",
+            (unsigned int)reason, (double)voltage);
 }

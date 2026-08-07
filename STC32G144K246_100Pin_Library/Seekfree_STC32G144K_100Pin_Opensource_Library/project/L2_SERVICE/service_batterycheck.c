@@ -4,14 +4,19 @@
 #include "service_packet.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
+#include "shared_lpf.h"
 
 #define BATTERYCHECK_PERIOD_TICK        (1000UL)
 #define BATTERYCHECK_DMA_TIMEOUT_TICK   (100UL)
+/* 电压发布数据一阶低通系数: 0.1, 平滑采样噪声 */
+#define BATTERYCHECK_LPF_ALPHA          (0.1f)
 
-static float batterycheck_voltage = 0.0f;
+static volatile float batterycheck_voltage = 0.0f;
 static uint32 batterycheck_last_request_tick = 0UL;
 static uint32 batterycheck_last_sequence = 0UL;
 static uint8 batterycheck_valid = 0U;
+static shared_lpf_t batterycheck_voltage_lpf;
+static uint8 batterycheck_lpf_ready = 0U;
 
 static void service_batterycheck_refresh_snapshot(void);
 static void service_batterycheck_request_next(void);
@@ -21,6 +26,7 @@ static void service_batterycheck_refresh_snapshot(void)
 {
     uint16 rawdata;
     uint32 sequence;
+    float raw_voltage;
 
     if(0U == bsp_battery_get_snapshot(&rawdata, &sequence))
     {
@@ -29,9 +35,21 @@ static void service_batterycheck_refresh_snapshot(void)
 
     if((0U == batterycheck_valid) || (sequence != batterycheck_last_sequence))
     {
-        bsp_battery_vol(&batterycheck_voltage);
+        /* 直接用本次取回的原始值换算, 避免二次读快照导致 LPF 双连击 */
+        raw_voltage = bsp_battery_vol_from_raw(rawdata);
         batterycheck_last_sequence = sequence;
         batterycheck_valid = 1U;
+        /* 发布数据 = 低通后的电压: 首帧直接落位, 之后按系数 0.1 平滑 */
+        if(0U == batterycheck_lpf_ready)
+        {
+            shared_lpf_reset(&batterycheck_voltage_lpf, raw_voltage);
+            batterycheck_lpf_ready = 1U;
+            batterycheck_voltage = raw_voltage;
+        }
+        else
+        {
+            batterycheck_voltage = shared_lpf_update(&batterycheck_voltage_lpf, raw_voltage);
+        }
     }
 }
 
@@ -64,6 +82,8 @@ void service_batterycheck_init(void)
     batterycheck_last_request_tick = service_timetick_what();
     batterycheck_last_sequence = 0UL;
     batterycheck_valid = 0U;
+    shared_lpf_init(&batterycheck_voltage_lpf, BATTERYCHECK_LPF_ALPHA, 0.0f);
+    batterycheck_lpf_ready = 0U;
     (void)service_packet_add_action("battery_voltage", service_batterycheck_voltage_reply, 0UL);
     #if __DBGFLAG__
     printf(">>[service_batterycheck_init]\r\n");
@@ -134,4 +154,17 @@ void service_batterycheck_get_voltage(float *voltage)
     {
         *voltage = batterycheck_voltage;
     }
+}
+
+/* ISR 安全读取: 只返回已发布的滤波后电压, 不触发刷新/低通计算, 撕裂读保护 */
+float service_batterycheck_get_filtered_voltage(void)
+{
+    float voltage;
+
+    voltage = batterycheck_voltage;
+    while(voltage != batterycheck_voltage)
+    {
+        voltage = batterycheck_voltage;
+    }
+    return voltage;
 }

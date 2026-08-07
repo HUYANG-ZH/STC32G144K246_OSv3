@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               04/08/26  18:02:48  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -17,151 +17,185 @@ stmt  level    source
     4          #include "service_packet.h"
     5          #include "service_timetick.h"
     6          #include "service_wireless_uart.h"
-    7          
-    8          #define BATTERYCHECK_PERIOD_TICK        (1000UL)
-    9          #define BATTERYCHECK_DMA_TIMEOUT_TICK   (100UL)
-   10          
-   11          static float batterycheck_voltage = 0.0f;
-   12          static uint32 batterycheck_last_request_tick = 0UL;
-   13          static uint32 batterycheck_last_sequence = 0UL;
-   14          static uint8 batterycheck_valid = 0U;
-   15          
-   16          static void service_batterycheck_refresh_snapshot(void);
-   17          static void service_batterycheck_request_next(void);
-   18          static void service_batterycheck_voltage_reply(void);
-   19          
-   20          static void service_batterycheck_refresh_snapshot(void)
-   21          {
-   22   1          uint16 rawdata;
-   23   1          uint32 sequence;
-   24   1      
-   25   1          if(0U == bsp_battery_get_snapshot(&rawdata, &sequence))
-   26   1          {
-   27   2              return;
-   28   2          }
-   29   1      
-   30   1          if((0U == batterycheck_valid) || (sequence != batterycheck_last_sequence))
-   31   1          {
-   32   2              bsp_battery_vol(&batterycheck_voltage);
-   33   2              batterycheck_last_sequence = sequence;
-   34   2              batterycheck_valid = 1U;
-   35   2          }
-   36   1      }
-   37          
-   38          static void service_batterycheck_request_next(void)
-   39          {
-   40   1          if(0U != bsp_battery_request_sample())
-   41   1          {
-   42   2              batterycheck_last_request_tick = service_timetick_what();
-   43   2          }
-   44   1      }
-   45          
-   46          static void service_batterycheck_voltage_reply(void)
-   47          {
-   48   1          service_batterycheck_refresh_snapshot();
-   49   1          service_batterycheck_request_next();
-   50   1          if(0U != batterycheck_valid)
-   51   1          {
-   52   2              wprint("battery_voltage,%.3f\r\n", batterycheck_voltage);
+    7          #include "shared_lpf.h"
+    8          
+    9          #define BATTERYCHECK_PERIOD_TICK        (1000UL)
+   10          #define BATTERYCHECK_DMA_TIMEOUT_TICK   (100UL)
+   11          /* 电压发布数据一阶低通系数: 0.1, 平滑采样噪声 */
+   12          #define BATTERYCHECK_LPF_ALPHA          (0.1f)
+   13          
+   14          static volatile float batterycheck_voltage = 0.0f;
+   15          static uint32 batterycheck_last_request_tick = 0UL;
+   16          static uint32 batterycheck_last_sequence = 0UL;
+   17          static uint8 batterycheck_valid = 0U;
+   18          static shared_lpf_t batterycheck_voltage_lpf;
+   19          static uint8 batterycheck_lpf_ready = 0U;
+   20          
+   21          static void service_batterycheck_refresh_snapshot(void);
+   22          static void service_batterycheck_request_next(void);
+   23          static void service_batterycheck_voltage_reply(void);
+   24          
+   25          static void service_batterycheck_refresh_snapshot(void)
+   26          {
+   27   1          uint16 rawdata;
+   28   1          uint32 sequence;
+   29   1          float raw_voltage;
+   30   1      
+   31   1          if(0U == bsp_battery_get_snapshot(&rawdata, &sequence))
+   32   1          {
+   33   2              return;
+   34   2          }
+   35   1      
+   36   1          if((0U == batterycheck_valid) || (sequence != batterycheck_last_sequence))
+   37   1          {
+   38   2              /* 直接用本次取回的原始值换算, 避免二次读快照导致 LPF 双连击 */
+   39   2              raw_voltage = bsp_battery_vol_from_raw(rawdata);
+   40   2              batterycheck_last_sequence = sequence;
+   41   2              batterycheck_valid = 1U;
+   42   2              /* 发布数据 = 低通后的电压: 首帧直接落位, 之后按系数 0.1 平滑 */
+   43   2              if(0U == batterycheck_lpf_ready)
+   44   2              {
+   45   3                  shared_lpf_reset(&batterycheck_voltage_lpf, raw_voltage);
+   46   3                  batterycheck_lpf_ready = 1U;
+   47   3                  batterycheck_voltage = raw_voltage;
+   48   3              }
+   49   2              else
+   50   2              {
+   51   3                  batterycheck_voltage = shared_lpf_update(&batterycheck_voltage_lpf, raw_voltage);
+   52   3              }
    53   2          }
-   54   1          else
-   55   1          {
-C251 COMPILER V5.60.0,  service_batterycheck                                               04/08/26  18:02:48  PAGE 2   
+   54   1      }
+   55          
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 2   
 
-   56   2              wprint("battery_voltage,pending\r\n");
-   57   2          }
-   58   1      }
-   59          
-   60          void service_batterycheck_init(void)
-   61          {
-   62   1          bsp_battery_init();
-   63   1          batterycheck_voltage = 0.0f;
-   64   1          batterycheck_last_request_tick = service_timetick_what();
-   65   1          batterycheck_last_sequence = 0UL;
-   66   1          batterycheck_valid = 0U;
-   67   1          (void)service_packet_add_action("battery_voltage", service_batterycheck_voltage_reply, 0UL);
-   68   1          #if __DBGFLAG__
-   69   1          printf(">>[service_batterycheck_init]\r\n");
-   70   1          wprint(">>[service_batterycheck_init]\r\n");
-   71   1          #endif
-   72   1      }
-   73          
-   74          void service_batterycheck_debug(void)
-   75          {
-   76   1          service_batterycheck_refresh_snapshot();
-   77   1          if(0U != batterycheck_valid)
-   78   1          {
-   79   2              printf("[batterycheck:voltage=%.4f]\r\n", batterycheck_voltage);
-   80   2          }
-   81   1          else
-   82   1          {
-   83   2              printf("[batterycheck:pending]\r\n");
-   84   2          }
-   85   1      }
-   86          
-   87          void service_batterycheck_task(void)
-   88          {
-   89   1          uint32 now;
-   90   1      
-   91   1          service_batterycheck_refresh_snapshot();
-   92   1          now = service_timetick_what();
-   93   1          if(0U != bsp_battery_is_busy())
-   94   1          {
-   95   2              if((uint32)(now - batterycheck_last_request_tick) >= BATTERYCHECK_DMA_TIMEOUT_TICK)
-   96   2              {
-   97   3                  bsp_battery_recover();
-   98   3                  service_batterycheck_request_next();
-   99   3              }
-  100   2              return;
-  101   2          }
-  102   1      
-  103   1          if((uint32)(now - batterycheck_last_request_tick) >= BATTERYCHECK_PERIOD_TICK)
-  104   1          {
-  105   2              service_batterycheck_request_next();
-  106   2          }
-  107   1      }
-  108          
-  109          uint8 service_batterycheck_is_valid(void)
-  110          {
+   56          static void service_batterycheck_request_next(void)
+   57          {
+   58   1          if(0U != bsp_battery_request_sample())
+   59   1          {
+   60   2              batterycheck_last_request_tick = service_timetick_what();
+   61   2          }
+   62   1      }
+   63          
+   64          static void service_batterycheck_voltage_reply(void)
+   65          {
+   66   1          service_batterycheck_refresh_snapshot();
+   67   1          service_batterycheck_request_next();
+   68   1          if(0U != batterycheck_valid)
+   69   1          {
+   70   2              wprint("battery_voltage,%.3f\r\n", batterycheck_voltage);
+   71   2          }
+   72   1          else
+   73   1          {
+   74   2              wprint("battery_voltage,pending\r\n");
+   75   2          }
+   76   1      }
+   77          
+   78          void service_batterycheck_init(void)
+   79          {
+   80   1          bsp_battery_init();
+   81   1          batterycheck_voltage = 0.0f;
+   82   1          batterycheck_last_request_tick = service_timetick_what();
+   83   1          batterycheck_last_sequence = 0UL;
+   84   1          batterycheck_valid = 0U;
+   85   1          shared_lpf_init(&batterycheck_voltage_lpf, BATTERYCHECK_LPF_ALPHA, 0.0f);
+   86   1          batterycheck_lpf_ready = 0U;
+   87   1          (void)service_packet_add_action("battery_voltage", service_batterycheck_voltage_reply, 0UL);
+   88   1          #if __DBGFLAG__
+   89   1          printf(">>[service_batterycheck_init]\r\n");
+   90   1          wprint(">>[service_batterycheck_init]\r\n");
+   91   1          #endif
+   92   1      }
+   93          
+   94          void service_batterycheck_debug(void)
+   95          {
+   96   1          service_batterycheck_refresh_snapshot();
+   97   1          if(0U != batterycheck_valid)
+   98   1          {
+   99   2              printf("[batterycheck:voltage=%.4f]\r\n", batterycheck_voltage);
+  100   2          }
+  101   1          else
+  102   1          {
+  103   2              printf("[batterycheck:pending]\r\n");
+  104   2          }
+  105   1      }
+  106          
+  107          void service_batterycheck_task(void)
+  108          {
+  109   1          uint32 now;
+  110   1      
   111   1          service_batterycheck_refresh_snapshot();
-  112   1          return batterycheck_valid;
-  113   1      }
-  114          
-  115          uint8 service_batterycheck_raw_is_valid(void)
-  116          {
-  117   1          return bsp_battery_sample_is_valid();
-  118   1      }
-  119          
-  120          void service_batterycheck_get_raw(uint16 *rawdata)
-  121          {
-C251 COMPILER V5.60.0,  service_batterycheck                                               04/08/26  18:02:48  PAGE 3   
+  112   1          now = service_timetick_what();
+  113   1          if(0U != bsp_battery_is_busy())
+  114   1          {
+  115   2              if((uint32)(now - batterycheck_last_request_tick) >= BATTERYCHECK_DMA_TIMEOUT_TICK)
+  116   2              {
+  117   3                  bsp_battery_recover();
+  118   3                  service_batterycheck_request_next();
+  119   3              }
+  120   2              return;
+  121   2          }
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 3   
 
-  122   1          bsp_battery_get_raw(rawdata);
-  123   1      }
-  124          
-  125          uint8 service_batterycheck_get_raw_snapshot(uint16 *rawdata, uint32 *sequence)
-  126          {
-  127   1          return bsp_battery_get_snapshot(rawdata, sequence);
-  128   1      }
-  129          
-  130          void service_batterycheck_get_voltage(float *voltage)
-  131          {
-  132   1          service_batterycheck_refresh_snapshot();
-  133   1          if(NULL != voltage)
-  134   1          {
-  135   2              *voltage = batterycheck_voltage;
-  136   2          }
-  137   1      }
+  122   1      
+  123   1          if((uint32)(now - batterycheck_last_request_tick) >= BATTERYCHECK_PERIOD_TICK)
+  124   1          {
+  125   2              service_batterycheck_request_next();
+  126   2          }
+  127   1      }
+  128          
+  129          uint8 service_batterycheck_is_valid(void)
+  130          {
+  131   1          service_batterycheck_refresh_snapshot();
+  132   1          return batterycheck_valid;
+  133   1      }
+  134          
+  135          uint8 service_batterycheck_raw_is_valid(void)
+  136          {
+  137   1          return bsp_battery_sample_is_valid();
+  138   1      }
+  139          
+  140          void service_batterycheck_get_raw(uint16 *rawdata)
+  141          {
+  142   1          bsp_battery_get_raw(rawdata);
+  143   1      }
+  144          
+  145          uint8 service_batterycheck_get_raw_snapshot(uint16 *rawdata, uint32 *sequence)
+  146          {
+  147   1          return bsp_battery_get_snapshot(rawdata, sequence);
+  148   1      }
+  149          
+  150          void service_batterycheck_get_voltage(float *voltage)
+  151          {
+  152   1          service_batterycheck_refresh_snapshot();
+  153   1          if(NULL != voltage)
+  154   1          {
+  155   2              *voltage = batterycheck_voltage;
+  156   2          }
+  157   1      }
+  158          
+  159          /* ISR 安全读取: 只返回已发布的滤波后电压, 不触发刷新/低通计算, 撕裂读保护 
+             -*/
+  160          float service_batterycheck_get_filtered_voltage(void)
+  161          {
+  162   1          float voltage;
+  163   1      
+  164   1          voltage = batterycheck_voltage;
+  165   1          while(voltage != batterycheck_voltage)
+  166   1          {
+  167   2              voltage = batterycheck_voltage;
+  168   2          }
+  169   1          return voltage;
+  170   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       579     ------
+  ecode size           =       800     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        39     ------
+  xdata size           =        56     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -169,9 +203,11 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 4   
+
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       185     ------
+  hconst size          =       191     ------
 End of Module Information.
 
 

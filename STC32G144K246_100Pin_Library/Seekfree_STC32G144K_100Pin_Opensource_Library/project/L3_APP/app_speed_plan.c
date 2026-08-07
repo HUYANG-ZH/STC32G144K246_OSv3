@@ -5,6 +5,9 @@
 #include "app_motion_preprocess.h"
 #include "app_speed_plan.h"
 #include "app_element.h"
+#include "app_attitude.h"
+#include "app_speedout.h"
+#include "service_negative_pressure.h"
 #include "service_wireless_uart.h"
 
 #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
@@ -14,7 +17,15 @@
 #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
 #define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
 
+/* 负压生效量接口: 无线 negative_pressure 为基础量, 触发时叠加增量, 上限 90 */
+#define APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT   (15.0f)     /* 触发时在基础量上增加的百分比 */
+#define APP_SPEED_PLAN_PRESSURE_MAX             (90.0f)     /* 生效量上限 */
+#define APP_SPEED_PLAN_PITCH_LIMIT_DEG          (30.0f)     /* |pitch| 超过 ±30° 触发 */
+#define APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM     (200U)      /* TOF 测距 <200mm 触发(预留) */
+
 static volatile float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
+static volatile float speed_plan_pressure_boost = APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT;
+static uint8 speed_plan_pressure_boost_active = 0U;
 static volatile float speed_plan_linear_mps = 0.0f;
 
 void app_speed_plan_control_step(void);
@@ -90,6 +101,69 @@ static void app_speed_plan_register_packet(void)
 {
     (void)service_packet_add_variable("speed_plan_min_ratio",
             (float *)&speed_plan_min_ratio, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("pressure_boost",
+            (float *)&speed_plan_pressure_boost, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
+}
+
+/* TOF 接近检测接口(预留): 待 TOF 模块重新启用后接入, 当前恒为 0 */
+static uint8 app_speed_plan_tof_near_obstacle(void)
+{
+    /* if(service_tof_get_distance_mm() < APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM) return 1U; */
+    return 0U;
+}
+
+/* 负压增量触发条件: TOF 接近(预留) 或 |pitch| 超过 ±30° */
+static uint8 app_speed_plan_pressure_boost_condition(void)
+{
+    app_attitude_data_t attitude;
+
+    if(0U != app_speed_plan_tof_near_obstacle())
+    {
+        return 1U;
+    }
+
+    app_attitude_get_data(&attitude);
+    if((0U != attitude.valid) &&
+       ((attitude.pitch_deg > APP_SPEED_PLAN_PITCH_LIMIT_DEG) ||
+        (attitude.pitch_deg < -APP_SPEED_PLAN_PITCH_LIMIT_DEG)))
+    {
+        return 1U;
+    }
+
+    return 0U;
+}
+
+/* 负压生效量计算: 基础量(无线 negative_pressure) + 触发增量, 上限 90。
+   触发期间接管负压输出, 恢复后还原基础量。调用方为 TIM5 前的 5ms 控制链。 */
+static void app_speed_plan_update_pressure(void)
+{
+    uint8 active;
+    float effective;
+
+    /* 安全联锁(欠压/IMU/电感故障)期间不接管负压: TIM5 联锁路径会强制置 0,
+       这里再写入会把联锁击穿, 因此联锁期间直接放弃本周期负压管理 */
+    if(0U != app_speedout_get_safety_inhibit())
+    {
+        speed_plan_pressure_boost_active = 0U;
+        return;
+    }
+
+    active = app_speed_plan_pressure_boost_condition();
+    if(0U != active)
+    {
+        effective = tfpu_add(tfpu_int2float((long)service_negative_pressure_get_config_percent()),
+                speed_plan_pressure_boost);
+        if(effective > APP_SPEED_PLAN_PRESSURE_MAX)
+        {
+            effective = APP_SPEED_PLAN_PRESSURE_MAX;
+        }
+        service_negative_pressure_set_percent((uint8)(effective + 0.5f));
+    }
+    else if(0U != speed_plan_pressure_boost_active)
+    {
+        service_negative_pressure_set_percent(service_negative_pressure_get_config_percent());
+    }
+    speed_plan_pressure_boost_active = active;
 }
 
 void app_speed_plan_init(void)
@@ -143,4 +217,7 @@ void app_speed_plan_control_step(void)
     {
         speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
     }
+
+    /* 负压生效量接口: 基础量 + 触发增量(上限90) */
+    app_speed_plan_update_pressure();
 }

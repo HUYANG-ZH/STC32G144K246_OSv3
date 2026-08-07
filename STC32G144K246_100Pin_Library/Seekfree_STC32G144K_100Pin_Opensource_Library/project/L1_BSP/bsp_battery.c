@@ -207,3 +207,8 @@ void bsp_battery_vol(float *vol)
     bsp_battery_get_raw(&rawdata);
     *vol = ((float)rawdata / BSP_BATTERY_ADC_FULL_SCALE) * BSP_BATTERY_VOLTAGE_SCALE;
 }
+
+float bsp_battery_vol_from_raw(uint16 rawdata)
+{
+    return ((float)rawdata / BSP_BATTERY_ADC_FULL_SCALE) * BSP_BATTERY_VOLTAGE_SCALE;
+}

@@ -20,5 +20,7 @@ void service_negative_pressure_request_percent(uint8 percent);
 void service_negative_pressure_apply_request(void);
 void service_negative_pressure_set_percent(uint8 percent);
 uint8 service_negative_pressure_get_percent(void);
+/* 读取无线配置的基础量(0~100), 只读不改动变量机制 */
+uint8 service_negative_pressure_get_config_percent(void);
 
 #endif

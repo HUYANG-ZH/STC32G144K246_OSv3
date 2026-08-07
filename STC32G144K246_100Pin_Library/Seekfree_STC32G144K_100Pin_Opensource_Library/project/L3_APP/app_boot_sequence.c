@@ -52,6 +52,7 @@ static void app_boot_start_handler(void)
     app_speedout_request_start();
 }
 
+/* 开机自动负压+发车流程已关闭: 任务不再注册运行, 发车仅剩无线 $$T,start@ 入口
 static void app_boot_task(void)
 {
     uint32 now;
@@ -72,6 +73,11 @@ static void app_boot_task(void)
 
     switch(boot_state)
     {
+        case APP_BOOT_STATE_IDLE:
+            boot_state = APP_BOOT_STATE_BEEP;
+            boot_state_tick = now;
+            break;
+
         case APP_BOOT_STATE_BEEP:
             if((uint32)(now - boot_state_tick) >= APP_BOOT_BEEP_TICKS)
             {
@@ -94,9 +100,8 @@ static void app_boot_task(void)
         case APP_BOOT_STATE_PRESSURE:
             if((uint32)(now - boot_state_tick) >= APP_BOOT_PRESSURE_DELAY_TICKS)
             {
-                app_speedout_request_start();
                 boot_state = APP_BOOT_STATE_DONE;
-                wprint("boot_drive,1.000\r\n");
+                wprint("boot_ready,1.000\r\n");
             }
             break;
 
@@ -104,6 +109,7 @@ static void app_boot_task(void)
             break;
     }
 }
+*/
 
 void app_boot_sequence_init(void)
 {
@@ -119,8 +125,7 @@ void app_boot_sequence_init(void)
 
     wprint("boot_beep,1.000\r\n");
 
-    (void)app_scheduler_add(APP_BOOT_TASK_ID, app_boot_task,
-            APP_BOOT_TASK_PRIORITY, APP_BOOT_TASK_PERIOD_MS);
+    /* 开机自动流程已关闭, 不再注册调度任务(无自动负压预充/自动发车) */
     #if __DBGFLAG__
     printf(">>[app_boot_sequence_init]\r\n");
     wprint(">>[app_boot_sequence_init]\r\n");

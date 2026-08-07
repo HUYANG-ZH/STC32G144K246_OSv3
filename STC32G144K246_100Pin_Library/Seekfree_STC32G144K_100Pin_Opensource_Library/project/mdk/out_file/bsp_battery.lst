@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  bsp_battery                                                        04/08/26  18:02:44  PAGE 1   
+C251 COMPILER V5.60.0,  bsp_battery                                                        07/08/26  18:38:48  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE bsp_battery
@@ -66,7 +66,7 @@ stmt  level    source
    53   2              battery_snapshot[index].sequence = 0UL;
    54   2              battery_snapshot[index].valid = 0U;
    55   2          }
-C251 COMPILER V5.60.0,  bsp_battery                                                        04/08/26  18:02:44  PAGE 2   
+C251 COMPILER V5.60.0,  bsp_battery                                                        07/08/26  18:38:48  PAGE 2   
 
    56   1      
    57   1          battery_published_index = 0U;
@@ -134,7 +134,7 @@ stmt  level    source
   119          uint8 bsp_battery_sample_is_valid(void)
   120          {
   121   1          uint8 ea_backup;
-C251 COMPILER V5.60.0,  bsp_battery                                                        04/08/26  18:02:44  PAGE 3   
+C251 COMPILER V5.60.0,  bsp_battery                                                        07/08/26  18:38:48  PAGE 3   
 
   122   1          uint8 valid;
   123   1      
@@ -202,7 +202,7 @@ stmt  level    source
   185   1          uint8 ea_backup;
   186   1      
   187   1          /* Background recovery only resets/re-arms peripheral registers. */
-C251 COMPILER V5.60.0,  bsp_battery                                                        04/08/26  18:02:44  PAGE 4   
+C251 COMPILER V5.60.0,  bsp_battery                                                        07/08/26  18:38:48  PAGE 4   
 
   188   1          ea_backup = EA;
   189   1          EA = 0;
@@ -226,16 +226,21 @@ stmt  level    source
   207   1          bsp_battery_get_raw(&rawdata);
   208   1          *vol = ((float)rawdata / BSP_BATTERY_ADC_FULL_SCALE) * BSP_BATTERY_VOLTAGE_SCALE;
   209   1      }
+  210          
+  211          float bsp_battery_vol_from_raw(uint16 rawdata)
+  212          {
+  213   1          return ((float)rawdata / BSP_BATTERY_ADC_FULL_SCALE) * BSP_BATTERY_VOLTAGE_SCALE;
+  214   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1168     ------
+  ecode size           =      1208     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        78     ------
+  xdata size           =        80     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

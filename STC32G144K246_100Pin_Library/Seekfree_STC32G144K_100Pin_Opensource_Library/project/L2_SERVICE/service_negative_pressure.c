@@ -163,3 +163,8 @@ uint8 service_negative_pressure_get_percent(void)
 {
     return negative_pressure_percent;
 }
+
+uint8 service_negative_pressure_get_config_percent(void)
+{
+    return negative_pressure_float_to_percent(negative_pressure_percent_config);
+}
