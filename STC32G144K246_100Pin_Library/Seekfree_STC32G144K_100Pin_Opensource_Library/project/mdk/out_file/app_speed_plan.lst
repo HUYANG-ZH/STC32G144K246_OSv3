@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  18:38:54  PAGE 1   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  19:40:24  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speed_plan
@@ -66,7 +66,7 @@ stmt  level    source
    52          
    53          static float app_speed_plan_max(float a, float b)
    54          {
-C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  18:38:54  PAGE 2   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  19:40:24  PAGE 2   
 
    55   1          return (a > b) ? a : b;
    56   1      }
@@ -134,7 +134,7 @@ stmt  level    source
   118   1          app_attitude_data_t attitude;
   119   1      
   120   1          if(0U != app_speed_plan_tof_near_obstacle())
-C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  18:38:54  PAGE 3   
+C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  19:40:24  PAGE 3   
 
   121   1          {
   122   2              return 1U;
@@ -158,101 +158,111 @@ stmt  level    source
   139          {
   140   1          uint8 active;
   141   1          float effective;
-  142   1      
-  143   1          /* 安全联锁(欠压/IMU/电感故障)期间不接管负压: TIM5 联锁路径会强制置 0,
-  144   1             这里再写入会把联锁击穿, 因此联锁期间直接放弃本周期负压管理 */
-  145   1          if(0U != app_speedout_get_safety_inhibit())
-  146   1          {
-  147   2              speed_plan_pressure_boost_active = 0U;
-  148   2              return;
-  149   2          }
-  150   1      
-  151   1          active = app_speed_plan_pressure_boost_condition();
-  152   1          if(0U != active)
-  153   1          {
-  154   2              effective = tfpu_add(tfpu_int2float((long)service_negative_pressure_get_config_percent()),
-  155   2                      speed_plan_pressure_boost);
-  156   2              if(effective > APP_SPEED_PLAN_PRESSURE_MAX)
-  157   2              {
-  158   3                  effective = APP_SPEED_PLAN_PRESSURE_MAX;
-  159   3              }
-  160   2              service_negative_pressure_set_percent((uint8)(effective + 0.5f));
-  161   2          }
-  162   1          else if(0U != speed_plan_pressure_boost_active)
+  142   1          app_speedout_data_t speedout;
+  143   1      
+  144   1          /* 安全联锁(IMU/电感故障)期间不接管负压: TIM5 联锁路径会强制置 0,
+  145   1             这里再写入会把联锁击穿, 因此联锁期间直接放弃本周期负压管理 */
+  146   1          if(0U != app_speedout_get_safety_inhibit())
+  147   1          {
+  148   2              speed_plan_pressure_boost_active = 0U;
+  149   2              return;
+  150   2          }
+  151   1      
+  152   1          /* 车辆未启动(无线 stop/急停后 enabled=0)时不接管负压:
+  153   1             否则 stop 后触发条件(如 |pitch|>30°)成立时会每 5ms 把负压重新拉起 */
+  154   1          app_speedout_get_data(&speedout);
+  155   1          if(speedout.enabled < 0.5f)
+  156   1          {
+  157   2              speed_plan_pressure_boost_active = 0U;
+  158   2              return;
+  159   2          }
+  160   1      
+  161   1          active = app_speed_plan_pressure_boost_condition();
+  162   1          if(0U != active)
   163   1          {
-  164   2              service_negative_pressure_set_percent(service_negative_pressure_get_config_percent());
-  165   2          }
-  166   1          speed_plan_pressure_boost_active = active;
-  167   1      }
-  168          
-  169          void app_speed_plan_init(void)
-  170          {
-  171   1          app_motion_preprocess_data_t motion_preprocess;
-  172   1      
-  173   1          app_motion_preprocess_get_data(&motion_preprocess);
-  174   1          speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
-  175   1          speed_plan_linear_mps = motion_preprocess.linear_mps;
-  176   1      
-  177   1          app_speed_plan_register_packet();
-  178   1          app_speed_plan_control_step();
-  179   1          /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定�
-             -� */
-  180   1          #if __DBGFLAG__
-  181   1          printf(">>[app_speed_plan_init]\r\n");
-  182   1          wprint(">>[app_speed_plan_init]\r\n");
-  183   1          #endif
-  184   1      }
-C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  18:38:54  PAGE 4   
+  164   2              effective = tfpu_add(tfpu_int2float((long)service_negative_pressure_get_config_percent()),
+  165   2                      speed_plan_pressure_boost);
+  166   2              if(effective > APP_SPEED_PLAN_PRESSURE_MAX)
+  167   2              {
+  168   3                  effective = APP_SPEED_PLAN_PRESSURE_MAX;
+  169   3              }
+  170   2              service_negative_pressure_set_percent((uint8)(effective + 0.5f));
+  171   2          }
+  172   1          else if(0U != speed_plan_pressure_boost_active)
+  173   1          {
+  174   2              service_negative_pressure_set_percent(service_negative_pressure_get_config_percent());
+  175   2          }
+  176   1          speed_plan_pressure_boost_active = active;
+  177   1      }
+  178          
+  179          void app_speed_plan_init(void)
+  180          {
+  181   1          app_motion_preprocess_data_t motion_preprocess;
+  182   1      
+  183   1          app_motion_preprocess_get_data(&motion_preprocess);
+  184   1          speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
+  185   1          speed_plan_linear_mps = motion_preprocess.linear_mps;
+C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  19:40:24  PAGE 4   
 
-  185          
-  186          float app_speed_plan_get_linear_mps(void)
-  187          {
-  188   1          return speed_plan_linear_mps;
-  189   1      }
-  190          
-  191          void app_speed_plan_control_step(void)
-  192          {
-  193   1          float line_error_rate;
-  194   1          float curvature_rate;
-  195   1          float brake_rate;
-  196   1          float ratio;
-  197   1          float target_raw_mps;
-  198   1          app_motion_preprocess_data_t motion_preprocess;
-  199   1          app_feedforward_data_t feedforward;
-  200   1      
-  201   1          app_motion_preprocess_get_data(&motion_preprocess);
-  202   1          app_feedforward_get_data(&feedforward);
-  203   1      
-  204   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
-  205   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
-  206   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
-  207   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
-  208   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
-  209   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
+  186   1      
+  187   1          app_speed_plan_register_packet();
+  188   1          app_speed_plan_control_step();
+  189   1          /* 周期执行由同一条 TIM6 控制链统一排序，避免跨定时器的数据年龄不确定�
+             -� */
+  190   1          #if __DBGFLAG__
+  191   1          printf(">>[app_speed_plan_init]\r\n");
+  192   1          wprint(">>[app_speed_plan_init]\r\n");
+  193   1          #endif
+  194   1      }
+  195          
+  196          float app_speed_plan_get_linear_mps(void)
+  197          {
+  198   1          return speed_plan_linear_mps;
+  199   1      }
+  200          
+  201          void app_speed_plan_control_step(void)
+  202          {
+  203   1          float line_error_rate;
+  204   1          float curvature_rate;
+  205   1          float brake_rate;
+  206   1          float ratio;
+  207   1          float target_raw_mps;
+  208   1          app_motion_preprocess_data_t motion_preprocess;
+  209   1          app_feedforward_data_t feedforward;
   210   1      
-  211   1          /* 跷跷板触发后立即降速到 0.8m/s，持续 160ms，跳过 ramp 实现硬立即 */
-  212   1          if(0U != app_element_seesaw_is_slowdown_active())
-  213   1          {
-  214   2              speed_plan_linear_mps = app_element_seesaw_slowdown_speed_mps();
-  215   2          }
-  216   1          else
-  217   1          {
-  218   2              speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
-  219   2          }
+  211   1          app_motion_preprocess_get_data(&motion_preprocess);
+  212   1          app_feedforward_get_data(&feedforward);
+  213   1      
+  214   1          line_error_rate = app_speed_plan_norm_abs(motion_preprocess.line_error, APP_SPEED_PLAN_ERROR_MAX);
+  215   1          curvature_rate = app_speed_plan_norm_abs(feedforward.curvature, APP_SPEED_PLAN_CURVATURE_MAX);
+  216   1          brake_rate = app_speed_plan_max(line_error_rate, curvature_rate);
+  217   1          ratio = app_speed_plan_limit(speed_plan_min_ratio, 0.0f, 1.0f);
+  218   1          target_raw_mps = tfpu_mul(motion_preprocess.linear_mps,
+  219   1                  tfpu_sub(1.0f, tfpu_mul(tfpu_sub(1.0f, ratio), brake_rate)));
   220   1      
-  221   1          /* 负压生效量接口: 基础量 + 触发增量(上限90) */
-  222   1          app_speed_plan_update_pressure();
-  223   1      }
+  221   1          /* 跷跷板触发后立即降速到 0.8m/s，持续 160ms，跳过 ramp 实现硬立即 */
+  222   1          if(0U != app_element_seesaw_is_slowdown_active())
+  223   1          {
+  224   2              speed_plan_linear_mps = app_element_seesaw_slowdown_speed_mps();
+  225   2          }
+  226   1          else
+  227   1          {
+  228   2              speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
+  229   2          }
+  230   1      
+  231   1          /* 负压生效量接口: 基础量 + 触发增量(上限90) */
+  232   1          app_speed_plan_update_pressure();
+  233   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1333     ------
+  ecode size           =      1375     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       167     ------
+  xdata size           =       195     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -261,6 +271,8 @@ Module Information          Static   Overlayable
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
+C251 COMPILER V5.60.0,  app_speed_plan                                                     07/08/26  19:40:24  PAGE 5   
+
   const size           =    ------     ------
   hconst size          =        95     ------
 End of Module Information.

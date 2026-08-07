@@ -139,10 +139,20 @@ static void app_speed_plan_update_pressure(void)
 {
     uint8 active;
     float effective;
+    app_speedout_data_t speedout;
 
-    /* 安全联锁(欠压/IMU/电感故障)期间不接管负压: TIM5 联锁路径会强制置 0,
+    /* 安全联锁(IMU/电感故障)期间不接管负压: TIM5 联锁路径会强制置 0,
        这里再写入会把联锁击穿, 因此联锁期间直接放弃本周期负压管理 */
     if(0U != app_speedout_get_safety_inhibit())
+    {
+        speed_plan_pressure_boost_active = 0U;
+        return;
+    }
+
+    /* 车辆未启动(无线 stop/急停后 enabled=0)时不接管负压:
+       否则 stop 后触发条件(如 |pitch|>30°)成立时会每 5ms 把负压重新拉起 */
+    app_speedout_get_data(&speedout);
+    if(speedout.enabled < 0.5f)
     {
         speed_plan_pressure_boost_active = 0U;
         return;

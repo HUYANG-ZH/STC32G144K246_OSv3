@@ -5,9 +5,12 @@ Traceback (most recent call last):
   File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\tui.py", line 460, in worker_flash_image
     actual = self.make_engine(port, cold, full_rewrite).flash(image, plan)
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 794, in flash
-    self.enter_bootloader()
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 490, in enter_bootloader
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 802, in flash
+    self.connect(ser)
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 528, in connect
+    status, payload, raw = self._request(
+                           ^^^^^^^^^^^^^^
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 403, in _request
     self._check_cancel()
   File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 389, in _check_cancel
     raise OperationCancelled("用户取消操作")

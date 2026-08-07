@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  19:25:19  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -29,7 +29,7 @@ stmt  level    source
    16          static uint32 batterycheck_last_sequence = 0UL;
    17          static uint8 batterycheck_valid = 0U;
    18          static shared_lpf_t batterycheck_voltage_lpf;
-   19          static uint8 batterycheck_lpf_ready = 0U;
+   19          static volatile uint8 batterycheck_lpf_ready = 0U;
    20          
    21          static void service_batterycheck_refresh_snapshot(void);
    22          static void service_batterycheck_request_next(void);
@@ -66,7 +66,7 @@ stmt  level    source
    53   2          }
    54   1      }
    55          
-C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 2   
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  19:25:19  PAGE 2   
 
    56          static void service_batterycheck_request_next(void)
    57          {
@@ -134,7 +134,7 @@ stmt  level    source
   119   3              }
   120   2              return;
   121   2          }
-C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 3   
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  19:25:19  PAGE 3   
 
   122   1      
   123   1          if((uint32)(now - batterycheck_last_request_tick) >= BATTERYCHECK_PERIOD_TICK)
@@ -186,16 +186,25 @@ stmt  level    source
   168   2          }
   169   1          return voltage;
   170   1      }
+  171          
+  172          /* 滤波已就绪标记: 1 = 主循环至少发布过一次滤波电压(首帧), 0 = 尚未(初值 0.0 �
+             -��可用于判定) */
+  173          uint8 service_batterycheck_filter_ready(void)
+  174          {
+  175   1          return batterycheck_lpf_ready;
+  176   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       800     ------
+  ecode size           =       805     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =        56     ------
+C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  19:25:19  PAGE 4   
+
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -203,8 +212,6 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
-C251 COMPILER V5.60.0,  service_batterycheck                                               07/08/26  18:38:49  PAGE 4   
-
   huge data size       =    ------     ------
   const size           =    ------     ------
   hconst size          =       191     ------

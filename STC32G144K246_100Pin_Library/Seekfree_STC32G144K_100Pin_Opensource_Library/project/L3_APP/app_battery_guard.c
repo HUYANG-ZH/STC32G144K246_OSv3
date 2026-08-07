@@ -2,9 +2,6 @@
 #include "service_batterycheck.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
-#include "app_feedforward.h"
-#include "app_motion_postprocess.h"
-#include "app_speedout.h"
 #include "app_battery_guard.h"
 
 /* TIM9: TIM8 已被 UART8 波特率发生器占用, 不可用作 PIT */
@@ -40,11 +37,10 @@ static void app_battery_guard_trip(float voltage, uint8 reason)
     battery_guard_trip_voltage = voltage;
     battery_guard_reason = reason;
     battery_guard_report_pending = 1U;
-    /* An interlock cannot be overridden by a concurrent START command. */
-    app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_BATTERY);
+    /* 仅报警, 不对车辆做任何动作(不下发联锁/不停机/不关负压) */
 }
 
-/* The only safety decision and motor stop request live in a high-priority timer. */
+/* 欠压/采样失效检测: 仅上报无线报警, 不影响电机与负压 */
 static void app_battery_guard_tick(void)
 {
     uint16 rawdata = 0U;
@@ -124,12 +120,7 @@ void app_battery_guard_pump_events(void)
         return;
     }
 
-    /* 有线报警 */
-    printf("[battery_guard] alarm, reason=%u(%s), voltage=%.2fV\r\n",
-            (unsigned int)reason,
-            (APP_BATTERY_GUARD_REASON_LOW_VOLTAGE == reason) ? "low_voltage" : "stale_sample",
-            (double)voltage);
-    /* 无线报警: reason 1=欠压 2=采样失效 */
+    /* 仅无线报警: reason 1=欠压 2=采样失效, 附报警电压 */
     wprint("battery_alarm,1.000,%u,%.2f\r\n",
             (unsigned int)reason, (double)voltage);
 }
