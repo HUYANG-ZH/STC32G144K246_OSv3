@@ -24,6 +24,7 @@
 #include "app_speedout.h"
 #include "app_boot_sequence.h"
 #include "app_battery_guard.h"
+#include "debugw.h"
 #include "service_boot_request.h"
 #include "service_button.h"
 
@@ -51,12 +52,13 @@ void main(void)
     app_motion_preprocess_init();
     app_feedforward_init();
     app_speed_plan_init();
-    // app_element_init();   // 元素识别关闭
+    app_element_init();
     app_speedout_init();
     app_motion_postprocess_init();
     app_boot_sequence_init();
     service_boot_request_init();
     service_button_init();
+    debugw_init();
 
     wdt_init();
 
@@ -78,11 +80,12 @@ void main(void)
         service_function_queue_update();
         service_packet_update();
         app_scheduler_run();
-        // app_element_pump_events();   // 元素识别关闭
+        app_element_pump_events();
         app_battery_guard_pump_events();
         service_negative_pressure_task();
         service_buzzer_task();
         service_led_task();
         service_button_task();
+        debugw_task();
     }
 }

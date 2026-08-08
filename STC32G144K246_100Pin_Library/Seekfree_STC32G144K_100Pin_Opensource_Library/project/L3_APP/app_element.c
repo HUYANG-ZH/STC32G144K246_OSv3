@@ -184,7 +184,7 @@ static volatile uint8 element_realtime_event_flags = 0U;
 #define ELEMENT_EVENT_SEESAW_FOUND         (0x04U)
 
 static void app_element_cylinder_state_reply(void);
-static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta_tick);
+/* static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta_tick); 环岛禁用 */
 static void app_element_process_control_events(uint32 now);
 
 static float app_element_roundabout_get_ff_scale(void)
@@ -610,6 +610,7 @@ void app_element_control_step(void)
 // 使用示例     app_element_roundabout_imu_step();
 // 备注信息     从主循环 imu_task 移植而来，使用 element_gyro_snapshot 共享数据，时基独立
 //-------------------------------------------------------------------------------------------------------------------
+#if 0
 static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta_tick)
 {
     service_imu_gyro_t gyro;
@@ -719,6 +720,8 @@ static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta
         app_element_roundabout_bias_yaw_radps = 0.0f;
     }
 }
+
+#endif
 
 static void app_element_roundabout_clear_count(void)
 {
@@ -836,6 +839,7 @@ static void app_element_cylinder_clear_count(void)
     wprint("cylinder_count,0.000\r\n");
 }
 
+#if 0
 static void app_element_seesaw_found(uint32 now)
 {
     uint8 ea_backup;
@@ -915,6 +919,8 @@ static void app_element_seesaw_update(uint32 now, uint8 attitude_fresh)
         element_seesaw_confirm = 0U;
     }
 }
+
+#endif
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     元素识别初始化
@@ -1062,8 +1068,8 @@ void app_element_imu_task(const service_imu_sample_t *imu)
         app_element_cylinder_update(gyro_x, raw_delta_tick, now);
     }
 
-    /* 跷跷板检测 */
-    app_element_seesaw_update(now, sample_fresh);
+    /* 跷跷板检测(当前禁用, 仅保留圆筒识别) */
+    // app_element_seesaw_update(now, sample_fresh);
 
     /* 跷跷板动作到期清除（100ms后释放控制，死区保留到500ms自动到期） */
     if((0U != element_seesaw_active) &&
@@ -1103,7 +1109,6 @@ void app_element_imu_task(const service_imu_sample_t *imu)
         EA = ea_backup;
     }
 
-    /* Integrate the roundabout state from each fresh IMU tick.  It used to
-     * run from the 5 ms TIM6 control step despite being an IMU-rate task. */
-    app_element_roundabout_imu_step(sample_fresh, raw_delta_tick);
+    /* 环岛 IMU 步进(当前禁用, 仅保留圆筒识别) */
+    // app_element_roundabout_imu_step(sample_fresh, raw_delta_tick);
 }

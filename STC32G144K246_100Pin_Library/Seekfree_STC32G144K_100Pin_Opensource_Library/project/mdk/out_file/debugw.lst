@@ -1,0 +1,109 @@
+C251 COMPILER V5.60.0,  debugw                                                             08/08/26  21:36:37  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE debugw
+OBJECT MODULE PLACED IN .\out_file\debugw.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\debugw.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SPEED) 
+                    -BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_drive
+                    -r;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components\stc32g_u
+                    -sb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\debugw.lst) OBJECT(.\out_file\debugw.obj
+                    -) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_packet.h"
+    3          #include "service_timetick.h"
+    4          #include "service_wireless_uart.h"
+    5          #include "app_attitude.h"
+    6          #include "debugw.h"
+    7          
+    8          /* 无线调试输出周期: 50Hz, 0.1ms/tick */
+    9          #define DEBUGW_PERIOD_TICK          (200UL)
+   10          
+   11          /* 无线开关: debuginfo >= 0.5 开启调试输出, < 0.5 关闭 */
+   12          static volatile float debugw_debug_info = 0.0f;
+   13          
+   14          //-------------------------------------------------------------------------------------------------------
+             -------------
+   15          // 函数简介     无线调试模块初始化
+   16          // 参数说明     void
+   17          // 返回参数     void
+   18          // 使用示例     debugw_init();
+   19          // 备注信息     注册 debuginfo 无线变量, 由主循环调用 debugw_task() 周期输出
+   20          //-------------------------------------------------------------------------------------------------------
+             -------------
+   21          void debugw_init(void)
+   22          {
+   23   1          debugw_debug_info = 0.0f;
+   24   1          (void)service_packet_add_variable("debuginfo", (float *)&debugw_debug_info, 1U);
+   25   1          #if __DBGFLAG__
+   26   1          printf(">>[debugw_init]\r\n");
+   27   1          wprint(">>[debugw_init]\r\n");
+   28   1          #endif
+   29   1      }
+   30          
+   31          //-------------------------------------------------------------------------------------------------------
+             -------------
+   32          // 函数简介     无线调试任务
+   33          // 参数说明     void
+   34          // 返回参数     void
+   35          // 使用示例     debugw_task();
+   36          // 备注信息     由主循环调用; 开关开启后按 50Hz 输出 IMU 三轴姿态(roll/pitch/yaw),
+   37          //             vofa+ FireWater 最简格式, 后续复杂调试输出在此追加
+   38          //-------------------------------------------------------------------------------------------------------
+             -------------
+   39          void debugw_task(void)
+   40          {
+   41   1          static uint32 last_tick = 0UL;
+   42   1          uint32 now;
+   43   1          app_attitude_data_t attitude;
+   44   1      
+   45   1          if(debugw_debug_info < 0.5f)
+   46   1          {
+   47   2              return;
+   48   2          }
+   49   1      
+   50   1          now = service_timetick_what();
+   51   1          if((uint32)(now - last_tick) < DEBUGW_PERIOD_TICK)
+C251 COMPILER V5.60.0,  debugw                                                             08/08/26  21:36:37  PAGE 2   
+
+   52   1          {
+   53   2              return;
+   54   2          }
+   55   1          last_tick = now;
+   56   1      
+   57   1          /* 50Hz IMU 三轴姿态最简输出: roll, pitch, yaw (deg) */
+   58   1          app_attitude_get_data(&attitude);
+   59   1          if(0U != attitude.valid)
+   60   1          {
+   61   2              wprint("%.1f,%.1f,%.1f\r\n",
+   62   2                      (double)attitude.roll_deg,
+   63   2                      (double)attitude.pitch_deg,
+   64   2                      (double)attitude.yaw_deg);
+   65   2          }
+   66   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       240     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        37     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        63     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
