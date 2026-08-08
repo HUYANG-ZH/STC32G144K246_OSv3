@@ -64,7 +64,6 @@ static void service_packet_append_uint32(char *buffer, uint8 *index, uint32 valu
 static void service_packet_append_float3(char *buffer, uint8 *index, float value);
 static float service_packet_parse_float_tfpu(const char *text);
 static uint8 service_packet_target_value_is_valid(const char *name, const float *value, uint8 value_count);
-static uint8 service_packet_value_changed(service_packet_variable_t *variable, const float *value);
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     判断字符是否为帧字段分隔符
@@ -342,26 +341,6 @@ static uint8 service_packet_target_value_is_valid(const char *name, const float 
     return 1U;
 }
 
-static uint8 service_packet_value_changed(service_packet_variable_t *variable, const float *value)
-{
-    uint8 i;
-
-    if((NULL == variable) || (NULL == value))
-    {
-        return 0U;
-    }
-
-    for(i = 0U; i < variable->value_count; i++)
-    {
-        if(variable->value[i] != value[i])
-        {
-            return 1U;
-        }
-    }
-
-    return 0U;
-}
-
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     解析浮点数列表
 // 参数说明     text            数值字符串
@@ -509,7 +488,6 @@ static void service_packet_handle_read(char *name)
 static void service_packet_handle_write(char *name, char *value_text)
 {
     uint8 i;
-    uint8 changed;
     uint8 ea_backup;
     float value_copy[SERVICE_PACKET_VALUE_MAX];
     service_packet_variable_t *variable;
@@ -535,7 +513,6 @@ static void service_packet_handle_write(char *name, char *value_text)
         return;
     }
 
-    changed = service_packet_value_changed(variable, value_copy);
     /* float 在 C251 上不是原子写；防止实时 TIM 读取到撕裂的参数帧。 */
     ea_backup = EA;
     EA = 0;
@@ -546,7 +523,9 @@ static void service_packet_handle_write(char *name, char *value_text)
     EA = ea_backup;
 
     packet_write_ok_total++;
-    if((0U != changed) && (NULL != variable->callback))
+    /* 写入即生效: 无论值是否变化都触发回调, 保证 stop/急停等置位了
+       control_override 的变量(如 negative_pressure)在同值重写时也能恢复控制 */
+    if(NULL != variable->callback)
     {
         variable->callback();
     }
