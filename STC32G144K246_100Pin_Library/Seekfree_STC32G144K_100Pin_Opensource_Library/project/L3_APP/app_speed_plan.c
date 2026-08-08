@@ -8,6 +8,7 @@
 #include "app_attitude.h"
 #include "app_speedout.h"
 #include "service_negative_pressure.h"
+#include "service_tof.h"
 #include "service_wireless_uart.h"
 
 #define APP_SPEED_PLAN_PACKET_SINGLE_COUNT      (1U)
@@ -105,14 +106,18 @@ static void app_speed_plan_register_packet(void)
             (float *)&speed_plan_pressure_boost, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
 }
 
-/* TOF 接近检测接口(预留): 待 TOF 模块重新启用后接入, 当前恒为 0 */
+/* TOF 接近检测: 测距 <200mm 判定为接近障碍, 触发负压增量。
+   TOF 未就绪/测距异常时 service_tof_get_distance_mm() 返回 8192/7777, 均 >200, 不会误触发 */
 static uint8 app_speed_plan_tof_near_obstacle(void)
 {
-    /* if(service_tof_get_distance_mm() < APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM) return 1U; */
+    if(service_tof_get_distance_mm() < APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM)
+    {
+        return 1U;
+    }
     return 0U;
 }
 
-/* 负压增量触发条件: TOF 接近(预留) 或 |pitch| 超过 ±30° */
+/* 负压增量触发条件: TOF 接近(<200mm) 或 |pitch| 超过 ±30° */
 static uint8 app_speed_plan_pressure_boost_condition(void)
 {
     app_attitude_data_t attitude;

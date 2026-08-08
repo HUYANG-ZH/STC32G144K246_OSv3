@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_inductor                                                   07/08/26  18:38:51  PAGE 1   
+C251 COMPILER V5.60.0,  service_inductor                                                   08/08/26  16:53:11  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_inductor
@@ -16,151 +16,158 @@ stmt  level    source
     3          #include "service_timetick.h"
     4          #include "service_inductor.h"
     5          #include "service_wireless_uart.h"
-    6          
-    7          #define SERVICE_INDUCTOR_DMA_TIMEOUT_TICK      (10000UL)
-    8          #define SERVICE_INDUCTOR_DEBUG_ENABLE          (0U)
-    9          #define SERVICE_INDUCTOR_DEBUG_PERIOD_TICK     (1000UL)  /* 10 Hz，0.1 ms/tick */
-   10          
-   11          static uint32 service_inductor_last_sequence = 0UL;
-   12          static uint32 service_inductor_last_progress_tick = 0UL;
-   13          static uint8 service_inductor_seen_snapshot = 0U;
-   14          
-   15          void service_inductor_init(void)
-   16          {
-   17   1          bsp_inductor_init();
-   18   1          service_inductor_last_sequence = 0UL;
-   19   1          service_inductor_last_progress_tick = service_timetick_what();
-   20   1          service_inductor_seen_snapshot = 0U;
-   21   1      }
-   22          
-   23          void service_inductor_debug(void)
-   24          {
-   25   1          static uint32 last_debug_tick = 0UL;
-   26   1          uint32 now;
-   27   1          service_inductor_data_t snapshot;
-   28   1      
-   29   1          now = service_timetick_what();
-   30   1          if((uint32)(now - last_debug_tick) < SERVICE_INDUCTOR_DEBUG_PERIOD_TICK)
-   31   1          {
-   32   2              return;
-   33   2          }
-   34   1          last_debug_tick = now;
-   35   1      
-   36   1          if(0U != service_inductor_get_snapshot(&snapshot, NULL))
-   37   1          {
-   38   2              /* 电感调试模式：输出 CH1、CH2、CH3、CH4、M 五路原始 ADC 值。 */
-   39   2              wprint("%u,%u,%u,%u,%u\r\n",
-   40   2                      snapshot.channel_1,
-   41   2                      snapshot.channel_2,
-   42   2                      snapshot.channel_3,
-   43   2                      snapshot.channel_4,
-   44   2                      snapshot.channel_m);
-   45   2          }
-   46   1      }
-   47          
-   48          void service_inductor_get_data(service_inductor_data_t *out_data)
-   49          {
-   50   1          inductor_rawdata_t raw_data;
-   51   1      
-   52   1          if(NULL == out_data)
-   53   1          {
-   54   2              return;
-   55   2          }
-C251 COMPILER V5.60.0,  service_inductor                                                   07/08/26  18:38:51  PAGE 2   
+    6          #include "app_inductor_preprocess.h"
+    7          
+    8          #define SERVICE_INDUCTOR_DMA_TIMEOUT_TICK      (10000UL)
+    9          #define SERVICE_INDUCTOR_DEBUG_ENABLE          (0U)
+   10          #define SERVICE_INDUCTOR_DEBUG_PERIOD_TICK     (1000UL)  /* 10 Hz，0.1 ms/tick */
+   11          
+   12          static uint32 service_inductor_last_sequence = 0UL;
+   13          static uint32 service_inductor_last_progress_tick = 0UL;
+   14          static uint8 service_inductor_seen_snapshot = 0U;
+   15          
+   16          void service_inductor_init(void)
+   17          {
+   18   1          bsp_inductor_init();
+   19   1          service_inductor_last_sequence = 0UL;
+   20   1          service_inductor_last_progress_tick = service_timetick_what();
+   21   1          service_inductor_seen_snapshot = 0U;
+   22   1      }
+   23          
+   24          void service_inductor_debug(void)
+   25          {
+   26   1          static uint32 last_debug_tick = 0UL;
+   27   1          uint32 now;
+   28   1          service_inductor_data_t snapshot;
+   29   1          app_inductor_preprocess_data_t preprocessed;
+   30   1      
+   31   1          now = service_timetick_what();
+   32   1          if((uint32)(now - last_debug_tick) < SERVICE_INDUCTOR_DEBUG_PERIOD_TICK)
+   33   1          {
+   34   2              return;
+   35   2          }
+   36   1          last_debug_tick = now;
+   37   1      
+   38   1          if(0U != service_inductor_get_snapshot(&snapshot, NULL))
+   39   1          {
+   40   2              app_inductor_preprocess_get_data(&preprocessed);
+   41   2              /* 电感调试模式：vofa+ FireWater 最简格式，
+   42   2                 前 4 路 CH1~CH4 原始 ADC 值 + 后 4 路 CH1~CH4 归一化值(0~100)。 */
+   43   2              wprint("%u,%u,%u,%u,%.1f,%.1f,%.1f,%.1f\r\n",
+   44   2                      snapshot.channel_1,
+   45   2                      snapshot.channel_2,
+   46   2                      snapshot.channel_3,
+   47   2                      snapshot.channel_4,
+   48   2                      preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+   49   2                      preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+   50   2                      preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+   51   2                      preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]);
+   52   2          }
+   53   1      }
+   54          
+   55          void service_inductor_get_data(service_inductor_data_t *out_data)
+C251 COMPILER V5.60.0,  service_inductor                                                   08/08/26  16:53:11  PAGE 2   
 
-   56   1      
-   57   1          raw_data.Channel_1 = 0U;
-   58   1          raw_data.Channel_2 = 0U;
-   59   1          raw_data.Channel_M = 0U;
-   60   1          raw_data.Channel_3 = 0U;
-   61   1          raw_data.Channel_4 = 0U;
-   62   1      
-   63   1          (void)bsp_inductor_get_snapshot(&raw_data, NULL);
-   64   1      
-   65   1          out_data->channel_1 = raw_data.Channel_1;
-   66   1          out_data->channel_2 = raw_data.Channel_2;
-   67   1          out_data->channel_m = raw_data.Channel_M;
-   68   1          out_data->channel_3 = raw_data.Channel_3;
-   69   1          out_data->channel_4 = raw_data.Channel_4;
-   70   1      }
-   71          
-   72          uint8 service_inductor_get_snapshot(service_inductor_data_t *out_data, uint32 *sequence)
-   73          {
-   74   1          inductor_rawdata_t raw_data;
-   75   1          uint8 valid;
-   76   1      
-   77   1          if(NULL == out_data)
-   78   1          {
-   79   2              return 0U;
-   80   2          }
-   81   1      
-   82   1          valid = bsp_inductor_get_snapshot(&raw_data, sequence);
-   83   1          out_data->channel_1 = raw_data.Channel_1;
-   84   1          out_data->channel_2 = raw_data.Channel_2;
-   85   1          out_data->channel_m = raw_data.Channel_M;
-   86   1          out_data->channel_3 = raw_data.Channel_3;
-   87   1          out_data->channel_4 = raw_data.Channel_4;
-   88   1          return valid;
-   89   1      }
-   90          
-   91          uint8 service_inductor_request_sample(void)
-   92          {
-   93   1          return bsp_inductor_request_sample();
-   94   1      }
-   95          
-   96          uint8 service_inductor_sample_is_valid(void)
-   97          {
-   98   1          return bsp_inductor_sample_is_valid();
-   99   1      }
-  100          
-  101          uint8 service_inductor_is_busy(void)
-  102          {
-  103   1          return bsp_inductor_is_busy();
-  104   1      }
-  105          
-  106          void service_inductor_task(void)
-  107          {
-  108   1          service_inductor_data_t snapshot;
-  109   1          uint32 sequence;
-  110   1          uint32 now;
-  111   1      
-  112   1          now = service_timetick_what();
-  113   1          if(0U != service_inductor_get_snapshot(&snapshot, &sequence))
-  114   1          {
-  115   2              if((0U == service_inductor_seen_snapshot) ||
-  116   2                      (sequence != service_inductor_last_sequence))
-  117   2              {
-  118   3                  service_inductor_last_sequence = sequence;
-  119   3                  service_inductor_last_progress_tick = now;
-  120   3                  service_inductor_seen_snapshot = 1U;
-  121   3              }
-C251 COMPILER V5.60.0,  service_inductor                                                   07/08/26  18:38:51  PAGE 3   
+   56          {
+   57   1          inductor_rawdata_t raw_data;
+   58   1      
+   59   1          if(NULL == out_data)
+   60   1          {
+   61   2              return;
+   62   2          }
+   63   1      
+   64   1          raw_data.Channel_1 = 0U;
+   65   1          raw_data.Channel_2 = 0U;
+   66   1          raw_data.Channel_M = 0U;
+   67   1          raw_data.Channel_3 = 0U;
+   68   1          raw_data.Channel_4 = 0U;
+   69   1      
+   70   1          (void)bsp_inductor_get_snapshot(&raw_data, NULL);
+   71   1      
+   72   1          out_data->channel_1 = raw_data.Channel_1;
+   73   1          out_data->channel_2 = raw_data.Channel_2;
+   74   1          out_data->channel_m = raw_data.Channel_M;
+   75   1          out_data->channel_3 = raw_data.Channel_3;
+   76   1          out_data->channel_4 = raw_data.Channel_4;
+   77   1      }
+   78          
+   79          uint8 service_inductor_get_snapshot(service_inductor_data_t *out_data, uint32 *sequence)
+   80          {
+   81   1          inductor_rawdata_t raw_data;
+   82   1          uint8 valid;
+   83   1      
+   84   1          if(NULL == out_data)
+   85   1          {
+   86   2              return 0U;
+   87   2          }
+   88   1      
+   89   1          valid = bsp_inductor_get_snapshot(&raw_data, sequence);
+   90   1          out_data->channel_1 = raw_data.Channel_1;
+   91   1          out_data->channel_2 = raw_data.Channel_2;
+   92   1          out_data->channel_m = raw_data.Channel_M;
+   93   1          out_data->channel_3 = raw_data.Channel_3;
+   94   1          out_data->channel_4 = raw_data.Channel_4;
+   95   1          return valid;
+   96   1      }
+   97          
+   98          uint8 service_inductor_request_sample(void)
+   99          {
+  100   1          return bsp_inductor_request_sample();
+  101   1      }
+  102          
+  103          uint8 service_inductor_sample_is_valid(void)
+  104          {
+  105   1          return bsp_inductor_sample_is_valid();
+  106   1      }
+  107          
+  108          uint8 service_inductor_is_busy(void)
+  109          {
+  110   1          return bsp_inductor_is_busy();
+  111   1      }
+  112          
+  113          void service_inductor_task(void)
+  114          {
+  115   1          service_inductor_data_t snapshot;
+  116   1          uint32 sequence;
+  117   1          uint32 now;
+  118   1      
+  119   1          now = service_timetick_what();
+  120   1          if(0U != service_inductor_get_snapshot(&snapshot, &sequence))
+  121   1          {
+C251 COMPILER V5.60.0,  service_inductor                                                   08/08/26  16:53:11  PAGE 3   
 
-  122   2          }
-  123   1      
-  124   1          /* A stalled DMA must not remain busy forever.  Recovery is background
-  125   1             register work only; TIM4 independently latches the control safety fault. */
-  126   1          if((0U != service_inductor_is_busy()) &&
-  127   1                  ((uint32)(now - service_inductor_last_progress_tick) >= SERVICE_INDUCTOR_DMA_TIMEOUT_TICK))
-  128   1          {
-  129   2              bsp_inductor_recover();
-  130   2              service_inductor_last_progress_tick = now;
-  131   2          }
-  132   1      
-  133   1      #if (SERVICE_INDUCTOR_DEBUG_ENABLE != 0U)
+  122   2              if((0U == service_inductor_seen_snapshot) ||
+  123   2                      (sequence != service_inductor_last_sequence))
+  124   2              {
+  125   3                  service_inductor_last_sequence = sequence;
+  126   3                  service_inductor_last_progress_tick = now;
+  127   3                  service_inductor_seen_snapshot = 1U;
+  128   3              }
+  129   2          }
+  130   1      
+  131   1          /* A stalled DMA must not remain busy forever.  Recovery is background
+  132   1             register work only; TIM4 independently latches the control safety fault. */
+  133   1          if((0U != service_inductor_is_busy()) &&
+  134   1                  ((uint32)(now - service_inductor_last_progress_tick) >= SERVICE_INDUCTOR_DMA_TIMEOUT_TICK))
+  135   1          {
+  136   2              bsp_inductor_recover();
+  137   2              service_inductor_last_progress_tick = now;
+  138   2          }
+  139   1      
+  140   1      #if (SERVICE_INDUCTOR_DEBUG_ENABLE != 0U)
                    service_inductor_debug();
                #endif
-  136   1      }
+  143   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       750     ------
+  ecode size           =       836     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        78     ------
+  xdata size           =       118     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -170,7 +177,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        50     ------
+  hconst size          =        67     ------
 End of Module Information.
 
 

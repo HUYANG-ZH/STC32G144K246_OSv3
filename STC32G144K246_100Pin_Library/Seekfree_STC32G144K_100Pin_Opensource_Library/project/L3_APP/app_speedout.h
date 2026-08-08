@@ -48,7 +48,6 @@ extern volatile app_speedout_data_t app_speedout_data;
 void app_speedout_init(void);
 void app_speedout_debug(void);
 /* 非实时上下文只能写请求邮箱；实际电机/PWM 状态变化由 TIM5 速度环执行。 */
-void app_speedout_request_stop(void);
 void app_speedout_request_stop_all(void);
 void app_speedout_request_start(void);
 void app_speedout_set_safety_inhibit(uint8 mask);

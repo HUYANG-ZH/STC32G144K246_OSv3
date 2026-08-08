@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              07/08/26  18:38:54  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              08/08/26  16:53:12  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_preprocess
@@ -34,114 +34,122 @@ stmt  level    source
    20          
    21          static volatile app_motion_preprocess_data_t motion_preprocess_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
    22          
-   23          void app_motion_preprocess_control_step(void);
-   24          
-   25          static float app_motion_preprocess_diff_ratio(float left_value, float right_value)
-   26          {
-   27   1          float sum;
-   28   1      
-   29   1          sum = tfpu_add(left_value, right_value);
-   30   1          if(APP_MOTION_PREPROCESS_SUM_MIN >= sum)
-   31   1          {
-   32   2              return 0.0f;
-   33   2          }
-   34   1      
-   35   1          return tfpu_div(tfpu_sub(left_value, right_value), sum);
-   36   1      }
-   37          
-   38          static void app_motion_preprocess_register_packet(void)
-   39          {
-   40   1          (void)service_packet_add_variable("motion_pre_linear_mps",
-   41   1                  &app_motion_preprocess_config.linear_mps, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
-   42   1          (void)service_packet_add_variable("motion_pre_yaw_rate_gain",
-   43   1                  &app_motion_preprocess_config.yaw_rate_gain, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
-   44   1      }
-   45          
-   46          //-------------------------------------------------------------------------------------------------------
-             -------------
-   47          // 函数简介     运动前处理初始化
-   48          // 参数说明     void
-   49          // 返回参数     void
-   50          // 使用示例     app_motion_preprocess_init();
-   51          // 备注信息     使用 APP_MOTION_PREPROCESS_PIT 每 APP_MOTION_PREPROCESS_PERIOD_MS ms 更新一次
-   52          //-------------------------------------------------------------------------------------------------------
-             -------------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              07/08/26  18:38:54  PAGE 2   
+   23          /* 差比融合权重无线可调, 宏定义值仅作默认 */
+   24          static volatile float motion_pre_x_weight = APP_MOTION_PREPROCESS_X_WEIGHT;
+   25          static volatile float motion_pre_y_weight = APP_MOTION_PREPROCESS_Y_WEIGHT;
+   26          
+   27          void app_motion_preprocess_control_step(void);
+   28          
+   29          static float app_motion_preprocess_diff_ratio(float left_value, float right_value)
+   30          {
+   31   1          float sum;
+   32   1      
+   33   1          sum = tfpu_add(left_value, right_value);
+   34   1          if(APP_MOTION_PREPROCESS_SUM_MIN >= sum)
+   35   1          {
+   36   2              return 0.0f;
+   37   2          }
+   38   1      
+   39   1          return tfpu_div(tfpu_sub(left_value, right_value), sum);
+   40   1      }
+   41          
+   42          static void app_motion_preprocess_register_packet(void)
+   43          {
+   44   1          (void)service_packet_add_variable("motion_pre_linear_mps",
+   45   1                  &app_motion_preprocess_config.linear_mps, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+   46   1          (void)service_packet_add_variable("motion_pre_yaw_rate_gain",
+   47   1                  &app_motion_preprocess_config.yaw_rate_gain, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+   48   1          (void)service_packet_add_variable("xw",
+   49   1                  (float *)&motion_pre_x_weight, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+   50   1          (void)service_packet_add_variable("yw",
+   51   1                  (float *)&motion_pre_y_weight, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+   52   1      }
+   53          
+   54          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              08/08/26  16:53:12  PAGE 2   
 
-   53          void app_motion_preprocess_init(void)
-   54          {
-   55   1          app_motion_preprocess_register_packet();
-   56   1          /* 首次仅发布当前快照；周期调度统一由 app_motion_postprocess 的 TIM6 控制链承�
+             -------------
+   55          // 函数简介     运动前处理初始化
+   56          // 参数说明     void
+   57          // 返回参数     void
+   58          // 使用示例     app_motion_preprocess_init();
+   59          // 备注信息     使用 APP_MOTION_PREPROCESS_PIT 每 APP_MOTION_PREPROCESS_PERIOD_MS ms 更新一次
+   60          //-------------------------------------------------------------------------------------------------------
+             -------------
+   61          void app_motion_preprocess_init(void)
+   62          {
+   63   1          app_motion_preprocess_register_packet();
+   64   1          /* 首次仅发布当前快照；周期调度统一由 app_motion_postprocess 的 TIM6 控制链承�
              -�。 */
-   57   1          app_motion_preprocess_control_step();
-   58   1          #if __DBGFLAG__
-   59   1          printf(">>[app_motion_preprocess_init]\r\n");
-   60   1          wprint(">>[app_motion_preprocess_init]\r\n");
-   61   1          #endif
-   62   1      }
-   63          
-   64          //-------------------------------------------------------------------------------------------------------
+   65   1          app_motion_preprocess_control_step();
+   66   1          #if __DBGFLAG__
+   67   1          printf(">>[app_motion_preprocess_init]\r\n");
+   68   1          wprint(">>[app_motion_preprocess_init]\r\n");
+   69   1          #endif
+   70   1      }
+   71          
+   72          //-------------------------------------------------------------------------------------------------------
              -------------
-   65          // 函数简介     获取运动前处理数据
-   66          // 参数说明     out_data        数据输出地址
-   67          // 返回参数     void
-   68          // 使用示例     app_motion_preprocess_get_data(&motion_data);
-   69          //-------------------------------------------------------------------------------------------------------
+   73          // 函数简介     获取运动前处理数据
+   74          // 参数说明     out_data        数据输出地址
+   75          // 返回参数     void
+   76          // 使用示例     app_motion_preprocess_get_data(&motion_data);
+   77          //-------------------------------------------------------------------------------------------------------
              -------------
-   70          void app_motion_preprocess_get_data(app_motion_preprocess_data_t *out_data)
-   71          {
-   72   1          uint8 ea_backup;
-   73   1      
-   74   1          if(NULL == out_data)
-   75   1          {
-   76   2              return;
-   77   2          }
-   78   1      
-   79   1          ea_backup = EA;
-   80   1          EA = 0;
-   81   1          out_data->x_error = motion_preprocess_data.x_error;
-   82   1          out_data->y_error = motion_preprocess_data.y_error;
-   83   1          out_data->line_error = motion_preprocess_data.line_error;
-   84   1          out_data->linear_mps = motion_preprocess_data.linear_mps;
-   85   1          out_data->target_yaw_rate_rps = motion_preprocess_data.target_yaw_rate_rps;
-   86   1          EA = ea_backup;
-   87   1      }
-   88          
-   89          void app_motion_preprocess_control_step(void)
-   90          {
-   91   1          app_inductor_preprocess_data_t inductor_data;
-   92   1          app_motion_preprocess_data_t output;
-   93   1      
-   94   1          app_inductor_preprocess_get_data(&inductor_data);
-   95   1      
-   96   1          output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normaliz
-             -ed[3]);
-   97   1          output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normaliz
-             -ed[2]);
-   98   1      
-   99   1          output.line_error = tfpu_add(tfpu_mul(output.y_error, APP_MOTION_PREPROCESS_Y_WEIGHT),
-  100   1                  tfpu_mul(output.x_error, APP_MOTION_PREPROCESS_X_WEIGHT));
-  101   1          output.linear_mps = app_motion_preprocess_config.linear_mps;
-  102   1          output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
+   78          void app_motion_preprocess_get_data(app_motion_preprocess_data_t *out_data)
+   79          {
+   80   1          uint8 ea_backup;
+   81   1      
+   82   1          if(NULL == out_data)
+   83   1          {
+   84   2              return;
+   85   2          }
+   86   1      
+   87   1          ea_backup = EA;
+   88   1          EA = 0;
+   89   1          out_data->x_error = motion_preprocess_data.x_error;
+   90   1          out_data->y_error = motion_preprocess_data.y_error;
+   91   1          out_data->line_error = motion_preprocess_data.line_error;
+   92   1          out_data->linear_mps = motion_preprocess_data.linear_mps;
+   93   1          out_data->target_yaw_rate_rps = motion_preprocess_data.target_yaw_rate_rps;
+   94   1          EA = ea_backup;
+   95   1      }
+   96          
+   97          void app_motion_preprocess_control_step(void)
+   98          {
+   99   1          app_inductor_preprocess_data_t inductor_data;
+  100   1          app_motion_preprocess_data_t output;
+  101   1      
+  102   1          app_inductor_preprocess_get_data(&inductor_data);
   103   1      
-  104   1          motion_preprocess_data.x_error = output.x_error;
-  105   1          motion_preprocess_data.y_error = output.y_error;
-  106   1          motion_preprocess_data.line_error = output.line_error;
-  107   1          motion_preprocess_data.linear_mps = output.linear_mps;
-  108   1          motion_preprocess_data.target_yaw_rate_rps = output.target_yaw_rate_rps;
-  109   1      }
+  104   1          output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normaliz
+             -ed[3]);
+  105   1          output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normaliz
+             -ed[2]);
+  106   1      
+  107   1          output.line_error = tfpu_add(tfpu_mul(output.y_error, motion_pre_y_weight),
+  108   1                  tfpu_mul(output.x_error, motion_pre_x_weight));
+  109   1          output.linear_mps = app_motion_preprocess_config.linear_mps;
+  110   1          output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
+  111   1      
+  112   1          motion_preprocess_data.x_error = output.x_error;
+  113   1          motion_preprocess_data.y_error = output.y_error;
+C251 COMPILER V5.60.0,  app_motion_preprocess                                              08/08/26  16:53:12  PAGE 3   
+
+  114   1          motion_preprocess_data.line_error = output.line_error;
+  115   1          motion_preprocess_data.linear_mps = output.linear_mps;
+  116   1          motion_preprocess_data.target_yaw_rate_rps = output.target_yaw_rate_rps;
+  117   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_preprocess                                              07/08/26  18:38:54  PAGE 3   
-
-  ecode size           =       687     ------
+  ecode size           =       739     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       105     ------
+  xdata size           =       113     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -151,7 +159,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       118     ------
+  hconst size          =       142     ------
 End of Module Information.
 
 

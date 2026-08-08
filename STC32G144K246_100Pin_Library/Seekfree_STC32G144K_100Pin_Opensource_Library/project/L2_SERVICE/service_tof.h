@@ -5,7 +5,7 @@
 
 /* Board configuration: enable the installed ToF module and its IIC service. */
 #ifndef SERVICE_TOF_ENABLE
-#define SERVICE_TOF_ENABLE             (0U)      /* 0: TOF 模块暂时关闭, 不初始化不采样 */
+#define SERVICE_TOF_ENABLE             (1U)
 #endif
 
 #define SERVICE_TOF_PERIOD_TICK        (333UL)   /* 约30Hz, 0.1ms/tick */

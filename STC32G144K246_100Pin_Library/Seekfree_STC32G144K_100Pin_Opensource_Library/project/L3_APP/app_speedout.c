@@ -175,7 +175,6 @@ static void app_speedout_register_packet(void)
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
     (void)service_packet_add_variable_with_callback("SRI", (float *)&app_speedout_config.right.ki,
             APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
-    (void)service_packet_add_action("speed_stop", app_speedout_request_stop, 0UL);
     (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
     (void)service_packet_add_action("start", app_speedout_start_action, 0UL);
 }
@@ -246,16 +245,6 @@ static void app_speedout_stop(void)
     app_speedout_clear_pid();
 
     service_motor_stop();
-}
-
-void app_speedout_request_stop(void)
-{
-    uint8 ea_backup;
-
-    ea_backup = EA;
-    EA = 0;
-    speedout_command = APP_SPEEDOUT_COMMAND_STOP;
-    EA = ea_backup;
 }
 
 void app_speedout_request_stop_all(void)

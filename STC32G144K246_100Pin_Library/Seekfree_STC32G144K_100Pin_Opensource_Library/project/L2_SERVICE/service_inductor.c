@@ -3,6 +3,7 @@
 #include "service_timetick.h"
 #include "service_inductor.h"
 #include "service_wireless_uart.h"
+#include "app_inductor_preprocess.h"
 
 #define SERVICE_INDUCTOR_DMA_TIMEOUT_TICK      (10000UL)
 #define SERVICE_INDUCTOR_DEBUG_ENABLE          (0U)
@@ -25,6 +26,7 @@ void service_inductor_debug(void)
     static uint32 last_debug_tick = 0UL;
     uint32 now;
     service_inductor_data_t snapshot;
+    app_inductor_preprocess_data_t preprocessed;
 
     now = service_timetick_what();
     if((uint32)(now - last_debug_tick) < SERVICE_INDUCTOR_DEBUG_PERIOD_TICK)
@@ -35,13 +37,18 @@ void service_inductor_debug(void)
 
     if(0U != service_inductor_get_snapshot(&snapshot, NULL))
     {
-        /* 电感调试模式：输出 CH1、CH2、CH3、CH4、M 五路原始 ADC 值。 */
-        wprint("%u,%u,%u,%u,%u\r\n",
+        app_inductor_preprocess_get_data(&preprocessed);
+        /* 电感调试模式：vofa+ FireWater 最简格式，
+           前 4 路 CH1~CH4 原始 ADC 值 + 后 4 路 CH1~CH4 归一化值(0~100)。 */
+        wprint("%u,%u,%u,%u,%.1f,%.1f,%.1f,%.1f\r\n",
                 snapshot.channel_1,
                 snapshot.channel_2,
                 snapshot.channel_3,
                 snapshot.channel_4,
-                snapshot.channel_m);
+                preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+                preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+                preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+                preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]);
     }
 }
 

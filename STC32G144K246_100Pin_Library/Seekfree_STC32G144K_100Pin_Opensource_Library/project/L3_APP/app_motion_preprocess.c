@@ -20,6 +20,10 @@ app_motion_preprocess_config_t app_motion_preprocess_config =
 
 static volatile app_motion_preprocess_data_t motion_preprocess_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
+/* 差比融合权重无线可调, 宏定义值仅作默认 */
+static volatile float motion_pre_x_weight = APP_MOTION_PREPROCESS_X_WEIGHT;
+static volatile float motion_pre_y_weight = APP_MOTION_PREPROCESS_Y_WEIGHT;
+
 void app_motion_preprocess_control_step(void);
 
 static float app_motion_preprocess_diff_ratio(float left_value, float right_value)
@@ -41,6 +45,10 @@ static void app_motion_preprocess_register_packet(void)
             &app_motion_preprocess_config.linear_mps, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("motion_pre_yaw_rate_gain",
             &app_motion_preprocess_config.yaw_rate_gain, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("xw",
+            (float *)&motion_pre_x_weight, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("yw",
+            (float *)&motion_pre_y_weight, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -96,8 +104,8 @@ void app_motion_preprocess_control_step(void)
     output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normalized[3]);
     output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normalized[2]);
 
-    output.line_error = tfpu_add(tfpu_mul(output.y_error, APP_MOTION_PREPROCESS_Y_WEIGHT),
-            tfpu_mul(output.x_error, APP_MOTION_PREPROCESS_X_WEIGHT));
+    output.line_error = tfpu_add(tfpu_mul(output.y_error, motion_pre_y_weight),
+            tfpu_mul(output.x_error, motion_pre_x_weight));
     output.linear_mps = app_motion_preprocess_config.linear_mps;
     output.target_yaw_rate_rps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, output.line_error);
 
