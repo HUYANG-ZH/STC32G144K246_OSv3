@@ -20,6 +20,11 @@
 #define APP_ATTITUDE_GYRO_Z_LPF_ALPHA_DEFAULT (0.5f)
 #endif
 
+/* pitch(0-360 全象限) 一阶低通系数 */
+#ifndef APP_ATTITUDE_PITCH_LPF_ALPHA_DEFAULT
+#define APP_ATTITUDE_PITCH_LPF_ALPHA_DEFAULT   (0.3f)
+#endif
+
 #ifndef APP_ATTITUDE_DT_MAX_SECOND
 #define APP_ATTITUDE_DT_MAX_SECOND             (0.020f)
 #endif

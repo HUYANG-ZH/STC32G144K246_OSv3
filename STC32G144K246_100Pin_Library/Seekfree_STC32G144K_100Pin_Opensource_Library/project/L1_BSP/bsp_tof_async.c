@@ -610,6 +610,7 @@ uint8 bsp_tof_async_init(void)
 void bsp_tof_async_process(void)
 {
     uint8 submit_result;
+    uint8 ea_backup;
     uint32 now;
 
     if(0U == tof_ready)
@@ -691,7 +692,11 @@ void bsp_tof_async_process(void)
             if(0U != bsp_tof_dl1a_transfer_succeeded())
             {
                 dl1a_range_status = bsp_tof_dl1a_parse_range_status(tof_read_buffer[0]);
+                /* 16 位值主循环写、TIM7 ISR 读, EA 关断防撕裂 */
+                ea_backup = EA;
+                EA = 0;
                 dl1a_distance_mm = (uint16)(((uint16)tof_read_buffer[10] << 8) | tof_read_buffer[11]);
+                EA = ea_backup;
                 if(dl1a_distance_mm > 8191U)
                 {
                     dl1a_distance_mm = 8192U;

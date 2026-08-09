@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  debugw                                                             08/08/26  21:36:37  PAGE 1   
+C251 COMPILER V5.60.0,  debugw                                                             09/08/26  00:53:46  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE debugw
@@ -66,14 +66,15 @@ stmt  level    source
    49   1      
    50   1          now = service_timetick_what();
    51   1          if((uint32)(now - last_tick) < DEBUGW_PERIOD_TICK)
-C251 COMPILER V5.60.0,  debugw                                                             08/08/26  21:36:37  PAGE 2   
+C251 COMPILER V5.60.0,  debugw                                                             09/08/26  00:53:46  PAGE 2   
 
    52   1          {
    53   2              return;
    54   2          }
    55   1          last_tick = now;
    56   1      
-   57   1          /* 50Hz IMU 三轴姿态最简输出: roll, pitch, yaw (deg) */
+   57   1          /* 50Hz IMU 三轴姿态最简输出: roll, pitch, yaw (deg); pitch 为 0-360 全象限(倒置=180°)
+             - */
    58   1          app_attitude_get_data(&attitude);
    59   1          if(0U != attitude.valid)
    60   1          {

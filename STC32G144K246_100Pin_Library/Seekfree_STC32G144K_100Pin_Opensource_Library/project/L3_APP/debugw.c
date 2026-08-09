@@ -54,7 +54,7 @@ void debugw_task(void)
     }
     last_tick = now;
 
-    /* 50Hz IMU 三轴姿态最简输出: roll, pitch, yaw (deg) */
+    /* 50Hz IMU 三轴姿态最简输出: roll, pitch, yaw (deg); pitch 为 0-360 全象限(倒置=180°) */
     app_attitude_get_data(&attitude);
     if(0U != attitude.valid)
     {

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          };
    52          
    53          static shared_pos_pid_t motion_postprocess_yaw_pid;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 2   
 
    54          static shared_lpf_t motion_postprocess_gyro_z_lpf;
    55          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
@@ -134,7 +134,7 @@ stmt  level    source
   117          {
   118   1          uint8 ea_backup;
   119   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 3   
 
   120   1          ea_backup = EA;
   121   1          EA = 0;
@@ -202,7 +202,7 @@ stmt  level    source
   183   2              imu.gyro_x = 0.0f;
   184   2              imu.gyro_y = 0.0f;
   185   2              imu.gyro_z = 0.0f;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 4   
 
   186   2              imu.sequence = 0UL;
   187   2              imu.valid = 0U;
@@ -270,7 +270,7 @@ stmt  level    source
   246   2              imu.valid = 0U;
   247   2          }
   248   1          now = service_timetick_what();
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 5   
 
   249   1          shared_lpf_init(&motion_postprocess_gyro_z_lpf,
   250   1                  APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT,
@@ -338,7 +338,7 @@ stmt  level    source
              -�分析。
   311           */
   312          void app_motion_postprocess_control_step(void)
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 6   
 
   313          {
   314   1          app_motion_preprocess_control_step();
@@ -406,7 +406,7 @@ stmt  level    source
   375   3                  else if(delta < -max_delta)
   376   3                  {
   377   4                      delta = -max_delta;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 7   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 7   
 
   378   4                  }
   379   3      
@@ -474,7 +474,7 @@ stmt  level    source
   440   2                      feedback_yaw_rate_radps, actual_yaw_rate_radps, APP_MOTION_POSTPROCESS_DT_SECOND);
   441   2              target_differential_speed = tfpu_add(feedback_differential_speed, feedforward_differential_speed)
              -;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             08/08/26  20:36:11  PAGE 8   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             09/08/26  00:53:45  PAGE 8   
 
   442   2              motion_postprocess_last_enabled = 1U;
   443   2          }
