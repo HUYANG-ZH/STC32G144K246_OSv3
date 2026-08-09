@@ -1,17 +1,10 @@
-操作：Turbo 增量升级
-异常：用户取消操作
+操作：APP CRC32 校验
+异常：CRC32 不一致：device=0x4CB479F5, host=0xA66458FE
 
 Traceback (most recent call last):
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\tui.py", line 460, in worker_flash_image
-    actual = self.make_engine(port, cold, full_rewrite).flash(image, plan)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 802, in flash
-    self.connect(ser)
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 528, in connect
-    status, payload, raw = self._request(
-                           ^^^^^^^^^^^^^^
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 403, in _request
-    self._check_cancel()
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 389, in _check_cancel
-    raise OperationCancelled("用户取消操作")
-stcfastboot.engine.OperationCancelled: 用户取消操作
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\tui.py", line 427, in worker_verify_crc
+    ).verify_current_application(image)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 736, in verify_current_application
+    raise FastBootError(
+stcfastboot.engine.FastBootError: CRC32 不一致：device=0x4CB479F5, host=0xA66458FE

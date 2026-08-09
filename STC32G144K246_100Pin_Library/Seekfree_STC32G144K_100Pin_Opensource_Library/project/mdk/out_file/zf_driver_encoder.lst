@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  29/07/26  21:56:04  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  09/08/26  19:48:03  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_encoder
@@ -66,7 +66,7 @@ stmt  level    source
    47              0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
    48              0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
    49              0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  29/07/26  21:56:04  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  09/08/26  19:48:03  PAGE 2   
 
    50              0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
    51          };
@@ -134,7 +134,7 @@ stmt  level    source
              -------------
   111          // 函数简介     定时器的计数器清空
   112          // 参数说明     timer_ch      定时器枚举体
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  29/07/26  21:56:04  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  09/08/26  19:48:03  PAGE 3   
 
   113          // 返回参数     void
   114          // 备注信息
@@ -202,7 +202,7 @@ stmt  level    source
   172   1          encoder_dir_pin[encoder_n & 0x0F + PWMF_ENCODER + 1] = (uint8)(dir_pin & 0xFF);
   173   1          switch(encoder_n)
   174   1          {
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  29/07/26  21:56:04  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  09/08/26  19:48:03  PAGE 4   
 
   175   2              case TIM0_ENCODER:  TL0=0;  TH0=0;  TMOD|=0x04; TR0=1; break;
   176   2              case TIM1_ENCODER:  TL1=0;  TH1=0;  TMOD|=0x40; TR1=1; break;
@@ -270,7 +270,7 @@ stmt  level    source
   234          // 返回参数     void
   235          // 使用示例             encoder_quad_init(PWMA_ENCODER, PWMA_ENCODER_CH1P_P60, PWMA_ENCODER_CH2P_P62)
   236          //                      // 使用PWMA 做正交解码使用， 通道1脉冲信号引脚P60，通道2脉�
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  29/07/26  21:56:04  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  09/08/26  19:48:03  PAGE 5   
 
              -��信号引脚P62
   237          // 备注信息                                
@@ -338,7 +338,7 @@ stmt  level    source
   293          // 参数说明     phaseB          通道B以及引脚
   294          // 返回参数     void
   295          // 备注信息   
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  29/07/26  21:56:04  PAGE 6   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  09/08/26  19:48:03  PAGE 6   
 
   296          // 使用示例     encoder_init_dir(PWMA_ENCODER, PWMA_ENCODER_CH1P_P60, PWMA_ENCODER_CH2P_P62)
   297          //             // 使用PWMA 做正交解码使用， 通道1方向信号引脚P60，通道2脉冲信号�

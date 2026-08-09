@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_imu                                                        07/08/26  18:38:50  PAGE 1   
+C251 COMPILER V5.60.0,  service_imu                                                        09/08/26  19:48:14  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_imu
@@ -66,7 +66,7 @@ stmt  level    source
    51          static void service_imu_update_calibration(const service_imu_sample_t *sample);
    52          static void service_imu_make_sample(service_imu_sample_t *out_data, const bsp_imu_sample_t *raw);
    53          static void service_imu_publish_sample(const service_imu_sample_t *sample);
-C251 COMPILER V5.60.0,  service_imu                                                        07/08/26  18:38:50  PAGE 2   
+C251 COMPILER V5.60.0,  service_imu                                                        09/08/26  19:48:14  PAGE 2   
 
    54          static void service_imu_cal_supervisor_task(void);
    55          static void service_imu_cal_supervisor_start_beeps(uint8 beep_count,
@@ -134,7 +134,7 @@ stmt  level    source
   117   2      
   118   2              case SERVICE_IMU_CAL_SUPERVISOR_CALIBRATING:
   119   2                  if(0U != service_imu_calibration_is_complete())
-C251 COMPILER V5.60.0,  service_imu                                                        07/08/26  18:38:50  PAGE 3   
+C251 COMPILER V5.60.0,  service_imu                                                        09/08/26  19:48:14  PAGE 3   
 
   120   2                  {
   121   3                      /* 校准完成: 短鸣三声提示 */
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          out_data->acc_y_g = tfpu_mul(tfpu_int2float((long)raw->acc_y_raw), service_imu_acc_scale);
   184   1          out_data->acc_z_g = tfpu_mul(tfpu_int2float((long)raw->acc_z_raw), service_imu_acc_scale);
   185   1          out_data->roll_deg = raw->roll_deg;
-C251 COMPILER V5.60.0,  service_imu                                                        07/08/26  18:38:50  PAGE 4   
+C251 COMPILER V5.60.0,  service_imu                                                        09/08/26  19:48:14  PAGE 4   
 
   186   1          out_data->pitch_deg = raw->pitch_deg;
   187   1          out_data->yaw_deg = raw->yaw_deg;
@@ -270,7 +270,7 @@ stmt  level    source
   249   2              return;
   250   2          }
   251   1      
-C251 COMPILER V5.60.0,  service_imu                                                        07/08/26  18:38:50  PAGE 5   
+C251 COMPILER V5.60.0,  service_imu                                                        09/08/26  19:48:14  PAGE 5   
 
   252   1          service_imu_make_sample(&sample, &raw);
   253   1          service_imu_update_calibration(&sample);
@@ -338,7 +338,7 @@ stmt  level    source
   315   1      }
   316          
   317          uint8 service_imu_get_latest_sample(service_imu_sample_t *out_data)
-C251 COMPILER V5.60.0,  service_imu                                                        07/08/26  18:38:50  PAGE 6   
+C251 COMPILER V5.60.0,  service_imu                                                        09/08/26  19:48:14  PAGE 6   
 
   318          {
   319   1          uint8 result;

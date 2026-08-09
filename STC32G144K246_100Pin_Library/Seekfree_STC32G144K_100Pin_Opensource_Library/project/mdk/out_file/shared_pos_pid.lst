@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 1   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE shared_pos_pid
@@ -66,7 +66,7 @@ stmt  level    source
    48          void shared_pos_pid_reset(shared_pos_pid_t *pid, float output)
    49          {
    50   1          if(NULL == pid)
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 2   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 2   
 
    51   1          {
    52   2              return;
@@ -134,7 +134,7 @@ stmt  level    source
   111          // 参数说明     feedback        反馈值
   112          // 参数说明     dt              距离上次更新的时间 单位秒
   113          // 返回参数     float           本次 PID 输出值
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 3   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 3   
 
   114          // 使用示例     output = shared_pos_pid_update(&pid, target, feedback, 0.005f);
   115          //-------------------------------------------------------------------------------------------------------
@@ -202,7 +202,7 @@ stmt  level    source
   172          {
   173   1          if(NULL == pid)
   174   1          {
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 4   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 4   
 
   175   2              return 0.0f;
   176   2          }
@@ -270,7 +270,7 @@ stmt  level    source
   234          static void shared_pos_pid_fix_limit(float *min_value, float *max_value)
   235          {
   236   1          float temp;
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 5   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 5   
 
   237   1      
   238   1          if((NULL == min_value) || (NULL == max_value))
@@ -338,7 +338,7 @@ stmt  level    source
   295          //-------------------------------------------------------------------------------------------------------
              -------------
   296          static float shared_pos_pid_limit_output(const shared_pos_pid_t *pid, float output)
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 6   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 6   
 
   297          {
   298   1          if((NULL != pid) && (ZF_ENABLE == pid->output_limit_enable))
@@ -406,7 +406,7 @@ stmt  level    source
   354   1          {
   355   2              error = 0.0f;
   356   2          }
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 7   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 7   
 
   357   1      
   358   1          return error;
@@ -474,7 +474,7 @@ stmt  level    source
   416   2          }
   417   1      
   418   1          return pid->ramp_target;
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 8   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 8   
 
   419   1      }
   420          
@@ -542,7 +542,7 @@ stmt  level    source
   478   2              {
   479   3                  if(ZF_TRUE == pid->feedback_initialized)
   480   3                  {
-C251 COMPILER V5.60.0,  shared_pos_pid                                                     29/07/26  16:37:29  PAGE 9   
+C251 COMPILER V5.60.0,  shared_pos_pid                                                     09/08/26  19:48:23  PAGE 9   
 
   481   4                      d_output = tfpu_div(tfpu_mul(tfpu_mul(tfpu_sub(0.0f, direction_sign), pid->kd),
   482   4                              tfpu_sub(feedback, pid->last_feedback)), dt);

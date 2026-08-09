@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -66,7 +66,7 @@ stmt  level    source
    51              uint32 sequence;
    52              uint8 owner;
    53          } app_speedout_target_mailbox_t;
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 2   
 
    54          
    55          #define APP_SPEEDOUT_TARGET_OWNER_NONE        (0U)
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          pid->output_limit_enable = ZF_ENABLE;
   118   1          pid->output_min = -output_limit;
   119   1          pid->output_max = output_limit;
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 3   
 
   120   1          pid->integral_limit_enable = (0.0f < config->integral_limit) ? ZF_ENABLE : ZF_DISABLE;
   121   1          pid->integral_min = -config->integral_limit;
@@ -202,7 +202,7 @@ stmt  level    source
   178   1          (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
   179   1          (void)service_packet_add_action("start", app_speedout_start_action, 0UL);
   180   1      }
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 4   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 4   
 
   181          
   182          void app_speedout_init(void)
@@ -270,7 +270,7 @@ stmt  level    source
   242   1          app_speedout_data.right_pwm = 0.0f;
   243   1          app_speedout_data.enabled = 0.0f;
   244   1          speedout_last_enabled = 0U;
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 5   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 5   
 
   245   1          app_speedout_clear_pid();
   246   1      
@@ -338,7 +338,7 @@ stmt  level    source
   308          static void app_speedout_start_action(void)
   309          {
   310   1          app_speedout_request_start();
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 6   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 6   
 
   311   1          wprint("start,0.000\r\n");
   312   1      }
@@ -406,7 +406,7 @@ stmt  level    source
   374   1          EA = ea_backup;
   375   1      
   376   1          if(snapshot.sequence != speedout_target_applied_sequence)
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 7   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 7   
 
   377   1          {
   378   2              speedout_active_left_target = app_speedout_limit_target(snapshot.left_mps);
@@ -474,7 +474,7 @@ stmt  level    source
   440   1          right_pwm = (int32)shared_pos_pid_update(&speedout_right_pid,
   441   1                  right_target, speed.right_mps, APP_SPEEDOUT_DT_SECOND);
   442   1      
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 8   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 8   
 
   443   1          service_motor_set_pwm(left_pwm, right_pwm);
   444   1      
@@ -543,7 +543,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-C251 COMPILER V5.60.0,  app_speedout                                                       08/08/26  16:53:14  PAGE 9   
+C251 COMPILER V5.60.0,  app_speedout                                                       09/08/26  19:48:22  PAGE 9   
 
   hconst size          =       246     ------
 End of Module Information.
