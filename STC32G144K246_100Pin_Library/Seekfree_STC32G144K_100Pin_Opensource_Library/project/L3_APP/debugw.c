@@ -2,7 +2,7 @@
 #include "service_packet.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
-#include "app_attitude.h"
+#include "service_inductor.h"
 #include "debugw.h"
 
 /* 无线调试输出周期: 50Hz, 0.1ms/tick */
@@ -33,14 +33,14 @@ void debugw_init(void)
 // 参数说明     void
 // 返回参数     void
 // 使用示例     debugw_task();
-// 备注信息     由主循环调用; 开关开启后按 50Hz 输出 IMU 三轴姿态(roll/pitch/yaw),
+// 备注信息     由主循环调用; 开关开启后按 50Hz 输出 4 路电感原始 ADC 值,
 //             vofa+ FireWater 最简格式, 后续复杂调试输出在此追加
 //-------------------------------------------------------------------------------------------------------------------
 void debugw_task(void)
 {
     static uint32 last_tick = 0UL;
     uint32 now;
-    app_attitude_data_t attitude;
+    service_inductor_data_t inductor;
 
     if(debugw_debug_info < 0.5f)
     {
@@ -54,13 +54,11 @@ void debugw_task(void)
     }
     last_tick = now;
 
-    /* 50Hz IMU 三轴姿态最简输出: roll, pitch, yaw (deg); pitch 为 0-360 全象限(倒置=180°) */
-    app_attitude_get_data(&attitude);
-    if(0U != attitude.valid)
-    {
-        wprint("%.1f,%.1f,%.1f\r\n",
-                (double)attitude.roll_deg,
-                (double)attitude.pitch_deg,
-                (double)attitude.yaw_deg);
-    }
+    /* 50Hz 4 路电感原始值最简输出: CH1, CH2, CH3, CH4 */
+    (void)service_inductor_get_snapshot(&inductor, NULL);
+    wprint("%u,%u,%u,%u\r\n",
+            inductor.channel_1,
+            inductor.channel_2,
+            inductor.channel_3,
+            inductor.channel_4);
 }

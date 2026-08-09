@@ -1,12 +1,10 @@
 #include "zf_common_headfile.h"
 #include "sys_include.h"
-#include "bsp_buzzer.h"
 #include "service_timetick.h"
 #include "service_function_queue.h"
 #include "service_wireless_uart.h"
 #include "service_packet.h"
 #include "service_batterycheck.h"
-#include "service_buzzer.h"
 #include "service_led.h"
 #include "service_imu.h"
 #include "service_inductor.h"
@@ -28,8 +26,6 @@
 #include "service_boot_request.h"
 #include "service_button.h"
 
-#define BOOT_BUZZ_MS            (500UL)
-
 void main(void)
 {
     SystemStart();
@@ -40,8 +36,6 @@ void main(void)
     service_wireless_uart_init();
     service_packet_init();
     service_batterycheck_init();
-    service_buzzer_init();
-    service_buzzer_stop();
     service_led_init();
     service_imu_init();
     service_tof_init();
@@ -62,10 +56,6 @@ void main(void)
 
     wdt_init();
 
-    bsp_buzzer_init();
-    bsp_buzzer_on();
-    system_delay_ms(BOOT_BUZZ_MS);
-    bsp_buzzer_off();
     /* 欠压守卫放在阻塞性开机流程之后启动, 避免阻塞期内采样停滞被误判失效 */
     app_battery_guard_init();
     while(1)
@@ -83,7 +73,6 @@ void main(void)
         app_element_pump_events();
         app_battery_guard_pump_events();
         service_negative_pressure_task();
-        service_buzzer_task();
         service_led_task();
         service_button_task();
         debugw_task();

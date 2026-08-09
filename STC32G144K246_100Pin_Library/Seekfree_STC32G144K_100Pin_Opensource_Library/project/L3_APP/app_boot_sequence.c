@@ -3,7 +3,6 @@
 #include "service_timetick.h"
 #include "service_packet.h"
 #include "service_wireless_uart.h"
-#include "service_buzzer.h"
 #include "service_negative_pressure.h"
 #include "app_scheduler.h"
 #include "app_speedout.h"
@@ -15,12 +14,10 @@
 #define APP_BOOT_TASK_PERIOD_MS             (10U)
 #define APP_BOOT_TICKS_PER_MS               (10UL)
 
-#define APP_BOOT_BEEP_MS                    (500UL)
 #define APP_BOOT_WAIT_MS                    (2000UL)
 #define APP_BOOT_PRESSURE_PERCENT           (60U)
 #define APP_BOOT_PRESSURE_DELAY_MS          (2000UL)
 
-#define APP_BOOT_BEEP_TICKS                 (APP_BOOT_BEEP_MS * APP_BOOT_TICKS_PER_MS)
 #define APP_BOOT_WAIT_TICKS                 (APP_BOOT_WAIT_MS * APP_BOOT_TICKS_PER_MS)
 #define APP_BOOT_PRESSURE_DELAY_TICKS       (APP_BOOT_PRESSURE_DELAY_MS * APP_BOOT_TICKS_PER_MS)
 
@@ -47,7 +44,6 @@ static void app_boot_start_handler(void)
 {
     boot_stop_received = 0U;
     boot_state = APP_BOOT_STATE_DONE;
-    service_buzzer_beep_ms(200U);
     wprint("start_drive,1.000\r\n");
     app_speedout_request_start();
 }
@@ -114,7 +110,6 @@ static void app_boot_task(void)
 void app_boot_sequence_init(void)
 {
     service_negative_pressure_set_percent(0U);
-    service_buzzer_beep_ms(APP_BOOT_BEEP_MS);
 
     boot_stop_received = 0U;
     boot_state = APP_BOOT_STATE_IDLE;
@@ -123,7 +118,7 @@ void app_boot_sequence_init(void)
     (void)service_packet_add_action("stop", app_boot_stop_handler, 0UL);
     (void)service_packet_add_action("start", app_boot_start_handler, 0UL);
 
-    wprint("boot_beep,1.000\r\n");
+    wprint("boot_ready,1.000\r\n");
 
     /* 开机自动流程已关闭, 不再注册调度任务(无自动负压预充/自动发车) */
     #if __DBGFLAG__

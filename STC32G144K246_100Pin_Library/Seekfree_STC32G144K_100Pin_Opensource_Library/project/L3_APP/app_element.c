@@ -6,7 +6,6 @@
 #include "service_packet.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
-#include "service_buzzer.h"
 #include "app_inductor_preprocess.h"
 #include "app_speedout.h"
 #include "service_tof.h"
@@ -836,7 +835,6 @@ void app_element_pump_events(void)
     if(0U != (flags & ELEMENT_RB_EVENT_FOUND))
     {
         wprint("roundabout,1.000,%u\r\n", (uint16)count_snapshot);
-        service_buzzer_beep_ms(300U);
     }
     if(0U != (flags & ELEMENT_RB_EVENT_EXIT))
     {
@@ -854,7 +852,6 @@ void app_element_pump_events(void)
     {
         wprint("cylinder_count,%u\r\n", (uint16)element_cylinder_count);
         wprint("cylinder,1.000\r\n");
-        service_buzzer_beep_ms(300U);
     }
     if(0U != (realtime_flags & ELEMENT_EVENT_CYLINDER_END))
     {
@@ -867,7 +864,6 @@ void app_element_pump_events(void)
     if(0U != (realtime_flags & ELEMENT_EVENT_SEESAW_FOUND))
     {
         wprint("seesaw,1.000\r\n");
-        service_buzzer_beep_ms(300U);
     }
 }
 

@@ -2,7 +2,6 @@
 #define __BSP_INCLUDE_H
 
 #include "bsp_battery.h"
-#include "bsp_buzzer.h"
 #include "bsp_led.h"
 #include "bsp_encoder.h"
 #include "bsp_imu.h"

@@ -2,23 +2,18 @@
 #include "sys_tfpu.h"
 #include "bsp_include.h"
 #include "service_imu.h"
-#include "service_buzzer.h"
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 
 #define SERVICE_IMU_CALIBRATE_COUNT     (200U)
 #define SERVICE_IMU_CALIBRATE_INV       (0.005f)
 
-/* 开机校准监督状态机 (蜂鸣提示 + 2s 延时后启动校准) */
+/* 开机校准监督状态机 (2s 延时后启动校准, 无蜂鸣提示) */
 #define SERVICE_IMU_CAL_BOOT_DELAY_TICK (20000UL)    /* 开机后等待 2s (0.1ms/tick) */
-#define SERVICE_IMU_CAL_BEEP_MS         (120UL)      /* 单声鸣响时长 ms */
-#define SERVICE_IMU_CAL_BEEP_ON_TICK    (1200UL)     /* 鸣响持续 120ms */
-#define SERVICE_IMU_CAL_BEEP_GAP_TICK   (1500UL)     /* 声间间隔 150ms */
 
 typedef enum
 {
     SERVICE_IMU_CAL_SUPERVISOR_WAIT_BOOT = 0,
-    SERVICE_IMU_CAL_SUPERVISOR_BEEPING,
     SERVICE_IMU_CAL_SUPERVISOR_CALIBRATING,
     SERVICE_IMU_CAL_SUPERVISOR_DONE,
 } service_imu_cal_supervisor_state_enum;
@@ -41,10 +36,6 @@ static float service_imu_calibration_sum = 0.0f;
 static uint16 service_imu_calibration_count = 0U;
 static volatile service_imu_calibration_state_enum service_imu_calibration_state = SERVICE_IMU_CALIBRATION_IDLE;
 static service_imu_cal_supervisor_state_enum cal_supervisor_state = SERVICE_IMU_CAL_SUPERVISOR_WAIT_BOOT;
-static service_imu_cal_supervisor_state_enum cal_supervisor_beep_next = SERVICE_IMU_CAL_SUPERVISOR_WAIT_BOOT;
-static uint8 cal_supervisor_beep_left = 0U;
-static uint8 cal_supervisor_beep_on = 0U;
-static uint32 cal_supervisor_beep_deadline = 0UL;
 static uint32 cal_supervisor_boot_tick = 0UL;
 
 static void service_imu_begin_calibration(service_imu_calibration_state_enum state);
@@ -52,49 +43,6 @@ static void service_imu_update_calibration(const service_imu_sample_t *sample);
 static void service_imu_make_sample(service_imu_sample_t *out_data, const bsp_imu_sample_t *raw);
 static void service_imu_publish_sample(const service_imu_sample_t *sample);
 static void service_imu_cal_supervisor_task(void);
-static void service_imu_cal_supervisor_start_beeps(uint8 beep_count,
-        service_imu_cal_supervisor_state_enum next_state);
-static void service_imu_cal_supervisor_beep_step(uint32 now);
-
-static void service_imu_cal_supervisor_start_beeps(uint8 beep_count,
-        service_imu_cal_supervisor_state_enum next_state)
-{
-    cal_supervisor_beep_left = beep_count;
-    cal_supervisor_beep_next = next_state;
-    cal_supervisor_beep_on = 0U;
-    cal_supervisor_beep_deadline = 0UL;
-    cal_supervisor_state = SERVICE_IMU_CAL_SUPERVISOR_BEEPING;
-}
-
-static void service_imu_cal_supervisor_beep_step(uint32 now)
-{
-    if(0U == cal_supervisor_beep_left)
-    {
-        if(SERVICE_IMU_CAL_SUPERVISOR_CALIBRATING == cal_supervisor_beep_next)
-        {
-            service_imu_start_calibration();
-        }
-        cal_supervisor_state = cal_supervisor_beep_next;
-        return;
-    }
-
-    if((uint32)(now - cal_supervisor_beep_deadline) < 0x80000000UL)
-    {
-        if(0U != cal_supervisor_beep_on)
-        {
-            service_buzzer_stop();
-            cal_supervisor_beep_on = 0U;
-            cal_supervisor_beep_left--;
-            cal_supervisor_beep_deadline = now + SERVICE_IMU_CAL_BEEP_GAP_TICK;
-        }
-        else
-        {
-            service_buzzer_beep_ms(SERVICE_IMU_CAL_BEEP_MS);
-            cal_supervisor_beep_on = 1U;
-            cal_supervisor_beep_deadline = now + SERVICE_IMU_CAL_BEEP_ON_TICK;
-        }
-    }
-}
 
 static void service_imu_cal_supervisor_task(void)
 {
@@ -106,20 +54,16 @@ static void service_imu_cal_supervisor_task(void)
         case SERVICE_IMU_CAL_SUPERVISOR_WAIT_BOOT:
             if((uint32)(now - cal_supervisor_boot_tick) >= SERVICE_IMU_CAL_BOOT_DELAY_TICK)
             {
-                /* 开机 2s 后: 短鸣两声提示, 随后开始校准 */
-                service_imu_cal_supervisor_start_beeps(2U, SERVICE_IMU_CAL_SUPERVISOR_CALIBRATING);
+                /* 开机 2s 后直接开始校准(蜂鸣器已移除) */
+                service_imu_start_calibration();
+                cal_supervisor_state = SERVICE_IMU_CAL_SUPERVISOR_CALIBRATING;
             }
-            break;
-
-        case SERVICE_IMU_CAL_SUPERVISOR_BEEPING:
-            service_imu_cal_supervisor_beep_step(now);
             break;
 
         case SERVICE_IMU_CAL_SUPERVISOR_CALIBRATING:
             if(0U != service_imu_calibration_is_complete())
             {
-                /* 校准完成: 短鸣三声提示 */
-                service_imu_cal_supervisor_start_beeps(3U, SERVICE_IMU_CAL_SUPERVISOR_DONE);
+                cal_supervisor_state = SERVICE_IMU_CAL_SUPERVISOR_DONE;
             }
             break;
 
