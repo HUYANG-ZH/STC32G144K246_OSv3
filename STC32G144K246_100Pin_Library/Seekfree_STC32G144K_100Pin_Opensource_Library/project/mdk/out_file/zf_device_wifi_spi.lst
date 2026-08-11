@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_wifi_spi
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   GND                 电源地
    47          *                   其余引脚悬空
    48          *                   ------------------------------------
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 2   
 
    49          *********************************************************************************************************
              -************/
@@ -134,7 +134,7 @@ stmt  level    source
   109   1          return (wait_time <= time);
   110   1      }
   111          
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 3   
 
   112          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -202,7 +202,7 @@ stmt  level    source
   167          // 备注信息     
   168          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 4   
 
   169          static void wifi_spi_dma_transfer_data (const uint8 *write_data, wifi_spi_packets_struct *read_data, uint
              -16 length)
@@ -270,7 +270,7 @@ stmt  level    source
   224   2              if(wifi_spi_wait_idle(wait_time))
   225   2              {
   226   3                  break;
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 5   
 
   227   3              }
   228   2              // 接收应答信号
@@ -338,7 +338,7 @@ stmt  level    source
   285          //-------------------------------------------------------------------------------------------------------
              -------------
   286          static uint8 wifi_spi_get_version (void)
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 6   
 
   287          {
   288   1          uint8 return_state;
@@ -406,7 +406,7 @@ stmt  level    source
   343          // 返回参数     *buffer         保存时间字符串地址 缓冲区大小至少需要30个字节
   344          // 返回参数     buffer_size     缓冲区大小 
   345          // 返回参数     uint8           状态 0-成功 1-错误
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 7   
 
   346          // 使用示例     
   347          // 备注信息     需要连接有网络的热点之后才能获取到正确的时间，并且在调用�
@@ -474,7 +474,7 @@ stmt  level    source
   404   3                  {
   405   4                      system_delay_ms(10);
   406   4                  }
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 8   
 
   407   3              }
   408   2          }
@@ -542,7 +542,7 @@ stmt  level    source
   464   1          return_state = wifi_spi_set_parameter(WIFI_SPI_SET_SOCKET_INFORMATION, temp_buffer, length, SOCKET_CO
              -NNECT_TIME_OUT);
   465   1          
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 9   
 
   466   1          // 本机IP地址与端口号信息以字符串形式保存在wifi_spi_ip_addr_port数组中
   467   1          wifi_spi_get_ip_addr_port();
@@ -610,7 +610,7 @@ stmt  level    source
   522   1          uint8 return_state = 1;
   523   1          wifi_spi_packets_struct temp_packets;
   524   1          
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 10  
 
   525   1          if(WIFI_SPI_IDLE == wifi_spi_mutex)
   526   1          {
@@ -678,7 +678,7 @@ stmt  level    source
   585          {
   586   1          uint16 send_length;
   587   1          wifi_spi_packets_struct temp_packets;
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 11  
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 11  
 
   588   1          
   589   1          // 检查WIFI SPI状态，如果在其他中断或者线程中已经发起了通讯，则本次不能
@@ -746,7 +746,7 @@ stmt  level    source
              -------------
   648          // 函数简介     WIFI SPI 字符串发送函数并同步接收数据
   649          // 参数说明     *string           需要发送的字符串
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 12  
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 12  
 
   650          // 返回参数     void          
   651          // 使用示例     wifi_spi_send_string("123");
@@ -814,7 +814,7 @@ stmt  level    source
   708   3                  {
   709   4                      if(length)
   710   4                      {
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 13  
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 13  
 
   711   5                          fifo_read_length = length >= temp_packets.head.length ? temp_packets.head.length : le
              -ngth;
@@ -882,7 +882,7 @@ stmt  level    source
   768   2              {
   769   3                  break;
   770   3              }
-C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 29/07/26  21:56:08  PAGE 14  
+C251 COMPILER V5.60.0,  zf_device_wifi_spi                                                 11/08/26  20:17:57  PAGE 14  
 
   771   2            
   772   2              // MAC地址信息以字符串形式保存在wifi_spi_mac_addr数组中

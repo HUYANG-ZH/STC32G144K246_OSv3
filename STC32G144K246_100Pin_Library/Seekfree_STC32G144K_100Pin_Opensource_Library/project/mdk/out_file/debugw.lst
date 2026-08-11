@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  debugw                                                             09/08/26  00:53:46  PAGE 1   
+C251 COMPILER V5.60.0,  debugw                                                             11/08/26  21:37:56  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE debugw
@@ -15,85 +15,138 @@ stmt  level    source
     2          #include "service_packet.h"
     3          #include "service_timetick.h"
     4          #include "service_wireless_uart.h"
-    5          #include "app_attitude.h"
-    6          #include "debugw.h"
-    7          
-    8          /* 无线调试输出周期: 50Hz, 0.1ms/tick */
-    9          #define DEBUGW_PERIOD_TICK          (200UL)
+    5          #include "service_inductor.h"
+    6          #include "service_tof.h"
+    7          #include "service_batterycheck.h"
+    8          #include "app_inductor_preprocess.h"
+    9          #include "debugw.h"
    10          
-   11          /* 无线开关: debuginfo >= 0.5 开启调试输出, < 0.5 关闭 */
-   12          static volatile float debugw_debug_info = 0.0f;
-   13          
-   14          //-------------------------------------------------------------------------------------------------------
+   11          /* 调试模式(无线 debuginfo):
+   12             0 = 关闭
+   13             1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
+   14             2 = 4路电感原始值 CH1~CH4, 10Hz
+   15             3 = 电池电压 (V), 10Hz */
+   16          #define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
+   17          #define DEBUGW_INDUCTOR_PERIOD_TICK     (1000UL)   /* 10Hz */
+   18          #define DEBUGW_VOLTAGE_PERIOD_TICK      (1000UL)   /* 10Hz */
+   19          
+   20          static volatile float debugw_debug_info = 0.0f;
+   21          
+   22          //-------------------------------------------------------------------------------------------------------
              -------------
-   15          // 函数简介     无线调试模块初始化
-   16          // 参数说明     void
-   17          // 返回参数     void
-   18          // 使用示例     debugw_init();
-   19          // 备注信息     注册 debuginfo 无线变量, 由主循环调用 debugw_task() 周期输出
-   20          //-------------------------------------------------------------------------------------------------------
+   23          // 函数简介     无线调试模块初始化
+   24          // 参数说明     void
+   25          // 返回参数     void
+   26          // 使用示例     debugw_init();
+   27          // 备注信息     注册 debuginfo 无线变量(0/1/2/3 模式选择), 由主循环调用 debugw_task()
+             - 周期输出
+   28          //-------------------------------------------------------------------------------------------------------
              -------------
-   21          void debugw_init(void)
-   22          {
-   23   1          debugw_debug_info = 0.0f;
-   24   1          (void)service_packet_add_variable("debuginfo", (float *)&debugw_debug_info, 1U);
-   25   1          #if __DBGFLAG__
-   26   1          printf(">>[debugw_init]\r\n");
-   27   1          wprint(">>[debugw_init]\r\n");
-   28   1          #endif
-   29   1      }
-   30          
-   31          //-------------------------------------------------------------------------------------------------------
-             -------------
-   32          // 函数简介     无线调试任务
-   33          // 参数说明     void
-   34          // 返回参数     void
-   35          // 使用示例     debugw_task();
-   36          // 备注信息     由主循环调用; 开关开启后按 50Hz 输出 IMU 三轴姿态(roll/pitch/yaw),
-   37          //             vofa+ FireWater 最简格式, 后续复杂调试输出在此追加
-   38          //-------------------------------------------------------------------------------------------------------
-             -------------
-   39          void debugw_task(void)
+   29          void debugw_init(void)
+   30          {
+   31   1          debugw_debug_info = 0.0f;
+   32   1          (void)service_packet_add_variable("debuginfo", (float *)&debugw_debug_info, 1U);
+   33   1          #if __DBGFLAG__
+   34   1          printf(">>[debugw_init]\r\n");
+   35   1          wprint(">>[debugw_init]\r\n");
+   36   1          #endif
+   37   1      }
+   38          
+   39          static uint8 debugw_mode(void)
    40          {
-   41   1          static uint32 last_tick = 0UL;
-   42   1          uint32 now;
-   43   1          app_attitude_data_t attitude;
-   44   1      
-   45   1          if(debugw_debug_info < 0.5f)
-   46   1          {
-   47   2              return;
-   48   2          }
-   49   1      
-   50   1          now = service_timetick_what();
-   51   1          if((uint32)(now - last_tick) < DEBUGW_PERIOD_TICK)
-C251 COMPILER V5.60.0,  debugw                                                             09/08/26  00:53:46  PAGE 2   
+   41   1          uint8 mode;
+   42   1      
+   43   1          mode = (uint8)(debugw_debug_info + 0.5f);
+   44   1          if(mode > 3U)
+   45   1          {
+   46   2              mode = 0U;   /* 未知模式视为关闭 */
+   47   2          }
+   48   1          return mode;
+   49   1      }
+   50          
+   51          //-------------------------------------------------------------------------------------------------------
+             -------------
+C251 COMPILER V5.60.0,  debugw                                                             11/08/26  21:37:56  PAGE 2   
 
-   52   1          {
-   53   2              return;
-   54   2          }
-   55   1          last_tick = now;
-   56   1      
-   57   1          /* 50Hz IMU 三轴姿态最简输出: roll, pitch, yaw (deg); pitch 为 0-360 全象限(倒置=180°)
-             - */
-   58   1          app_attitude_get_data(&attitude);
-   59   1          if(0U != attitude.valid)
-   60   1          {
-   61   2              wprint("%.1f,%.1f,%.1f\r\n",
-   62   2                      (double)attitude.roll_deg,
-   63   2                      (double)attitude.pitch_deg,
-   64   2                      (double)attitude.yaw_deg);
-   65   2          }
-   66   1      }
+   52          // 函数简介     无线调试任务
+   53          // 参数说明     void
+   54          // 返回参数     void
+   55          // 使用示例     debugw_task();
+   56          // 备注信息     由主循环调用; 按 debuginfo 模式输出对应数据, vofa+ FireWater 最简格
+             -式
+   57          //-------------------------------------------------------------------------------------------------------
+             -------------
+   58          void debugw_task(void)
+   59          {
+   60   1          static uint32 last_tick = 0UL;
+   61   1          uint8 mode;
+   62   1          uint32 period_tick;
+   63   1          uint32 now;
+   64   1          app_inductor_preprocess_data_t preprocessed;
+   65   1          service_inductor_data_t inductor;
+   66   1          float voltage;
+   67   1      
+   68   1          mode = debugw_mode();
+   69   1          if(0U == mode)
+   70   1          {
+   71   2              return;
+   72   2          }
+   73   1      
+   74   1          period_tick = (1U == mode) ? DEBUGW_IMU_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK;
+   75   1      
+   76   1          now = service_timetick_what();
+   77   1          if((uint32)(now - last_tick) < period_tick)
+   78   1          {
+   79   2              return;
+   80   2          }
+   81   1          last_tick = now;
+   82   1      
+   83   1          switch(mode)
+   84   1          {
+   85   2              case 1U:
+   86   2                  /* 20Hz 4路电感归一化值 + TOF测距: norm(CH1),norm(CH2),norm(CH3),norm(CH4),tof(mm) *
+             -/
+   87   2                  app_inductor_preprocess_get_data(&preprocessed);
+   88   2                  wprint("%.1f,%.1f,%.1f,%.1f,%u\r\n",
+   89   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+   90   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+   91   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+   92   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+   93   2                          (uint16)service_tof_get_distance_mm());
+   94   2                  break;
+   95   2      
+   96   2              case 2U:
+   97   2                  /* 10Hz 4路电感原始值: CH1, CH2, CH3, CH4 */
+   98   2                  (void)service_inductor_get_snapshot(&inductor, NULL);
+   99   2                  wprint("%u,%u,%u,%u\r\n",
+  100   2                          inductor.channel_1,
+  101   2                          inductor.channel_2,
+  102   2                          inductor.channel_3,
+  103   2                          inductor.channel_4);
+  104   2                  break;
+  105   2      
+  106   2              case 3U:
+  107   2                  /* 10Hz 电池电压(V) */
+  108   2                  service_batterycheck_get_voltage(&voltage);
+  109   2                  wprint("%.2f\r\n", (double)voltage);
+  110   2                  break;
+  111   2      
+  112   2              default:
+  113   2                  break;
+  114   2          }
+C251 COMPILER V5.60.0,  debugw                                                             11/08/26  21:37:56  PAGE 3   
+
+  115   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       240     ------
+  ecode size           =       493     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        37     ------
+  xdata size           =        72     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -103,7 +156,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        63     ------
+  hconst size          =        92     ------
 End of Module Information.
 
 

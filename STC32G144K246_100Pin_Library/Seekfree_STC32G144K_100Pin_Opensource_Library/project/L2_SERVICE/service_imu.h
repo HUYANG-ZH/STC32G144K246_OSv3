@@ -39,6 +39,7 @@ void service_imu_task(void);
 void service_imu_update(void);
 void service_imu_start_calibration(void);
 uint8 service_imu_calibration_is_complete(void);
+uint8 service_imu_calibration_is_running(void);
 void service_imu_calibrate_gyro_x(void);
 void service_imu_calibrate_gyro_z(void);
 /* Compatibility projection for gyro-only users.  New users should consume

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/08/26  16:53:12  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/08/26  21:37:55  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    52   1      }
    53          
    54          static void app_inductor_update_precomputed(void)
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/08/26  16:53:12  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/08/26  21:37:55  PAGE 2   
 
    55          {
    56   1          uint8 i;
@@ -134,7 +134,7 @@ stmt  level    source
   118   4                  }
   119   3                  if(values[j] > max_val)
   120   3                  {
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/08/26  16:53:12  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/08/26  21:37:55  PAGE 3   
 
   121   4                      max_val = values[j];
   122   4                  }
@@ -155,9 +155,9 @@ stmt  level    source
   136   3                  {
   137   4                      normalized[i] = 0.0f;
   138   4                  }
-  139   3                  else if(100.0f < normalized[i])
+  139   3                  else if(APP_INDUCTOR_NORM_UPPER_LIMIT < normalized[i])
   140   3                  {
-  141   4                      normalized[i] = 100.0f;
+  141   4                      normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT;
   142   4                  }
   143   3              }
   144   2          }
@@ -202,7 +202,7 @@ stmt  level    source
   183   3                  if(0U == inductor_sensor_fault)
   184   3                  {
   185   4                      inductor_sensor_fault = 1U;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/08/26  16:53:12  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/08/26  21:37:55  PAGE 4   
 
   186   4                      app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
   187   4                  }
@@ -270,7 +270,7 @@ stmt  level    source
   249   2              {
   250   3                  inductor_history[i][j] = sample[i];
   251   3              }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/08/26  16:53:12  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/08/26  21:37:55  PAGE 5   
 
   252   2          }
   253   1      
@@ -339,7 +339,7 @@ Module Information          Static   Overlayable
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            08/08/26  16:53:12  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            11/08/26  21:37:55  PAGE 6   
 
   xdata size           =       435     ------
   xdata-const size     =    ------     ------

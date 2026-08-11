@@ -136,9 +136,9 @@ static void app_inductor_update_output(void)
             {
                 normalized[i] = 0.0f;
             }
-            else if(100.0f < normalized[i])
+            else if(APP_INDUCTOR_NORM_UPPER_LIMIT < normalized[i])
             {
-                normalized[i] = 100.0f;
+                normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT;
             }
         }
     }

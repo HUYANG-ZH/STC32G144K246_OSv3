@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_dl1b                                                     04/08/26  18:02:42  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_dl1b                                                     11/08/26  20:17:58  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_dl1b
@@ -66,7 +66,7 @@ stmt  level    source
              -***********/
    46          
    47          #include "zf_common_debug.h"
-C251 COMPILER V5.60.0,  zf_device_dl1b                                                     04/08/26  18:02:42  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_dl1b                                                     11/08/26  20:17:58  PAGE 2   
 
    48          
    49          #include "zf_driver_delay.h"
@@ -134,7 +134,7 @@ stmt  level    source
                #elif (DL1B_USE_INTERFACE==HARDWARE_IIC)
   109   1          dl1b_debug_i2c_error = (IIC_SUCCESS == iic_init(DL1B_IIC, DL1B_DEV_ADDR, DL1B_IIC_SPEED, DL1B_SCL_PIN
              -, DL1B_SDA_PIN)) ? 0 : 1;
-C251 COMPILER V5.60.0,  zf_device_dl1b                                                     04/08/26  18:02:42  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_dl1b                                                     11/08/26  20:17:58  PAGE 3   
 
   110   1          dl1b_debug_i2c_initialized = (0 == dl1b_debug_i2c_error) ? 1 : 0;
   111   1          dl1b_debug_scl_level = gpio_get_level((gpio_pin_enum)(DL1B_SCL_PIN & 0xFF));
@@ -202,7 +202,7 @@ stmt  level    source
   170   2              dl1b_debug_gpio_status = data_buffer[2];
   171   2              
   172   2              // DL1B 的 GPIO__TIO_HV_STATUS 返回非零即表示有测量结果。
-C251 COMPILER V5.60.0,  zf_device_dl1b                                                     04/08/26  18:02:42  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_dl1b                                                     11/08/26  20:17:58  PAGE 4   
 
   173   2              // 该器件常见返回值为 0x02，不能只检查 bit0。
   174   2              if(data_buffer[2])
@@ -270,7 +270,7 @@ stmt  level    source
   234          
   235          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_dl1b                                                     04/08/26  18:02:42  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_dl1b                                                     11/08/26  20:17:58  PAGE 5   
 
   236          // 函数简介     初始化 DL1B
   237          // 参数说明     void
@@ -338,7 +338,7 @@ stmt  level    source
   298   2              data_buffer[1] = DL1B_FIRMWARE__SYSTEM_STATUS & 0xFF;
   299   2              dl1b_transfer_8bit_array(data_buffer, 2, &data_buffer[2], 1);
   300   2              dl1b_debug_scl_level = gpio_get_level(DL1B_SCL_PIN);
-C251 COMPILER V5.60.0,  zf_device_dl1b                                                     04/08/26  18:02:42  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_dl1b                                                     11/08/26  20:17:58  PAGE 6   
 
   301   2              dl1b_debug_sda_level = gpio_get_level(DL1B_SDA_PIN);
   302   2              dl1b_debug_firmware_status = data_buffer[2];
@@ -406,7 +406,7 @@ stmt  level    source
   364   2          #if DL1B_INT_ENABLE
                        exti_init(DL1B_INT_PIN, EXTI_TRIGGER_FALLING);
                        dl1b_int_handler();
-C251 COMPILER V5.60.0,  zf_device_dl1b                                                     04/08/26  18:02:42  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_dl1b                                                     11/08/26  20:17:58  PAGE 7   
 
                        dl1b_finsh_flag = 0;
                    #endif

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               08/08/26  20:36:12  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               11/08/26  21:37:56  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -12,104 +12,93 @@ stmt  level    source
 
     1          #include "zf_common_headfile.h"
     2          #include "sys_include.h"
-    3          #include "bsp_buzzer.h"
-    4          #include "service_timetick.h"
-    5          #include "service_function_queue.h"
-    6          #include "service_wireless_uart.h"
-    7          #include "service_packet.h"
-    8          #include "service_batterycheck.h"
-    9          #include "service_buzzer.h"
-   10          #include "service_led.h"
-   11          #include "service_imu.h"
-   12          #include "service_inductor.h"
-   13          #include "service_motor.h"
-   14          #include "service_negative_pressure.h"
-   15          #include "service_speed.h"
-   16          #include "service_tof.h"
-   17          #include "app_element.h"
-   18          #include "app_feedforward.h"
-   19          #include "app_inductor_preprocess.h"
-   20          #include "app_motion_preprocess.h"
-   21          #include "app_motion_postprocess.h"
-   22          #include "app_scheduler.h"
-   23          #include "app_speed_plan.h"
-   24          #include "app_speedout.h"
-   25          #include "app_boot_sequence.h"
-   26          #include "app_battery_guard.h"
-   27          #include "debugw.h"
-   28          #include "service_boot_request.h"
-   29          #include "service_button.h"
-   30          
-   31          #define BOOT_BUZZ_MS            (500UL)
-   32          
-   33          void main(void)
-   34          {
-   35   1          SystemStart();
-   36   1      
-   37   1          service_timetick_init();
-   38   1          service_function_queue_init();
-   39   1          app_scheduler_init();
-   40   1          service_wireless_uart_init();
-   41   1          service_packet_init();
-   42   1          service_batterycheck_init();
-   43   1          service_buzzer_init();
-   44   1          service_buzzer_stop();
-   45   1          service_led_init();
-   46   1          service_imu_init();
-   47   1          service_tof_init();
-   48   1          service_motor_init();
-   49   1          service_negative_pressure_init();
-   50   1          service_speed_init();
-   51   1          app_inductor_preprocess_init();
-   52   1          app_motion_preprocess_init();
-   53   1          app_feedforward_init();
-   54   1          app_speed_plan_init();
-   55   1          app_element_init();
-   56   1          app_speedout_init();
-C251 COMPILER V5.60.0,  main                                                               08/08/26  20:36:12  PAGE 2   
+    3          #include "service_timetick.h"
+    4          #include "service_function_queue.h"
+    5          #include "service_wireless_uart.h"
+    6          #include "service_packet.h"
+    7          #include "service_batterycheck.h"
+    8          #include "service_led.h"
+    9          #include "service_imu.h"
+   10          #include "service_inductor.h"
+   11          #include "service_motor.h"
+   12          #include "service_negative_pressure.h"
+   13          #include "service_speed.h"
+   14          #include "service_tof.h"
+   15          #include "app_element.h"
+   16          #include "app_feedforward.h"
+   17          #include "app_inductor_preprocess.h"
+   18          #include "app_motion_preprocess.h"
+   19          #include "app_motion_postprocess.h"
+   20          #include "app_scheduler.h"
+   21          #include "app_speed_plan.h"
+   22          #include "app_speedout.h"
+   23          #include "app_boot_sequence.h"
+   24          #include "app_battery_guard.h"
+   25          #include "debugw.h"
+   26          #include "service_boot_request.h"
+   27          #include "service_button.h"
+   28          
+   29          void main(void)
+   30          {
+   31   1          SystemStart();
+   32   1      
+   33   1          service_timetick_init();
+   34   1          service_function_queue_init();
+   35   1          app_scheduler_init();
+   36   1          service_wireless_uart_init();
+   37   1          service_packet_init();
+   38   1          service_batterycheck_init();
+   39   1          service_led_init();
+   40   1          service_imu_init();
+   41   1          service_tof_init();
+   42   1          service_motor_init();
+   43   1          service_negative_pressure_init();
+   44   1          service_speed_init();
+   45   1          app_inductor_preprocess_init();
+   46   1          app_motion_preprocess_init();
+   47   1          app_feedforward_init();
+   48   1          app_speed_plan_init();
+   49   1          app_element_init();
+   50   1          app_speedout_init();
+   51   1          app_motion_postprocess_init();
+   52   1          app_boot_sequence_init();
+   53   1          service_boot_request_init();
+   54   1          service_button_init();
+   55   1          debugw_init();
+   56   1      
+C251 COMPILER V5.60.0,  main                                                               11/08/26  21:37:56  PAGE 2   
 
-   57   1          app_motion_postprocess_init();
-   58   1          app_boot_sequence_init();
-   59   1          service_boot_request_init();
-   60   1          service_button_init();
-   61   1          debugw_init();
-   62   1      
-   63   1          wdt_init();
-   64   1      
-   65   1          bsp_buzzer_init();
-   66   1          bsp_buzzer_on();
-   67   1          system_delay_ms(BOOT_BUZZ_MS);
-   68   1          bsp_buzzer_off();
-   69   1          /* 欠压守卫放在阻塞性开机流程之后启动, 避免阻塞期内采样停滞被误判失效
+   57   1          wdt_init();
+   58   1      
+   59   1          /* 欠压守卫放在阻塞性开机流程之后启动, 避免阻塞期内采样停滞被误判失效
              - */
-   70   1          app_battery_guard_init();
-   71   1          while(1)
-   72   1          {
-   73   2              wdt_feed();
-   74   2              iic_async_process_all_timed(service_timetick_what());
-   75   2              service_imu_task();
-   76   2              service_tof_task();
-   77   2              service_batterycheck_task();
-   78   2              service_inductor_task();
-   79   2              service_boot_request_process();
-   80   2              service_function_queue_update();
-   81   2              service_packet_update();
-   82   2              app_scheduler_run();
-   83   2              app_element_pump_events();
-   84   2              app_battery_guard_pump_events();
-   85   2              service_negative_pressure_task();
-   86   2              service_buzzer_task();
-   87   2              service_led_task();
-   88   2              service_button_task();
-   89   2              debugw_task();
-   90   2          }
-   91   1      }
+   60   1          app_battery_guard_init();
+   61   1          while(1)
+   62   1          {
+   63   2              wdt_feed();
+   64   2              iic_async_process_all_timed(service_timetick_what());
+   65   2              service_imu_task();
+   66   2              service_tof_task();
+   67   2              service_batterycheck_task();
+   68   2              service_inductor_task();
+   69   2              service_boot_request_process();
+   70   2              service_function_queue_update();
+   71   2              service_packet_update();
+   72   2              app_scheduler_run();
+   73   2              app_element_pump_events();
+   74   2              app_battery_guard_pump_events();
+   75   2              service_negative_pressure_task();
+   76   2              service_led_task();
+   77   2              service_button_task();
+   78   2              debugw_task();
+   79   2          }
+   80   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       275     ------
+  ecode size           =       221     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
