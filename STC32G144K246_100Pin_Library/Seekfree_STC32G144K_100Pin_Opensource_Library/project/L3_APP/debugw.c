@@ -3,16 +3,17 @@
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 #include "service_inductor.h"
+#include "service_tof.h"
 #include "service_batterycheck.h"
-#include "app_attitude.h"
+#include "app_inductor_preprocess.h"
 #include "debugw.h"
 
 /* 调试模式(无线 debuginfo):
    0 = 关闭
-   1 = IMU 三轴姿态 roll/pitch/yaw (deg), 50Hz
+   1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
    2 = 4路电感原始值 CH1~CH4, 10Hz
    3 = 电池电压 (V), 10Hz */
-#define DEBUGW_IMU_PERIOD_TICK          (200UL)    /* 50Hz, 0.1ms/tick */
+#define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
 #define DEBUGW_INDUCTOR_PERIOD_TICK     (1000UL)   /* 10Hz */
 #define DEBUGW_VOLTAGE_PERIOD_TICK      (1000UL)   /* 10Hz */
 
@@ -60,7 +61,7 @@ void debugw_task(void)
     uint8 mode;
     uint32 period_tick;
     uint32 now;
-    app_attitude_data_t attitude;
+    app_inductor_preprocess_data_t preprocessed;
     service_inductor_data_t inductor;
     float voltage;
 
@@ -82,15 +83,14 @@ void debugw_task(void)
     switch(mode)
     {
         case 1U:
-            /* 50Hz IMU 三轴姿态: roll, pitch, yaw (deg); pitch 为 0-360 全象限(倒置=180°) */
-            app_attitude_get_data(&attitude);
-            if(0U != attitude.valid)
-            {
-                wprint("%.1f,%.1f,%.1f\r\n",
-                        (double)attitude.roll_deg,
-                        (double)attitude.pitch_deg,
-                        (double)attitude.yaw_deg);
-            }
+            /* 20Hz 4路电感归一化值 + TOF测距: norm(CH1),norm(CH2),norm(CH3),norm(CH4),tof(mm) */
+            app_inductor_preprocess_get_data(&preprocessed);
+            wprint("%.1f,%.1f,%.1f,%.1f,%u\r\n",
+                    (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+                    (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+                    (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+                    (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+                    (uint16)service_tof_get_distance_mm());
             break;
 
         case 2U:

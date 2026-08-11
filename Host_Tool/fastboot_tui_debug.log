@@ -1,10 +1,17 @@
-操作：APP CRC32 校验
-异常：CRC32 不一致：device=0x4CB479F5, host=0xA66458FE
+操作：HEX 检查
+异常：[Errno 2] No such file or directory: 'D:\\Electromagnetic_Car\\STC32G144K246_OSv3\\STC32G144K246_100Pin_Library\\Seekfree_STC32G144K_100Pin_Opensource_Library\\project\\mdk\\seekfree.hex'
 
 Traceback (most recent call last):
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\tui.py", line 427, in worker_verify_crc
-    ).verify_current_application(image)
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 736, in verify_current_application
-    raise FastBootError(
-stcfastboot.engine.FastBootError: CRC32 不一致：device=0x4CB479F5, host=0xA66458FE
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\tui.py", line 371, in worker_plan_image
+    image = parse_intel_hex(path)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Electromagnetic_Car\STC32G144K246_OSv3\Host_Tool\stcfastboot\engine.py", line 157, in parse_intel_hex
+    for line_no, raw_line in enumerate(source.read_text(encoding="ascii").splitlines(), 1):
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Anaconda3\Lib\pathlib.py", line 1058, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Anaconda3\Lib\pathlib.py", line 1044, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Electromagnetic_Car\\STC32G144K246_OSv3\\STC32G144K246_100Pin_Library\\Seekfree_STC32G144K_100Pin_Opensource_Library\\project\\mdk\\seekfree.hex'
