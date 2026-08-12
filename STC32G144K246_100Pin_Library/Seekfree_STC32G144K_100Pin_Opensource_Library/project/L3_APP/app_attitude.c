@@ -6,8 +6,9 @@
 #include "app_attitude.h"
 
 static shared_lpf_t attitude_gyro_z_lpf;
-static shared_lpf_t attitude_pitch_lpf;
+static shared_lpf_t attitude_gyro_x_lpf;
 static shared_kalman_t attitude_roll_kalman;
+static shared_kalman_t attitude_pitch_kalman;
 static volatile app_attitude_data_t attitude_data;
 static uint32 attitude_last_sequence = 0UL;
 static uint32 attitude_last_timestamp_tick = 0UL;
@@ -99,8 +100,8 @@ void app_attitude_init(void)
 {
     shared_lpf_init(&attitude_gyro_z_lpf,
             APP_ATTITUDE_GYRO_Z_LPF_ALPHA_DEFAULT, 0.0f);
-    shared_lpf_init(&attitude_pitch_lpf,
-            APP_ATTITUDE_PITCH_LPF_ALPHA_DEFAULT, 0.0f);
+    shared_lpf_init(&attitude_gyro_x_lpf,
+            APP_ATTITUDE_GYRO_X_LPF_ALPHA_DEFAULT, 0.0f);
     attitude_last_sequence = 0UL;
     attitude_last_timestamp_tick = 0UL;
     attitude_kalman_ready = 0U;
@@ -113,34 +114,35 @@ void app_attitude_init(void)
     attitude_data.valid = 0U;
 }
 
-static float app_attitude_pitch_lpf_update(float input)
+/* pitch 0-360 语义下把 accel 测量平移到估计值 ±180° 内, 使连续 Kalman 不回绕发散 */
+static float app_attitude_pitch_wrap_measure(float measure_deg, float estimate_deg)
 {
     float delta;
-    float output;
 
-    /* 回绕感知一阶低通: 0/360 接缝处(恰为水平姿态)避免线性混叠,
-       359→0 按 -1° 处理而非 -359°, 防止平路振动虚假触发 (30,330) */
-    output = attitude_pitch_lpf.output;
-    delta = tfpu_sub(input, output);
+    delta = tfpu_sub(measure_deg, estimate_deg);
     if(delta > 180.0f)
     {
-        delta = tfpu_sub(delta, 360.0f);
+        measure_deg = tfpu_sub(measure_deg, 360.0f);
     }
     else if(delta < -180.0f)
     {
-        delta = tfpu_add(delta, 360.0f);
+        measure_deg = tfpu_add(measure_deg, 360.0f);
     }
-    output = tfpu_add(output, tfpu_mul(attitude_pitch_lpf.alpha, delta));
-    if(output >= 360.0f)
+    return measure_deg;
+}
+
+/* pitch Kalman 输出归一化回 [0,360), 状态范围不超出 (-180,540), 单次 ±360 调整即可 */
+static float app_attitude_pitch_normalize(float angle_deg)
+{
+    if(angle_deg >= 360.0f)
     {
-        output = tfpu_sub(output, 360.0f);
+        angle_deg = tfpu_sub(angle_deg, 360.0f);
     }
-    else if(output < 0.0f)
+    else if(angle_deg < 0.0f)
     {
-        output = tfpu_add(output, 360.0f);
+        angle_deg = tfpu_add(angle_deg, 360.0f);
     }
-    attitude_pitch_lpf.output = output;
-    return output;
+    return angle_deg;
 }
 
 void app_attitude_update(const service_imu_sample_t *imu)
@@ -149,6 +151,7 @@ void app_attitude_update(const service_imu_sample_t *imu)
     float accel_roll_deg;
     float accel_pitch_deg;
     float dt;
+    float gyro_x;
     float gyro_z;
 
     if((NULL == imu) || (0U == imu->valid) || (0UL == imu->sequence) ||
@@ -158,6 +161,7 @@ void app_attitude_update(const service_imu_sample_t *imu)
     }
 
     app_attitude_get_accel_angles(imu, &accel_roll_deg, &accel_pitch_deg);
+    gyro_x = shared_lpf_update(&attitude_gyro_x_lpf, imu->gyro_x);
     gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, imu->gyro_z);
     if(0U == attitude_kalman_ready)
     {
@@ -165,7 +169,10 @@ void app_attitude_update(const service_imu_sample_t *imu)
                 APP_ATTITUDE_KALMAN_Q_ANGLE_DEFAULT,
                 APP_ATTITUDE_KALMAN_Q_BIAS_DEFAULT,
                 APP_ATTITUDE_KALMAN_R_MEASURE_DEFAULT);
-        shared_lpf_reset(&attitude_pitch_lpf, accel_pitch_deg);
+        shared_kalman_init(&attitude_pitch_kalman, accel_pitch_deg,
+                APP_ATTITUDE_KALMAN_Q_ANGLE_DEFAULT,
+                APP_ATTITUDE_KALMAN_Q_BIAS_DEFAULT,
+                APP_ATTITUDE_PITCH_KALMAN_R_DEFAULT);
         attitude_data.roll_deg = accel_roll_deg;
         attitude_data.pitch_deg = accel_pitch_deg;
         attitude_data.yaw_deg = 0.0f;
@@ -175,9 +182,13 @@ void app_attitude_update(const service_imu_sample_t *imu)
     {
         dt = app_attitude_get_dt(imu);
         attitude_data.roll_deg = shared_kalman_update(&attitude_roll_kalman,
-                accel_roll_deg, imu->gyro_x, dt);
-        /* pitch 0-360 无法用连续状态 Kalman(359→0 回绕会发散), 采用加速度计全象限 + 回绕感知低通 */
-        attitude_data.pitch_deg = app_attitude_pitch_lpf_update(accel_pitch_deg);
+                accel_roll_deg, gyro_x, dt);
+        /* pitch: 陀螺融合 Kalman + 测量回绕预包装, 保持 0-360 全象限语义 */
+        accel_pitch_deg = app_attitude_pitch_wrap_measure(accel_pitch_deg,
+                attitude_pitch_kalman.angle);
+        attitude_data.pitch_deg = app_attitude_pitch_normalize(
+                shared_kalman_update(&attitude_pitch_kalman,
+                        accel_pitch_deg, gyro_x, dt));
         attitude_data.yaw_deg = tfpu_add(attitude_data.yaw_deg,
                 tfpu_mul(gyro_z, dt));
         if(180.0f < attitude_data.yaw_deg)

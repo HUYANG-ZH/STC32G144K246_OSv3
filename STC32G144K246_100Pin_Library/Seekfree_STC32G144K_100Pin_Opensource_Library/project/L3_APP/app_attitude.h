@@ -20,9 +20,18 @@
 #define APP_ATTITUDE_GYRO_Z_LPF_ALPHA_DEFAULT (0.5f)
 #endif
 
-/* pitch(0-360 全象限) 一阶低通系数 */
+#ifndef APP_ATTITUDE_GYRO_X_LPF_ALPHA_DEFAULT
+#define APP_ATTITUDE_GYRO_X_LPF_ALPHA_DEFAULT (0.5f)
+#endif
+
+/* pitch 已改用陀螺融合 Kalman(回绕预包装), 该宏保留备用 */
 #ifndef APP_ATTITUDE_PITCH_LPF_ALPHA_DEFAULT
 #define APP_ATTITUDE_PITCH_LPF_ALPHA_DEFAULT   (0.3f)
+#endif
+
+/* pitch Kalman 测量噪声: 负压振动场景下增大 R(更信任陀螺积分) */
+#ifndef APP_ATTITUDE_PITCH_KALMAN_R_DEFAULT
+#define APP_ATTITUDE_PITCH_KALMAN_R_DEFAULT   (0.05f)
 #endif
 
 #ifndef APP_ATTITUDE_DT_MAX_SECOND

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_attitude                                                       11/08/26  20:58:48  PAGE 1   
+C251 COMPILER V5.60.0,  app_attitude                                                       12/08/26  14:53:06  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_attitude
@@ -19,249 +19,263 @@ stmt  level    source
     6          #include "app_attitude.h"
     7          
     8          static shared_lpf_t attitude_gyro_z_lpf;
-    9          static shared_lpf_t attitude_pitch_lpf;
+    9          static shared_lpf_t attitude_gyro_x_lpf;
    10          static shared_kalman_t attitude_roll_kalman;
-   11          static volatile app_attitude_data_t attitude_data;
-   12          static uint32 attitude_last_sequence = 0UL;
-   13          static uint32 attitude_last_timestamp_tick = 0UL;
-   14          static uint8 attitude_kalman_ready = 0U;
-   15          
-   16          #define APP_ATTITUDE_PI                  (3.1415926f)
-   17          #define APP_ATTITUDE_HALF_PI             (1.5707963f)
-   18          #define APP_ATTITUDE_RAD_TO_DEG          (57.2957795f)
-   19          #define APP_ATTITUDE_TICK_TO_SECOND      (0.0001f)
-   20          
-   21          static float app_attitude_atan2(float y, float x)
-   22          {
-   23   1          float value;
-   24   1      
-   25   1          if(x > 0.0f)
-   26   1          {
-   27   2              value = tfpu_atan(tfpu_div(y, x));
-   28   2          }
-   29   1          else if(x < 0.0f)
-   30   1          {
-   31   2              value = tfpu_atan(tfpu_div(y, x));
-   32   2              value = (y >= 0.0f) ? tfpu_add(value, APP_ATTITUDE_PI) :
-   33   2                      tfpu_sub(value, APP_ATTITUDE_PI);
-   34   2          }
-   35   1          else if(y > 0.0f)
-   36   1          {
-   37   2              value = APP_ATTITUDE_HALF_PI;
-   38   2          }
-   39   1          else if(y < 0.0f)
-   40   1          {
-   41   2              value = tfpu_sub(0.0f, APP_ATTITUDE_HALF_PI);
-   42   2          }
-   43   1          else
-   44   1          {
-   45   2              value = 0.0f;
-   46   2          }
-   47   1      
-   48   1          return value;
-   49   1      }
-   50          
-   51          static void app_attitude_get_accel_angles(const service_imu_sample_t *imu,
-   52                  float *roll_deg,
-   53                  float *pitch_deg)
-   54          {
-   55   1          float roll_rad;
-C251 COMPILER V5.60.0,  app_attitude                                                       11/08/26  20:58:48  PAGE 2   
+   11          static shared_kalman_t attitude_pitch_kalman;
+   12          static volatile app_attitude_data_t attitude_data;
+   13          static uint32 attitude_last_sequence = 0UL;
+   14          static uint32 attitude_last_timestamp_tick = 0UL;
+   15          static uint8 attitude_kalman_ready = 0U;
+   16          
+   17          #define APP_ATTITUDE_PI                  (3.1415926f)
+   18          #define APP_ATTITUDE_HALF_PI             (1.5707963f)
+   19          #define APP_ATTITUDE_RAD_TO_DEG          (57.2957795f)
+   20          #define APP_ATTITUDE_TICK_TO_SECOND      (0.0001f)
+   21          
+   22          static float app_attitude_atan2(float y, float x)
+   23          {
+   24   1          float value;
+   25   1      
+   26   1          if(x > 0.0f)
+   27   1          {
+   28   2              value = tfpu_atan(tfpu_div(y, x));
+   29   2          }
+   30   1          else if(x < 0.0f)
+   31   1          {
+   32   2              value = tfpu_atan(tfpu_div(y, x));
+   33   2              value = (y >= 0.0f) ? tfpu_add(value, APP_ATTITUDE_PI) :
+   34   2                      tfpu_sub(value, APP_ATTITUDE_PI);
+   35   2          }
+   36   1          else if(y > 0.0f)
+   37   1          {
+   38   2              value = APP_ATTITUDE_HALF_PI;
+   39   2          }
+   40   1          else if(y < 0.0f)
+   41   1          {
+   42   2              value = tfpu_sub(0.0f, APP_ATTITUDE_HALF_PI);
+   43   2          }
+   44   1          else
+   45   1          {
+   46   2              value = 0.0f;
+   47   2          }
+   48   1      
+   49   1          return value;
+   50   1      }
+   51          
+   52          static void app_attitude_get_accel_angles(const service_imu_sample_t *imu,
+   53                  float *roll_deg,
+   54                  float *pitch_deg)
+   55          {
+C251 COMPILER V5.60.0,  app_attitude                                                       12/08/26  14:53:06  PAGE 2   
 
-   56   1          float pitch_rad;
-   57   1      
-   58   1          if((NULL == imu) || (NULL == roll_deg) || (NULL == pitch_deg))
-   59   1          {
-   60   2              return;
-   61   2          }
-   62   1      
-   63   1          roll_rad = app_attitude_atan2(imu->acc_y_g, imu->acc_z_g);
-   64   1          /* pitch 0-360 全象限: 分母用 az 保留重力方向(而非恒正模长),
-   65   1             倒置(az<0)时 pitch=180°, 与正放(0°)区分; 绕 pitch 轴翻转可全周观测 */
-   66   1          pitch_rad = app_attitude_atan2(tfpu_sub(0.0f, imu->acc_x_g), imu->acc_z_g);
-   67   1          *roll_deg = tfpu_mul(roll_rad, APP_ATTITUDE_RAD_TO_DEG);
-   68   1          *pitch_deg = tfpu_mul(pitch_rad, APP_ATTITUDE_RAD_TO_DEG);
-   69   1          if(*pitch_deg < 0.0f)
-   70   1          {
-   71   2              *pitch_deg = tfpu_add(*pitch_deg, 360.0f);
-   72   2          }
-   73   1      }
-   74          
-   75          static float app_attitude_get_dt(const service_imu_sample_t *imu)
-   76          {
-   77   1          uint32 delta_tick;
-   78   1          float dt;
-   79   1      
-   80   1          if(NULL == imu)
-   81   1          {
-   82   2              return 0.0001f;
-   83   2          }
-   84   1          delta_tick = imu->timestamp_tick - attitude_last_timestamp_tick;
-   85   1          if(0UL == delta_tick)
-   86   1          {
-   87   2              return 0.0001f;
-   88   2          }
-   89   1          dt = tfpu_mul(tfpu_int2float((long)delta_tick),
-   90   1                  APP_ATTITUDE_TICK_TO_SECOND);
-   91   1          if(APP_ATTITUDE_DT_MAX_SECOND < dt)
-   92   1          {
-   93   2              dt = APP_ATTITUDE_DT_MAX_SECOND;
-   94   2          }
-   95   1          return dt;
-   96   1      }
-   97          
-   98          void app_attitude_init(void)
-   99          {
-  100   1          shared_lpf_init(&attitude_gyro_z_lpf,
-  101   1                  APP_ATTITUDE_GYRO_Z_LPF_ALPHA_DEFAULT, 0.0f);
-  102   1          shared_lpf_init(&attitude_pitch_lpf,
-  103   1                  APP_ATTITUDE_PITCH_LPF_ALPHA_DEFAULT, 0.0f);
-  104   1          attitude_last_sequence = 0UL;
-  105   1          attitude_last_timestamp_tick = 0UL;
-  106   1          attitude_kalman_ready = 0U;
-  107   1          attitude_data.roll_deg = 0.0f;
-  108   1          attitude_data.pitch_deg = 0.0f;
-  109   1          attitude_data.yaw_deg = 0.0f;
-  110   1          attitude_data.gyro_z = 0.0f;
-  111   1          attitude_data.sequence = 0UL;
-  112   1          attitude_data.timestamp_tick = 0UL;
-  113   1          attitude_data.valid = 0U;
-  114   1      }
-  115          
-  116          static float app_attitude_pitch_lpf_update(float input)
-  117          {
-  118   1          float delta;
-  119   1          float output;
-  120   1      
-  121   1          /* 回绕感知一阶低通: 0/360 接缝处(恰为水平姿态)避免线性混叠,
-C251 COMPILER V5.60.0,  app_attitude                                                       11/08/26  20:58:48  PAGE 3   
+   56   1          float roll_rad;
+   57   1          float pitch_rad;
+   58   1      
+   59   1          if((NULL == imu) || (NULL == roll_deg) || (NULL == pitch_deg))
+   60   1          {
+   61   2              return;
+   62   2          }
+   63   1      
+   64   1          roll_rad = app_attitude_atan2(imu->acc_y_g, imu->acc_z_g);
+   65   1          /* pitch 0-360 全象限: 分母用 az 保留重力方向(而非恒正模长),
+   66   1             倒置(az<0)时 pitch=180°, 与正放(0°)区分; 绕 pitch 轴翻转可全周观测 */
+   67   1          pitch_rad = app_attitude_atan2(tfpu_sub(0.0f, imu->acc_x_g), imu->acc_z_g);
+   68   1          *roll_deg = tfpu_mul(roll_rad, APP_ATTITUDE_RAD_TO_DEG);
+   69   1          *pitch_deg = tfpu_mul(pitch_rad, APP_ATTITUDE_RAD_TO_DEG);
+   70   1          if(*pitch_deg < 0.0f)
+   71   1          {
+   72   2              *pitch_deg = tfpu_add(*pitch_deg, 360.0f);
+   73   2          }
+   74   1      }
+   75          
+   76          static float app_attitude_get_dt(const service_imu_sample_t *imu)
+   77          {
+   78   1          uint32 delta_tick;
+   79   1          float dt;
+   80   1      
+   81   1          if(NULL == imu)
+   82   1          {
+   83   2              return 0.0001f;
+   84   2          }
+   85   1          delta_tick = imu->timestamp_tick - attitude_last_timestamp_tick;
+   86   1          if(0UL == delta_tick)
+   87   1          {
+   88   2              return 0.0001f;
+   89   2          }
+   90   1          dt = tfpu_mul(tfpu_int2float((long)delta_tick),
+   91   1                  APP_ATTITUDE_TICK_TO_SECOND);
+   92   1          if(APP_ATTITUDE_DT_MAX_SECOND < dt)
+   93   1          {
+   94   2              dt = APP_ATTITUDE_DT_MAX_SECOND;
+   95   2          }
+   96   1          return dt;
+   97   1      }
+   98          
+   99          void app_attitude_init(void)
+  100          {
+  101   1          shared_lpf_init(&attitude_gyro_z_lpf,
+  102   1                  APP_ATTITUDE_GYRO_Z_LPF_ALPHA_DEFAULT, 0.0f);
+  103   1          shared_lpf_init(&attitude_gyro_x_lpf,
+  104   1                  APP_ATTITUDE_GYRO_X_LPF_ALPHA_DEFAULT, 0.0f);
+  105   1          attitude_last_sequence = 0UL;
+  106   1          attitude_last_timestamp_tick = 0UL;
+  107   1          attitude_kalman_ready = 0U;
+  108   1          attitude_data.roll_deg = 0.0f;
+  109   1          attitude_data.pitch_deg = 0.0f;
+  110   1          attitude_data.yaw_deg = 0.0f;
+  111   1          attitude_data.gyro_z = 0.0f;
+  112   1          attitude_data.sequence = 0UL;
+  113   1          attitude_data.timestamp_tick = 0UL;
+  114   1          attitude_data.valid = 0U;
+  115   1      }
+  116          
+  117          /* pitch 0-360 语义下把 accel 测量平移到估计值 ±180° 内, 使连续 Kalman 不回绕发散 
+             -*/
+  118          static float app_attitude_pitch_wrap_measure(float measure_deg, float estimate_deg)
+  119          {
+  120   1          float delta;
+C251 COMPILER V5.60.0,  app_attitude                                                       12/08/26  14:53:06  PAGE 3   
 
-  122   1             359→0 按 -1° 处理而非 -359°, 防止平路振动虚假触发 (30,330) */
-  123   1          output = attitude_pitch_lpf.output;
-  124   1          delta = tfpu_sub(input, output);
-  125   1          if(delta > 180.0f)
-  126   1          {
-  127   2              delta = tfpu_sub(delta, 360.0f);
-  128   2          }
-  129   1          else if(delta < -180.0f)
-  130   1          {
-  131   2              delta = tfpu_add(delta, 360.0f);
-  132   2          }
-  133   1          output = tfpu_add(output, tfpu_mul(attitude_pitch_lpf.alpha, delta));
-  134   1          if(output >= 360.0f)
-  135   1          {
-  136   2              output = tfpu_sub(output, 360.0f);
-  137   2          }
-  138   1          else if(output < 0.0f)
-  139   1          {
-  140   2              output = tfpu_add(output, 360.0f);
-  141   2          }
-  142   1          attitude_pitch_lpf.output = output;
-  143   1          return output;
-  144   1      }
-  145          
-  146          void app_attitude_update(const service_imu_sample_t *imu)
-  147          {
-  148   1          uint8 ea_backup;
-  149   1          float accel_roll_deg;
-  150   1          float accel_pitch_deg;
-  151   1          float dt;
-  152   1          float gyro_z;
-  153   1      
-  154   1          if((NULL == imu) || (0U == imu->valid) || (0UL == imu->sequence) ||
-  155   1             (imu->sequence == attitude_last_sequence))
-  156   1          {
-  157   2              return;
-  158   2          }
-  159   1      
-  160   1          app_attitude_get_accel_angles(imu, &accel_roll_deg, &accel_pitch_deg);
-  161   1          gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, imu->gyro_z);
-  162   1          if(0U == attitude_kalman_ready)
-  163   1          {
-  164   2              shared_kalman_init(&attitude_roll_kalman, accel_roll_deg,
-  165   2                      APP_ATTITUDE_KALMAN_Q_ANGLE_DEFAULT,
-  166   2                      APP_ATTITUDE_KALMAN_Q_BIAS_DEFAULT,
-  167   2                      APP_ATTITUDE_KALMAN_R_MEASURE_DEFAULT);
-  168   2              shared_lpf_reset(&attitude_pitch_lpf, accel_pitch_deg);
-  169   2              attitude_data.roll_deg = accel_roll_deg;
-  170   2              attitude_data.pitch_deg = accel_pitch_deg;
-  171   2              attitude_data.yaw_deg = 0.0f;
-  172   2              attitude_kalman_ready = 1U;
-  173   2          }
-  174   1          else
-  175   1          {
-  176   2              dt = app_attitude_get_dt(imu);
-  177   2              attitude_data.roll_deg = shared_kalman_update(&attitude_roll_kalman,
-  178   2                      accel_roll_deg, imu->gyro_x, dt);
-  179   2              /* pitch 0-360 无法用连续状态 Kalman(359→0 回绕会发散), 采用加速度计全象限
-             - + 回绕感知低通 */
-  180   2              attitude_data.pitch_deg = app_attitude_pitch_lpf_update(accel_pitch_deg);
-  181   2              attitude_data.yaw_deg = tfpu_add(attitude_data.yaw_deg,
-  182   2                      tfpu_mul(gyro_z, dt));
-  183   2              if(180.0f < attitude_data.yaw_deg)
-  184   2              {
-  185   3                  attitude_data.yaw_deg = tfpu_sub(attitude_data.yaw_deg, 360.0f);
-  186   3              }
-C251 COMPILER V5.60.0,  app_attitude                                                       11/08/26  20:58:48  PAGE 4   
+  121   1      
+  122   1          delta = tfpu_sub(measure_deg, estimate_deg);
+  123   1          if(delta > 180.0f)
+  124   1          {
+  125   2              measure_deg = tfpu_sub(measure_deg, 360.0f);
+  126   2          }
+  127   1          else if(delta < -180.0f)
+  128   1          {
+  129   2              measure_deg = tfpu_add(measure_deg, 360.0f);
+  130   2          }
+  131   1          return measure_deg;
+  132   1      }
+  133          
+  134          /* pitch Kalman 输出归一化回 [0,360), 状态范围不超出 (-180,540), 单次 ±360 调整即可 *
+             -/
+  135          static float app_attitude_pitch_normalize(float angle_deg)
+  136          {
+  137   1          if(angle_deg >= 360.0f)
+  138   1          {
+  139   2              angle_deg = tfpu_sub(angle_deg, 360.0f);
+  140   2          }
+  141   1          else if(angle_deg < 0.0f)
+  142   1          {
+  143   2              angle_deg = tfpu_add(angle_deg, 360.0f);
+  144   2          }
+  145   1          return angle_deg;
+  146   1      }
+  147          
+  148          void app_attitude_update(const service_imu_sample_t *imu)
+  149          {
+  150   1          uint8 ea_backup;
+  151   1          float accel_roll_deg;
+  152   1          float accel_pitch_deg;
+  153   1          float dt;
+  154   1          float gyro_x;
+  155   1          float gyro_z;
+  156   1      
+  157   1          if((NULL == imu) || (0U == imu->valid) || (0UL == imu->sequence) ||
+  158   1             (imu->sequence == attitude_last_sequence))
+  159   1          {
+  160   2              return;
+  161   2          }
+  162   1      
+  163   1          app_attitude_get_accel_angles(imu, &accel_roll_deg, &accel_pitch_deg);
+  164   1          gyro_x = shared_lpf_update(&attitude_gyro_x_lpf, imu->gyro_x);
+  165   1          gyro_z = shared_lpf_update(&attitude_gyro_z_lpf, imu->gyro_z);
+  166   1          if(0U == attitude_kalman_ready)
+  167   1          {
+  168   2              shared_kalman_init(&attitude_roll_kalman, accel_roll_deg,
+  169   2                      APP_ATTITUDE_KALMAN_Q_ANGLE_DEFAULT,
+  170   2                      APP_ATTITUDE_KALMAN_Q_BIAS_DEFAULT,
+  171   2                      APP_ATTITUDE_KALMAN_R_MEASURE_DEFAULT);
+  172   2              shared_kalman_init(&attitude_pitch_kalman, accel_pitch_deg,
+  173   2                      APP_ATTITUDE_KALMAN_Q_ANGLE_DEFAULT,
+  174   2                      APP_ATTITUDE_KALMAN_Q_BIAS_DEFAULT,
+  175   2                      APP_ATTITUDE_PITCH_KALMAN_R_DEFAULT);
+  176   2              attitude_data.roll_deg = accel_roll_deg;
+  177   2              attitude_data.pitch_deg = accel_pitch_deg;
+  178   2              attitude_data.yaw_deg = 0.0f;
+  179   2              attitude_kalman_ready = 1U;
+  180   2          }
+  181   1          else
+  182   1          {
+  183   2              dt = app_attitude_get_dt(imu);
+  184   2              attitude_data.roll_deg = shared_kalman_update(&attitude_roll_kalman,
+  185   2                      accel_roll_deg, gyro_x, dt);
+C251 COMPILER V5.60.0,  app_attitude                                                       12/08/26  14:53:06  PAGE 4   
 
-  187   2              else if(-180.0f > attitude_data.yaw_deg)
-  188   2              {
-  189   3                  attitude_data.yaw_deg = tfpu_add(attitude_data.yaw_deg, 360.0f);
-  190   3              }
-  191   2          }
-  192   1          attitude_last_sequence = imu->sequence;
-  193   1          attitude_last_timestamp_tick = imu->timestamp_tick;
-  194   1      
-  195   1          ea_backup = EA;
-  196   1          EA = 0;
-  197   1          attitude_data.gyro_z = gyro_z;
-  198   1          attitude_data.sequence = imu->sequence;
-  199   1          attitude_data.timestamp_tick = imu->timestamp_tick;
-  200   1          attitude_data.valid = 1U;
-  201   1          EA = ea_backup;
-  202   1      }
-  203          
-  204          void app_attitude_task(void)
-  205          {
-  206   1          service_imu_sample_t imu;
-  207   1      
-  208   1          /* Compatibility entry point; update() rejects duplicate frame sequences. */
-  209   1          if(0U != service_imu_get_latest_sample(&imu))
-  210   1          {
-  211   2              app_attitude_update(&imu);
-  212   2          }
+  186   2              /* pitch: 陀螺融合 Kalman + 测量回绕预包装, 保持 0-360 全象限语义 */
+  187   2              accel_pitch_deg = app_attitude_pitch_wrap_measure(accel_pitch_deg,
+  188   2                      attitude_pitch_kalman.angle);
+  189   2              attitude_data.pitch_deg = app_attitude_pitch_normalize(
+  190   2                      shared_kalman_update(&attitude_pitch_kalman,
+  191   2                              accel_pitch_deg, gyro_x, dt));
+  192   2              attitude_data.yaw_deg = tfpu_add(attitude_data.yaw_deg,
+  193   2                      tfpu_mul(gyro_z, dt));
+  194   2              if(180.0f < attitude_data.yaw_deg)
+  195   2              {
+  196   3                  attitude_data.yaw_deg = tfpu_sub(attitude_data.yaw_deg, 360.0f);
+  197   3              }
+  198   2              else if(-180.0f > attitude_data.yaw_deg)
+  199   2              {
+  200   3                  attitude_data.yaw_deg = tfpu_add(attitude_data.yaw_deg, 360.0f);
+  201   3              }
+  202   2          }
+  203   1          attitude_last_sequence = imu->sequence;
+  204   1          attitude_last_timestamp_tick = imu->timestamp_tick;
+  205   1      
+  206   1          ea_backup = EA;
+  207   1          EA = 0;
+  208   1          attitude_data.gyro_z = gyro_z;
+  209   1          attitude_data.sequence = imu->sequence;
+  210   1          attitude_data.timestamp_tick = imu->timestamp_tick;
+  211   1          attitude_data.valid = 1U;
+  212   1          EA = ea_backup;
   213   1      }
   214          
-  215          void app_attitude_get_data(app_attitude_data_t *out_data)
+  215          void app_attitude_task(void)
   216          {
-  217   1          uint8 ea_backup;
+  217   1          service_imu_sample_t imu;
   218   1      
-  219   1          if(NULL == out_data)
-  220   1          {
-  221   2              return;
-  222   2          }
-  223   1      
-  224   1          ea_backup = EA;
-  225   1          EA = 0;
-  226   1          out_data->roll_deg = attitude_data.roll_deg;
-  227   1          out_data->pitch_deg = attitude_data.pitch_deg;
-  228   1          out_data->yaw_deg = attitude_data.yaw_deg;
-  229   1          out_data->gyro_z = attitude_data.gyro_z;
-  230   1          out_data->sequence = attitude_data.sequence;
-  231   1          out_data->timestamp_tick = attitude_data.timestamp_tick;
-  232   1          out_data->valid = attitude_data.valid;
-  233   1          EA = ea_backup;
-  234   1      }
+  219   1          /* Compatibility entry point; update() rejects duplicate frame sequences. */
+  220   1          if(0U != service_imu_get_latest_sample(&imu))
+  221   1          {
+  222   2              app_attitude_update(&imu);
+  223   2          }
+  224   1      }
+  225          
+  226          void app_attitude_get_data(app_attitude_data_t *out_data)
+  227          {
+  228   1          uint8 ea_backup;
+  229   1      
+  230   1          if(NULL == out_data)
+  231   1          {
+  232   2              return;
+  233   2          }
+  234   1      
+  235   1          ea_backup = EA;
+  236   1          EA = 0;
+  237   1          out_data->roll_deg = attitude_data.roll_deg;
+  238   1          out_data->pitch_deg = attitude_data.pitch_deg;
+  239   1          out_data->yaw_deg = attitude_data.yaw_deg;
+  240   1          out_data->gyro_z = attitude_data.gyro_z;
+  241   1          out_data->sequence = attitude_data.sequence;
+  242   1          out_data->timestamp_tick = attitude_data.timestamp_tick;
+  243   1          out_data->valid = attitude_data.valid;
+  244   1          EA = ea_backup;
+  245   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      2474     ------
+  ecode size           =      2584     ------
   data size            =    ------     ------
+C251 COMPILER V5.60.0,  app_attitude                                                       12/08/26  14:53:06  PAGE 5   
+
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       234     ------
+  xdata size           =       283     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -271,8 +285,6 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-C251 COMPILER V5.60.0,  app_attitude                                                       11/08/26  20:58:48  PAGE 5   
-
   hconst size          =        24     ------
 End of Module Information.
 
