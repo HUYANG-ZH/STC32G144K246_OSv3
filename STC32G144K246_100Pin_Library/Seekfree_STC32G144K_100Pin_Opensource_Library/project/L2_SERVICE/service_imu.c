@@ -269,6 +269,12 @@ uint8 service_imu_calibration_is_complete(void)
     return (SERVICE_IMU_CALIBRATION_COMPLETE == service_imu_calibration_state) ? 1U : 0U;
 }
 
+uint8 service_imu_calibration_is_running(void)
+{
+    return ((SERVICE_IMU_CALIBRATION_GYRO_Z == service_imu_calibration_state) ||
+            (SERVICE_IMU_CALIBRATION_GYRO_X == service_imu_calibration_state)) ? 1U : 0U;
+}
+
 void service_imu_calibrate_gyro_z(void)
 {
     gyro_z_offset = 0.0f;

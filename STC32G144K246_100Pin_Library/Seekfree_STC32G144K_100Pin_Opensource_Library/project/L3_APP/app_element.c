@@ -55,6 +55,7 @@
 #define APP_ELEMENT_SEESAW_SLOWDOWN_SPEED_MPS   (1.4f)
 
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
+#define APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM (300U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 /* 环岛超时: 触发后 2s 内未结束则强制结束 */
@@ -149,8 +150,8 @@ static volatile uint32 element_roundabout_dead_start_tick = 0U;
 static volatile uint8 element_roundabout_dead = 0U;
 static volatile uint8 element_roundabout_count = 0U;
 static volatile float element_roundabout_count_float = 0.0f;
-static volatile uint8 element_roundabout_gz_high = 0U;
-static volatile uint32 element_roundabout_gz_high_tick = 0U;
+static volatile uint8 element_roundabout_gx_high = 0U;
+static volatile uint32 element_roundabout_gx_high_tick = 0U;
 static volatile uint8 element_roundabout_gz_integrate = 0U;
 static volatile float element_roundabout_gz_angle_deg = 0.0f;
 static volatile uint8 element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
@@ -284,7 +285,7 @@ static void app_element_reset(void)
     element_roundabout_dead = 0U;
     element_roundabout_count = 0U;
     element_roundabout_count_float = 0.0f;
-    element_roundabout_gz_high = 0U;
+    element_roundabout_gx_high = 0U;
     element_roundabout_gz_integrate = 0U;
     element_roundabout_gz_angle_deg = 0.0f;
     element_roundabout_last_tick = 0U;
@@ -563,15 +564,16 @@ void app_element_control_step(void)
         return;
     }
 
-    /* 环岛判据: 训练模型(8 树 INT8 压缩), 输入 CH1/CH2/CH3/CH4 归一化值 + TOF(mm) */
+    /* 环岛判据: TOF>300mm 且训练模型(8 树 INT8 压缩, CH1/CH2/CH3/CH4 归一化值 + TOF)判定 */
     tof_distance_mm = service_tof_get_distance_mm();
     app_inductor_preprocess_get_data(&inductor);
-    roundabout_detected = (0U != roundabout_priority_tree_predict(
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-            inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
-            (float)tof_distance_mm)) ? 1U : 0U;
+    roundabout_detected = ((tof_distance_mm > APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM) &&
+            (0U != roundabout_priority_tree_predict(
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+                    (float)tof_distance_mm))) ? 1U : 0U;
 
     if(APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE == element_roundabout_fsm)
     {
@@ -596,7 +598,7 @@ void app_element_control_step(void)
 
     if(0U != roundabout_detected)
     {
-        if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
+        if((0U == element_seesaw_active) && (0U == element_roundabout_gx_high))
         {
             element_roundabout_confirm++;
             if(element_roundabout_confirm >= APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT)
@@ -641,13 +643,13 @@ static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta
     /* 追踪gx是否在20ms内超过200°/s（环岛检测阻挡条件） */
     if((0U != sample_fresh) && ((gyro.gyro_x > 200.0f) || (gyro.gyro_x < -200.0f)))
     {
-        element_roundabout_gz_high = 1U;
-        element_roundabout_gz_high_tick = now;
+        element_roundabout_gx_high = 1U;
+        element_roundabout_gx_high_tick = now;
     }
-    else if((0U != element_roundabout_gz_high) &&
-            ((uint32)(now - element_roundabout_gz_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
+    else if((0U != element_roundabout_gx_high) &&
+            ((uint32)(now - element_roundabout_gx_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
     {
-        element_roundabout_gz_high = 0U;
+        element_roundabout_gx_high = 0U;
     }
 
     /* 环岛gz积分：达到当前环岛配置角度后退出，第三次环岛直接停车 */

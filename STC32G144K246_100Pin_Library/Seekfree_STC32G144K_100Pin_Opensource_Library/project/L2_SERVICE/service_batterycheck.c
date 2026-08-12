@@ -27,6 +27,8 @@ static void service_batterycheck_refresh_snapshot(void)
     uint16 rawdata;
     uint32 sequence;
     float raw_voltage;
+    float filtered;
+    uint8 ea_backup;
 
     if(0U == bsp_battery_get_snapshot(&rawdata, &sequence))
     {
@@ -44,12 +46,18 @@ static void service_batterycheck_refresh_snapshot(void)
         {
             shared_lpf_reset(&batterycheck_voltage_lpf, raw_voltage);
             batterycheck_lpf_ready = 1U;
-            batterycheck_voltage = raw_voltage;
+            filtered = raw_voltage;
         }
         else
         {
-            batterycheck_voltage = shared_lpf_update(&batterycheck_voltage_lpf, raw_voltage);
+            filtered = shared_lpf_update(&batterycheck_voltage_lpf, raw_voltage);
         }
+        /* float 多字节存储必须对中断原子: TIM9 欠压守卫 10ms 会读该值,
+           撕裂读会把半个旧值+半个新值拼成垃圾(曾导致开机恒定 -0.16V 误报警) */
+        ea_backup = EA;
+        EA = 0;
+        batterycheck_voltage = filtered;
+        EA = ea_backup;
     }
 }
 

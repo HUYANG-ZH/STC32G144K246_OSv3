@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_negative_pressure                                          10/08/26  17:00:13  PAGE 1   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          12/08/26  22:16:59  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_negative_pressure
@@ -14,188 +14,281 @@ stmt  level    source
     1          #include "zf_common_headfile.h"
     2          #include "service_packet.h"
     3          #include "service_negative_pressure.h"
-    4          #include "service_wireless_uart.h"
-    5          
-    6          #define NEGATIVE_PRESSURE_PERCENT_MAX       (100U)
-    7          #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
-    8          #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
-    9          #define NEGATIVE_PRESSURE_PACKET_COUNT      (1U)
-   10          
-   11          static volatile uint8 negative_pressure_percent = 0U;
-   12          static float negative_pressure_percent_config = 0.0f;
-   13          static uint8 negative_pressure_config_percent = 0U;
-   14          static volatile uint8 negative_pressure_requested_percent = 0U;
-   15          static volatile uint8 negative_pressure_request_pending = 0U;
-   16          static volatile uint8 negative_pressure_control_override = 0U;
-   17          
-   18          static uint32 negative_pressure_percent_to_duty(uint8 percent)
-   19          {
-   20   1          uint32 duty_range;
-   21   1      
-   22   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
-   23   1          {
-   24   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
-   25   2          }
-   26   1      
-   27   1          duty_range = NEGATIVE_PRESSURE_DUTY_MAX - NEGATIVE_PRESSURE_DUTY_MIN;
-   28   1      
-   29   1          return NEGATIVE_PRESSURE_DUTY_MIN + (duty_range * percent / NEGATIVE_PRESSURE_PERCENT_MAX);
-   30   1      }
-   31          
-   32          static uint8 negative_pressure_float_to_percent(float percent)
-   33          {
-   34   1          if(0.0f >= percent)
-   35   1          {
-   36   2              return 0U;
-   37   2          }
-   38   1      
-   39   1          if((float)NEGATIVE_PRESSURE_PERCENT_MAX <= percent)
-   40   1          {
-   41   2              return NEGATIVE_PRESSURE_PERCENT_MAX;
-   42   2          }
-   43   1      
-   44   1          return (uint8)(percent + 0.5f);
-   45   1      }
-   46          
-   47          static void service_negative_pressure_config_updated(void)
-   48          {
-   49   1          uint8 percent;
-   50   1          uint8 ea_backup;
+    4          #include "service_timetick.h"
+    5          #include "service_wireless_uart.h"
+    6          
+    7          #define NEGATIVE_PRESSURE_PERCENT_MAX       (100U)
+    8          #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
+    9          #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
+   10          #define NEGATIVE_PRESSURE_PACKET_COUNT      (1U)
+   11          /* 缓启动: 负压变化率不超过 10%/s (0.1ms/tick), 1 百分之一% 需要 10 tick */
+   12          #define NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC  (10U)
+   13          #define NEGATIVE_PRESSURE_RAMP_TICK_PER_H       \
+   14              (10000U / (NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC * 100U))
+   15          
+   16          static volatile uint8 negative_pressure_percent = 0U;
+   17          static float negative_pressure_percent_config = 0.0f;
+   18          static uint8 negative_pressure_config_percent = 0U;
+   19          static volatile uint8 negative_pressure_requested_percent = 0U;
+   20          static volatile uint8 negative_pressure_request_pending = 0U;
+   21          static volatile uint8 negative_pressure_control_override = 0U;
+   22          static uint32 negative_pressure_last_ramp_tick = 0UL;
+   23          static uint8 negative_pressure_ramp_remainder = 0U;
+   24          static uint16 negative_pressure_actual_h = 0U;   /* 斜坡实际值(百分之一%), 与取整发布的 pe
+             -rcent 分离, 防止亚百分比进度丢失 */
+   25          
+   26          static uint32 negative_pressure_percent_to_duty(uint8 percent)
+   27          {
+   28   1          uint32 duty_range;
+   29   1      
+   30   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+   31   1          {
+   32   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+   33   2          }
+   34   1      
+   35   1          duty_range = NEGATIVE_PRESSURE_DUTY_MAX - NEGATIVE_PRESSURE_DUTY_MIN;
+   36   1      
+   37   1          return NEGATIVE_PRESSURE_DUTY_MIN + (duty_range * percent / NEGATIVE_PRESSURE_PERCENT_MAX);
+   38   1      }
+   39          
+   40          static uint8 negative_pressure_float_to_percent(float percent)
+   41          {
+   42   1          if(0.0f >= percent)
+   43   1          {
+   44   2              return 0U;
+   45   2          }
+   46   1      
+   47   1          if((float)NEGATIVE_PRESSURE_PERCENT_MAX <= percent)
+   48   1          {
+   49   2              return NEGATIVE_PRESSURE_PERCENT_MAX;
+   50   2          }
    51   1      
-   52   1          percent = negative_pressure_float_to_percent(negative_pressure_percent_config);
-   53   1          ea_backup = EA;
-   54   1          EA = 0;
-   55   1          negative_pressure_config_percent = percent;
-C251 COMPILER V5.60.0,  service_negative_pressure                                          10/08/26  17:00:13  PAGE 2   
+   52   1          return (uint8)(percent + 0.5f);
+   53   1      }
+   54          
+C251 COMPILER V5.60.0,  service_negative_pressure                                          12/08/26  22:16:59  PAGE 2   
 
-   56   1          negative_pressure_control_override = 0U;
-   57   1          negative_pressure_requested_percent = percent;
-   58   1          negative_pressure_request_pending = 1U;
-   59   1          EA = ea_backup;
-   60   1      }
-   61          
-   62          void service_negative_pressure_init(void)
-   63          {
-   64   1          pwm_init(SERVICE_NEGATIVE_PRESSURE_PWM_CH, SERVICE_NEGATIVE_PRESSURE_PWM_FREQ_HZ, 0U);
-   65   1          negative_pressure_percent = 0U;
-   66   1          negative_pressure_percent_config = 0.0f;
-   67   1          negative_pressure_config_percent = 0U;
-   68   1          negative_pressure_requested_percent = 0U;
-   69   1          negative_pressure_request_pending = 0U;
-   70   1          negative_pressure_control_override = 0U;
-   71   1          (void)service_packet_add_variable_with_callback("negative_pressure", &negative_pressure_percent_confi
+   55          static void service_negative_pressure_config_updated(void)
+   56          {
+   57   1          uint8 percent;
+   58   1          uint8 ea_backup;
+   59   1      
+   60   1          percent = negative_pressure_float_to_percent(negative_pressure_percent_config);
+   61   1          ea_backup = EA;
+   62   1          EA = 0;
+   63   1          negative_pressure_config_percent = percent;
+   64   1          negative_pressure_control_override = 0U;
+   65   1          negative_pressure_requested_percent = percent;
+   66   1          negative_pressure_request_pending = 1U;
+   67   1          EA = ea_backup;
+   68   1      }
+   69          
+   70          void service_negative_pressure_init(void)
+   71          {
+   72   1          pwm_init(SERVICE_NEGATIVE_PRESSURE_PWM_CH, SERVICE_NEGATIVE_PRESSURE_PWM_FREQ_HZ, 0U);
+   73   1          negative_pressure_percent = 0U;
+   74   1          negative_pressure_percent_config = 0.0f;
+   75   1          negative_pressure_config_percent = 0U;
+   76   1          negative_pressure_requested_percent = 0U;
+   77   1          negative_pressure_request_pending = 0U;
+   78   1          negative_pressure_control_override = 0U;
+   79   1          negative_pressure_last_ramp_tick = service_timetick_what();
+   80   1          negative_pressure_ramp_remainder = 0U;
+   81   1          negative_pressure_actual_h = 0U;
+   82   1          (void)service_packet_add_variable_with_callback("negative_pressure", &negative_pressure_percent_confi
              -g,
-   72   1                  NEGATIVE_PRESSURE_PACKET_COUNT, service_negative_pressure_config_updated);
-   73   1          #if __DBGFLAG__
-   74   1          printf(">>[service_negative_pressure_init]\r\n");
-   75   1          wprint(">>[service_negative_pressure_init]\r\n");
-   76   1          #endif
-   77   1      }
-   78          
-   79          void service_negative_pressure_debug(void)
-   80          {
-   81   1          printf("[pressure] : 30\r\n");
-   82   1          service_negative_pressure_set_percent(30);
-   83   1      }
-   84          
-   85          void service_negative_pressure_task(void)
-   86          {
-   87   1          uint8 percent;
-   88   1          uint8 ea_backup;
-   89   1      
-   90   1          percent = negative_pressure_float_to_percent(negative_pressure_percent_config);
-   91   1          ea_backup = EA;
-   92   1          EA = 0;
-   93   1          if(0U != negative_pressure_control_override)
-   94   1          {
-   95   2              EA = ea_backup;
-   96   2              return;
-   97   2          }
-   98   1      
-   99   1          if(percent != negative_pressure_config_percent)
-  100   1          {
-  101   2              negative_pressure_config_percent = percent;
-  102   2              negative_pressure_requested_percent = percent;
-  103   2              negative_pressure_request_pending = 1U;
-  104   2          }
-  105   1          EA = ea_backup;
-  106   1      }
-  107          
-  108          void service_negative_pressure_request_percent(uint8 percent)
-  109          {
-  110   1          uint8 ea_backup;
-  111   1      
-  112   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
-  113   1          {
-  114   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+   83   1                  NEGATIVE_PRESSURE_PACKET_COUNT, service_negative_pressure_config_updated);
+   84   1          #if __DBGFLAG__
+   85   1          printf(">>[service_negative_pressure_init]\r\n");
+   86   1          wprint(">>[service_negative_pressure_init]\r\n");
+   87   1          #endif
+   88   1      }
+   89          
+   90          void service_negative_pressure_debug(void)
+   91          {
+   92   1          printf("[pressure] : 30\r\n");
+   93   1          service_negative_pressure_set_percent(30);
+   94   1      }
+   95          
+   96          void service_negative_pressure_task(void)
+   97          {
+   98   1          uint8 percent;
+   99   1          uint8 ea_backup;
+  100   1      
+  101   1          percent = negative_pressure_float_to_percent(negative_pressure_percent_config);
+  102   1          ea_backup = EA;
+  103   1          EA = 0;
+  104   1          if(0U != negative_pressure_control_override)
+  105   1          {
+  106   2              EA = ea_backup;
+  107   2              return;
+  108   2          }
+  109   1      
+  110   1          if(percent != negative_pressure_config_percent)
+  111   1          {
+  112   2              negative_pressure_config_percent = percent;
+  113   2              negative_pressure_requested_percent = percent;
+  114   2              negative_pressure_request_pending = 1U;
   115   2          }
-  116   1      
-  117   1          ea_backup = EA;
-  118   1          EA = 0;
-  119   1          negative_pressure_requested_percent = percent;
-  120   1          negative_pressure_request_pending = 1U;
-C251 COMPILER V5.60.0,  service_negative_pressure                                          10/08/26  17:00:13  PAGE 3   
+  116   1          EA = ea_backup;
+  117   1      }
+  118          
+  119          void service_negative_pressure_request_percent(uint8 percent)
+C251 COMPILER V5.60.0,  service_negative_pressure                                          12/08/26  22:16:59  PAGE 3   
 
-  121   1          EA = ea_backup;
-  122   1      }
-  123          
-  124          void service_negative_pressure_apply_request(void)
-  125          {
-  126   1          uint8 percent;
-  127   1          uint8 ea_backup;
-  128   1      
-  129   1          ea_backup = EA;
-  130   1          EA = 0;
-  131   1          if(0U == negative_pressure_request_pending)
-  132   1          {
-  133   2              EA = ea_backup;
-  134   2              return;
-  135   2          }
-  136   1          percent = negative_pressure_requested_percent;
-  137   1          negative_pressure_request_pending = 0U;
-  138   1          EA = ea_backup;
-  139   1      
-  140   1          pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(percent));
-  141   1          negative_pressure_percent = percent;
-  142   1      }
-  143          
-  144          void service_negative_pressure_set_percent(uint8 percent)
-  145          {
-  146   1          uint8 ea_backup;
-  147   1      
-  148   1          /* A real-time controller owns this value until the packet write callback
-  149   1           * explicitly accepts a new operator configuration. */
-  150   1          ea_backup = EA;
-  151   1          EA = 0;
-  152   1          negative_pressure_control_override = 1U;
-  153   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
-  154   1          {
-  155   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
-  156   2          }
-  157   1          negative_pressure_requested_percent = percent;
-  158   1          negative_pressure_request_pending = 1U;
-  159   1          EA = ea_backup;
-  160   1      }
-  161          
-  162          uint8 service_negative_pressure_get_percent(void)
-  163          {
-  164   1          return negative_pressure_percent;
-  165   1      }
-  166          
-  167          uint8 service_negative_pressure_get_config_percent(void)
-  168          {
-  169   1          return negative_pressure_float_to_percent(negative_pressure_percent_config);
-  170   1      }
+  120          {
+  121   1          uint8 ea_backup;
+  122   1      
+  123   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+  124   1          {
+  125   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+  126   2          }
+  127   1      
+  128   1          ea_backup = EA;
+  129   1          EA = 0;
+  130   1          negative_pressure_requested_percent = percent;
+  131   1          negative_pressure_request_pending = 1U;
+  132   1          EA = ea_backup;
+  133   1      }
+  134          
+  135          void service_negative_pressure_apply_request(void)
+  136          {
+  137   1          uint32 now;
+  138   1          uint32 delta_tick;
+  139   1          uint32 step_h;
+  140   1          uint32 actual_h;
+  141   1          uint32 target_h;
+  142   1          uint8 next_percent;
+  143   1          uint8 ea_backup;
+  144   1      
+  145   1          ea_backup = EA;
+  146   1          EA = 0;
+  147   1          if(0U == negative_pressure_request_pending)
+  148   1          {
+  149   2              EA = ea_backup;
+  150   2              return;
+  151   2          }
+  152   1          target_h = (uint32)negative_pressure_requested_percent * 100U;
+  153   1          EA = ea_backup;
+  154   1          actual_h = (uint32)negative_pressure_actual_h;
+  155   1      
+  156   1          /* 缓启动斜坡: 变化率 ≤5%/s, 按 0.1ms tick 定时, 整数定点(百分之一%) */
+  157   1          now = service_timetick_what();
+  158   1          delta_tick = now - negative_pressure_last_ramp_tick;
+  159   1          negative_pressure_last_ramp_tick = now;
+  160   1      
+  161   1          step_h = delta_tick / NEGATIVE_PRESSURE_RAMP_TICK_PER_H;
+  162   1          negative_pressure_ramp_remainder = (uint8)(negative_pressure_ramp_remainder +
+  163   1                  (delta_tick % NEGATIVE_PRESSURE_RAMP_TICK_PER_H));
+  164   1          if(negative_pressure_ramp_remainder >= (uint8)NEGATIVE_PRESSURE_RAMP_TICK_PER_H)
+  165   1          {
+  166   2              negative_pressure_ramp_remainder = (uint8)(negative_pressure_ramp_remainder -
+  167   2                      NEGATIVE_PRESSURE_RAMP_TICK_PER_H);
+  168   2              step_h++;
+  169   2          }
+  170   1      
+  171   1          if(actual_h < target_h)
+  172   1          {
+  173   2              actual_h += step_h;
+  174   2              if(actual_h > target_h)
+  175   2              {
+  176   3                  actual_h = target_h;
+  177   3              }
+  178   2          }
+  179   1          else if(actual_h > target_h)
+  180   1          {
+  181   2              if(step_h >= actual_h)
+  182   2              {
+  183   3                  actual_h = target_h;
+  184   3              }
+  185   2              else
+C251 COMPILER V5.60.0,  service_negative_pressure                                          12/08/26  22:16:59  PAGE 4   
+
+  186   2              {
+  187   3                  actual_h -= step_h;
+  188   3                  if(actual_h < target_h)
+  189   3                  {
+  190   4                      actual_h = target_h;
+  191   4                  }
+  192   3              }
+  193   2          }
+  194   1      
+  195   1          next_percent = (uint8)((actual_h + 50U) / 100U);
+  196   1          if(next_percent != negative_pressure_percent)
+  197   1          {
+  198   2              pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(next_percent));
+  199   2          }
+  200   1          negative_pressure_percent = next_percent;
+  201   1          negative_pressure_actual_h = (uint16)actual_h;
+  202   1      
+  203   1          if(actual_h == target_h)
+  204   1          {
+  205   2              negative_pressure_request_pending = 0U;
+  206   2          }
+  207   1      }
+  208          
+  209          void service_negative_pressure_set_percent_immediate(uint8 percent)
+  210          {
+  211   1          uint8 ea_backup;
+  212   1      
+  213   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+  214   1          {
+  215   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+  216   2          }
+  217   1      
+  218   1          ea_backup = EA;
+  219   1          EA = 0;
+  220   1          negative_pressure_control_override = 1U;
+  221   1          negative_pressure_requested_percent = percent;
+  222   1          negative_pressure_request_pending = 0U;
+  223   1          negative_pressure_percent = percent;
+  224   1          negative_pressure_actual_h = (uint16)percent * 100U;
+  225   1          EA = ea_backup;
+  226   1      
+  227   1          pwm_set_duty(SERVICE_NEGATIVE_PRESSURE_PWM_CH, negative_pressure_percent_to_duty(percent));
+  228   1          negative_pressure_last_ramp_tick = service_timetick_what();
+  229   1          negative_pressure_ramp_remainder = 0U;
+  230   1      }
+  231          
+  232          void service_negative_pressure_set_percent(uint8 percent)
+  233          {
+  234   1          uint8 ea_backup;
+  235   1      
+  236   1          /* A real-time controller owns this value until the packet write callback
+  237   1           * explicitly accepts a new operator configuration. */
+  238   1          ea_backup = EA;
+  239   1          EA = 0;
+  240   1          negative_pressure_control_override = 1U;
+  241   1          if(NEGATIVE_PRESSURE_PERCENT_MAX < percent)
+  242   1          {
+  243   2              percent = NEGATIVE_PRESSURE_PERCENT_MAX;
+  244   2          }
+  245   1          negative_pressure_requested_percent = percent;
+  246   1          negative_pressure_request_pending = 1U;
+  247   1          EA = ea_backup;
+  248   1      }
+  249          
+  250          uint8 service_negative_pressure_get_percent(void)
+  251          {
+C251 COMPILER V5.60.0,  service_negative_pressure                                          12/08/26  22:16:59  PAGE 5   
+
+  252   1          return negative_pressure_percent;
+  253   1      }
+  254          
+  255          uint8 service_negative_pressure_get_config_percent(void)
+  256          {
+  257   1          return negative_pressure_float_to_percent(negative_pressure_percent_config);
+  258   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       672     ------
+  ecode size           =      1364     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        28     ------
+  xdata size           =        57     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -203,11 +296,9 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
-C251 COMPILER V5.60.0,  service_negative_pressure                                          10/08/26  17:00:13  PAGE 4   
-
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       112     ------
+  hconst size          =       134     ------
 End of Module Information.
 
 

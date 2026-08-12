@@ -4,6 +4,7 @@
 #include "service_timetick.h"
 #include "service_wireless_uart.h"
 #include "app_speedout.h"
+#include "service_imu.h"
 
 #define SERVICE_LED_TICKS_PER_MS       (10UL)
 #define SERVICE_LED_TIME_HALF_RANGE    (0x80000000UL)
@@ -11,9 +12,20 @@
 #define SERVICE_LED_MODE_IDLE          (0U)
 #define SERVICE_LED_MODE_ON_DELAY      (1U)
 #define SERVICE_LED_MODE_BLINK         (2U)
+#define SERVICE_LED_MODE_STEADY        (3U)
 
-#define SERVICE_LED_STOP_BLINK_ON_MS   (1000UL)
-#define SERVICE_LED_STOP_BLINK_OFF_MS  (1000UL)
+/* 应用状态机: 开机常亮 → IMU校准快闪 → 待机慢闪 → 运行态 */
+#define SERVICE_LED_APP_BOOT           (0U)
+#define SERVICE_LED_APP_CALIBRATING    (1U)
+#define SERVICE_LED_APP_STANDBY        (2U)
+#define SERVICE_LED_APP_RUNNING        (3U)
+
+#define SERVICE_LED_CALIBRATING_ON_MS  (100UL)
+#define SERVICE_LED_CALIBRATING_OFF_MS (100UL)
+#define SERVICE_LED_STANDBY_ON_MS      (900UL)
+#define SERVICE_LED_STANDBY_OFF_MS     (900UL)
+#define SERVICE_LED_RUNNING_ON_MS      (100UL)
+#define SERVICE_LED_RUNNING_OFF_MS     (900UL)
 
 static uint8 led_is_on = 0U;
 static uint8 led_mode = SERVICE_LED_MODE_IDLE;
@@ -22,8 +34,8 @@ static uint32 led_deadline_tick = 0UL;
 static uint32 led_on_ticks = 0UL;
 static uint32 led_off_ticks = 0UL;
 static uint32 led_blink_remaining = 0UL;
-static uint8 led_status_valid = 0U;
-static uint8 led_status_started = 0U;
+static uint8 led_app_state = SERVICE_LED_APP_BOOT;
+static uint8 led_app_state_valid = 0U;
 
 static uint8 service_led_time_reached(uint32 now, uint32 deadline)
 {
@@ -44,11 +56,11 @@ void service_led_init(void)
 {
     bsp_led_init();
     led_is_on = 0U;
-    led_status_valid = 1U;
-    led_status_started = 0U;
+    led_app_state = SERVICE_LED_APP_BOOT;
+    led_app_state_valid = 0U;
     service_led_reset_schedule();
-    service_led_blink_ms(SERVICE_LED_STOP_BLINK_ON_MS,
-            SERVICE_LED_STOP_BLINK_OFF_MS, 0UL);
+    /* 开机后常亮, 等待 IMU 校准开始 */
+    service_led_on();
     #if __DBGFLAG__
     printf(">>[service_led_init]\r\n");
     wprint(">>[service_led_init]\r\n");
@@ -66,6 +78,7 @@ void service_led_on(void)
     bsp_led_on();
     led_is_on = 1U;
     service_led_reset_schedule();
+    led_mode = SERVICE_LED_MODE_STEADY;
 }
 
 void service_led_off(void)
@@ -133,7 +146,7 @@ static void service_led_timing_task(void)
 {
     uint32 now;
 
-    if(SERVICE_LED_MODE_IDLE == led_mode)
+    if((SERVICE_LED_MODE_IDLE == led_mode) || (SERVICE_LED_MODE_STEADY == led_mode))
     {
         return;
     }
@@ -179,24 +192,55 @@ void service_led_task(void)
 {
     app_speedout_data_t speedout_status;
     uint8 started;
+    uint8 new_app_state;
 
     app_speedout_get_data(&speedout_status);
     started = (speedout_status.enabled >= 0.5f) ? 1U : 0U;
     started = (0U != started) ? 1U : 0U;
 
-    if((0U == led_status_valid) || (led_status_started != started))
+    if(0U != started)
     {
-        led_status_valid = 1U;
-        led_status_started = started;
+        new_app_state = SERVICE_LED_APP_RUNNING;
+    }
+    else if(0U != service_imu_calibration_is_running())
+    {
+        new_app_state = SERVICE_LED_APP_CALIBRATING;
+    }
+    else if(0U != service_imu_calibration_is_complete())
+    {
+        new_app_state = SERVICE_LED_APP_STANDBY;
+    }
+    else
+    {
+        new_app_state = SERVICE_LED_APP_BOOT;
+    }
 
-        if(0U != started)
+    if((0U == led_app_state_valid) || (led_app_state != new_app_state))
+    {
+        led_app_state_valid = 1U;
+        led_app_state = new_app_state;
+
+        switch(new_app_state)
         {
-            service_led_on();
-        }
-        else
-        {
-            service_led_blink_ms(SERVICE_LED_STOP_BLINK_ON_MS,
-                    SERVICE_LED_STOP_BLINK_OFF_MS, 0UL);
+            case SERVICE_LED_APP_CALIBRATING:
+                /* IMU 校准中: 150ms 亮 / 150ms 灭 快速闪烁 */
+                service_led_blink_ms(SERVICE_LED_CALIBRATING_ON_MS,
+                        SERVICE_LED_CALIBRATING_OFF_MS, 0UL);
+                break;
+            case SERVICE_LED_APP_STANDBY:
+                /* 待机: 900ms 亮 / 900ms 灭 慢速闪烁 */
+                service_led_blink_ms(SERVICE_LED_STANDBY_ON_MS,
+                        SERVICE_LED_STANDBY_OFF_MS, 0UL);
+                break;
+            case SERVICE_LED_APP_RUNNING:
+                /* 运行态: 100ms 亮 / 900ms 灭 */
+                service_led_blink_ms(SERVICE_LED_RUNNING_ON_MS,
+                        SERVICE_LED_RUNNING_OFF_MS, 0UL);
+                break;
+            default:
+                /* 开机: 常亮 */
+                service_led_on();
+                break;
         }
     }
 
