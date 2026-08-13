@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          };
    52          
    53          static shared_pos_pid_t motion_postprocess_yaw_pid;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 2   
 
    54          static shared_lpf_t motion_postprocess_gyro_z_lpf;
    55          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
@@ -134,7 +134,7 @@ stmt  level    source
   117          
   118          static void app_motion_postprocess_restart_pid(void)
   119          {
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 3   
 
   120   1          uint8 ea_backup;
   121   1      
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          imu_available = service_imu_get_latest_sample(&imu);
   184   1          imu_fresh = 0U;
   185   1          if(0U == imu_available)
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 4   
 
   186   1          {
   187   2              imu.gyro_x = 0.0f;
@@ -270,7 +270,7 @@ stmt  level    source
   246   2              imu.sequence = 0UL;
   247   2              imu.valid = 0U;
   248   2          }
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 5   
 
   249   1          now = service_timetick_what();
   250   1          shared_lpf_init(&motion_postprocess_gyro_z_lpf,
@@ -338,7 +338,7 @@ stmt  level    source
   311           * TIM5 的 1 ms 速度环先使用上一帧目标，TIM6 随后生成下一帧目标，时序稳定且�
              -�分析。
   312           */
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 6   
 
   313          void app_motion_postprocess_control_step(void)
   314          {
@@ -406,7 +406,7 @@ stmt  level    source
   375   2      
   376   2              /* 角速度目标变化率限幅 */
   377   2              if((app_motion_postprocess_config.rate_limit > 0.0f) && (0U != motion_postprocess_rate_limit_read
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 7   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 7   
 
              -y))
   378   2              {
@@ -474,7 +474,7 @@ stmt  level    source
   439   2              if(0U != motion_postprocess_last_enabled)
   440   2              {
   441   3                  app_motion_postprocess_clear_pid();
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 8   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 8   
 
   442   3              }
   443   2              feedback_differential_speed = 0.0f;
@@ -543,7 +543,7 @@ Module Information          Static   Overlayable
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             13/08/26  19:27:58  PAGE 9   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             14/08/26  02:58:00  PAGE 9   
 
   far data size        =    ------     ------
   huge data size       =    ------     ------
