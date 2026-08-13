@@ -6,6 +6,7 @@
 #include "service_speed.h"
 #include "service_wireless_uart.h"
 #include "app_speedout.h"
+#include "app_stall_guard.h"
 
 #define APP_SPEEDOUT_PACKET_SINGLE_COUNT     (1U)
 #define APP_SPEEDOUT_ENABLE_THRESHOLD        (0.5f)
@@ -405,6 +406,10 @@ static void app_speedout_tick(void)
     float left_target;
     float right_target;
     service_speed_data_t speed;
+
+    /* 堵转保护: 使用上一帧已发布数据判定, 触发时投递的急停邮箱
+       由本帧随后的 apply_command 立即执行, 与无线 stop 同一路径 */
+    app_stall_guard_tick();
 
     app_speedout_consume_target();
     app_speedout_apply_command();

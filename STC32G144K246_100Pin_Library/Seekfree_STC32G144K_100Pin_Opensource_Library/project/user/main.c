@@ -24,6 +24,7 @@
 #include "app_speedout.h"
 #include "app_boot_sequence.h"
 #include "app_battery_guard.h"
+#include "app_stall_guard.h"
 #include "debugw.h"
 #include "service_boot_request.h"
 #include "service_button.h"
@@ -54,6 +55,7 @@ void main(void)
     app_speed_plan_init();
     app_element_init();
     app_speedout_init();
+    app_stall_guard_init();
     app_motion_postprocess_init();
     app_boot_sequence_init();
     service_boot_request_init();
@@ -82,6 +84,7 @@ void main(void)
         app_scheduler_run();
         app_element_pump_events();
         app_battery_guard_pump_events();
+        app_stall_guard_pump_events();
         service_negative_pressure_task();
         service_buzzer_task();
         service_led_task();

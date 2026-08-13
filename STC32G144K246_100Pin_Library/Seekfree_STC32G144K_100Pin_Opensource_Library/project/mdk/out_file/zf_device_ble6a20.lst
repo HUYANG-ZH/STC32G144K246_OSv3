@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  12/08/26  16:33:59  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  13/08/26  23:57:11  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_ble6a20
@@ -66,7 +66,7 @@ stmt  level    source
    46          *                   ------------------------------------
    47          *********************************************************************************************************
              -************/
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  12/08/26  16:33:59  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  13/08/26  23:57:11  PAGE 2   
 
    48          
    49          #include "zf_device_ble6a20.h"
@@ -134,7 +134,7 @@ stmt  level    source
   107   1          {
   108   2              if(!gpio_get_level(BLE6A20_RTS_PIN))    // RTS低电平，可发送
   109   2              {
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  12/08/26  16:33:59  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  13/08/26  23:57:11  PAGE 3   
 
   110   3                  send_len = len < PKT_SIZE ? len : PKT_SIZE;
   111   3                  uart_write_buffer(BLE6A20_INDEX, buff, send_len);
@@ -202,7 +202,7 @@ stmt  level    source
   167          void ble6a20_callback (uint8 uart_dat)
   168          {
   169   1      //    uart_query_byte(BLE6A20_INDEX, &ble6a20_data);
-C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  12/08/26  16:33:59  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_ble6a20                                                  13/08/26  23:57:11  PAGE 4   
 
   170   1          fifo_write_buffer(&ble6a20_fifo, &uart_dat, 1);
   171   1      }
