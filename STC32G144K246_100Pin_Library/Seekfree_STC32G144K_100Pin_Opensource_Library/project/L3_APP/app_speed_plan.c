@@ -5,7 +5,6 @@
 #include "app_motion_preprocess.h"
 #include "app_speed_plan.h"
 #include "app_element.h"
-#include "app_attitude.h"
 #include "app_speedout.h"
 #include "service_negative_pressure.h"
 #include "service_tof.h"
@@ -21,8 +20,7 @@
 /* 负压生效量接口: 无线 negative_pressure 为基础量, 触发时叠加增量, 上限 90 */
 #define APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT   (15.0f)     /* 触发时在基础量上增加的百分比 */
 #define APP_SPEED_PLAN_PRESSURE_MAX             (90.0f)     /* 生效量上限 */
-#define APP_SPEED_PLAN_PITCH_LIMIT_DEG          (30.0f)     /* pitch(0-360) 偏离水平 (30,330) 触发 */
-#define APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM     (200U)      /* TOF 测距 <200mm 触发(预留) */
+#define APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM     (200U)      /* TOF 测距 <200mm 触发 */
 
 static volatile float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
 static volatile float speed_plan_pressure_boost = APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT;
@@ -117,26 +115,10 @@ static uint8 app_speed_plan_tof_near_obstacle(void)
     return 0U;
 }
 
-/* 负压增量触发条件: TOF 接近(<200mm) 或 pitch(0-360) 偏离水平 (30,330) */
+/* 负压增量触发条件: TOF 接近(<200mm) */
 static uint8 app_speed_plan_pressure_boost_condition(void)
 {
-    app_attitude_data_t attitude;
-
-    if(0U != app_speed_plan_tof_near_obstacle())
-    {
-        return 1U;
-    }
-
-    app_attitude_get_data(&attitude);
-    /* pitch 已改为 0-360 语义: 偏离水平 (30, 330) 区间即触发(与原 ±30° 等效) */
-    if((0U != attitude.valid) &&
-       (attitude.pitch_deg > APP_SPEED_PLAN_PITCH_LIMIT_DEG) &&
-       (attitude.pitch_deg < (360.0f - APP_SPEED_PLAN_PITCH_LIMIT_DEG)))
-    {
-        return 1U;
-    }
-
-    return 0U;
+    return app_speed_plan_tof_near_obstacle();
 }
 
 /* 负压生效量计算: 基础量(无线 negative_pressure) + 触发增量, 上限 90。

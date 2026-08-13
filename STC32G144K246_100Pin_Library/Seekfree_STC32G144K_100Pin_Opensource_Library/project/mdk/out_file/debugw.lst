@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  debugw                                                             12/08/26  14:53:07  PAGE 1   
+C251 COMPILER V5.60.0,  debugw                                                             13/08/26  21:32:07  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE debugw
@@ -17,7 +17,7 @@ stmt  level    source
     4          #include "service_wireless_uart.h"
     5          #include "service_inductor.h"
     6          #include "service_tof.h"
-    7          #include "app_attitude.h"
+    7          #include "service_speed.h"
     8          #include "app_inductor_preprocess.h"
     9          #include "debugw.h"
    10          
@@ -25,10 +25,10 @@ stmt  level    source
    12             0 = 关闭
    13             1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
    14             2 = 4路电感原始值 CH1~CH4, 10Hz
-   15             3 = 姿态角 pitch,roll,yaw (°), 100Hz */
+   15             3 = 电机速度 left,right (m/s), 100Hz */
    16          #define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
-   17          #define DEBUGW_INDUCTOR_PERIOD_TICK     (1000UL)   /* 10Hz */
-   18          #define DEBUGW_IMU3_PERIOD_TICK         (100UL)    /* 100Hz */
+   17          #define DEBUGW_INDUCTOR_PERIOD_TICK     (200UL)    /* 50Hz */
+   18          #define DEBUGW_MOTOR_PERIOD_TICK        (100UL)    /* 100Hz */
    19          
    20          static volatile float debugw_debug_info = 0.0f;
    21          
@@ -66,7 +66,7 @@ stmt  level    source
    50          
    51          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  debugw                                                             12/08/26  14:53:07  PAGE 2   
+C251 COMPILER V5.60.0,  debugw                                                             13/08/26  21:32:07  PAGE 2   
 
    52          // 函数简介     无线调试任务
    53          // 参数说明     void
@@ -84,7 +84,7 @@ stmt  level    source
    63   1          uint32 now;
    64   1          app_inductor_preprocess_data_t preprocessed;
    65   1          service_inductor_data_t inductor;
-   66   1          app_attitude_data_t attitude;
+   66   1          service_speed_data_t speed;
    67   1      
    68   1          mode = debugw_mode();
    69   1          if(0U == mode)
@@ -93,7 +93,7 @@ stmt  level    source
    72   2          }
    73   1      
    74   1          period_tick = (1U == mode) ? DEBUGW_IMU_PERIOD_TICK :
-   75   1                  ((3U == mode) ? DEBUGW_IMU3_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK);
+   75   1                  ((3U == mode) ? DEBUGW_MOTOR_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK);
    76   1      
    77   1          now = service_timetick_what();
    78   1          if((uint32)(now - last_tick) < period_tick)
@@ -127,30 +127,29 @@ stmt  level    source
   105   2                  break;
   106   2      
   107   2              case 3U:
-  108   2                  /* 100Hz 姿态角: pitch,roll,yaw (°) */
-  109   2                  app_attitude_get_data(&attitude);
-  110   2                  wprint("%.1f,%.1f,%.1f\r\n",
-  111   2                          (double)attitude.pitch_deg,
-  112   2                          (double)attitude.roll_deg,
-  113   2                          (double)attitude.yaw_deg);
-  114   2                  break;
-C251 COMPILER V5.60.0,  debugw                                                             12/08/26  14:53:07  PAGE 3   
+  108   2                  /* 100Hz 电机速度: left,right (m/s) */
+  109   2                  service_speed_get(&speed);
+  110   2                  wprint("%.2f,%.2f\r\n",
+  111   2                          (double)speed.left_mps,
+  112   2                          (double)speed.right_mps);
+  113   2                  break;
+  114   2      
+C251 COMPILER V5.60.0,  debugw                                                             13/08/26  21:32:07  PAGE 3   
 
-  115   2      
-  116   2              default:
-  117   2                  break;
-  118   2          }
-  119   1      }
+  115   2              default:
+  116   2                  break;
+  117   2          }
+  118   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       549     ------
+  ecode size           =       529     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        93     ------
+  xdata size           =        76     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -160,7 +159,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =       102     ------
+  hconst size          =        97     ------
 End of Module Information.
 
 

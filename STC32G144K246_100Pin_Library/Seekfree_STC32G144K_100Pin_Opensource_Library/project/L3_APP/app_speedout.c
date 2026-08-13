@@ -470,8 +470,7 @@ static void app_speedout_apply_command(void)
         /* Safety faults dominate START and remain active until their owner
            explicitly clears the relevant interlock bit. */
         app_speedout_stop();
-        service_negative_pressure_set_percent(0U);
-        service_negative_pressure_apply_request();
+        service_negative_pressure_set_percent_immediate(0U);
     }
     else if(APP_SPEEDOUT_COMMAND_STOP == command)
     {
@@ -480,8 +479,7 @@ static void app_speedout_apply_command(void)
     else if(APP_SPEEDOUT_COMMAND_STOP_ALL == command)
     {
         app_speedout_stop();
-        service_negative_pressure_set_percent(0U);
-        service_negative_pressure_apply_request();
+        service_negative_pressure_set_percent_immediate(0U);
     }
     else if(APP_SPEEDOUT_COMMAND_START == command)
     {

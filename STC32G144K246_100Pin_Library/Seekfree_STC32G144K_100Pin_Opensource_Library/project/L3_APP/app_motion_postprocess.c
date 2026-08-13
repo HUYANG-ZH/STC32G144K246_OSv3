@@ -61,6 +61,8 @@ static uint8 motion_postprocess_imu_fault = 0U;
 static uint8 motion_postprocess_last_enabled = 0U;
 static float motion_post_target_yaw_rate_override = 0.0f;
 static float motion_postprocess_yaw_debug_enable = 0.0f;
+/* 两轮速度环调试: 变量值即目标线速(m/s), >=阈值启用, 0 退出 */
+static float motion_postprocess_speed_debug_enable = 0.0f;
 static float motion_postprocess_rate_limited_yaw_rate = 0.0f;
 static uint8 motion_postprocess_rate_limit_ready = 0U;
 
@@ -147,6 +149,8 @@ static void app_motion_postprocess_register_packet(void)
             &motion_post_target_yaw_rate_override, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("motion_post_yaw_debug",
             &motion_postprocess_yaw_debug_enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("motion_post_speed_debug",
+            &motion_postprocess_speed_debug_enable, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("motion_post_rate_limit",
             &app_motion_postprocess_config.rate_limit, APP_MOTION_POSTPROCESS_PACKET_SINGLE_COUNT);
 }
@@ -314,8 +318,12 @@ void app_motion_postprocess_control_step(void)
     {
         // app_element_control_step();   // 环岛检测禁用, 仅保留圆筒识别
     }
-    app_feedforward_control_step();
-    app_speed_plan_control_step();
+    /* 两轮速度环调试模式: 跳过前馈与速度规划, 目标线速由无线直接指派 */
+    if(motion_postprocess_speed_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    {
+        app_feedforward_control_step();
+        app_speed_plan_control_step();
+    }
     app_motion_postprocess_compute_step();
 }
 
@@ -346,6 +354,13 @@ static void app_motion_postprocess_compute_step(void)
     processed_error = raw_error;
     static_feedforward_speed = feedforward.feedforward;
     linear_mps = app_speed_plan_get_linear_mps();
+
+    if(motion_postprocess_speed_debug_enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    {
+        /* 两轮速度环调试模式: 目标线速 = 该变量值本身(m/s), 差速=0(纯速度环), 前馈=0 */
+        linear_mps = motion_postprocess_speed_debug_enable;
+        static_feedforward_speed = 0.0f;
+    }
 
     if(motion_postprocess_yaw_debug_enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
     {
@@ -429,6 +444,12 @@ static void app_motion_postprocess_compute_step(void)
         target_differential_speed = 0.0f;
         motion_postprocess_last_enabled = 0U;
         motion_postprocess_rate_limit_ready = 0U;
+    }
+    else if(motion_postprocess_speed_debug_enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    {
+        /* 两轮速度环调试模式: 差速目标强制 0, 仅速度 PID 生效 */
+        target_differential_speed = 0.0f;
+        motion_postprocess_last_enabled = 1U;
     }
     else
     {

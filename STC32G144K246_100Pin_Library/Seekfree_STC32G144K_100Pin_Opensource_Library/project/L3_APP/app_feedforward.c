@@ -11,8 +11,8 @@
 #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
 #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
 #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
-#define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (80.0f)     // CH1/CH2归一化强度达到该值时给满前馈
-#define APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV    (0.0125f)
+#define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (50.0f)     // CH1/CH2归一化强度达到该值时给满前馈
+#define APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV    (0.02f)
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
     (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
