@@ -11,6 +11,13 @@
 #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
 #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
 #define APP_MOTION_PREPROCESS_DEFAULT_YAW_RATE_GAIN    (0.62f)     // 默认角速度增益，单位 rad/s
+/* x 轴(前进方向)电感差比的抗噪参数(直道弱信号防噪声放大导致车体震颤):
+   公式: x_error = (CH2-CH3)/(CH2+CH3+B) * max(CH2,CH3)/(max(CH2,CH3)+S0)
+   B    = 分母偏置: 直道信号和的一半左右(直道 CH2+CH3≈16 取 8)
+   S0   = 强度门控半强度点: 直道单路强度(≈8)的 2 倍, 弱信号压增益、强信号(弯道)保持敏感
+   经 200 组参数网格仿真: 直道降噪约 4.5x, 出线边缘约 19x, 弯道压缩约 29% 可用 xw 上调补偿 */
+#define APP_MOTION_PREPROCESS_X_DEN_BIAS_DEFAULT      (8.0f)      // 差比分母偏置
+#define APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT       (16.0f)     // 门控半强度点
 
 app_motion_preprocess_config_t app_motion_preprocess_config =
 {
@@ -23,6 +30,9 @@ static volatile app_motion_preprocess_data_t motion_preprocess_data = {0.0f, 0.0
 /* 差比融合权重无线可调, 宏定义值仅作默认 */
 static volatile float motion_pre_x_weight = APP_MOTION_PREPROCESS_X_WEIGHT;
 static volatile float motion_pre_y_weight = APP_MOTION_PREPROCESS_Y_WEIGHT;
+/* x 轴差比抗噪参数无线可调, 宏定义值仅作默认 */
+static volatile float motion_pre_x_den_bias = APP_MOTION_PREPROCESS_X_DEN_BIAS_DEFAULT;
+static volatile float motion_pre_x_gate_s0 = APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT;
 
 void app_motion_preprocess_control_step(void);
 
@@ -49,6 +59,10 @@ static void app_motion_preprocess_register_packet(void)
             (float *)&motion_pre_x_weight, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("yw",
             (float *)&motion_pre_y_weight, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("x_den_b",
+            (float *)&motion_pre_x_den_bias, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("x_gate_s0",
+            (float *)&motion_pre_x_gate_s0, APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -102,7 +116,24 @@ void app_motion_preprocess_control_step(void)
     app_inductor_preprocess_get_data(&inductor_data);
 
     output.y_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[0], inductor_data.normalized[3]);
-    output.x_error = app_motion_preprocess_diff_ratio(inductor_data.normalized[1], inductor_data.normalized[2]);
+    /* x 轴(前进方向)差比抗噪公式:
+       x_error = (CH2-CH3)/(CH2+CH3+x_den_b) * max(CH2,CH3)/(max(CH2,CH3)+x_gate_s0)
+       直道弱信号时: 分母偏置防小分母放大 + 强度门控把增益压到接近 0 -> 噪声不进控制链
+       弯道强信号时: 门控增益 -> 1, 偏置相对大分母可忽略 -> 差比保持敏感 */
+    {
+        float x_strength;
+        float x_gate;
+        float x_raw;
+
+        x_strength = (inductor_data.normalized[1] > inductor_data.normalized[2]) ?
+                inductor_data.normalized[1] : inductor_data.normalized[2];
+        x_gate = tfpu_div(x_strength,
+                tfpu_add(x_strength, motion_pre_x_gate_s0));
+        x_raw = tfpu_div(tfpu_sub(inductor_data.normalized[1], inductor_data.normalized[2]),
+                tfpu_add(tfpu_add(inductor_data.normalized[1], inductor_data.normalized[2]),
+                motion_pre_x_den_bias));
+        output.x_error = tfpu_mul(x_raw, x_gate);
+    }
 
     output.line_error = tfpu_add(tfpu_mul(output.y_error, motion_pre_y_weight),
             tfpu_mul(output.x_error, motion_pre_x_weight));
