@@ -4,7 +4,7 @@
 #include "service_wireless_uart.h"
 #include "service_inductor.h"
 #include "service_tof.h"
-#include "service_batterycheck.h"
+#include "service_speed.h"
 #include "app_inductor_preprocess.h"
 #include "debugw.h"
 
@@ -12,10 +12,10 @@
    0 = 关闭
    1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
    2 = 4路电感原始值 CH1~CH4, 10Hz
-   3 = 电池电压 (V), 10Hz */
+   3 = 两路编码器速度 left,right (m/s), 50Hz */
 #define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
 #define DEBUGW_INDUCTOR_PERIOD_TICK     (1000UL)   /* 10Hz */
-#define DEBUGW_VOLTAGE_PERIOD_TICK      (1000UL)   /* 10Hz */
+#define DEBUGW_MOTOR_PERIOD_TICK        (200UL)    /* 50Hz */
 
 static volatile float debugw_debug_info = 0.0f;
 
@@ -63,7 +63,7 @@ void debugw_task(void)
     uint32 now;
     app_inductor_preprocess_data_t preprocessed;
     service_inductor_data_t inductor;
-    float voltage;
+    service_speed_data_t speed;
 
     mode = debugw_mode();
     if(0U == mode)
@@ -71,7 +71,8 @@ void debugw_task(void)
         return;
     }
 
-    period_tick = (1U == mode) ? DEBUGW_IMU_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK;
+    period_tick = (1U == mode) ? DEBUGW_IMU_PERIOD_TICK :
+            ((3U == mode) ? DEBUGW_MOTOR_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK);
 
     now = service_timetick_what();
     if((uint32)(now - last_tick) < period_tick)
@@ -104,9 +105,11 @@ void debugw_task(void)
             break;
 
         case 3U:
-            /* 10Hz 电池电压(V) */
-            service_batterycheck_get_voltage(&voltage);
-            wprint("%.2f\r\n", (double)voltage);
+            /* 50Hz 两路编码器速度: left,right (m/s) */
+            service_speed_get(&speed);
+            wprint("%.2f,%.2f\r\n",
+                    (double)speed.left_mps,
+                    (double)speed.right_mps);
             break;
 
         default:
