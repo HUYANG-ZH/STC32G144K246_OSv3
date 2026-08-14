@@ -1,0 +1,224 @@
+C251 COMPILER V5.60.0,  app_stall_guard                                                    15/08/26  02:19:38  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE app_stall_guard
+OBJECT MODULE PLACED IN .\out_file\app_stall_guard.obj
+COMPILER INVOKED BY: D:\C251keil\C251\BIN\C251.EXE ..\L3_APP\app_stall_guard.c LARGE ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(
+                    -0,SPEED) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries
+                    -\zf_driver;..\user;..\code;..\L0_SYS;..\L1_BSP;..\L2_SERVICE;..\L3_APP;..\LL_Shared_Source;..\..\libraries\zf_components
+                    -\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant) DEBUG PRINT(.\out_file\app_stall_guard.lst) OBJECT(.\o
+                    -ut_file\app_stall_guard.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "service_wireless_uart.h"
+    3          #include "app_speedout.h"
+    4          #include "app_stall_guard.h"
+    5          
+    6          #define APP_STALL_GUARD_TICKS_PER_MS        (1U)      /* 跟随 TIM5 1ms 周期 */
+    7          #define APP_STALL_GUARD_HOLD_TICKS          (APP_STALL_GUARD_HOLD_MS / APP_STALL_GUARD_TICKS_PER_MS)
+    8          #define APP_STALL_GUARD_GRACE_TICKS         (APP_STALL_GUARD_STARTUP_GRACE_MS / APP_STALL_GUARD_TICKS_PER
+             -_MS)
+    9          #define APP_STALL_GUARD_PWM_LIMIT           (APP_STALL_GUARD_PWM_RATIO * (float)PWM_DUTY_MAX)
+   10          
+   11          static uint16 stall_left_hold = 0U;                 /* 左轮连续满足计数(1ms tick) */
+   12          static uint16 stall_right_hold = 0U;                /* 右轮连续满足计数(1ms tick) */
+   13          static uint16 stall_grace_count = 0U;               /* 启动宽限 1ms tick 计数 */
+   14          static volatile uint8 stall_triggered = 0U;         /* 触发锁存, 防止重复触发刷屏 */
+   15          static volatile uint8 stall_report_pending = 0U;    /* 主循环待上报标志 */
+   16          static uint8 stall_last_enabled = 0U;               /* enabled 边沿检测 */
+   17          
+   18          //-------------------------------------------------------------------------------------------------------
+             -------------
+   19          // 函数简介     电机堵转保护初始化
+   20          // 参数说明     void
+   21          // 返回参数     void
+   22          // 使用示例     app_stall_guard_init();
+   23          // 备注信息     由 main 在 app_speedout_init() 之后调用
+   24          //-------------------------------------------------------------------------------------------------------
+             -------------
+   25          void app_stall_guard_init(void)
+   26          {
+   27   1          stall_left_hold = 0U;
+   28   1          stall_right_hold = 0U;
+   29   1          stall_grace_count = 0U;
+   30   1          stall_triggered = 0U;
+   31   1          stall_report_pending = 0U;
+   32   1          stall_last_enabled = 0U;
+   33   1          #if __DBGFLAG__
+   34   1          printf(">>[app_stall_guard_init]\r\n");
+   35   1          wprint(">>[app_stall_guard_init]\r\n");
+   36   1          #endif
+   37   1      }
+   38          
+   39          //-------------------------------------------------------------------------------------------------------
+             -------------
+   40          // 函数简介     电机堵转检测步进 (TIM5 1ms 中断上下文)
+   41          // 参数说明     void
+   42          // 返回参数     void
+   43          // 使用示例     app_speedout_tick() 内调用
+   44          // 备注信息     只读 app_speedout_data 快照; 触发时投递急停邮箱,
+   45          //              同帧随后的 apply_command 即执行急停, 与无线 stop 路径一致
+   46          //-------------------------------------------------------------------------------------------------------
+             -------------
+   47          void app_stall_guard_tick(void)
+   48          {
+   49   1          app_speedout_data_t speedout;
+   50   1          uint8 enabled;
+C251 COMPILER V5.60.0,  app_stall_guard                                                    15/08/26  02:19:38  PAGE 2   
+
+   51   1          uint8 left_pwm_high;
+   52   1          uint8 right_pwm_high;
+   53   1          uint8 left_speed_low;
+   54   1          uint8 right_speed_low;
+   55   1          uint8 trigger = 0U;
+   56   1          uint8 ea_backup;
+   57   1      
+   58   1          app_speedout_get_data(&speedout);
+   59   1          enabled = (speedout.enabled >= 0.5f) ? 1U : 0U;
+   60   1      
+   61   1          if(0U == enabled)
+   62   1          {
+   63   2              /* 停车/未启动: 复位全部状态, 急停生效后自动解锁, 无线 start 可重新武�
+             -� */
+   64   2              stall_left_hold = 0U;
+   65   2              stall_right_hold = 0U;
+   66   2              stall_grace_count = 0U;
+   67   2              stall_triggered = 0U;
+   68   2              stall_last_enabled = 0U;
+   69   2              return;
+   70   2          }
+   71   1      
+   72   1          if(0U != stall_triggered)
+   73   1          {
+   74   2              /* 已触发, 急停命令已投递; 等待 enabled 归零解锁, 避免 500ms 周期重复触发
+             - */
+   75   2              return;
+   76   2          }
+   77   1      
+   78   1          if(0U == stall_last_enabled)
+   79   1          {
+   80   2              /* enabled 上升沿: 启动宽限期开始 */
+   81   2              stall_grace_count = 0U;
+   82   2          }
+   83   1          stall_last_enabled = 1U;
+   84   1      
+   85   1          if(stall_grace_count < APP_STALL_GUARD_GRACE_TICKS)
+   86   1          {
+   87   2              stall_grace_count++;
+   88   2              stall_left_hold = 0U;
+   89   2              stall_right_hold = 0U;
+   90   2              return;
+   91   2          }
+   92   1      
+   93   1          /* 条件 A: |PWM| >= 80% 满占空比 */
+   94   1          left_pwm_high = ((speedout.left_pwm >= APP_STALL_GUARD_PWM_LIMIT) ||
+   95   1                  (speedout.left_pwm <= -APP_STALL_GUARD_PWM_LIMIT)) ? 1U : 0U;
+   96   1          right_pwm_high = ((speedout.right_pwm >= APP_STALL_GUARD_PWM_LIMIT) ||
+   97   1                  (speedout.right_pwm <= -APP_STALL_GUARD_PWM_LIMIT)) ? 1U : 0U;
+   98   1      
+   99   1          /* 条件 B: |实际速度| < 2.5m/s (编码器未建立速度) */
+  100   1          left_speed_low = ((speedout.left_actual_mps < APP_STALL_GUARD_SPEED_MPS) &&
+  101   1                  (speedout.left_actual_mps > -APP_STALL_GUARD_SPEED_MPS)) ? 1U : 0U;
+  102   1          right_speed_low = ((speedout.right_actual_mps < APP_STALL_GUARD_SPEED_MPS) &&
+  103   1                  (speedout.right_actual_mps > -APP_STALL_GUARD_SPEED_MPS)) ? 1U : 0U;
+  104   1      
+  105   1          /* 条件 C: 连续保持 0.5s; 任一帧不满足即清零重计 */
+  106   1          if((0U != left_pwm_high) && (0U != left_speed_low))
+  107   1          {
+  108   2              stall_left_hold++;
+  109   2              if(stall_left_hold >= APP_STALL_GUARD_HOLD_TICKS)
+  110   2              {
+  111   3                  trigger = 1U;
+  112   3              }
+  113   2          }
+  114   1          else
+C251 COMPILER V5.60.0,  app_stall_guard                                                    15/08/26  02:19:38  PAGE 3   
+
+  115   1          {
+  116   2              stall_left_hold = 0U;
+  117   2          }
+  118   1      
+  119   1          if((0U != right_pwm_high) && (0U != right_speed_low))
+  120   1          {
+  121   2              stall_right_hold++;
+  122   2              if(stall_right_hold >= APP_STALL_GUARD_HOLD_TICKS)
+  123   2              {
+  124   3                  trigger = 1U;
+  125   3              }
+  126   2          }
+  127   1          else
+  128   1          {
+  129   2              stall_right_hold = 0U;
+  130   2          }
+  131   1      
+  132   1          if(0U != trigger)
+  133   1          {
+  134   2              ea_backup = EA;
+  135   2              EA = 0;
+  136   2              stall_triggered = 1U;
+  137   2              stall_report_pending = 1U;
+  138   2              EA = ea_backup;
+  139   2              stall_left_hold = 0U;
+  140   2              stall_right_hold = 0U;
+  141   2              /* 与无线急停完全相同的操作: 由 TIM5 同帧 apply_command 执行
+  142   2                 (电机停止 + 负压立即归零) */
+  143   2              app_speedout_request_stop_all();
+  144   2          }
+  145   1      }
+  146          
+  147          //-------------------------------------------------------------------------------------------------------
+             -------------
+  148          // 函数简介     堵转事件泵 - 主循环调用
+  149          // 参数说明     void
+  150          // 返回参数     void
+  151          // 使用示例     while(1) { app_stall_guard_pump_events(); }
+  152          // 备注信息     输出 stall_alarm 报警帧与 stop 回报帧, 与无线急停回报一致
+  153          //-------------------------------------------------------------------------------------------------------
+             -------------
+  154          void app_stall_guard_pump_events(void)
+  155          {
+  156   1          uint8 ea_backup;
+  157   1          uint8 pending;
+  158   1      
+  159   1          ea_backup = EA;
+  160   1          EA = 0;
+  161   1          pending = stall_report_pending;
+  162   1          stall_report_pending = 0U;
+  163   1          EA = ea_backup;
+  164   1      
+  165   1          if(0U == pending)
+  166   1          {
+  167   2              return;
+  168   2          }
+  169   1      
+  170   1          wprint("stall_alarm,1.000\r\n");
+  171   1          wprint("stop,0.000\r\n");
+  172   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       706     ------
+  data size            =    ------     ------
+C251 COMPILER V5.60.0,  app_stall_guard                                                    15/08/26  02:19:38  PAGE 4   
+
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        46     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        99     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
