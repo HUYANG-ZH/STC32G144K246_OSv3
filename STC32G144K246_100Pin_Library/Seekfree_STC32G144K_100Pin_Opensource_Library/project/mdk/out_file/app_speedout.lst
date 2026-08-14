@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -66,7 +66,7 @@ stmt  level    source
    51              float right_mps;
    52              uint32 sequence;
    53              uint8 owner;
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 2   
 
    54          } app_speedout_target_mailbox_t;
    55          
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          pid->kd = config->kd;
   118   1          pid->output_limit_enable = ZF_ENABLE;
   119   1          pid->output_min = -output_limit;
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 3   
 
   120   1          pid->output_max = output_limit;
   121   1          pid->integral_limit_enable = (0.0f < config->integral_limit) ? ZF_ENABLE : ZF_DISABLE;
@@ -202,7 +202,7 @@ stmt  level    source
   178   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
   179   1          (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
   180   1          (void)service_packet_add_action("start", app_speedout_start_action, 0UL);
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 4   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 4   
 
   181   1      }
   182          
@@ -270,7 +270,7 @@ stmt  level    source
   242   1          app_speedout_data.left_pwm = 0.0f;
   243   1          app_speedout_data.right_pwm = 0.0f;
   244   1          app_speedout_data.enabled = 0.0f;
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 5   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 5   
 
   245   1          speedout_last_enabled = 0U;
   246   1          app_speedout_clear_pid();
@@ -338,7 +338,7 @@ stmt  level    source
   308          
   309          static void app_speedout_start_action(void)
   310          {
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 6   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 6   
 
   311   1          app_speedout_request_start();
   312   1          wprint("start,0.000\r\n");
@@ -406,7 +406,7 @@ stmt  level    source
   374   1          snapshot.owner = speedout_target_mailbox.owner;
   375   1          EA = ea_backup;
   376   1      
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 7   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 7   
 
   377   1          if(snapshot.sequence != speedout_target_applied_sequence)
   378   1          {
@@ -474,7 +474,7 @@ stmt  level    source
   440   2              return;
   441   2          }
   442   1      
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 8   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 8   
 
   443   1          left_pwm = (int32)shared_pos_pid_update(&speedout_left_pid,
   444   1                  left_target, speed.left_mps, APP_SPEEDOUT_DT_SECOND);
@@ -543,7 +543,7 @@ Module Information          Static   Overlayable
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
-C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  16:13:55  PAGE 9   
+C251 COMPILER V5.60.0,  app_speedout                                                       14/08/26  17:38:46  PAGE 9   
 
   far data size        =    ------     ------
   huge data size       =    ------     ------

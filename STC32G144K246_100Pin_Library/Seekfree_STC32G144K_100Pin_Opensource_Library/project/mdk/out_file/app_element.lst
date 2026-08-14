@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -66,7 +66,7 @@ stmt  level    source
    49          #define APP_ELEMENT_SEESAW_DEAD_TICK            (APP_ELEMENT_SEESAW_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
    50          #define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
    51          #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 2   
 
    52          #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
    53          #define APP_ELEMENT_SEESAW_SLOWDOWN_MS          (160UL)
@@ -75,7 +75,7 @@ stmt  level    source
    55          #define APP_ELEMENT_SEESAW_SLOWDOWN_SPEED_MPS   (1.4f)
    56          
    57          #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
-   58          #define APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM (500U)
+   58          #define APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM (650U)
    59          #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
    60          #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS
              -)
@@ -134,7 +134,7 @@ stmt  level    source
   111              0.0f,
   112              0.0f,
   113              0.0f,
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 3   
 
   114              0.0f
   115          };
@@ -202,7 +202,7 @@ stmt  level    source
   177          static volatile service_imu_gyro_t element_gyro_snapshot = {0.0f, 0.0f, 0.0f, 0U};
   178          static volatile uint32 element_roundabout_last_tick = 0U;
   179          static volatile uint8 element_roundabout_event_flags = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 4   
 
   180          static volatile uint16 element_roundabout_event_count = 0U;   /* FOUND 事件携带的 count */
   181          static volatile uint8 element_realtime_event_flags = 0U;
@@ -270,7 +270,7 @@ stmt  level    source
   242          {
   243   1          float bias_dps;
   244   1      
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 5   
 
   245   1          bias_dps = app_element_roundabout_get_bias_dps();
   246   1          app_element_roundabout_bias_yaw_radps = tfpu_mul(bias_dps, APP_ELEMENT_DEG_TO_RAD);
@@ -338,7 +338,7 @@ stmt  level    source
   308   1      }
   309          
   310          static void app_element_cylinder_clear(void)
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 6   
 
   311          {
   312   1          element_cylinder_angle_pos_deg = 0.0f;
@@ -406,7 +406,7 @@ stmt  level    source
   374   1          uint8 tail;
   375   1          float angle_abs;
   376   1      
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 7   
 
   377   1          if(0U == element_cylinder_bucket_count)
   378   1          {
@@ -474,7 +474,7 @@ stmt  level    source
   438   1          app_motion_preprocess_config.linear_mps = APP_ELEMENT_CYLINDER_SLOWDOWN_SPEED_MPS;
   439   1          app_feedforward_config.kff = APP_ELEMENT_CYLINDER_SLOWDOWN_KFF;
   440   1          app_motion_preprocess_config.yaw_rate_gain = APP_ELEMENT_CYLINDER_SLOWDOWN_YAW_GAIN;
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 8   
 
   441   1          if(app_speedout_data.enabled > 0.0f)
   442   1          {
@@ -542,7 +542,7 @@ stmt  level    source
   504   2              return;
   505   2          }
   506   1      
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 9   
 
   507   1          delta_deg = tfpu_mul(gyro_x, tfpu_mul(tfpu_int2float((long)delta_tick), APP_ELEMENT_TICK_TO_SECOND));
   508   1          app_element_cylinder_push(delta_deg, now);
@@ -610,7 +610,7 @@ stmt  level    source
   569   1          app_inductor_preprocess_get_data(&inductor);
   570   1          roundabout_detected = ((tof_distance_mm > APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM) &&
   571   1                  (0U != roundabout_priority_tree_predict(
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 10  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 10  
 
   572   1                          inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
   573   1                          inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
@@ -678,7 +678,7 @@ stmt  level    source
                    gyro = element_gyro_snapshot;   /* volatile 读主循环快照 */
                
                    now = service_timetick_what();
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 11  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 11  
 
                    if(0U == element_roundabout_last_tick)
                    {
@@ -746,7 +746,7 @@ stmt  level    source
                                element_roundabout_distance_m = 0.0f;
                                element_roundabout_event_flags |= ELEMENT_RB_EVENT_EXIT;
                                ea_backup = EA;
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 12  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 12  
 
                                EA = 0;
                                element_data.type = APP_ELEMENT_TYPE_NONE;
@@ -814,7 +814,7 @@ stmt  level    source
   758          // 使用示例     app_element_pump_events();
   759          // 备注信息     由 app_motion_postprocess_gyro_task 周期调用
   760          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 13  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 13  
 
              -------------
   761          void app_element_pump_events(void)
@@ -882,7 +882,7 @@ stmt  level    source
   823   2              service_buzzer_beep_ms(300U);
   824   2          }
   825   1      }
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 14  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 14  
 
   826          
   827          //-------------------------------------------------------------------------------------------------------
@@ -950,7 +950,7 @@ stmt  level    source
                
                    element_realtime_event_flags |= ELEMENT_EVENT_SEESAW_FOUND;
                }
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 15  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 15  
 
                
                static void app_element_seesaw_update(uint32 now, uint8 attitude_fresh)
@@ -1018,7 +1018,7 @@ stmt  level    source
   949          // 使用示例     app_element_init();
   950          // 备注信息     当前仅启用圆筒识别，初始化后默认无元素
   951          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 16  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 16  
 
              -------------
   952          void app_element_init(void)
@@ -1086,7 +1086,7 @@ stmt  level    source
              -------------
  1012          // 函数简介     元素识别IMU输入任务
  1013          // 参数说明     gyro             IMU三轴陀螺仪数据，单位 deg/s
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 17  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 17  
 
  1014          // 返回参数     void
  1015          // 使用示例     app_element_imu_task(&gyro);
@@ -1154,7 +1154,7 @@ stmt  level    source
  1076   2          }
  1077   1      
  1078   1          /* 注: 环岛 gz 积分/退出/EXIT_WAIT 距离积分/偏置到期清除仍禁用;
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 18  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 18  
 
  1079   1             gx 横滚抑制(环岛阻挡)已恢复在本函数内实时执行 */
  1080   1      
@@ -1222,7 +1222,7 @@ stmt  level    source
  1141   1          {
  1142   2              element_roundabout_gx_high = 0U;
  1143   2          }
-C251 COMPILER V5.60.0,  app_element                                                        14/08/26  16:20:36  PAGE 19  
+C251 COMPILER V5.60.0,  app_element                                                        14/08/26  18:06:15  PAGE 19  
 
  1144   1      
  1145   1          /* 环岛 IMU 步进(当前禁用, 仅保留圆筒识别) */
