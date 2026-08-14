@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 1   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE seekfree_assistant
@@ -66,7 +66,7 @@ stmt  level    source
    44          
    45          static fifo_struct      seekfree_assistant_fifo = {0};
    46          static uint8            seekfree_assistant_buffer[SEEKFREE_ASSISTANT_BUFFER_SIZE] = {0};                        /
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 2   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 2   
 
              -/ 数据存放数组
    47          float                   seekfree_assistant_parameter[SEEKFREE_ASSISTANT_SET_PARAMETR_COUNT] = {0};      //
@@ -134,7 +134,7 @@ stmt  level    source
    99   3              }break;
   100   2      
   101   2              case SEEKFREE_ASSISTANT_MT9V03X:
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 3   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 3   
 
   102   2              {
   103   3                  image_size = width * height;
@@ -202,7 +202,7 @@ stmt  level    source
   157   1              for(i = 0; i < temp_oscilloscope.channel_num; i++)
   158   1              {
   159   2                      ((uint8 *)&temp_oscilloscope.dat[i])[0] = ((uint8 *)&seekfree_assistant_oscilloscope->dat[i])[3];
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 4   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 4   
 
   160   2                      ((uint8 *)&temp_oscilloscope.dat[i])[1] = ((uint8 *)&seekfree_assistant_oscilloscope->dat[i])[2];
   161   2                      ((uint8 *)&temp_oscilloscope.dat[i])[2] = ((uint8 *)&seekfree_assistant_oscilloscope->dat[i])[1];
@@ -270,7 +270,7 @@ stmt  level    source
   219          // 参数说明     boundary_type   边界类型
   220          // 参数说明     dot_num         一条边界有多少个点
   221          // 参数说明     dot_x1          存放边线1横坐标的地址  如果传递NULL参数则表示不�
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 5   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 5   
 
              -�送边线1
   222          // 参数说明     dot_x2          存放边线2横坐标的地址  如果传递NULL参数则表示不�
@@ -338,7 +338,7 @@ stmt  level    source
   272   4                      boundary_data_type = 1;
   273   4                  }
   274   3              }break;
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 6   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 6   
 
   275   2      
   276   2              case Y_BOUNDARY:
@@ -406,7 +406,7 @@ stmt  level    source
              -undary_num;
   337   1      }
   338          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 7   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 7   
 
              -------------
   339          // 函数简介     逐飞助手解析接收到的数据
@@ -474,7 +474,7 @@ stmt  level    source
   396   4                                      ((uint8 *)&seekfree_assistant_parameter[receive_packet->channel - 1])[1] = ((uint8 *)&receive_packet-
              ->dat)[2];
   397   4                                      ((uint8 *)&seekfree_assistant_parameter[receive_packet->channel - 1])[0] = ((uint8 *)&receive_packet-
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 8   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 8   
 
              ->dat)[3];
   398   4                                      seekfree_assistant_parameter_update_flag[receive_packet->channel - 1] = 1;
@@ -543,7 +543,7 @@ Module Information          Static   Overlayable
   edata size           =    ------     ------
   bit size             =         1     ------
   ebit size            =    ------     ------
-C251 COMPILER V5.60.0,  seekfree_assistant                                                 13/08/26  23:57:13  PAGE 9   
+C251 COMPILER V5.60.0,  seekfree_assistant                                                 14/08/26  16:13:42  PAGE 9   
 
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------

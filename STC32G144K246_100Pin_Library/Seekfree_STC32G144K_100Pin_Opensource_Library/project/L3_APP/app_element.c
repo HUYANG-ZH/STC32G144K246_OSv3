@@ -55,7 +55,7 @@
 #define APP_ELEMENT_SEESAW_SLOWDOWN_SPEED_MPS   (1.4f)
 
 #define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
-#define APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM (300U)
+#define APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM (500U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
 /* 环岛超时: 触发后 2s 内未结束则强制结束 */
@@ -640,6 +640,7 @@ static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta
     control_delta_tick = now - element_roundabout_last_tick;
     element_roundabout_last_tick = now;
 
+    /* gx 横滚抑制(环岛检测阻挡条件)已上移至 app_element_imu_task() 实时执行, 此处不再使用 */
     /* 追踪gx是否在20ms内超过200°/s（环岛检测阻挡条件） */
     if((0U != sample_fresh) && ((gyro.gyro_x > 200.0f) || (gyro.gyro_x < -200.0f)))
     {
@@ -1074,8 +1075,8 @@ void app_element_imu_task(const service_imu_sample_t *imu)
         EA = ea_backup;
     }
 
-    /* 注：gx 阻挡追踪、环岛 gz 积分、退出、EXIT_WAIT 距离积分、偏置到期清除
-       已移至 app_element_roundabout_imu_step() 在 TIM7 中断内硬实时执行 */
+    /* 注: 环岛 gz 积分/退出/EXIT_WAIT 距离积分/偏置到期清除仍禁用;
+       gx 横滚抑制(环岛阻挡)已恢复在本函数内实时执行 */
 
     if((0U != sample_fresh) &&
        (raw_delta_tick > APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK))
@@ -1126,6 +1127,19 @@ void app_element_imu_task(const service_imu_sample_t *imu)
         element_data.dir = APP_ELEMENT_DIR_NONE;
         element_data.active = 0.0f;
         EA = ea_backup;
+    }
+
+    /* 环岛横滚抑制: |gyro_x| > 200°/s 视为剧烈横滚(颠簸/侧倾/圆筒绕行),
+       置位 gx_high 持续 20ms, 期间抑制环岛确认, 防传感器尖峰误判环岛 */
+    if((0U != sample_fresh) && ((imu->gyro_x > 200.0f) || (imu->gyro_x < -200.0f)))
+    {
+        element_roundabout_gx_high = 1U;
+        element_roundabout_gx_high_tick = now;
+    }
+    else if((0U != element_roundabout_gx_high) &&
+            ((uint32)(now - element_roundabout_gx_high_tick) > 20U * APP_ELEMENT_TICK_PER_MS))
+    {
+        element_roundabout_gx_high = 0U;
     }
 
     /* 环岛 IMU 步进(当前禁用, 仅保留圆筒识别) */
