@@ -315,7 +315,7 @@ void app_motion_postprocess_control_step(void)
     /* 角速度环调试模式下关闭电感元素检测 */
     if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
     {
-        app_element_control_step();
+        // app_element_control_step();   // 环岛识别暂时关闭(仅关闭环岛检测入口, 圆筒识别不受影响)
     }
     app_feedforward_control_step();
     app_speed_plan_control_step();

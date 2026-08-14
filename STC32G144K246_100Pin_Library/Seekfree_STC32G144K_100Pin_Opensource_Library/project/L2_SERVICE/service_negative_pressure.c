@@ -8,8 +8,8 @@
 #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
 #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
 #define NEGATIVE_PRESSURE_PACKET_COUNT      (1U)
-/* 缓启动: 负压变化率不超过 10%/s (0.1ms/tick), 1 百分之一% 需要 10 tick */
-#define NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC  (10U)
+/* 缓启动: 负压变化率不超过 15%/s (0.1ms/tick), 1 百分之一% 需要 10 tick */
+#define NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC  (15U)
 #define NEGATIVE_PRESSURE_RAMP_TICK_PER_H       \
     (10000U / (NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC * 100U))
 

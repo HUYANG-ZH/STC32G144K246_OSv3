@@ -13,6 +13,9 @@
 #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
 #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (80.0f)     // CH1/CH2归一化强度达到该值时给满前馈
 #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV    (0.0125f)
+/* 曲率强度门控半强度点: 与 x_error 抗噪公式同构, 直道弱信号压缩曲率噪声,
+   弯道强信号保持敏感; 直道强度(≈8)的 3 倍取 24 */
+#define APP_FEEDFORWARD_GATE_S0_DEFAULT          (24.0f)
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
     (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
@@ -29,6 +32,7 @@ static float feedforward_last_curvature = 0.0f;
 static uint8 feedforward_rate_ready = 0U;
 static float feedforward_scale = 1.0f;
 static float feedforward_dt_inv = 0.0f;
+static volatile float feedforward_gate_s0 = APP_FEEDFORWARD_GATE_S0_DEFAULT;
 
 void app_feedforward_control_step(void);
 
@@ -38,6 +42,8 @@ static void app_feedforward_register_packet(void)
             &app_feedforward_config.kff, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
     (void)service_packet_add_variable("feedforward_kd",
             &app_feedforward_config.kd, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
+    (void)service_packet_add_variable("ff_gate_s0",
+            (float *)&feedforward_gate_s0, APP_FEEDFORWARD_PACKET_SINGLE_COUNT);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -110,6 +116,14 @@ void app_feedforward_control_step(void)
     denominator = tfpu_add(tfpu_add(inductor_data.normalized[0], inductor_data.normalized[3]),
             app_feedforward_config.denominator_bias);
     curvature = tfpu_div(numerator, denominator);
+
+    /* 曲率强度门控(与 x_error 抗噪同构): 直道弱信号压缩曲率噪声, 弯道强信号保持敏感 */
+    {
+        float x_strength = (inductor_data.normalized[1] > inductor_data.normalized[2]) ?
+                inductor_data.normalized[1] : inductor_data.normalized[2];
+        float x_gate = tfpu_div(x_strength, tfpu_add(x_strength, feedforward_gate_s0));
+        curvature = tfpu_mul(curvature, x_gate);
+    }
 
     if(0U == feedforward_rate_ready)
     {

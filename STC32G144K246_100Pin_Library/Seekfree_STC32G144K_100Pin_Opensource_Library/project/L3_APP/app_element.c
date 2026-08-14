@@ -77,19 +77,19 @@
 #define APP_ELEMENT_ROUNDABOUT_4_FF_SCALE_DEFAULT (1.0f)
 #define APP_ELEMENT_ROUNDABOUT_5_FF_SCALE_DEFAULT (1.0f)
 #define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (-800.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (500.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (600.0f)
 #define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (-800.0f)
-#define APP_ELEMENT_ROUNDABOUT_4_BIAS_DPS_DEFAULT (500.0f)
+#define APP_ELEMENT_ROUNDABOUT_4_BIAS_DPS_DEFAULT (600.0f)
 #define APP_ELEMENT_ROUNDABOUT_5_BIAS_DPS_DEFAULT (-500.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (290.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (290.0f)
-#define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (290.0f)
-#define APP_ELEMENT_ROUNDABOUT_4_ANGLE_DEG_DEFAULT (290.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_ANGLE_DEG_DEFAULT (330.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_ANGLE_DEG_DEFAULT (270.0f)
+#define APP_ELEMENT_ROUNDABOUT_3_ANGLE_DEG_DEFAULT (330.0f)
+#define APP_ELEMENT_ROUNDABOUT_4_ANGLE_DEG_DEFAULT (270.0f)
 #define APP_ELEMENT_ROUNDABOUT_5_ANGLE_DEG_DEFAULT (180.0f)
 #define APP_ELEMENT_ROUNDABOUT_STOP_COUNT        (5U)        /* 第5环完成后停车 */
 #define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS           (40UL)
 #define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK         (APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_MS * APP_ELEMENT_TICK_PER_MS)
-#define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT  (1800.0f)
+#define APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT  (0.0f)
 
 app_element_config_t app_element_config =
 {
@@ -731,8 +731,14 @@ static void app_element_roundabout_imu_step(uint8 sample_fresh, uint32 raw_delta
             }
             else
             {
-                /* 出环反向偏置：持续40ms，由到期机制自动清除 */
-                app_element_roundabout_bias_yaw_radps = tfpu_mul(APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT, APP_ELEMENT_DEG_TO_RAD);
+                /* 出环反向偏置: 持续40ms, 由到期机制自动清除;
+                   方向与环内偏置相反(回正): 环内负偏置(1/3/5环)->正向, 环内正偏置(2/4环)->负向 */
+                float reverse_bias_dps = APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_DPS_DEFAULT;
+                if(app_element_roundabout_get_bias_dps() > 0.0f)
+                {
+                    reverse_bias_dps = tfpu_sub(0.0f, reverse_bias_dps);
+                }
+                app_element_roundabout_bias_yaw_radps = tfpu_mul(reverse_bias_dps, APP_ELEMENT_DEG_TO_RAD);
                 app_element_roundabout_bias_active = 1U;
                 element_roundabout_bias_start_tick = now;
                 element_roundabout_bias_duration_tick = APP_ELEMENT_ROUNDABOUT_REVERSE_BIAS_TICK;

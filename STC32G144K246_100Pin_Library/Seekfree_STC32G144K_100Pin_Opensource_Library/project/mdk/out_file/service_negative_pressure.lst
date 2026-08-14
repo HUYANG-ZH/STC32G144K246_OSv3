@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  17:38:39  PAGE 1   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  23:49:41  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_negative_pressure
@@ -21,8 +21,8 @@ stmt  level    source
     8          #define NEGATIVE_PRESSURE_DUTY_MIN          (PWM_DUTY_MAX * 5UL / 100UL)
     9          #define NEGATIVE_PRESSURE_DUTY_MAX          (PWM_DUTY_MAX * 10UL / 100UL)
    10          #define NEGATIVE_PRESSURE_PACKET_COUNT      (1U)
-   11          /* 缓启动: 负压变化率不超过 10%/s (0.1ms/tick), 1 百分之一% 需要 10 tick */
-   12          #define NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC  (10U)
+   11          /* 缓启动: 负压变化率不超过 15%/s (0.1ms/tick), 1 百分之一% 需要 10 tick */
+   12          #define NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC  (15U)
    13          #define NEGATIVE_PRESSURE_RAMP_TICK_PER_H       \
    14              (10000U / (NEGATIVE_PRESSURE_RAMP_PERCENT_PER_SEC * 100U))
    15          
@@ -66,7 +66,7 @@ stmt  level    source
    52   1          return (uint8)(percent + 0.5f);
    53   1      }
    54          
-C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  17:38:39  PAGE 2   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  23:49:41  PAGE 2   
 
    55          static void service_negative_pressure_config_updated(void)
    56          {
@@ -134,7 +134,7 @@ stmt  level    source
   117   1      }
   118          
   119          void service_negative_pressure_request_percent(uint8 percent)
-C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  17:38:39  PAGE 3   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  23:49:41  PAGE 3   
 
   120          {
   121   1          uint8 ea_backup;
@@ -202,7 +202,7 @@ stmt  level    source
   183   3                  actual_h = target_h;
   184   3              }
   185   2              else
-C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  17:38:39  PAGE 4   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  23:49:41  PAGE 4   
 
   186   2              {
   187   3                  actual_h -= step_h;
@@ -270,7 +270,7 @@ stmt  level    source
   249          
   250          uint8 service_negative_pressure_get_percent(void)
   251          {
-C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  17:38:39  PAGE 5   
+C251 COMPILER V5.60.0,  service_negative_pressure                                          14/08/26  23:49:41  PAGE 5   
 
   252   1          return negative_pressure_percent;
   253   1      }
