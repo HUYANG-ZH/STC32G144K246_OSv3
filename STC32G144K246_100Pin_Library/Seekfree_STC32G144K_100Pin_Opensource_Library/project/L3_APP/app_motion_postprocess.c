@@ -230,8 +230,8 @@ void app_motion_postprocess_imu_step(void)
         app_attitude_update(&imu);
     }
     /* 先发布本帧 Kalman 姿态，再交给元素模块使用当前 pitch 判定跷跷板。 */
-    /* 元素识别临时关闭(调试后恢复): app_element_imu_task(&imu); */
-    // app_element_imu_task(&imu);   // 元素识别临时关闭
+    /* 元素识别恢复(与car2同步): 圆筒识别 + 环岛横滚抑制 gz_high */
+    app_element_imu_task(&imu);
 }
 
 void app_motion_postprocess_init(void)
