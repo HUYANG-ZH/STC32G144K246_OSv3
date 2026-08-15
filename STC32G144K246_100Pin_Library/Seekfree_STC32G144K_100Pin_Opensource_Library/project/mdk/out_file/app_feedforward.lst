@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  02:16:13  PAGE 1   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_feedforward
@@ -28,9 +28,9 @@ stmt  level    source
              -��前馈
    15          #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV    (0.0125f)
    16          /* 曲率强度门控半强度点(car2抗干扰设计同步): 与 x_error 抗噪公式同构,
-   17             直道弱信号压缩曲率噪声, 弯道强信号保持敏感; 按car3量纲取40(与x_gate_s0一致)
-             - */
-   18          #define APP_FEEDFORWARD_GATE_S0_DEFAULT          (40.0f)
+   17             直道弱信号压缩曲率噪声, 弯道强信号保持敏感; 按car3重标后量纲取32(与x_gate_
+             -s0一致) */
+   18          #define APP_FEEDFORWARD_GATE_S0_DEFAULT          (32.0f)
    19          #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
    20          #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
    21              (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
@@ -66,7 +66,7 @@ stmt  level    source
    50          // 函数简介     前馈模块初始化
    51          // 参数说明     void
    52          // 返回参数     void
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  02:16:13  PAGE 2   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 2   
 
    53          // 使用示例     app_feedforward_init();
    54          // 备注信息     使用 APP_FEEDFORWARD_PERIOD_MS ms 周期任务更新一次
@@ -134,7 +134,7 @@ stmt  level    source
   112   1      
   113   1          app_inductor_preprocess_get_data(&inductor_data);
   114   1      
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  02:16:13  PAGE 3   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 3   
 
   115   1          numerator = tfpu_sub(inductor_data.normalized[1], inductor_data.normalized[2]);
   116   1          denominator = tfpu_add(tfpu_add(inductor_data.normalized[0], inductor_data.normalized[3]),
@@ -202,7 +202,7 @@ stmt  level    source
   177   1      
   178   1          feedforward_data.curvature = curvature;
   179   1          feedforward_data.curvature_rate = curvature_rate;
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  02:16:13  PAGE 4   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 4   
 
   180   1          feedforward_data.feedforward = tfpu_mul(tfpu_add(feedforward_p, feedforward_d), feedforward_scale);
   181   1      

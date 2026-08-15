@@ -6,7 +6,7 @@
 #include "service_wireless_uart.h"
 
 #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
-#define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.25f)     // x轴差比融合权重
+#define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.33f)     // x轴差比融合权重
 #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.0f)      // y轴差比融合权重
 #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
 #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
@@ -16,10 +16,10 @@
    B    = 分母偏置: 直道信号和的一半左右
    S0   = 强度门控半强度点: 直道单路强度的 2 倍, 弱信号压增益、强信号(弯道)保持敏感
    car2 量纲(0~100): B=8, S0=16, 经 200 组参数网格仿真直道降噪约 4.5x、出线约 19x
-   car3 量纲(0~300 软上限, MIN 标定高): 经 6 场景 x 81 组 = 486 组网格仿真交叉验证,
-   最优平衡点 B=24, S0=40(补偿后直道 std 全场景最小, 弯道压缩可用 xw 0.25->0.35 补偿) */
+   car3 量纲(0~300 软上限, 重标后 min={625,870,1140,790} max={1930,3000,3000,1930}):
+   直道x信号≈5、弯道≈64, 经网格仿真重标: B=24, S0=32(弯道损失~33% 由 xw 0.33 补偿) */
 #define APP_MOTION_PREPROCESS_X_DEN_BIAS_DEFAULT      (24.0f)     // 差比分母偏置
-#define APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT       (40.0f)     // 门控半强度点
+#define APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT       (32.0f)     // 门控半强度点
 
 app_motion_preprocess_config_t app_motion_preprocess_config =
 {

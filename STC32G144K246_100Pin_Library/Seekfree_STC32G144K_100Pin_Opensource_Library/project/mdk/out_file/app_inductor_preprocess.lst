@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  02:16:14  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  16:12:53  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -26,8 +26,8 @@ stmt  level    source
    13          #define APP_INDUCTOR_STARTUP_GRACE_TICK         (1000UL)
    14          #define APP_INDUCTOR_MAX_SAMPLE_AGE_TICK        (500UL)
    15          // [4]is middle inductor
-   16          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {747U, 866U, 870U, 650U, 100U};
-   17          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {1420U, 2011U, 2011U, 1440U, 4095U
+   16          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {625U, 870U, 1140U, 790U, 100U};
+   17          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {1930U, 3000U, 3000U, 1930U, 4095U
              -};
    18          
    19          static void app_inductor_update_precomputed(void);
@@ -66,7 +66,7 @@ stmt  level    source
    52   1      }
    53          
    54          static void app_inductor_update_precomputed(void)
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  02:16:14  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  16:12:53  PAGE 2   
 
    55          {
    56   1          uint8 i;
@@ -134,7 +134,7 @@ stmt  level    source
   118   4                  }
   119   3                  if(values[j] > max_val)
   120   3                  {
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  02:16:14  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  16:12:53  PAGE 3   
 
   121   4                      max_val = values[j];
   122   4                  }
@@ -202,7 +202,7 @@ stmt  level    source
   183   3                  if(0U == inductor_sensor_fault)
   184   3                  {
   185   4                      inductor_sensor_fault = 1U;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  02:16:14  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  16:12:53  PAGE 4   
 
   186   4                      app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
   187   4                  }
@@ -270,7 +270,7 @@ stmt  level    source
   249   2              {
   250   3                  inductor_history[i][j] = sample[i];
   251   3              }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  02:16:14  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  16:12:53  PAGE 5   
 
   252   2          }
   253   1      
@@ -339,7 +339,7 @@ Module Information          Static   Overlayable
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  02:16:14  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            15/08/26  16:12:53  PAGE 6   
 
   xdata size           =       435     ------
   xdata-const size     =    ------     ------
