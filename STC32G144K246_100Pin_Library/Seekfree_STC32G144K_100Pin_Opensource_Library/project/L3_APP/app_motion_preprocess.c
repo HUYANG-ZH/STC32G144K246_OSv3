@@ -6,7 +6,7 @@
 #include "service_wireless_uart.h"
 
 #define APP_MOTION_PREPROCESS_PACKET_SINGLE_COUNT      (1U)        // 无线变量单次注册数量
-#define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.33f)     // x轴差比融合权重
+#define APP_MOTION_PREPROCESS_X_WEIGHT                 (0.5f)      // x轴差比融合权重
 #define APP_MOTION_PREPROCESS_Y_WEIGHT                 (1.0f)      // y轴差比融合权重
 #define APP_MOTION_PREPROCESS_SUM_MIN                  (0.001f)    // 差比计算分母最小值
 #define APP_MOTION_PREPROCESS_DEFAULT_LINEAR_MPS       (0.0f)      // 默认直线速度，单位 m/s
@@ -17,9 +17,11 @@
    S0   = 强度门控半强度点: 直道单路强度的 2 倍, 弱信号压增益、强信号(弯道)保持敏感
    car2 量纲(0~100): B=8, S0=16, 经 200 组参数网格仿真直道降噪约 4.5x、出线约 19x
    car3 量纲(0~300 软上限, 重标后 min={625,870,1140,790} max={1930,3000,3000,1930}):
-   直道x信号≈5、弯道≈64, 经网格仿真重标: B=24, S0=32(弯道损失~33% 由 xw 0.33 补偿) */
+   直道x信号≈5、弯道≈64, 经网格仿真重标: B=24, S0=32(弯道损失~33% 由 xw 0.33 补偿)
+   实车验证: S0=32+xw=0.33 弯道延迟过大(几乎出线才转), 改 S0=20+xw=0.5:
+   入弯早期(s<32)门控增益+35~50%, x前视信号权重 25%->33%, 兼顾直道稳定性 */
 #define APP_MOTION_PREPROCESS_X_DEN_BIAS_DEFAULT      (24.0f)     // 差比分母偏置
-#define APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT       (32.0f)     // 门控半强度点
+#define APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT       (20.0f)     // 门控半强度点
 
 app_motion_preprocess_config_t app_motion_preprocess_config =
 {

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  debugw                                                             15/08/26  17:45:09  PAGE 1   
+C251 COMPILER V5.60.0,  debugw                                                             15/08/26  19:21:58  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE debugw
@@ -19,137 +19,151 @@ stmt  level    source
     6          #include "service_tof.h"
     7          #include "service_speed.h"
     8          #include "app_inductor_preprocess.h"
-    9          #include "debugw.h"
-   10          
-   11          /* 调试模式(无线 debuginfo):
-   12             0 = 关闭
-   13             1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
-   14             2 = 4路电感原始值 CH1~CH4, 10Hz
-   15             3 = 电机速度 left,right (m/s), 100Hz */
-   16          #define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
-   17          #define DEBUGW_INDUCTOR_PERIOD_TICK     (200UL)    /* 50Hz */
-   18          #define DEBUGW_MOTOR_PERIOD_TICK        (100UL)    /* 100Hz */
-   19          
-   20          static volatile float debugw_debug_info = 0.0f;
+    9          #include "app_motion_postprocess.h"
+   10          #include "debugw.h"
+   11          
+   12          /* 调试模式(无线 debuginfo):
+   13             0 = 关闭
+   14             1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
+   15             2 = 4路电感原始值 CH1~CH4, 10Hz
+   16             3 = 电机速度 left,right (m/s), 100Hz
+   17             4 = 角速度环目标/实际 target,actual (rad/s), 50Hz */
+   18          #define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
+   19          #define DEBUGW_INDUCTOR_PERIOD_TICK     (200UL)    /* 50Hz */
+   20          #define DEBUGW_MOTOR_PERIOD_TICK        (100UL)    /* 100Hz */
    21          
-   22          //-------------------------------------------------------------------------------------------------------
+   22          static volatile float debugw_debug_info = 0.0f;
+   23          
+   24          //-------------------------------------------------------------------------------------------------------
              -------------
-   23          // 函数简介     无线调试模块初始化
-   24          // 参数说明     void
-   25          // 返回参数     void
-   26          // 使用示例     debugw_init();
-   27          // 备注信息     注册 debuginfo 无线变量(0/1/2/3 模式选择), 由主循环调用 debugw_task()
+   25          // 函数简介     无线调试模块初始化
+   26          // 参数说明     void
+   27          // 返回参数     void
+   28          // 使用示例     debugw_init();
+   29          // 备注信息     注册 debuginfo 无线变量(0/1/2/3 模式选择), 由主循环调用 debugw_task()
              - 周期输出
-   28          //-------------------------------------------------------------------------------------------------------
+   30          //-------------------------------------------------------------------------------------------------------
              -------------
-   29          void debugw_init(void)
-   30          {
-   31   1          debugw_debug_info = 0.0f;
-   32   1          (void)service_packet_add_variable("debuginfo", (float *)&debugw_debug_info, 1U);
-   33   1          #if __DBGFLAG__
-   34   1          printf(">>[debugw_init]\r\n");
-   35   1          wprint(">>[debugw_init]\r\n");
-   36   1          #endif
-   37   1      }
-   38          
-   39          static uint8 debugw_mode(void)
-   40          {
-   41   1          uint8 mode;
-   42   1      
-   43   1          mode = (uint8)(debugw_debug_info + 0.5f);
-   44   1          if(mode > 3U)
-   45   1          {
-   46   2              mode = 0U;   /* 未知模式视为关闭 */
-   47   2          }
-   48   1          return mode;
-   49   1      }
-   50          
-   51          //-------------------------------------------------------------------------------------------------------
-             -------------
-C251 COMPILER V5.60.0,  debugw                                                             15/08/26  17:45:09  PAGE 2   
+   31          void debugw_init(void)
+   32          {
+   33   1          debugw_debug_info = 0.0f;
+   34   1          (void)service_packet_add_variable("debuginfo", (float *)&debugw_debug_info, 1U);
+   35   1          #if __DBGFLAG__
+   36   1          printf(">>[debugw_init]\r\n");
+   37   1          wprint(">>[debugw_init]\r\n");
+   38   1          #endif
+   39   1      }
+   40          
+   41          static uint8 debugw_mode(void)
+   42          {
+   43   1          uint8 mode;
+   44   1      
+   45   1          mode = (uint8)(debugw_debug_info + 0.5f);
+   46   1          if(mode > 4U)
+   47   1          {
+   48   2              mode = 0U;   /* 未知模式视为关闭 */
+   49   2          }
+   50   1          return mode;
+   51   1      }
+   52          
+C251 COMPILER V5.60.0,  debugw                                                             15/08/26  19:21:58  PAGE 2   
 
-   52          // 函数简介     无线调试任务
-   53          // 参数说明     void
-   54          // 返回参数     void
-   55          // 使用示例     debugw_task();
-   56          // 备注信息     由主循环调用; 按 debuginfo 模式输出对应数据, vofa+ FireWater 最简格
+   53          //-------------------------------------------------------------------------------------------------------
+             -------------
+   54          // 函数简介     无线调试任务
+   55          // 参数说明     void
+   56          // 返回参数     void
+   57          // 使用示例     debugw_task();
+   58          // 备注信息     由主循环调用; 按 debuginfo 模式输出对应数据, vofa+ FireWater 最简格
              -式
-   57          //-------------------------------------------------------------------------------------------------------
+   59          //-------------------------------------------------------------------------------------------------------
              -------------
-   58          void debugw_task(void)
-   59          {
-   60   1          static uint32 last_tick = 0UL;
-   61   1          uint8 mode;
-   62   1          uint32 period_tick;
-   63   1          uint32 now;
-   64   1          app_inductor_preprocess_data_t preprocessed;
-   65   1          service_inductor_data_t inductor;
-   66   1          service_speed_data_t speed;
-   67   1      
-   68   1          mode = debugw_mode();
-   69   1          if(0U == mode)
-   70   1          {
-   71   2              return;
-   72   2          }
-   73   1      
-   74   1          period_tick = (1U == mode) ? DEBUGW_IMU_PERIOD_TICK :
-   75   1                  ((3U == mode) ? DEBUGW_MOTOR_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK);
-   76   1      
-   77   1          now = service_timetick_what();
-   78   1          if((uint32)(now - last_tick) < period_tick)
-   79   1          {
-   80   2              return;
-   81   2          }
-   82   1          last_tick = now;
-   83   1      
-   84   1          switch(mode)
-   85   1          {
-   86   2              case 1U:
-   87   2                  /* 20Hz 4路电感归一化值 + TOF测距: norm(CH1),norm(CH2),norm(CH3),norm(CH4),tof(mm) *
+   60          void debugw_task(void)
+   61          {
+   62   1          static uint32 last_tick = 0UL;
+   63   1          uint8 mode;
+   64   1          uint32 period_tick;
+   65   1          uint32 now;
+   66   1          app_inductor_preprocess_data_t preprocessed;
+   67   1          service_inductor_data_t inductor;
+   68   1          service_speed_data_t speed;
+   69   1      
+   70   1          mode = debugw_mode();
+   71   1          if(0U == mode)
+   72   1          {
+   73   2              return;
+   74   2          }
+   75   1      
+   76   1          period_tick = (1U == mode) ? DEBUGW_IMU_PERIOD_TICK :
+   77   1                  ((3U == mode) ? DEBUGW_MOTOR_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK);
+   78   1      
+   79   1          now = service_timetick_what();
+   80   1          if((uint32)(now - last_tick) < period_tick)
+   81   1          {
+   82   2              return;
+   83   2          }
+   84   1          last_tick = now;
+   85   1      
+   86   1          switch(mode)
+   87   1          {
+   88   2              case 1U:
+   89   2                  /* 20Hz 4路电感归一化值 + TOF测距: norm(CH1),norm(CH2),norm(CH3),norm(CH4),tof(mm) *
              -/
-   88   2                  app_inductor_preprocess_get_data(&preprocessed);
-   89   2                  wprint("%.1f,%.1f,%.1f,%.1f,%u\r\n",
-   90   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
-   91   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
-   92   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-   93   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
-   94   2                          (uint16)service_tof_get_distance_mm());
-   95   2                  break;
-   96   2      
-   97   2              case 2U:
-   98   2                  /* 10Hz 4路电感原始值: CH1, CH2, CH3, CH4 */
-   99   2                  (void)service_inductor_get_snapshot(&inductor, NULL);
-  100   2                  wprint("%u,%u,%u,%u\r\n",
-  101   2                          inductor.channel_1,
-  102   2                          inductor.channel_2,
-  103   2                          inductor.channel_3,
-  104   2                          inductor.channel_4);
-  105   2                  break;
-  106   2      
-  107   2              case 3U:
-  108   2                  /* 100Hz 电机速度: left,right (m/s) */
-  109   2                  service_speed_get(&speed);
-  110   2                  wprint("%.2f,%.2f\r\n",
-  111   2                          (double)speed.left_mps,
-  112   2                          (double)speed.right_mps);
-  113   2                  break;
-  114   2      
-C251 COMPILER V5.60.0,  debugw                                                             15/08/26  17:45:09  PAGE 3   
+   90   2                  app_inductor_preprocess_get_data(&preprocessed);
+   91   2                  wprint("%.1f,%.1f,%.1f,%.1f,%u\r\n",
+   92   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+   93   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+   94   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+   95   2                          (double)preprocessed.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+   96   2                          (uint16)service_tof_get_distance_mm());
+   97   2                  break;
+   98   2      
+   99   2              case 2U:
+  100   2                  /* 10Hz 4路电感原始值: CH1, CH2, CH3, CH4 */
+  101   2                  (void)service_inductor_get_snapshot(&inductor, NULL);
+  102   2                  wprint("%u,%u,%u,%u\r\n",
+  103   2                          inductor.channel_1,
+  104   2                          inductor.channel_2,
+  105   2                          inductor.channel_3,
+  106   2                          inductor.channel_4);
+  107   2                  break;
+  108   2      
+  109   2              case 3U:
+  110   2                  /* 100Hz 电机速度: left,right (m/s) */
+  111   2                  service_speed_get(&speed);
+  112   2                  wprint("%.2f,%.2f\r\n",
+  113   2                          (double)speed.left_mps,
+  114   2                          (double)speed.right_mps);
+C251 COMPILER V5.60.0,  debugw                                                             15/08/26  19:21:58  PAGE 3   
 
-  115   2              default:
-  116   2                  break;
-  117   2          }
-  118   1      }
+  115   2                  break;
+  116   2      
+  117   2              case 4U:
+  118   2                  /* 50Hz 角速度环监控: target_yaw_rate, actual_yaw_rate (rad/s) */
+  119   2                  {
+  120   3                      app_motion_postprocess_data_t motion;
+  121   3      
+  122   3                      app_motion_postprocess_get_data(&motion);
+  123   3                      wprint("%.3f,%.3f\r\n",
+  124   3                              (double)motion.target_yaw_rate_radps,
+  125   3                              (double)motion.actual_yaw_rate_radps);
+  126   3                  }
+  127   2                  break;
+  128   2      
+  129   2              default:
+  130   2                  break;
+  131   2          }
+  132   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       529     ------
+  ecode size           =       602     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        66     ------
+  xdata size           =       114     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -159,7 +173,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        97     ------
+  hconst size          =       109     ------
 End of Module Information.
 
 

@@ -6,13 +6,15 @@
 #include "service_tof.h"
 #include "service_speed.h"
 #include "app_inductor_preprocess.h"
+#include "app_motion_postprocess.h"
 #include "debugw.h"
 
 /* 调试模式(无线 debuginfo):
    0 = 关闭
    1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
    2 = 4路电感原始值 CH1~CH4, 10Hz
-   3 = 电机速度 left,right (m/s), 100Hz */
+   3 = 电机速度 left,right (m/s), 100Hz
+   4 = 角速度环目标/实际 target,actual (rad/s), 50Hz */
 #define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
 #define DEBUGW_INDUCTOR_PERIOD_TICK     (200UL)    /* 50Hz */
 #define DEBUGW_MOTOR_PERIOD_TICK        (100UL)    /* 100Hz */
@@ -41,7 +43,7 @@ static uint8 debugw_mode(void)
     uint8 mode;
 
     mode = (uint8)(debugw_debug_info + 0.5f);
-    if(mode > 3U)
+    if(mode > 4U)
     {
         mode = 0U;   /* 未知模式视为关闭 */
     }
@@ -110,6 +112,18 @@ void debugw_task(void)
             wprint("%.2f,%.2f\r\n",
                     (double)speed.left_mps,
                     (double)speed.right_mps);
+            break;
+
+        case 4U:
+            /* 50Hz 角速度环监控: target_yaw_rate, actual_yaw_rate (rad/s) */
+            {
+                app_motion_postprocess_data_t motion;
+
+                app_motion_postprocess_get_data(&motion);
+                wprint("%.3f,%.3f\r\n",
+                        (double)motion.target_yaw_rate_radps,
+                        (double)motion.actual_yaw_rate_radps);
+            }
             break;
 
         default:
