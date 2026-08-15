@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_inductor                                                   15/08/26  16:10:06  PAGE 1   
+C251 COMPILER V5.60.0,  service_inductor                                                   15/08/26  17:08:48  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_inductor
@@ -66,7 +66,7 @@ stmt  level    source
    53   1      }
    54          
    55          void service_inductor_get_data(service_inductor_data_t *out_data)
-C251 COMPILER V5.60.0,  service_inductor                                                   15/08/26  16:10:06  PAGE 2   
+C251 COMPILER V5.60.0,  service_inductor                                                   15/08/26  17:08:48  PAGE 2   
 
    56          {
    57   1          inductor_rawdata_t raw_data;
@@ -78,96 +78,93 @@ stmt  level    source
    63   1      
    64   1          raw_data.Channel_1 = 0U;
    65   1          raw_data.Channel_2 = 0U;
-   66   1          raw_data.Channel_M = 0U;
-   67   1          raw_data.Channel_3 = 0U;
-   68   1          raw_data.Channel_4 = 0U;
-   69   1      
-   70   1          (void)bsp_inductor_get_snapshot(&raw_data, NULL);
-   71   1      
-   72   1          out_data->channel_1 = raw_data.Channel_1;
-   73   1          out_data->channel_2 = raw_data.Channel_2;
-   74   1          out_data->channel_m = raw_data.Channel_M;
-   75   1          out_data->channel_3 = raw_data.Channel_3;
-   76   1          out_data->channel_4 = raw_data.Channel_4;
-   77   1      }
-   78          
-   79          uint8 service_inductor_get_snapshot(service_inductor_data_t *out_data, uint32 *sequence)
-   80          {
-   81   1          inductor_rawdata_t raw_data;
-   82   1          uint8 valid;
-   83   1      
-   84   1          if(NULL == out_data)
-   85   1          {
-   86   2              return 0U;
-   87   2          }
-   88   1      
-   89   1          valid = bsp_inductor_get_snapshot(&raw_data, sequence);
-   90   1          out_data->channel_1 = raw_data.Channel_1;
-   91   1          out_data->channel_2 = raw_data.Channel_2;
-   92   1          out_data->channel_m = raw_data.Channel_M;
-   93   1          out_data->channel_3 = raw_data.Channel_3;
-   94   1          out_data->channel_4 = raw_data.Channel_4;
-   95   1          return valid;
-   96   1      }
-   97          
-   98          uint8 service_inductor_request_sample(void)
-   99          {
-  100   1          return bsp_inductor_request_sample();
-  101   1      }
-  102          
-  103          uint8 service_inductor_sample_is_valid(void)
-  104          {
-  105   1          return bsp_inductor_sample_is_valid();
-  106   1      }
-  107          
-  108          uint8 service_inductor_is_busy(void)
-  109          {
-  110   1          return bsp_inductor_is_busy();
-  111   1      }
-  112          
-  113          void service_inductor_task(void)
-  114          {
-  115   1          service_inductor_data_t snapshot;
-  116   1          uint32 sequence;
-  117   1          uint32 now;
-  118   1      
-  119   1          now = service_timetick_what();
-  120   1          if(0U != service_inductor_get_snapshot(&snapshot, &sequence))
-  121   1          {
-C251 COMPILER V5.60.0,  service_inductor                                                   15/08/26  16:10:06  PAGE 3   
+   66   1          raw_data.Channel_3 = 0U;
+   67   1          raw_data.Channel_4 = 0U;
+   68   1      
+   69   1          (void)bsp_inductor_get_snapshot(&raw_data, NULL);
+   70   1      
+   71   1          out_data->channel_1 = raw_data.Channel_1;
+   72   1          out_data->channel_2 = raw_data.Channel_2;
+   73   1          out_data->channel_3 = raw_data.Channel_3;
+   74   1          out_data->channel_4 = raw_data.Channel_4;
+   75   1      }
+   76          
+   77          uint8 service_inductor_get_snapshot(service_inductor_data_t *out_data, uint32 *sequence)
+   78          {
+   79   1          inductor_rawdata_t raw_data;
+   80   1          uint8 valid;
+   81   1      
+   82   1          if(NULL == out_data)
+   83   1          {
+   84   2              return 0U;
+   85   2          }
+   86   1      
+   87   1          valid = bsp_inductor_get_snapshot(&raw_data, sequence);
+   88   1          out_data->channel_1 = raw_data.Channel_1;
+   89   1          out_data->channel_2 = raw_data.Channel_2;
+   90   1          out_data->channel_3 = raw_data.Channel_3;
+   91   1          out_data->channel_4 = raw_data.Channel_4;
+   92   1          return valid;
+   93   1      }
+   94          
+   95          uint8 service_inductor_request_sample(void)
+   96          {
+   97   1          return bsp_inductor_request_sample();
+   98   1      }
+   99          
+  100          uint8 service_inductor_sample_is_valid(void)
+  101          {
+  102   1          return bsp_inductor_sample_is_valid();
+  103   1      }
+  104          
+  105          uint8 service_inductor_is_busy(void)
+  106          {
+  107   1          return bsp_inductor_is_busy();
+  108   1      }
+  109          
+  110          void service_inductor_task(void)
+  111          {
+  112   1          service_inductor_data_t snapshot;
+  113   1          uint32 sequence;
+  114   1          uint32 now;
+  115   1      
+  116   1          now = service_timetick_what();
+  117   1          if(0U != service_inductor_get_snapshot(&snapshot, &sequence))
+  118   1          {
+  119   2              if((0U == service_inductor_seen_snapshot) ||
+  120   2                      (sequence != service_inductor_last_sequence))
+  121   2              {
+C251 COMPILER V5.60.0,  service_inductor                                                   15/08/26  17:08:48  PAGE 3   
 
-  122   2              if((0U == service_inductor_seen_snapshot) ||
-  123   2                      (sequence != service_inductor_last_sequence))
-  124   2              {
-  125   3                  service_inductor_last_sequence = sequence;
-  126   3                  service_inductor_last_progress_tick = now;
-  127   3                  service_inductor_seen_snapshot = 1U;
-  128   3              }
-  129   2          }
-  130   1      
-  131   1          /* A stalled DMA must not remain busy forever.  Recovery is background
-  132   1             register work only; TIM4 independently latches the control safety fault. */
-  133   1          if((0U != service_inductor_is_busy()) &&
-  134   1                  ((uint32)(now - service_inductor_last_progress_tick) >= SERVICE_INDUCTOR_DMA_TIMEOUT_TICK))
-  135   1          {
-  136   2              bsp_inductor_recover();
-  137   2              service_inductor_last_progress_tick = now;
-  138   2          }
-  139   1      
-  140   1      #if (SERVICE_INDUCTOR_DEBUG_ENABLE != 0U)
+  122   3                  service_inductor_last_sequence = sequence;
+  123   3                  service_inductor_last_progress_tick = now;
+  124   3                  service_inductor_seen_snapshot = 1U;
+  125   3              }
+  126   2          }
+  127   1      
+  128   1          /* A stalled DMA must not remain busy forever.  Recovery is background
+  129   1             register work only; TIM4 independently latches the control safety fault. */
+  130   1          if((0U != service_inductor_is_busy()) &&
+  131   1                  ((uint32)(now - service_inductor_last_progress_tick) >= SERVICE_INDUCTOR_DMA_TIMEOUT_TICK))
+  132   1          {
+  133   2              bsp_inductor_recover();
+  134   2              service_inductor_last_progress_tick = now;
+  135   2          }
+  136   1      
+  137   1      #if (SERVICE_INDUCTOR_DEBUG_ENABLE != 0U)
                    service_inductor_debug();
                #endif
-  143   1      }
+  140   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       836     ------
+  ecode size           =       781     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       118     ------
+  xdata size           =       102     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

@@ -577,7 +577,8 @@ void app_element_control_step(void)
         return;
     }
 
-    /* 环岛判据 = TOF 距离超出阈值 且 电感评分函数判定为环岛 (两者同时满足才计入确认) */
+    /* 环岛判据 = TOF 距离超出阈值 且 电感评分函数判定为环岛 (两者同时满足才计入确认)
+       car3 已彻底弃用 M 通道电感, 评分输入仅 CH1~CH4 */
     tof_distance_mm = service_tof_get_distance_mm();
     app_inductor_preprocess_get_data(&inductor);
     roundabout_detected = ((tof_distance_mm > APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM) &&
@@ -585,8 +586,7 @@ void app_element_control_step(void)
                     inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
                     inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
                     inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
-                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]))) ? 1U : 0U;
+                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]))) ? 1U : 0U;
     if(0U != roundabout_detected)
     {
         if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
@@ -898,12 +898,11 @@ static void app_element_seesaw_update(uint32 now, uint8 attitude_fresh)
 
     app_inductor_preprocess_get_data(&inductor);
 
+    /* car3 已彻底弃用 M 通道电感: 原评分 M 项(+159*M - 2*M*M)移除, 阈值不变 */
     score = (int32)(-81 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1]
                     -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2]
                     -204 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3]
-                    -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]
-                    +159 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M])
-            - 2 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M] * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M];
+                    -56 * (int16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]);
 
     if((score >= APP_ELEMENT_SEESAW_SCORE_THRESHOLD) &&
             (attitude.pitch_deg >= APP_ELEMENT_SEESAW_PITCH_THRESHOLD_DEG))

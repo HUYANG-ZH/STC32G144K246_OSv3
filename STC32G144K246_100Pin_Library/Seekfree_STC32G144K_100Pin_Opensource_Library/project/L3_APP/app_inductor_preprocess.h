@@ -12,7 +12,8 @@
 #endif
 
 #define APP_INDUCTOR_PREPROCESS_SIDE_COUNT     (4U)
-#define APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT  (5U)
+/* car3 已彻底弃用 M 通道电感, 仅保留 CH1~CH4 四路 */
+#define APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT  (4U)
 
 /* 归一化软上限: 允许近场线性外推超过 100, 仅兜底传感器故障/标定误调 */
 #define APP_INDUCTOR_NORM_UPPER_LIMIT          (300.0f)
@@ -21,7 +22,6 @@
 #define APP_INDUCTOR_PREPROCESS_INDEX_CH2      (1U)
 #define APP_INDUCTOR_PREPROCESS_INDEX_CH3      (2U)
 #define APP_INDUCTOR_PREPROCESS_INDEX_CH4      (3U)
-#define APP_INDUCTOR_PREPROCESS_INDEX_M        (4U)
 
 typedef struct
 {

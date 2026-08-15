@@ -63,7 +63,6 @@ void service_inductor_get_data(service_inductor_data_t *out_data)
 
     raw_data.Channel_1 = 0U;
     raw_data.Channel_2 = 0U;
-    raw_data.Channel_M = 0U;
     raw_data.Channel_3 = 0U;
     raw_data.Channel_4 = 0U;
 
@@ -71,7 +70,6 @@ void service_inductor_get_data(service_inductor_data_t *out_data)
 
     out_data->channel_1 = raw_data.Channel_1;
     out_data->channel_2 = raw_data.Channel_2;
-    out_data->channel_m = raw_data.Channel_M;
     out_data->channel_3 = raw_data.Channel_3;
     out_data->channel_4 = raw_data.Channel_4;
 }
@@ -89,7 +87,6 @@ uint8 service_inductor_get_snapshot(service_inductor_data_t *out_data, uint32 *s
     valid = bsp_inductor_get_snapshot(&raw_data, sequence);
     out_data->channel_1 = raw_data.Channel_1;
     out_data->channel_2 = raw_data.Channel_2;
-    out_data->channel_m = raw_data.Channel_M;
     out_data->channel_3 = raw_data.Channel_3;
     out_data->channel_4 = raw_data.Channel_4;
     return valid;

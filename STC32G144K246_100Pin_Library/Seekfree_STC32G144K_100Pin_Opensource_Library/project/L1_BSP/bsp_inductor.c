@@ -3,25 +3,24 @@
 
 #define ADC_CHANNEL_1 ADC2_CH3_P03
 #define ADC_CHANNEL_2 ADC2_CH4_P04
-#define ADC_CHANNEL_M ADC2_CH5_P05
 #define ADC_CHANNEL_3 ADC2_CH7_P07
 #define ADC_CHANNEL_4 ADC2_CH6_P06
 
 /*
  * ADC2 的 DMA 格式：每通道占用 2 * samples + 4 字节，最后两个字节为硬件平均值。
- * 0x0A 对应每通道 8 次转换；5 个通道一次扫描由 DMA 完成，CPU 不轮询转换完成位。
+ * 0x0A 对应每通道 8 次转换；4 个通道一次扫描由 DMA 完成，CPU 不轮询转换完成位。
+ * car3 已彻底弃用 M 通道电感(ADC2_CH5_P05)。
  */
-#define BSP_INDUCTOR_DMA_CHANNEL_COUNT       (5U)
+#define BSP_INDUCTOR_DMA_CHANNEL_COUNT       (4U)
 #define BSP_INDUCTOR_DMA_SAMPLES              (8U)
 #define BSP_INDUCTOR_DMA_CFG2                 (0x0AU)
 #define BSP_INDUCTOR_DMA_DATA_BYTES           ((BSP_INDUCTOR_DMA_SAMPLES * 2U) + 4U)
-#define BSP_INDUCTOR_DMA_CHSW0                (0xF8U)     /* ADC2 CH3..CH7 */
+#define BSP_INDUCTOR_DMA_CHSW0                (0xD8U)     /* ADC2 CH3,CH4,CH6,CH7 (不含 CH5/M) */
 
 enum
 {
     BSP_INDUCTOR_DMA_CH1 = 0,
     BSP_INDUCTOR_DMA_CH2,
-    BSP_INDUCTOR_DMA_CHM,
     BSP_INDUCTOR_DMA_CH4,
     BSP_INDUCTOR_DMA_CH3,
 };
@@ -61,7 +60,6 @@ void bsp_inductor_init(void)
 
     adc_init(ADC_CHANNEL_1, ADC_12BIT);
     adc_init(ADC_CHANNEL_2, ADC_12BIT);
-    adc_init(ADC_CHANNEL_M, ADC_12BIT);
     adc_init(ADC_CHANNEL_3, ADC_12BIT);
     adc_init(ADC_CHANNEL_4, ADC_12BIT);
 
@@ -69,7 +67,6 @@ void bsp_inductor_init(void)
     {
         inductor_snapshot[slot].raw.Channel_1 = 0U;
         inductor_snapshot[slot].raw.Channel_2 = 0U;
-        inductor_snapshot[slot].raw.Channel_M = 0U;
         inductor_snapshot[slot].raw.Channel_3 = 0U;
         inductor_snapshot[slot].raw.Channel_4 = 0U;
         inductor_snapshot[slot].sequence = 0UL;
@@ -166,9 +163,6 @@ void bsp_inductor_dma_irq_handler(void)
     inductor_snapshot[next_index].raw.Channel_2 =
             (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CH2][BSP_INDUCTOR_DMA_DATA_BYTES - 2U] << 8) |
             inductor_dma_buffer[BSP_INDUCTOR_DMA_CH2][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);
-    inductor_snapshot[next_index].raw.Channel_M =
-            (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CHM][BSP_INDUCTOR_DMA_DATA_BYTES - 2U] << 8) |
-            inductor_dma_buffer[BSP_INDUCTOR_DMA_CHM][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);
     inductor_snapshot[next_index].raw.Channel_3 =
             (uint16)(((uint16)inductor_dma_buffer[BSP_INDUCTOR_DMA_CH3][BSP_INDUCTOR_DMA_DATA_BYTES - 2U] << 8) |
             inductor_dma_buffer[BSP_INDUCTOR_DMA_CH3][BSP_INDUCTOR_DMA_DATA_BYTES - 1U]);

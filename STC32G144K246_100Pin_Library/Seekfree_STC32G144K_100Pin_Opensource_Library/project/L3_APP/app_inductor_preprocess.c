@@ -12,9 +12,9 @@
 #define APP_INDUCTOR_AVERAGE_INV               (0.2f)
 #define APP_INDUCTOR_STARTUP_GRACE_TICK         (1000UL)
 #define APP_INDUCTOR_MAX_SAMPLE_AGE_TICK        (500UL)
-// [4]is middle inductor
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {625U, 870U, 1140U, 790U, 100U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {1930U, 3000U, 3000U, 1930U, 4095U};
+// car3 已彻底弃用 M 通道电感, 仅标定 CH1~CH4 四路
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {625U, 870U, 1140U, 790U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {1930U, 3000U, 3000U, 1930U};
 
 static void app_inductor_update_precomputed(void);
 
@@ -47,7 +47,6 @@ static uint8 app_inductor_sample(uint16 sample[APP_INDUCTOR_CHANNEL_COUNT], uint
     sample[APP_INDUCTOR_PREPROCESS_INDEX_CH2] = raw.channel_2;
     sample[APP_INDUCTOR_PREPROCESS_INDEX_CH3] = raw.channel_3;
     sample[APP_INDUCTOR_PREPROCESS_INDEX_CH4] = raw.channel_4;
-    sample[APP_INDUCTOR_PREPROCESS_INDEX_M] = raw.channel_m;
     return 1U;
 }
 
@@ -278,12 +277,11 @@ void app_inductor_preprocess_debug(void)
     {
         last_tick = service_timetick_what();
         app_inductor_preprocess_get_data(&inductor);
-        wprint("%.1f,%.1f,%.1f,%.1f,%.1f\r\n",
+        wprint("%.1f,%.1f,%.1f,%.1f\r\n",
                 inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
                 inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
                 inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
-                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_M]);
+                inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]);
     }
 }
 

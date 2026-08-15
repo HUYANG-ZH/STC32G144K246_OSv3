@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 1   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  17:08:51  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_feedforward
@@ -66,7 +66,7 @@ stmt  level    source
    50          // 函数简介     前馈模块初始化
    51          // 参数说明     void
    52          // 返回参数     void
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 2   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  17:08:51  PAGE 2   
 
    53          // 使用示例     app_feedforward_init();
    54          // 备注信息     使用 APP_FEEDFORWARD_PERIOD_MS ms 周期任务更新一次
@@ -134,7 +134,7 @@ stmt  level    source
   112   1      
   113   1          app_inductor_preprocess_get_data(&inductor_data);
   114   1      
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 3   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  17:08:51  PAGE 3   
 
   115   1          numerator = tfpu_sub(inductor_data.normalized[1], inductor_data.normalized[2]);
   116   1          denominator = tfpu_add(tfpu_add(inductor_data.normalized[0], inductor_data.normalized[3]),
@@ -202,7 +202,7 @@ stmt  level    source
   177   1      
   178   1          feedforward_data.curvature = curvature;
   179   1          feedforward_data.curvature_rate = curvature_rate;
-C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  16:24:09  PAGE 4   
+C251 COMPILER V5.60.0,  app_feedforward                                                    15/08/26  17:08:51  PAGE 4   
 
   180   1          feedforward_data.feedforward = tfpu_mul(tfpu_add(feedforward_p, feedforward_d), feedforward_scale);
   181   1      
@@ -224,7 +224,7 @@ Module Information          Static   Overlayable
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =       144     ------
+  xdata size           =       136     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
