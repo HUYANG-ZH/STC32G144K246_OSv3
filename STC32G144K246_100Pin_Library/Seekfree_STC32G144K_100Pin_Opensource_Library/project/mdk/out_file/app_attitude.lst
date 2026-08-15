@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_attitude                                                       14/08/26  17:38:42  PAGE 1   
+C251 COMPILER V5.60.0,  app_attitude                                                       15/08/26  21:11:07  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_attitude
@@ -66,7 +66,7 @@ stmt  level    source
    53                  float *pitch_deg)
    54          {
    55   1          float roll_rad;
-C251 COMPILER V5.60.0,  app_attitude                                                       14/08/26  17:38:42  PAGE 2   
+C251 COMPILER V5.60.0,  app_attitude                                                       15/08/26  21:11:07  PAGE 2   
 
    56   1          float pitch_rad;
    57   1      
@@ -134,7 +134,7 @@ stmt  level    source
   119   1          float output;
   120   1      
   121   1          /* 回绕感知一阶低通: 0/360 接缝处(恰为水平姿态)避免线性混叠,
-C251 COMPILER V5.60.0,  app_attitude                                                       14/08/26  17:38:42  PAGE 3   
+C251 COMPILER V5.60.0,  app_attitude                                                       15/08/26  21:11:07  PAGE 3   
 
   122   1             359→0 按 -1° 处理而非 -359°, 防止平路振动虚假触发 (30,330) */
   123   1          output = attitude_pitch_lpf.output;
@@ -202,7 +202,7 @@ stmt  level    source
   184   2              {
   185   3                  attitude_data.yaw_deg = tfpu_sub(attitude_data.yaw_deg, 360.0f);
   186   3              }
-C251 COMPILER V5.60.0,  app_attitude                                                       14/08/26  17:38:42  PAGE 4   
+C251 COMPILER V5.60.0,  app_attitude                                                       15/08/26  21:11:07  PAGE 4   
 
   187   2              else if(-180.0f > attitude_data.yaw_deg)
   188   2              {
@@ -271,7 +271,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-C251 COMPILER V5.60.0,  app_attitude                                                       14/08/26  17:38:42  PAGE 5   
+C251 COMPILER V5.60.0,  app_attitude                                                       15/08/26  21:11:07  PAGE 5   
 
   hconst size          =        24     ------
 End of Module Information.

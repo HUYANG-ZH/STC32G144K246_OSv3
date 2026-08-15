@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 1   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_element
@@ -66,7 +66,7 @@ stmt  level    source
    49          #define APP_ELEMENT_SEESAW_DEAD_TICK            (APP_ELEMENT_SEESAW_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
    50          #define APP_ELEMENT_SEESAW_ACTIVE_MS            (100UL)
    51          #define APP_ELEMENT_SEESAW_ACTIVE_TICK          (APP_ELEMENT_SEESAW_ACTIVE_MS * APP_ELEMENT_TICK_PER_MS)
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 2   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 2   
 
    52          #define APP_ELEMENT_SEESAW_SCORE_THRESHOLD      (1020)
    53          #define APP_ELEMENT_SEESAW_SLOWDOWN_MS          (160UL)
@@ -134,7 +134,7 @@ stmt  level    source
   110              0U,
   111              0U,
   112              0.0f,
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 3   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 3   
 
   113              0U
   114          };
@@ -202,7 +202,7 @@ stmt  level    source
   176          static float element_roundabout_ff_scale_2 = APP_ELEMENT_ROUNDABOUT_2_FF_SCALE_DEFAULT;
   177          static float element_roundabout_ff_scale_3 = APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT;
   178          static float element_roundabout_ff_scale_4 = APP_ELEMENT_ROUNDABOUT_4_FF_SCALE_DEFAULT;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 4   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 4   
 
   179          static float element_roundabout_ff_scale_5 = APP_ELEMENT_ROUNDABOUT_5_FF_SCALE_DEFAULT;
   180          static float element_roundabout_bias_dps_1 = APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT;
@@ -270,7 +270,7 @@ stmt  level    source
   242   2              case 4U:
   243   2                  return element_roundabout_angle_deg_4;
   244   2              case 5U:
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 5   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 5   
 
   245   2                  return element_roundabout_angle_deg_5;
   246   2              default:
@@ -338,7 +338,7 @@ stmt  level    source
   308   1          element_seesaw_event = 0.0f;
   309   1          element_seesaw_slowdown_active = 0U;
   310   1          element_seesaw_slowdown_start_tick = 0U;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 6   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 6   
 
   311   1          element_cylinder_slowdown_pending = 0U;
   312   1          element_cylinder_slowdown_deadline_tick = 0U;
@@ -406,7 +406,7 @@ stmt  level    source
   374   1          element_cylinder_angle_pos_deg = tfpu_sub(element_cylinder_angle_pos_deg,
   375   1                  element_cylinder_bucket_angle_pos[element_cylinder_bucket_head]);
   376   1          element_cylinder_angle_neg_deg = tfpu_sub(element_cylinder_angle_neg_deg,
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 7   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 7   
 
   377   1                  element_cylinder_bucket_angle_neg[element_cylinder_bucket_head]);
   378   1          if(element_cylinder_angle_pos_deg < 0.0f)
@@ -474,7 +474,7 @@ stmt  level    source
   439   2              element_cylinder_bucket_angle_neg[tail] = tfpu_add(element_cylinder_bucket_angle_neg[tail], angle
              -_abs);
   440   2              element_cylinder_angle_neg_deg = tfpu_add(element_cylinder_angle_neg_deg, angle_abs);
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 8   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 8   
 
   441   2          }
   442   1      }
@@ -542,7 +542,7 @@ stmt  level    source
   504   1          app_element_cylinder_clear();
   505   1      
   506   1          element_realtime_event_flags |= ELEMENT_EVENT_CYLINDER_FOUND;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 9   
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 9   
 
   507   1      }
   508          
@@ -610,7 +610,7 @@ stmt  level    source
   570   1          element_roundabout_dead = 1U;
   571   1          element_roundabout_dead_start_tick = now;
   572   1      
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 10  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 10  
 
   573   1          ea_backup = EA;
   574   1          EA = 0;
@@ -678,7 +678,7 @@ stmt  level    source
   635   2              {
   636   3                  element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_IDLE;
   637   3                  element_roundabout_dead = 1U;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 11  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 11  
 
   638   3                  element_roundabout_dead_start_tick = now;
   639   3                  element_roundabout_event_flags |= ELEMENT_RB_EVENT_TIMEOUT;
@@ -746,7 +746,7 @@ stmt  level    source
   699   1      
   700   1          /* 环岛gz积分：达到当前环岛配置角度后退出，第5环直接停车 */
   701   1          if((0U != element_roundabout_gz_integrate) && (0U != sample_fresh) &&
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 12  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 12  
 
   702   1             (0U != raw_delta_tick) &&
   703   1             (APP_ELEMENT_CYLINDER_SAMPLE_GAP_MAX_TICK >= raw_delta_tick))
@@ -814,7 +814,7 @@ stmt  level    source
   763   1          {
   764   2              service_speed_data_t speed;
   765   2              float avg_mps;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 13  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 13  
 
   766   2      
   767   2              if((uint32)(now - element_roundabout_exit_wait_start_tick) >=
@@ -882,7 +882,7 @@ stmt  level    source
   823          void app_element_pump_events(void)
   824          {
   825   1          uint8 flags;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 14  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 14  
 
   826   1          uint8 realtime_flags;
   827   1          uint16 count_snapshot;
@@ -950,7 +950,7 @@ stmt  level    source
   889          //-------------------------------------------------------------------------------------------------------
              -------------
   890          // 函数简介     跷跷板降速是否激活
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 15  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 15  
 
   891          // 参数说明     void
   892          // 返回参数     uint8           1：降速激活中 0：已到期或未触发
@@ -1018,7 +1018,7 @@ stmt  level    source
                static void app_element_seesaw_update(uint32 now, uint8 attitude_fresh)
                {
                    app_inductor_preprocess_data_t inductor;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 16  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 16  
 
                    app_attitude_data_t attitude;
                    int32 score;
@@ -1086,7 +1086,7 @@ stmt  level    source
  1014          void app_element_init(void)
  1015          {
  1016   1          app_element_reset();
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 17  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 17  
 
  1017   1          (void)service_packet_add_action("cylinder_state", app_element_cylinder_state_reply, 0UL);
  1018   1          (void)service_packet_add_variable("cylinder_event",
@@ -1154,7 +1154,7 @@ stmt  level    source
  1078   1      
  1079   1          ea_backup = EA;
  1080   1          EA = 0;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 18  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 18  
 
  1081   1          *out_data = element_data;
  1082   1          EA = ea_backup;
@@ -1222,7 +1222,7 @@ stmt  level    source
  1142   2              gyro_x = shared_lpf_update(&element_gyro_x_lpf, imu->gyro_x);
  1143   2      
  1144   2              ea_backup = EA;
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 19  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 19  
 
  1145   2              EA = 0;
  1146   2              element_data.gyro_x = gyro_x;
@@ -1290,7 +1290,7 @@ stmt  level    source
  1207   1          app_element_roundabout_imu_step(sample_fresh, raw_delta_tick);
  1208   1      }
 
-C251 COMPILER V5.60.0,  app_element                                                        15/08/26  00:38:52  PAGE 20  
+C251 COMPILER V5.60.0,  app_element                                                        15/08/26  21:11:07  PAGE 20  
 
 
 Module Information          Static   Overlayable

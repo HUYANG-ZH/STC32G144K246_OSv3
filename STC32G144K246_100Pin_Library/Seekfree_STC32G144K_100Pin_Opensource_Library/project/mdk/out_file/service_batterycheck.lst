@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_batterycheck                                               14/08/26  17:38:37  PAGE 1   
+C251 COMPILER V5.60.0,  service_batterycheck                                               15/08/26  21:11:00  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_batterycheck
@@ -66,7 +66,7 @@ stmt  level    source
    53   3                  filtered = shared_lpf_update(&batterycheck_voltage_lpf, raw_voltage);
    54   3              }
    55   2              /* float 多字节存储必须对中断原子: TIM9 欠压守卫 10ms 会读该值,
-C251 COMPILER V5.60.0,  service_batterycheck                                               14/08/26  17:38:37  PAGE 2   
+C251 COMPILER V5.60.0,  service_batterycheck                                               15/08/26  21:11:00  PAGE 2   
 
    56   2                 撕裂读会把半个旧值+半个新值拼成垃圾(曾导致开机恒定 -0.16V 误报警) *
              -/
@@ -134,7 +134,7 @@ stmt  level    source
   118   1      
   119   1          service_batterycheck_refresh_snapshot();
   120   1          now = service_timetick_what();
-C251 COMPILER V5.60.0,  service_batterycheck                                               14/08/26  17:38:37  PAGE 3   
+C251 COMPILER V5.60.0,  service_batterycheck                                               15/08/26  21:11:00  PAGE 3   
 
   121   1          if(0U != bsp_battery_is_busy())
   122   1          {
@@ -202,7 +202,7 @@ stmt  level    source
   182          {
   183   1          return batterycheck_lpf_ready;
   184   1      }
-C251 COMPILER V5.60.0,  service_batterycheck                                               14/08/26  17:38:37  PAGE 4   
+C251 COMPILER V5.60.0,  service_batterycheck                                               15/08/26  21:11:00  PAGE 4   
 
 
 

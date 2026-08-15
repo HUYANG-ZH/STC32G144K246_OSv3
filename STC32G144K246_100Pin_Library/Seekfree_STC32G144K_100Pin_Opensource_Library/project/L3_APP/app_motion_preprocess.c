@@ -15,9 +15,11 @@
    公式: x_error = (CH2-CH3)/(CH2+CH3+B) * max(CH2,CH3)/(max(CH2,CH3)+S0)
    B    = 分母偏置: 直道信号和的一半左右(直道 CH2+CH3≈16 取 8)
    S0   = 强度门控半强度点: 直道单路强度(≈8)的 2 倍, 弱信号压增益、强信号(弯道)保持敏感
-   经 200 组参数网格仿真: 直道降噪约 4.5x, 出线边缘约 19x, 弯道压缩约 29% 可用 xw 上调补偿 */
+   经 200 组参数网格仿真: 直道降噪约 4.5x, 出线边缘约 19x, 弯道压缩约 29% 可用 xw 上调补偿
+   实车修正: 出弯回正不足(xw=1.5 名义足够但出弯弱信号被 gate 砍到 0.36~0.5 倍),
+   S0 16->12: 出弯边缘 gate 0.33->0.43, 回正力+30%; 直道 gate 0.24->0.30 噪声略放大约 1.25x */
 #define APP_MOTION_PREPROCESS_X_DEN_BIAS_DEFAULT      (8.0f)      // 差比分母偏置
-#define APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT       (16.0f)     // 门控半强度点
+#define APP_MOTION_PREPROCESS_X_GATE_S0_DEFAULT       (12.0f)     // 门控半强度点
 
 app_motion_preprocess_config_t app_motion_preprocess_config =
 {
