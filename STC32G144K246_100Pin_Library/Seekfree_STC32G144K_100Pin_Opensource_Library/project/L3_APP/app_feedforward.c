@@ -14,8 +14,9 @@
 #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (80.0f)     // CH1/CH2归一化强度达到该值时给满前馈
 #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV    (0.0125f)
 /* 曲率强度门控半强度点(car2抗干扰设计同步): 与 x_error 抗噪公式同构,
-   直道弱信号压缩曲率噪声, 弯道强信号保持敏感; 按car3重标后量纲取32(与x_gate_s0一致) */
-#define APP_FEEDFORWARD_GATE_S0_DEFAULT          (32.0f)
+   直道弱信号压缩曲率噪声, 弯道强信号保持敏感; 按car3重标后量纲取32(与x_gate_s0一致)
+   实车修正: x_gate_s0 已降 20 缓解弯道延迟, 前馈门控同步降 20 保持一致放开节奏 */
+#define APP_FEEDFORWARD_GATE_S0_DEFAULT          (20.0f)
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
 #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
     (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
