@@ -2,25 +2,45 @@
 #include "sys_tfpu.h"
 #include "service_inductor.h"
 #include "service_timetick.h"
+#include "service_packet.h"
 #include "service_wireless_uart.h"
 #include "app_speedout.h"
 #include "app_inductor_preprocess.h"
 
 #define APP_INDUCTOR_CHANNEL_COUNT             APP_INDUCTOR_PREPROCESS_CHANNEL_COUNT
 #define APP_INDUCTOR_HISTORY_COUNT             (7U)
-#define APP_INDUCTOR_AVERAGE_COUNT             (5U)
-#define APP_INDUCTOR_AVERAGE_INV               (0.2f)
 #define APP_INDUCTOR_STARTUP_GRACE_TICK         (1000UL)
 #define APP_INDUCTOR_MAX_SAMPLE_AGE_TICK        (500UL)
+/* 电感归一化(Q16 定点, 零浮点), 按通道分两种模式:
+   锚点模式(CH1/CH4 左右横电感): 单锚点三点分段 min->0, mid->X, max->100
+     锚点输出 X 为全局无线可调变量 inductor_anchor_out(默认 50), 两通道共用同一 X,
+     保证 CH1/CH4 在锚点(mid)处归一化值严格相等(车居中输出恒等, 左右绝对对称)
+   单段模式(CH2/CH3 前后纵电感): 保持原 min-max 线性归一化 (v-min)*100/(max-min)
+   斜率 k = ceil(Δout<<16/区间宽), uint32 存; 区间内 Δv<=w => 乘积<=100<<16<2^32 无溢出 */
+#define APP_INDUCTOR_SLOPE_Q16_SHIFT          (16U)
+#define APP_INDUCTOR_NORM_UPPER_LIMIT_U16      (300U)
+#define APP_INDUCTOR_ANCHOR_OUT_DEFAULT        (50.0f)
+/* 锚点模式通道判定: 仅 CH1/CH4 */
+#define APP_INDUCTOR_IS_ANCHOR_CHANNEL(i)      ((APP_INDUCTOR_PREPROCESS_INDEX_CH1 == (i)) || \
+        (APP_INDUCTOR_PREPROCESS_INDEX_CH4 == (i)))
 // car3 已彻底弃用 M 通道电感, 仅标定 CH1~CH4 四路
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {625U, 870U, 1140U, 790U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {1930U, 3000U, 3000U, 1930U};
+// 锚点模式(CH1/CH4)实测标定: min/mid(车严格居中实测)/max
+//   CH1: min=730 mid=1778 max=2361; CH4: min=780 mid=1931 max=2267
+// 单段模式(CH2/CH3)仅用 min/max, mid 占位值不参与计算
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {730U, 870U, 1140U, 780U};
+uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1778U, 1935U, 2070U, 1931U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2361U, 3000U, 3000U, 2267U};
 
 static void app_inductor_update_precomputed(void);
 
-static float inductor_min_float[APP_INDUCTOR_CHANNEL_COUNT];
-static float inductor_max_float[APP_INDUCTOR_CHANNEL_COUNT];
-static float inductor_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
+/* 锚点输出 X(全局共用, 无线可调): 锚点模式通道在 mid 处的归一化值, 默认 50 */
+static volatile float inductor_anchor_out = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
+static float inductor_anchor_out_last = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
+static uint16 inductor_mid_value[APP_INDUCTOR_CHANNEL_COUNT];
+static uint32 inductor_slope_low_q16[APP_INDUCTOR_CHANNEL_COUNT];
+static uint32 inductor_slope_high_q16[APP_INDUCTOR_CHANNEL_COUNT];
+static uint32 inductor_slope_full_q16[APP_INDUCTOR_CHANNEL_COUNT];   /* 单段模式斜率 */
+static uint16 inductor_anchor_u16;              /* 与斜率同批发布的锚点输出 X */
 
 static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
 static uint8 inductor_history_index = 0U;
@@ -54,34 +74,89 @@ static void app_inductor_update_precomputed(void)
 {
     uint8 i;
     uint8 ea_backup;
-    uint16 range;
-    float next_min[APP_INDUCTOR_CHANNEL_COUNT];
-    float next_max[APP_INDUCTOR_CHANNEL_COUNT];
-    float next_range_inv[APP_INDUCTOR_CHANNEL_COUNT];
+    uint16 low_width;
+    uint16 high_width;
+    uint16 full_width;
+    uint16 anchor_out_u16;
+    uint16 next_mid[APP_INDUCTOR_CHANNEL_COUNT];
+    uint32 next_slope_low[APP_INDUCTOR_CHANNEL_COUNT];
+    uint32 next_slope_high[APP_INDUCTOR_CHANNEL_COUNT];
+    uint32 next_slope_full[APP_INDUCTOR_CHANNEL_COUNT];
+
+    /* 锚点输出 X 截断到 [0,100] */
+    if(0.0f >= inductor_anchor_out)
+    {
+        anchor_out_u16 = 0U;
+    }
+    else if(100.0f <= inductor_anchor_out)
+    {
+        anchor_out_u16 = 100U;
+    }
+    else
+    {
+        anchor_out_u16 = (uint16)inductor_anchor_out;
+    }
 
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
-        next_min[i] = tfpu_int2float((long)app_inductor_preprocess_min_value[i]);
-        next_max[i] = tfpu_int2float((long)app_inductor_preprocess_max_value[i]);
-        if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_min_value[i])
+        next_mid[i] = app_inductor_preprocess_mid_value[i];
+        if(0U != APP_INDUCTOR_IS_ANCHOR_CHANNEL(i))
         {
-            range = app_inductor_preprocess_max_value[i] - app_inductor_preprocess_min_value[i];
-            next_range_inv[i] = tfpu_div(100.0f, tfpu_int2float((long)range));
+            /* 锚点模式(CH1/CH4): 下段 [min, mid] -> [0, X] */
+            if(app_inductor_preprocess_mid_value[i] > app_inductor_preprocess_min_value[i])
+            {
+                low_width = (uint16)(app_inductor_preprocess_mid_value[i] -
+                        app_inductor_preprocess_min_value[i]);
+                next_slope_low[i] = (((uint32)anchor_out_u16 << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
+                        low_width - 1UL) / low_width;
+            }
+            else
+            {
+                next_slope_low[i] = 0UL;
+            }
+            /* 锚点模式: 上段 [mid, max] -> [X, 100] */
+            if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_mid_value[i])
+            {
+                high_width = (uint16)(app_inductor_preprocess_max_value[i] -
+                        app_inductor_preprocess_mid_value[i]);
+                next_slope_high[i] = (((uint32)(100U - anchor_out_u16) << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
+                        high_width - 1UL) / high_width;
+            }
+            else
+            {
+                next_slope_high[i] = 0UL;
+            }
+            next_slope_full[i] = 0UL;
         }
         else
         {
-            next_range_inv[i] = 0.0f;
+            /* 单段模式(CH2/CH3): [min, max] -> [0, 100], 与原 min-max 归一化一致 */
+            next_slope_low[i] = 0UL;
+            next_slope_high[i] = 0UL;
+            if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_min_value[i])
+            {
+                full_width = (uint16)(app_inductor_preprocess_max_value[i] -
+                        app_inductor_preprocess_min_value[i]);
+                next_slope_full[i] = ((100UL << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
+                        full_width - 1UL) / full_width;
+            }
+            else
+            {
+                next_slope_full[i] = 0UL;
+            }
         }
     }
 
     /* TIM4 only observes fully published calibration triples. */
     ea_backup = EA;
     EA = 0;
+    inductor_anchor_u16 = anchor_out_u16;
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
-        inductor_min_float[i] = next_min[i];
-        inductor_max_float[i] = next_max[i];
-        inductor_range_inv[i] = next_range_inv[i];
+        inductor_mid_value[i] = next_mid[i];
+        inductor_slope_low_q16[i] = next_slope_low[i];
+        inductor_slope_high_q16[i] = next_slope_high[i];
+        inductor_slope_full_q16[i] = next_slope_full[i];
     }
     EA = ea_backup;
 }
@@ -95,8 +170,8 @@ static void app_inductor_update_output(void)
     uint16 min_val;
     uint16 max_val;
     uint16 values[APP_INDUCTOR_HISTORY_COUNT];
-    float filtered[APP_INDUCTOR_CHANNEL_COUNT];
-    float normalized[APP_INDUCTOR_CHANNEL_COUNT];
+    uint16 filtered[APP_INDUCTOR_CHANNEL_COUNT];
+    uint16 normalized[APP_INDUCTOR_CHANNEL_COUNT];
 
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
@@ -121,23 +196,60 @@ static void app_inductor_update_output(void)
             }
         }
 
-        filtered[i] = tfpu_mul(tfpu_int2float((long)(sum - min_val - max_val)),
-                APP_INDUCTOR_AVERAGE_INV);
+        /* 整数中值滤波: 去极值后 5 帧平均(四舍五入), 零浮点 */
+        filtered[i] = (uint16)((sum - min_val - max_val + 2UL) / 5UL);
 
-        if(0.0f >= inductor_range_inv[i])
+        if(0U != APP_INDUCTOR_IS_ANCHOR_CHANNEL(i))
         {
-            normalized[i] = 0.0f;
+            /* 锚点模式(CH1/CH4): 分段映射(零浮点定点 Q16) min->0, mid->X, max->100, 上段保留 300 外推
+               X=inductor_anchor_u16 为全局共用锚点输出, 两通道 mid 处输出严格相等 */
+            if(filtered[i] <= inductor_mid_value[i])
+            {
+                if((0UL == inductor_slope_low_q16[i]) ||
+                        (filtered[i] <= app_inductor_preprocess_min_value[i]))
+                {
+                    normalized[i] = 0U;
+                }
+                else
+                {
+                    normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]) *
+                            inductor_slope_low_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
+                }
+            }
+            else
+            {
+                if(0UL == inductor_slope_high_q16[i])
+                {
+                    normalized[i] = inductor_anchor_u16;
+                }
+                else
+                {
+                    normalized[i] = (uint16)(inductor_anchor_u16 +
+                            (((uint32)(filtered[i] - inductor_mid_value[i]) *
+                            inductor_slope_high_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT));
+                    if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
+                    {
+                        normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT_U16;
+                    }
+                }
+            }
         }
         else
         {
-            normalized[i] = tfpu_mul(tfpu_sub(filtered[i], inductor_min_float[i]), inductor_range_inv[i]);
-            if(0.0f > normalized[i])
+            /* 单段模式(CH2/CH3): 原 min-max 线性归一化 (v-min)*100/(max-min), 钳 0/300 */
+            if((0UL == inductor_slope_full_q16[i]) ||
+                    (filtered[i] <= app_inductor_preprocess_min_value[i]))
             {
-                normalized[i] = 0.0f;
+                normalized[i] = 0U;
             }
-            else if(APP_INDUCTOR_NORM_UPPER_LIMIT < normalized[i])
+            else
             {
-                normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT;
+                normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]) *
+                        inductor_slope_full_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
+                if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
+                {
+                    normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT_U16;
+                }
             }
         }
     }
@@ -146,8 +258,8 @@ static void app_inductor_update_output(void)
     EA = 0;
     for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
-        inductor_data.filtered[i] = filtered[i];
-        inductor_data.normalized[i] = normalized[i];
+        inductor_data.filtered[i] = tfpu_int2float((long)filtered[i]);
+        inductor_data.normalized[i] = tfpu_int2float((long)normalized[i]);
     }
     EA = ea_backup;
 }
@@ -161,6 +273,14 @@ static void app_inductor_preprocess_tick(void)
     uint32 now;
 
     now = service_timetick_what();
+
+    /* 无线锚点输出 X 变化时重算两段斜率(仅变化瞬间执行, 8次32位除法约数十us) */
+    if(inductor_anchor_out != inductor_anchor_out_last)
+    {
+        inductor_anchor_out_last = inductor_anchor_out;
+        app_inductor_update_precomputed();
+    }
+
     if(0U == app_inductor_sample(sample, &sequence))
     {
         if((uint32)(now - inductor_start_tick) >= APP_INDUCTOR_STARTUP_GRACE_TICK)
@@ -235,6 +355,8 @@ void app_inductor_preprocess_init(void)
     uint16 sample[APP_INDUCTOR_CHANNEL_COUNT];
 
     service_inductor_init();
+    (void)service_packet_add_variable("anchor_out",
+            (float *)&inductor_anchor_out, 1U);
 
     for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
     {
