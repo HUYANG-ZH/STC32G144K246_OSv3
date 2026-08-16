@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          static volatile app_inductor_preprocess_data_t inductor_data;
    52          static uint32 inductor_last_sequence = 0UL;
    53          static uint32 inductor_last_fresh_tick = 0UL;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 2   
 
    54          static uint32 inductor_start_tick = 0UL;
    55          static uint8 inductor_sensor_seen = 0U;
@@ -134,7 +134,7 @@ stmt  level    source
   117   3                  {
   118   4                      next_slope_low[i] = 0UL;
   119   4                  }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 3   
 
   120   3                  /* 锚点模式: 上段 [mid, max] -> [X, 100] */
   121   3                  if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_mid_value[i])
@@ -202,7 +202,7 @@ stmt  level    source
   183   3                  values[j] = inductor_history[i][j];
   184   3              }
   185   2      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 4   
 
   186   2              min_val = values[0];
   187   2              max_val = values[0];
@@ -270,7 +270,7 @@ stmt  level    source
   247   4                  }
   248   3                  else
   249   3                  {
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 5   
 
   250   4                      normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]) *
   251   4                              inductor_slope_full_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
@@ -338,7 +338,7 @@ stmt  level    source
   312   2              return;
   313   2          }
   314   1      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 6   
 
   315   1          inductor_last_sequence = sequence;
   316   1          inductor_last_fresh_tick = now;
@@ -406,7 +406,7 @@ stmt  level    source
   378   1          inductor_history_index = 0U;
   379   1          inductor_history_valid = 0U;
   380   1          inductor_last_sequence = 0UL;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 7   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 7   
 
   381   1          inductor_last_fresh_tick = service_timetick_what();
   382   1          inductor_start_tick = inductor_last_fresh_tick;
@@ -475,7 +475,7 @@ Module Information          Static   Overlayable
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 8   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  18:22:33  PAGE 8   
 
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------

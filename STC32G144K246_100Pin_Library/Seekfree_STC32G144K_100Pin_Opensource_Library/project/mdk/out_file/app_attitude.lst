@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  15:52:46  PAGE 1   
+C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  18:22:31  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_attitude
@@ -66,7 +66,7 @@ stmt  level    source
    53                  float *roll_deg,
    54                  float *pitch_deg)
    55          {
-C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  15:52:46  PAGE 2   
+C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  18:22:31  PAGE 2   
 
    56   1          float roll_rad;
    57   1          float pitch_rad;
@@ -134,7 +134,7 @@ stmt  level    source
   118          static float app_attitude_pitch_wrap_measure(float measure_deg, float estimate_deg)
   119          {
   120   1          float delta;
-C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  15:52:46  PAGE 3   
+C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  18:22:31  PAGE 3   
 
   121   1      
   122   1          delta = tfpu_sub(measure_deg, estimate_deg);
@@ -202,7 +202,7 @@ stmt  level    source
   183   2              dt = app_attitude_get_dt(imu);
   184   2              attitude_data.roll_deg = shared_kalman_update(&attitude_roll_kalman,
   185   2                      accel_roll_deg, gyro_x, dt);
-C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  15:52:46  PAGE 4   
+C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  18:22:31  PAGE 4   
 
   186   2              /* pitch: 陀螺融合 Kalman + 测量回绕预包装, 保持 0-360 全象限语义 */
   187   2              accel_pitch_deg = app_attitude_pitch_wrap_measure(accel_pitch_deg,
@@ -271,7 +271,7 @@ Module Information          Static   Overlayable
   code size            =    ------     ------
   ecode size           =      2584     ------
   data size            =    ------     ------
-C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  15:52:46  PAGE 5   
+C251 COMPILER V5.60.0,  app_attitude                                                       16/08/26  18:22:31  PAGE 5   
 
   idata size           =    ------     ------
   pdata size           =    ------     ------

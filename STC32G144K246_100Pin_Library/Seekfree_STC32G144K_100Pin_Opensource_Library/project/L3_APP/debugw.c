@@ -5,6 +5,7 @@
 #include "service_inductor.h"
 #include "service_tof.h"
 #include "service_speed.h"
+#include "service_imu.h"
 #include "app_inductor_preprocess.h"
 #include "app_motion_postprocess.h"
 #include "debugw.h"
@@ -14,7 +15,8 @@
    1 = 4路电感归一化值(CH1~CH4) + TOF测距(mm), 20Hz
    2 = 4路电感原始值 CH1~CH4, 10Hz
    3 = 电机速度 left,right (m/s), 100Hz
-   4 = 角速度环目标/实际 target,actual (rad/s), 50Hz */
+   4 = 角速度环目标/实际 target,actual (rad/s), 50Hz
+   5 = 轮速 left,right (m/s) + IMU三轴角速度 gx,gy,gz (deg/s), 20Hz */
 #define DEBUGW_IMU_PERIOD_TICK          (500UL)    /* 20Hz, 0.1ms/tick */
 #define DEBUGW_INDUCTOR_PERIOD_TICK     (200UL)    /* 50Hz */
 #define DEBUGW_MOTOR_PERIOD_TICK        (100UL)    /* 100Hz */
@@ -43,7 +45,7 @@ static uint8 debugw_mode(void)
     uint8 mode;
 
     mode = (uint8)(debugw_debug_info + 0.5f);
-    if(mode > 4U)
+    if(mode > 5U)
     {
         mode = 0U;   /* 未知模式视为关闭 */
     }
@@ -73,7 +75,7 @@ void debugw_task(void)
         return;
     }
 
-    period_tick = (1U == mode) ? DEBUGW_IMU_PERIOD_TICK :
+    period_tick = ((1U == mode) || (5U == mode)) ? DEBUGW_IMU_PERIOD_TICK :
             ((3U == mode) ? DEBUGW_MOTOR_PERIOD_TICK : DEBUGW_INDUCTOR_PERIOD_TICK);
 
     now = service_timetick_what();
@@ -123,6 +125,22 @@ void debugw_task(void)
                 wprint("%.3f,%.3f\r\n",
                         (double)motion.target_yaw_rate_radps,
                         (double)motion.actual_yaw_rate_radps);
+            }
+            break;
+
+        case 5U:
+            /* 20Hz 轮速+IMU角速度: left,right (m/s), gx,gy,gz (deg/s) */
+            {
+                service_imu_gyro_t gyro;
+
+                service_speed_get(&speed);
+                service_imu_read_gyro(&gyro);
+                wprint("%.2f,%.2f,%.1f,%.1f,%.1f\r\n",
+                        (double)speed.left_mps,
+                        (double)speed.right_mps,
+                        (double)gyro.gyro_x,
+                        (double)gyro.gyro_y,
+                        (double)gyro.gyro_z);
             }
             break;
 
