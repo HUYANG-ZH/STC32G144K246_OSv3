@@ -17,9 +17,9 @@
 #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
 #define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
 
-/* 负压生效量接口: 无线 negative_pressure 为基础量, 触发时叠加增量, 上限 90 */
-#define APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT   (15.0f)     /* 触发时在基础量上增加的百分比 */
-#define APP_SPEED_PLAN_PRESSURE_MAX             (90.0f)     /* 生效量上限 */
+/* 负压生效量接口: 无线 negative_pressure 为基础量, 触发时叠加增量, 上限 90 下限 0 */
+#define APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT   (-15.0f)     /* 触发时在基础量上调整的百分比(负=减少) */
+#define APP_SPEED_PLAN_PRESSURE_MAX             (90.0f)      /* 生效量上限 */
 #define APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM     (200U)      /* TOF 测距 <200mm 触发 */
 
 static volatile float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
@@ -121,7 +121,7 @@ static uint8 app_speed_plan_pressure_boost_condition(void)
     return app_speed_plan_tof_near_obstacle();
 }
 
-/* 负压生效量计算: 基础量(无线 negative_pressure) + 触发增量, 上限 90。
+/* 负压生效量计算: 基础量(无线 negative_pressure) + 触发增量(负=减负压), 上限90 下限0。
    触发期间接管负压输出, 恢复后还原基础量。调用方为 TIM5 前的 5ms 控制链。 */
 static void app_speed_plan_update_pressure(void)
 {
@@ -154,6 +154,11 @@ static void app_speed_plan_update_pressure(void)
         if(effective > APP_SPEED_PLAN_PRESSURE_MAX)
         {
             effective = APP_SPEED_PLAN_PRESSURE_MAX;
+        }
+        else if(0.0f > effective)
+        {
+            /* 下限 0: 负值转 uint8 会溢出, 且 service 层 percent=0 仍保底 5% 占空比 */
+            effective = 0.0f;
         }
         service_negative_pressure_set_percent((uint8)(effective + 0.5f));
     }
