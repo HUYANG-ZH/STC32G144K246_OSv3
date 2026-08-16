@@ -19,21 +19,24 @@
    斜率 k = ceil(Δout<<16/区间宽), uint32 存; 区间内 Δv<=w => 乘积<=100<<16<2^32 无溢出 */
 #define APP_INDUCTOR_SLOPE_Q16_SHIFT          (16U)
 #define APP_INDUCTOR_NORM_UPPER_LIMIT_U16      (300U)
-#define APP_INDUCTOR_ANCHOR_OUT_DEFAULT        (50.0f)
+#define APP_INDUCTOR_ANCHOR_OUT_DEFAULT        (68.0f)
 /* 锚点模式通道判定: 仅 CH1/CH4 */
 #define APP_INDUCTOR_IS_ANCHOR_CHANNEL(i)      ((APP_INDUCTOR_PREPROCESS_INDEX_CH1 == (i)) || \
         (APP_INDUCTOR_PREPROCESS_INDEX_CH4 == (i)))
 // car3 已彻底弃用 M 通道电感, 仅标定 CH1~CH4 四路
 // 锚点模式(CH1/CH4)实测标定: min/mid(车严格居中实测)/max
-//   CH1: min=730 mid=1778 max=2361; CH4: min=780 mid=1931 max=2267
-// 单段模式(CH2/CH3)仅用 min/max, mid 占位值不参与计算
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {730U, 870U, 1140U, 780U};
-uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1778U, 1935U, 2070U, 1931U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2361U, 3000U, 3000U, 2267U};
+//   CH1: min=750 mid=1873 max=2341; CH4: min=850 mid=1810 max=2177
+// 单段模式(CH2/CH3)仅用 min/max: CH2 1037/3200, CH3 1189/3200; mid 占位值不参与计算
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {750U, 1037U, 1189U, 850U};
+uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1873U, 1935U, 2070U, 1810U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2341U, 3200U, 3200U, 2177U};
 
 static void app_inductor_update_precomputed(void);
 
-/* 锚点输出 X(全局共用, 无线可调): 锚点模式通道在 mid 处的归一化值, 默认 50 */
+/* 锚点输出 X(全局共用, 无线可调): 锚点模式通道在 mid 处的归一化值, 默认 68
+   依据: 新标定(CH1 750/1873/2341, CH4 850/1810/2177)工作区1400~2200,
+   对称标准 X=62~72, 两段斜率均衡 X=70~72, 折中取 68: CH1两段斜率几乎均衡(0.061/0.068),
+   CH4上段 0.136->0.087 缓和(原50上段过陡易饱和); 实车可无线微调 64~72 */
 static volatile float inductor_anchor_out = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
 static float inductor_anchor_out_last = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
 static uint16 inductor_mid_value[APP_INDUCTOR_CHANNEL_COUNT];
