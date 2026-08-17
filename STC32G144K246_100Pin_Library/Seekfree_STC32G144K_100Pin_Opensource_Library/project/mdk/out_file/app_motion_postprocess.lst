@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51              0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
    52              0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
    53          };
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 2   
 
    54          
    55          static shared_pos_pid_t motion_postprocess_yaw_pid;
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          shared_pos_pid_reset(&motion_postprocess_yaw_pid, 0.0f);
   118   1      }
   119          
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 3   
 
   120          static void app_motion_postprocess_restart_pid(void)
   121          {
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          service_imu_update();
   184   1          now = service_timetick_what();
   185   1          imu_available = service_imu_get_latest_sample(&imu);
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 4   
 
   186   1          imu_fresh = 0U;
   187   1          if(0U == imu_available)
@@ -270,7 +270,7 @@ stmt  level    source
   246   1          {
   247   2              imu.gyro_z = 0.0f;
   248   2              imu.sequence = 0UL;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 5   
 
   249   2              imu.valid = 0U;
   250   2          }
@@ -338,7 +338,7 @@ stmt  level    source
   312           * 单一 5 ms 控制链：按数据依赖顺序推进，禁止让这些控制计算经由主循环队列
              -调度。
   313           * TIM5 的 1 ms 速度环先使用上一帧目标，TIM6 随后生成下一帧目标，时序稳定且�
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 6   
 
              -�分析。
   314           */
@@ -406,7 +406,7 @@ stmt  level    source
   375   1          {
   376   2              feedback_yaw_rate_radps = tfpu_mul(app_motion_preprocess_config.yaw_rate_gain, raw_error);
   377   2      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 7   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 7   
 
   378   2              /* 角速度目标变化率限幅 */
   379   2              if((app_motion_postprocess_config.rate_limit > 0.0f) && (0U != motion_postprocess_rate_limit_read
@@ -474,7 +474,7 @@ stmt  level    source
   439   1          if(0U == enabled)
   440   1          {
   441   2              if(0U != motion_postprocess_last_enabled)
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 8   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 8   
 
   442   2              {
   443   3                  app_motion_postprocess_clear_pid();
@@ -543,7 +543,7 @@ Module Information          Static   Overlayable
   edata size           =    ------     ------
   bit size             =    ------     ------
   ebit size            =    ------     ------
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  16:08:24  PAGE 9   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             17/08/26  21:57:55  PAGE 9   
 
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------

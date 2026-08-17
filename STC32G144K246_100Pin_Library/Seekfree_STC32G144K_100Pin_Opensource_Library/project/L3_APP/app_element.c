@@ -577,16 +577,16 @@ void app_element_control_step(void)
         return;
     }
 
-    /* 环岛判据 = TOF 距离超出阈值 且 电感评分函数判定为环岛 (两者同时满足才计入确认)
-       car3 已彻底弃用 M 通道电感, 评分输入仅 CH1~CH4 */
+    /* 环岛判据 = TOF 距离超出阈值 且 INT8浅树模型(rapt_v22, 65x5)判定: 输入 uint16 归一化值(内部钳位255) + TOF mm */
     tof_distance_mm = service_tof_get_distance_mm();
     app_inductor_preprocess_get_data(&inductor);
     roundabout_detected = ((tof_distance_mm > APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM) &&
             (0U != roundabout_priority_tree_predict(
-                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
-                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
-                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-                    inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]))) ? 1U : 0U;
+                    (uint16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+                    (uint16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+                    (uint16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+                    (uint16)inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4],
+                    tof_distance_mm))) ? 1U : 0U;
     if(0U != roundabout_detected)
     {
         if((0U == element_seesaw_active) && (0U == element_roundabout_gz_high))
