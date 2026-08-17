@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -39,427 +39,425 @@ stmt  level    source
    25                  (APP_INDUCTOR_PREPROCESS_INDEX_CH4 == (i)))
    26          // car3 已彻底弃用 M 通道电感, 仅标定 CH1~CH4 四路
    27          // 锚点模式(CH1/CH4)实测标定: min/mid(车严格居中实测)/max
-   28          //   CH1: min=750 mid=1873 max=2341; CH4: min=850 mid=1810 max=2177
-   29          // 单段模式(CH2/CH3)仅用 min/max: CH2 1037/3200, CH3 1189/3200; mid 占位值不参与计算
-   30          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {750U, 1037U, 1189U, 850U};
-   31          uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1873U, 1935U, 2070U, 1810U};
-   32          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2341U, 3200U, 3200U, 2177U};
+   28          //   CH1: min=714 mid=1831 max=2265; CH4: min=853 mid=1720 max=2100
+   29          // 单段模式(CH2/CH3)仅用 min/max: CH2 1007/3125, CH3 1175/3190; mid 占位值不参与计算
+   30          uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {714U, 1007U, 1175U, 853U};
+   31          uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1831U, 1935U, 2070U, 1720U};
+   32          uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2265U, 3125U, 3190U, 2100U};
    33          
    34          static void app_inductor_update_precomputed(void);
    35          
    36          /* 锚点输出 X(全局共用, 无线可调): 锚点模式通道在 mid 处的归一化值, 默认 68
-   37             依据: 新标定(CH1 750/1873/2341, CH4 850/1810/2177)工作区1400~2200,
-   38             对称标准 X=62~72, 两段斜率均衡 X=70~72, 折中取 68: CH1两段斜率几乎均衡(0.061/0.06
-             -8),
-   39             CH4上段 0.136->0.087 缓和(原50上段过陡易饱和); 实车可无线微调 64~72 */
-   40          static volatile float inductor_anchor_out = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
-   41          static float inductor_anchor_out_last = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
-   42          static uint16 inductor_mid_value[APP_INDUCTOR_CHANNEL_COUNT];
-   43          static uint32 inductor_slope_low_q16[APP_INDUCTOR_CHANNEL_COUNT];
-   44          static uint32 inductor_slope_high_q16[APP_INDUCTOR_CHANNEL_COUNT];
-   45          static uint32 inductor_slope_full_q16[APP_INDUCTOR_CHANNEL_COUNT];   /* 单段模式斜率 */
-   46          static uint16 inductor_anchor_u16;              /* 与斜率同批发布的锚点输出 X */
-   47          
-   48          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
-   49          static uint8 inductor_history_index = 0U;
-   50          static uint8 inductor_history_valid = 0U;
-   51          static volatile app_inductor_preprocess_data_t inductor_data;
-   52          static uint32 inductor_last_sequence = 0UL;
-   53          static uint32 inductor_last_fresh_tick = 0UL;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 2   
+   37             依据: car3 标定(CH1 714/1831/2265, CH4 853/1720/2100), 两段斜率均衡 X=69.5~72 折中取 68:
+   38             CH1 下段0.061/上段0.074, CH4 下段0.078/上段0.084 均较均衡; 实车可无线微调 66~72 */
+   39          static volatile float inductor_anchor_out = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
+   40          static float inductor_anchor_out_last = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
+   41          static uint16 inductor_mid_value[APP_INDUCTOR_CHANNEL_COUNT];
+   42          static uint32 inductor_slope_low_q16[APP_INDUCTOR_CHANNEL_COUNT];
+   43          static uint32 inductor_slope_high_q16[APP_INDUCTOR_CHANNEL_COUNT];
+   44          static uint32 inductor_slope_full_q16[APP_INDUCTOR_CHANNEL_COUNT];   /* 单段模式斜率 */
+   45          static uint16 inductor_anchor_u16;              /* 与斜率同批发布的锚点输出 X */
+   46          
+   47          static uint16 inductor_history[APP_INDUCTOR_CHANNEL_COUNT][APP_INDUCTOR_HISTORY_COUNT];
+   48          static uint8 inductor_history_index = 0U;
+   49          static uint8 inductor_history_valid = 0U;
+   50          static volatile app_inductor_preprocess_data_t inductor_data;
+   51          static uint32 inductor_last_sequence = 0UL;
+   52          static uint32 inductor_last_fresh_tick = 0UL;
+   53          static uint32 inductor_start_tick = 0UL;
+   54          static uint8 inductor_sensor_seen = 0U;
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 2   
 
-   54          static uint32 inductor_start_tick = 0UL;
-   55          static uint8 inductor_sensor_seen = 0U;
-   56          static uint8 inductor_sensor_fault = 0U;
-   57          
-   58          static void app_inductor_preprocess_tick(void);
-   59          
-   60          static uint8 app_inductor_sample(uint16 sample[APP_INDUCTOR_CHANNEL_COUNT], uint32 *sequence)
-   61          {
-   62   1          service_inductor_data_t raw;
-   63   1      
-   64   1          if(0U == service_inductor_get_snapshot(&raw, sequence))
-   65   1          {
-   66   2              return 0U;
-   67   2          }
-   68   1      
-   69   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH1] = raw.channel_1;
-   70   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH2] = raw.channel_2;
-   71   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH3] = raw.channel_3;
-   72   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH4] = raw.channel_4;
-   73   1          return 1U;
-   74   1      }
-   75          
-   76          static void app_inductor_update_precomputed(void)
-   77          {
-   78   1          uint8 i;
-   79   1          uint8 ea_backup;
-   80   1          uint16 low_width;
-   81   1          uint16 high_width;
-   82   1          uint16 full_width;
-   83   1          uint16 anchor_out_u16;
-   84   1          uint16 next_mid[APP_INDUCTOR_CHANNEL_COUNT];
-   85   1          uint32 next_slope_low[APP_INDUCTOR_CHANNEL_COUNT];
-   86   1          uint32 next_slope_high[APP_INDUCTOR_CHANNEL_COUNT];
-   87   1          uint32 next_slope_full[APP_INDUCTOR_CHANNEL_COUNT];
-   88   1      
-   89   1          /* 锚点输出 X 截断到 [0,100] */
-   90   1          if(0.0f >= inductor_anchor_out)
-   91   1          {
-   92   2              anchor_out_u16 = 0U;
-   93   2          }
-   94   1          else if(100.0f <= inductor_anchor_out)
-   95   1          {
-   96   2              anchor_out_u16 = 100U;
-   97   2          }
-   98   1          else
-   99   1          {
-  100   2              anchor_out_u16 = (uint16)inductor_anchor_out;
-  101   2          }
-  102   1      
-  103   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  104   1          {
-  105   2              next_mid[i] = app_inductor_preprocess_mid_value[i];
-  106   2              if(0U != APP_INDUCTOR_IS_ANCHOR_CHANNEL(i))
-  107   2              {
-  108   3                  /* 锚点模式(CH1/CH4): 下段 [min, mid] -> [0, X] */
-  109   3                  if(app_inductor_preprocess_mid_value[i] > app_inductor_preprocess_min_value[i])
-  110   3                  {
-  111   4                      low_width = (uint16)(app_inductor_preprocess_mid_value[i] -
-  112   4                              app_inductor_preprocess_min_value[i]);
-  113   4                      next_slope_low[i] = (((uint32)anchor_out_u16 << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
-  114   4                              low_width - 1UL) / low_width;
-  115   4                  }
-  116   3                  else
-  117   3                  {
-  118   4                      next_slope_low[i] = 0UL;
-  119   4                  }
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 3   
+   55          static uint8 inductor_sensor_fault = 0U;
+   56          
+   57          static void app_inductor_preprocess_tick(void);
+   58          
+   59          static uint8 app_inductor_sample(uint16 sample[APP_INDUCTOR_CHANNEL_COUNT], uint32 *sequence)
+   60          {
+   61   1          service_inductor_data_t raw;
+   62   1      
+   63   1          if(0U == service_inductor_get_snapshot(&raw, sequence))
+   64   1          {
+   65   2              return 0U;
+   66   2          }
+   67   1      
+   68   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH1] = raw.channel_1;
+   69   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH2] = raw.channel_2;
+   70   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH3] = raw.channel_3;
+   71   1          sample[APP_INDUCTOR_PREPROCESS_INDEX_CH4] = raw.channel_4;
+   72   1          return 1U;
+   73   1      }
+   74          
+   75          static void app_inductor_update_precomputed(void)
+   76          {
+   77   1          uint8 i;
+   78   1          uint8 ea_backup;
+   79   1          uint16 low_width;
+   80   1          uint16 high_width;
+   81   1          uint16 full_width;
+   82   1          uint16 anchor_out_u16;
+   83   1          uint16 next_mid[APP_INDUCTOR_CHANNEL_COUNT];
+   84   1          uint32 next_slope_low[APP_INDUCTOR_CHANNEL_COUNT];
+   85   1          uint32 next_slope_high[APP_INDUCTOR_CHANNEL_COUNT];
+   86   1          uint32 next_slope_full[APP_INDUCTOR_CHANNEL_COUNT];
+   87   1      
+   88   1          /* 锚点输出 X 截断到 [0,100] */
+   89   1          if(0.0f >= inductor_anchor_out)
+   90   1          {
+   91   2              anchor_out_u16 = 0U;
+   92   2          }
+   93   1          else if(100.0f <= inductor_anchor_out)
+   94   1          {
+   95   2              anchor_out_u16 = 100U;
+   96   2          }
+   97   1          else
+   98   1          {
+   99   2              anchor_out_u16 = (uint16)inductor_anchor_out;
+  100   2          }
+  101   1      
+  102   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  103   1          {
+  104   2              next_mid[i] = app_inductor_preprocess_mid_value[i];
+  105   2              if(0U != APP_INDUCTOR_IS_ANCHOR_CHANNEL(i))
+  106   2              {
+  107   3                  /* 锚点模式(CH1/CH4): 下段 [min, mid] -> [0, X] */
+  108   3                  if(app_inductor_preprocess_mid_value[i] > app_inductor_preprocess_min_value[i])
+  109   3                  {
+  110   4                      low_width = (uint16)(app_inductor_preprocess_mid_value[i] -
+  111   4                              app_inductor_preprocess_min_value[i]);
+  112   4                      next_slope_low[i] = (((uint32)anchor_out_u16 << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
+  113   4                              low_width - 1UL) / low_width;
+  114   4                  }
+  115   3                  else
+  116   3                  {
+  117   4                      next_slope_low[i] = 0UL;
+  118   4                  }
+  119   3                  /* 锚点模式: 上段 [mid, max] -> [X, 100] */
+  120   3                  if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_mid_value[i])
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 3   
 
-  120   3                  /* 锚点模式: 上段 [mid, max] -> [X, 100] */
-  121   3                  if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_mid_value[i])
-  122   3                  {
-  123   4                      high_width = (uint16)(app_inductor_preprocess_max_value[i] -
-  124   4                              app_inductor_preprocess_mid_value[i]);
-  125   4                      next_slope_high[i] = (((uint32)(100U - anchor_out_u16) << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
-  126   4                              high_width - 1UL) / high_width;
-  127   4                  }
-  128   3                  else
-  129   3                  {
-  130   4                      next_slope_high[i] = 0UL;
-  131   4                  }
-  132   3                  next_slope_full[i] = 0UL;
-  133   3              }
-  134   2              else
-  135   2              {
-  136   3                  /* 单段模式(CH2/CH3): [min, max] -> [0, 100], 与原 min-max 归一化一致 */
-  137   3                  next_slope_low[i] = 0UL;
-  138   3                  next_slope_high[i] = 0UL;
-  139   3                  if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_min_value[i])
-  140   3                  {
-  141   4                      full_width = (uint16)(app_inductor_preprocess_max_value[i] -
-  142   4                              app_inductor_preprocess_min_value[i]);
-  143   4                      next_slope_full[i] = ((100UL << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
-  144   4                              full_width - 1UL) / full_width;
-  145   4                  }
-  146   3                  else
-  147   3                  {
-  148   4                      next_slope_full[i] = 0UL;
-  149   4                  }
-  150   3              }
-  151   2          }
-  152   1      
-  153   1          /* TIM4 only observes fully published calibration triples. */
-  154   1          ea_backup = EA;
-  155   1          EA = 0;
-  156   1          inductor_anchor_u16 = anchor_out_u16;
-  157   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  158   1          {
-  159   2              inductor_mid_value[i] = next_mid[i];
-  160   2              inductor_slope_low_q16[i] = next_slope_low[i];
-  161   2              inductor_slope_high_q16[i] = next_slope_high[i];
-  162   2              inductor_slope_full_q16[i] = next_slope_full[i];
-  163   2          }
-  164   1          EA = ea_backup;
-  165   1      }
-  166          
-  167          static void app_inductor_update_output(void)
-  168          {
-  169   1          uint8 i;
-  170   1          uint8 j;
-  171   1          uint8 ea_backup;
-  172   1          uint32 sum;
-  173   1          uint16 min_val;
-  174   1          uint16 max_val;
-  175   1          uint16 values[APP_INDUCTOR_HISTORY_COUNT];
-  176   1          uint16 filtered[APP_INDUCTOR_CHANNEL_COUNT];
-  177   1          uint16 normalized[APP_INDUCTOR_CHANNEL_COUNT];
-  178   1      
-  179   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  180   1          {
-  181   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
-  182   2              {
-  183   3                  values[j] = inductor_history[i][j];
-  184   3              }
-  185   2      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 4   
+  121   3                  {
+  122   4                      high_width = (uint16)(app_inductor_preprocess_max_value[i] -
+  123   4                              app_inductor_preprocess_mid_value[i]);
+  124   4                      next_slope_high[i] = (((uint32)(100U - anchor_out_u16) << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
+  125   4                              high_width - 1UL) / high_width;
+  126   4                  }
+  127   3                  else
+  128   3                  {
+  129   4                      next_slope_high[i] = 0UL;
+  130   4                  }
+  131   3                  next_slope_full[i] = 0UL;
+  132   3              }
+  133   2              else
+  134   2              {
+  135   3                  /* 单段模式(CH2/CH3): [min, max] -> [0, 100], 与原 min-max 归一化一致 */
+  136   3                  next_slope_low[i] = 0UL;
+  137   3                  next_slope_high[i] = 0UL;
+  138   3                  if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_min_value[i])
+  139   3                  {
+  140   4                      full_width = (uint16)(app_inductor_preprocess_max_value[i] -
+  141   4                              app_inductor_preprocess_min_value[i]);
+  142   4                      next_slope_full[i] = ((100UL << APP_INDUCTOR_SLOPE_Q16_SHIFT) +
+  143   4                              full_width - 1UL) / full_width;
+  144   4                  }
+  145   3                  else
+  146   3                  {
+  147   4                      next_slope_full[i] = 0UL;
+  148   4                  }
+  149   3              }
+  150   2          }
+  151   1      
+  152   1          /* TIM4 only observes fully published calibration triples. */
+  153   1          ea_backup = EA;
+  154   1          EA = 0;
+  155   1          inductor_anchor_u16 = anchor_out_u16;
+  156   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  157   1          {
+  158   2              inductor_mid_value[i] = next_mid[i];
+  159   2              inductor_slope_low_q16[i] = next_slope_low[i];
+  160   2              inductor_slope_high_q16[i] = next_slope_high[i];
+  161   2              inductor_slope_full_q16[i] = next_slope_full[i];
+  162   2          }
+  163   1          EA = ea_backup;
+  164   1      }
+  165          
+  166          static void app_inductor_update_output(void)
+  167          {
+  168   1          uint8 i;
+  169   1          uint8 j;
+  170   1          uint8 ea_backup;
+  171   1          uint32 sum;
+  172   1          uint16 min_val;
+  173   1          uint16 max_val;
+  174   1          uint16 values[APP_INDUCTOR_HISTORY_COUNT];
+  175   1          uint16 filtered[APP_INDUCTOR_CHANNEL_COUNT];
+  176   1          uint16 normalized[APP_INDUCTOR_CHANNEL_COUNT];
+  177   1      
+  178   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  179   1          {
+  180   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
+  181   2              {
+  182   3                  values[j] = inductor_history[i][j];
+  183   3              }
+  184   2      
+  185   2              min_val = values[0];
+  186   2              max_val = values[0];
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 4   
 
-  186   2              min_val = values[0];
-  187   2              max_val = values[0];
-  188   2              sum = values[0];
-  189   2              for(j = 1U; j < APP_INDUCTOR_HISTORY_COUNT; j++)
-  190   2              {
-  191   3                  sum += values[j];
-  192   3                  if(values[j] < min_val)
-  193   3                  {
-  194   4                      min_val = values[j];
-  195   4                  }
-  196   3                  if(values[j] > max_val)
-  197   3                  {
-  198   4                      max_val = values[j];
-  199   4                  }
-  200   3              }
-  201   2      
-  202   2              /* 整数中值滤波: 去极值后 5 帧平均(四舍五入), 零浮点 */
-  203   2              filtered[i] = (uint16)((sum - min_val - max_val + 2UL) / 5UL);
-  204   2      
-  205   2              if(0U != APP_INDUCTOR_IS_ANCHOR_CHANNEL(i))
-  206   2              {
-  207   3                  /* 锚点模式(CH1/CH4): 分段映射(零浮点定点 Q16) min->0, mid->X, max->100, 上段�
+  187   2              sum = values[0];
+  188   2              for(j = 1U; j < APP_INDUCTOR_HISTORY_COUNT; j++)
+  189   2              {
+  190   3                  sum += values[j];
+  191   3                  if(values[j] < min_val)
+  192   3                  {
+  193   4                      min_val = values[j];
+  194   4                  }
+  195   3                  if(values[j] > max_val)
+  196   3                  {
+  197   4                      max_val = values[j];
+  198   4                  }
+  199   3              }
+  200   2      
+  201   2              /* 整数中值滤波: 去极值后 5 帧平均(四舍五入), 零浮点 */
+  202   2              filtered[i] = (uint16)((sum - min_val - max_val + 2UL) / 5UL);
+  203   2      
+  204   2              if(0U != APP_INDUCTOR_IS_ANCHOR_CHANNEL(i))
+  205   2              {
+  206   3                  /* 锚点模式(CH1/CH4): 分段映射(零浮点定点 Q16) min->0, mid->X, max->100, 上段�
              -��留 300 外推
-  208   3                     X=inductor_anchor_u16 为全局共用锚点输出, 两通道 mid 处输出严格相等 */
-  209   3                  if(filtered[i] <= inductor_mid_value[i])
-  210   3                  {
-  211   4                      if((0UL == inductor_slope_low_q16[i]) ||
-  212   4                              (filtered[i] <= app_inductor_preprocess_min_value[i]))
-  213   4                      {
-  214   5                          normalized[i] = 0U;
-  215   5                      }
-  216   4                      else
-  217   4                      {
-  218   5                          normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]
+  207   3                     X=inductor_anchor_u16 为全局共用锚点输出, 两通道 mid 处输出严格相等 */
+  208   3                  if(filtered[i] <= inductor_mid_value[i])
+  209   3                  {
+  210   4                      if((0UL == inductor_slope_low_q16[i]) ||
+  211   4                              (filtered[i] <= app_inductor_preprocess_min_value[i]))
+  212   4                      {
+  213   5                          normalized[i] = 0U;
+  214   5                      }
+  215   4                      else
+  216   4                      {
+  217   5                          normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]
              -) *
-  219   5                                  inductor_slope_low_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
-  220   5                      }
-  221   4                  }
-  222   3                  else
-  223   3                  {
-  224   4                      if(0UL == inductor_slope_high_q16[i])
-  225   4                      {
-  226   5                          normalized[i] = inductor_anchor_u16;
-  227   5                      }
-  228   4                      else
-  229   4                      {
-  230   5                          normalized[i] = (uint16)(inductor_anchor_u16 +
-  231   5                                  (((uint32)(filtered[i] - inductor_mid_value[i]) *
-  232   5                                  inductor_slope_high_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT));
-  233   5                          if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
-  234   5                          {
-  235   6                              normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT_U16;
-  236   6                          }
-  237   5                      }
-  238   4                  }
-  239   3              }
-  240   2              else
-  241   2              {
-  242   3                  /* 单段模式(CH2/CH3): 原 min-max 线性归一化 (v-min)*100/(max-min), 钳 0/300 */
-  243   3                  if((0UL == inductor_slope_full_q16[i]) ||
-  244   3                          (filtered[i] <= app_inductor_preprocess_min_value[i]))
-  245   3                  {
-  246   4                      normalized[i] = 0U;
-  247   4                  }
-  248   3                  else
-  249   3                  {
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 5   
+  218   5                                  inductor_slope_low_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
+  219   5                      }
+  220   4                  }
+  221   3                  else
+  222   3                  {
+  223   4                      if(0UL == inductor_slope_high_q16[i])
+  224   4                      {
+  225   5                          normalized[i] = inductor_anchor_u16;
+  226   5                      }
+  227   4                      else
+  228   4                      {
+  229   5                          normalized[i] = (uint16)(inductor_anchor_u16 +
+  230   5                                  (((uint32)(filtered[i] - inductor_mid_value[i]) *
+  231   5                                  inductor_slope_high_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT));
+  232   5                          if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
+  233   5                          {
+  234   6                              normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT_U16;
+  235   6                          }
+  236   5                      }
+  237   4                  }
+  238   3              }
+  239   2              else
+  240   2              {
+  241   3                  /* 单段模式(CH2/CH3): 原 min-max 线性归一化 (v-min)*100/(max-min), 钳 0/300 */
+  242   3                  if((0UL == inductor_slope_full_q16[i]) ||
+  243   3                          (filtered[i] <= app_inductor_preprocess_min_value[i]))
+  244   3                  {
+  245   4                      normalized[i] = 0U;
+  246   4                  }
+  247   3                  else
+  248   3                  {
+  249   4                      normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]) *
+  250   4                              inductor_slope_full_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 5   
 
-  250   4                      normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]) *
-  251   4                              inductor_slope_full_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
-  252   4                      if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
-  253   4                      {
-  254   5                          normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT_U16;
-  255   5                      }
-  256   4                  }
-  257   3              }
-  258   2          }
-  259   1      
-  260   1          ea_backup = EA;
-  261   1          EA = 0;
-  262   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  263   1          {
-  264   2              inductor_data.filtered[i] = tfpu_int2float((long)filtered[i]);
-  265   2              inductor_data.normalized[i] = tfpu_int2float((long)normalized[i]);
-  266   2          }
-  267   1          EA = ea_backup;
-  268   1      }
-  269          
-  270          static void app_inductor_preprocess_tick(void)
-  271          {
-  272   1          uint8 i;
-  273   1          uint8 j;
-  274   1          uint16 sample[APP_INDUCTOR_CHANNEL_COUNT];
-  275   1          uint32 sequence;
-  276   1          uint32 now;
-  277   1      
-  278   1          now = service_timetick_what();
-  279   1      
-  280   1          /* 无线锚点输出 X 变化时重算两段斜率(仅变化瞬间执行, 8次32位除法约数十us
+  251   4                      if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
+  252   4                      {
+  253   5                          normalized[i] = APP_INDUCTOR_NORM_UPPER_LIMIT_U16;
+  254   5                      }
+  255   4                  }
+  256   3              }
+  257   2          }
+  258   1      
+  259   1          ea_backup = EA;
+  260   1          EA = 0;
+  261   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  262   1          {
+  263   2              inductor_data.filtered[i] = tfpu_int2float((long)filtered[i]);
+  264   2              inductor_data.normalized[i] = tfpu_int2float((long)normalized[i]);
+  265   2          }
+  266   1          EA = ea_backup;
+  267   1      }
+  268          
+  269          static void app_inductor_preprocess_tick(void)
+  270          {
+  271   1          uint8 i;
+  272   1          uint8 j;
+  273   1          uint16 sample[APP_INDUCTOR_CHANNEL_COUNT];
+  274   1          uint32 sequence;
+  275   1          uint32 now;
+  276   1      
+  277   1          now = service_timetick_what();
+  278   1      
+  279   1          /* 无线锚点输出 X 变化时重算两段斜率(仅变化瞬间执行, 8次32位除法约数十us
              -) */
-  281   1          if(inductor_anchor_out != inductor_anchor_out_last)
-  282   1          {
-  283   2              inductor_anchor_out_last = inductor_anchor_out;
-  284   2              app_inductor_update_precomputed();
-  285   2          }
-  286   1      
-  287   1          if(0U == app_inductor_sample(sample, &sequence))
-  288   1          {
-  289   2              if((uint32)(now - inductor_start_tick) >= APP_INDUCTOR_STARTUP_GRACE_TICK)
-  290   2              {
-  291   3                  if(0U == inductor_sensor_fault)
-  292   3                  {
-  293   4                      inductor_sensor_fault = 1U;
-  294   4                      app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
-  295   4                  }
-  296   3              }
-  297   2              (void)service_inductor_request_sample();
-  298   2              return;
-  299   2          }
-  300   1      
-  301   1          if((0U != inductor_sensor_seen) && (sequence == inductor_last_sequence))
-  302   1          {
-  303   2              if((uint32)(now - inductor_last_fresh_tick) >= APP_INDUCTOR_MAX_SAMPLE_AGE_TICK)
-  304   2              {
-  305   3                  if(0U == inductor_sensor_fault)
-  306   3                  {
-  307   4                      inductor_sensor_fault = 1U;
-  308   4                      app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
-  309   4                  }
-  310   3              }
-  311   2              (void)service_inductor_request_sample();
-  312   2              return;
-  313   2          }
-  314   1      
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 6   
+  280   1          if(inductor_anchor_out != inductor_anchor_out_last)
+  281   1          {
+  282   2              inductor_anchor_out_last = inductor_anchor_out;
+  283   2              app_inductor_update_precomputed();
+  284   2          }
+  285   1      
+  286   1          if(0U == app_inductor_sample(sample, &sequence))
+  287   1          {
+  288   2              if((uint32)(now - inductor_start_tick) >= APP_INDUCTOR_STARTUP_GRACE_TICK)
+  289   2              {
+  290   3                  if(0U == inductor_sensor_fault)
+  291   3                  {
+  292   4                      inductor_sensor_fault = 1U;
+  293   4                      app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
+  294   4                  }
+  295   3              }
+  296   2              (void)service_inductor_request_sample();
+  297   2              return;
+  298   2          }
+  299   1      
+  300   1          if((0U != inductor_sensor_seen) && (sequence == inductor_last_sequence))
+  301   1          {
+  302   2              if((uint32)(now - inductor_last_fresh_tick) >= APP_INDUCTOR_MAX_SAMPLE_AGE_TICK)
+  303   2              {
+  304   3                  if(0U == inductor_sensor_fault)
+  305   3                  {
+  306   4                      inductor_sensor_fault = 1U;
+  307   4                      app_speedout_set_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
+  308   4                  }
+  309   3              }
+  310   2              (void)service_inductor_request_sample();
+  311   2              return;
+  312   2          }
+  313   1      
+  314   1          inductor_last_sequence = sequence;
+  315   1          inductor_last_fresh_tick = now;
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 6   
 
-  315   1          inductor_last_sequence = sequence;
-  316   1          inductor_last_fresh_tick = now;
-  317   1          inductor_sensor_seen = 1U;
-  318   1          if(0U != inductor_sensor_fault)
-  319   1          {
-  320   2              inductor_sensor_fault = 0U;
-  321   2              app_speedout_clear_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
-  322   2          }
-  323   1      
-  324   1          if(0U == inductor_history_valid)
-  325   1          {
-  326   2              for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  327   2              {
-  328   3                  for(j = 0U; j < APP_INDUCTOR_HISTORY_COUNT; j++)
-  329   3                  {
-  330   4                      inductor_history[i][j] = sample[i];
-  331   4                  }
-  332   3              }
-  333   2              inductor_history_index = 0U;
-  334   2              inductor_history_valid = 1U;
-  335   2          }
-  336   1          else
-  337   1          {
-  338   2              for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  339   2              {
-  340   3                  inductor_history[i][inductor_history_index] = sample[i];
-  341   3              }
-  342   2      
-  343   2              inductor_history_index++;
-  344   2              if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
-  345   2              {
-  346   3                  inductor_history_index = 0U;
-  347   3              }
-  348   2          }
-  349   1      
-  350   1          app_inductor_update_output();
-  351   1          (void)service_inductor_request_sample();
-  352   1      }
-  353          
-  354          void app_inductor_preprocess_init(void)
-  355          {
-  356   1          uint8 i;
-  357   1          uint8 j;
-  358   1          uint16 sample[APP_INDUCTOR_CHANNEL_COUNT];
-  359   1      
-  360   1          service_inductor_init();
-  361   1          (void)service_packet_add_variable("anchor_out",
-  362   1                  (float *)&inductor_anchor_out, 1U);
-  363   1      
-  364   1          for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  365   1          {
-  366   2              sample[i] = 0U;
-  367   2          }
-  368   1          (void)app_inductor_sample(sample, NULL);
-  369   1      
-  370   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  371   1          {
-  372   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
-  373   2              {
-  374   3                  inductor_history[i][j] = sample[i];
-  375   3              }
-  376   2          }
-  377   1      
-  378   1          inductor_history_index = 0U;
-  379   1          inductor_history_valid = 0U;
-  380   1          inductor_last_sequence = 0UL;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 7   
+  316   1          inductor_sensor_seen = 1U;
+  317   1          if(0U != inductor_sensor_fault)
+  318   1          {
+  319   2              inductor_sensor_fault = 0U;
+  320   2              app_speedout_clear_safety_inhibit(APP_SPEEDOUT_SAFETY_INDUCTOR);
+  321   2          }
+  322   1      
+  323   1          if(0U == inductor_history_valid)
+  324   1          {
+  325   2              for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  326   2              {
+  327   3                  for(j = 0U; j < APP_INDUCTOR_HISTORY_COUNT; j++)
+  328   3                  {
+  329   4                      inductor_history[i][j] = sample[i];
+  330   4                  }
+  331   3              }
+  332   2              inductor_history_index = 0U;
+  333   2              inductor_history_valid = 1U;
+  334   2          }
+  335   1          else
+  336   1          {
+  337   2              for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  338   2              {
+  339   3                  inductor_history[i][inductor_history_index] = sample[i];
+  340   3              }
+  341   2      
+  342   2              inductor_history_index++;
+  343   2              if(APP_INDUCTOR_HISTORY_COUNT <= inductor_history_index)
+  344   2              {
+  345   3                  inductor_history_index = 0U;
+  346   3              }
+  347   2          }
+  348   1      
+  349   1          app_inductor_update_output();
+  350   1          (void)service_inductor_request_sample();
+  351   1      }
+  352          
+  353          void app_inductor_preprocess_init(void)
+  354          {
+  355   1          uint8 i;
+  356   1          uint8 j;
+  357   1          uint16 sample[APP_INDUCTOR_CHANNEL_COUNT];
+  358   1      
+  359   1          service_inductor_init();
+  360   1          (void)service_packet_add_variable("anchor_out",
+  361   1                  (float *)&inductor_anchor_out, 1U);
+  362   1      
+  363   1          for(i = 0U; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  364   1          {
+  365   2              sample[i] = 0U;
+  366   2          }
+  367   1          (void)app_inductor_sample(sample, NULL);
+  368   1      
+  369   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  370   1          {
+  371   2              for(j = 0; j < APP_INDUCTOR_HISTORY_COUNT; j++)
+  372   2              {
+  373   3                  inductor_history[i][j] = sample[i];
+  374   3              }
+  375   2          }
+  376   1      
+  377   1          inductor_history_index = 0U;
+  378   1          inductor_history_valid = 0U;
+  379   1          inductor_last_sequence = 0UL;
+  380   1          inductor_last_fresh_tick = service_timetick_what();
+  381   1          inductor_start_tick = inductor_last_fresh_tick;
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 7   
 
-  381   1          inductor_last_fresh_tick = service_timetick_what();
-  382   1          inductor_start_tick = inductor_last_fresh_tick;
-  383   1          inductor_sensor_seen = 0U;
-  384   1          inductor_sensor_fault = 0U;
-  385   1          app_inductor_update_precomputed();
-  386   1          app_inductor_update_output();
-  387   1      
-  388   1          pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_t
+  382   1          inductor_sensor_seen = 0U;
+  383   1          inductor_sensor_fault = 0U;
+  384   1          app_inductor_update_precomputed();
+  385   1          app_inductor_update_output();
+  386   1      
+  387   1          pit_us_init(APP_INDUCTOR_PREPROCESS_PIT, APP_INDUCTOR_PREPROCESS_PERIOD_US, app_inductor_preprocess_t
              -ick);
-  389   1          interrupt_set_priority(TIM4_IRQn, 3U);
-  390   1          #if __DBGFLAG__
-  391   1          printf(">>[app_inductor_preprocess_init]\r\n");
-  392   1          wprint(">>[app_inductor_preprocess_init]\r\n");
-  393   1          #endif
-  394   1      }
-  395          
-  396          void app_inductor_preprocess_debug(void)
-  397          {
-  398   1          static uint32 last_tick = 0U;
-  399   1          app_inductor_preprocess_data_t inductor;
-  400   1      
-  401   1          if((service_timetick_what() - last_tick) >= 33U)  // 30Hz
-  402   1          {
-  403   2              last_tick = service_timetick_what();
-  404   2              app_inductor_preprocess_get_data(&inductor);
-  405   2              wprint("%.1f,%.1f,%.1f,%.1f\r\n",
-  406   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
-  407   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
-  408   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
-  409   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]);
-  410   2          }
-  411   1      }
-  412          
-  413          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
-  414          {
-  415   1          uint8 i;
-  416   1          uint8 ea_backup;
-  417   1      
-  418   1          if(NULL == out_data)
-  419   1          {
-  420   2              return;
-  421   2          }
-  422   1      
-  423   1          ea_backup = EA;
-  424   1          EA = 0;
-  425   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
-  426   1          {
-  427   2              out_data->filtered[i] = inductor_data.filtered[i];
-  428   2              out_data->normalized[i] = inductor_data.normalized[i];
-  429   2          }
-  430   1          EA = ea_backup;
-  431   1      }
+  388   1          interrupt_set_priority(TIM4_IRQn, 3U);
+  389   1          #if __DBGFLAG__
+  390   1          printf(">>[app_inductor_preprocess_init]\r\n");
+  391   1          wprint(">>[app_inductor_preprocess_init]\r\n");
+  392   1          #endif
+  393   1      }
+  394          
+  395          void app_inductor_preprocess_debug(void)
+  396          {
+  397   1          static uint32 last_tick = 0U;
+  398   1          app_inductor_preprocess_data_t inductor;
+  399   1      
+  400   1          if((service_timetick_what() - last_tick) >= 33U)  // 30Hz
+  401   1          {
+  402   2              last_tick = service_timetick_what();
+  403   2              app_inductor_preprocess_get_data(&inductor);
+  404   2              wprint("%.1f,%.1f,%.1f,%.1f\r\n",
+  405   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH1],
+  406   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH2],
+  407   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH3],
+  408   2                      inductor.normalized[APP_INDUCTOR_PREPROCESS_INDEX_CH4]);
+  409   2          }
+  410   1      }
+  411          
+  412          void app_inductor_preprocess_get_data(app_inductor_preprocess_data_t *out_data)
+  413          {
+  414   1          uint8 i;
+  415   1          uint8 ea_backup;
+  416   1      
+  417   1          if(NULL == out_data)
+  418   1          {
+  419   2              return;
+  420   2          }
+  421   1      
+  422   1          ea_backup = EA;
+  423   1          EA = 0;
+  424   1          for(i = 0; i < APP_INDUCTOR_CHANNEL_COUNT; i++)
+  425   1          {
+  426   2              out_data->filtered[i] = inductor_data.filtered[i];
+  427   2              out_data->normalized[i] = inductor_data.normalized[i];
+  428   2          }
+  429   1          EA = ea_backup;
+  430   1      }
 
 
 Module Information          Static   Overlayable
@@ -475,10 +473,10 @@ Module Information          Static   Overlayable
   bit size             =    ------     ------
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            16/08/26  15:56:02  PAGE 8   
-
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            17/08/26  21:41:45  PAGE 8   
+
   huge data size       =    ------     ------
   const size           =    ------     ------
   hconst size          =       185     ------

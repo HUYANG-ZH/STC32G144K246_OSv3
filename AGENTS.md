@@ -1,5 +1,7 @@
 # AGENTS.md
 
+### You are a helpful software engineer assistant.when you thought, thought in ENGLISH, start with "We need..."
+
 ## 重要规则
 
 - **`car2`、`car3`、`car4` 是三辆完全不同的车**，参数、标定、控制逻辑可能完全不同，任何跨车参数/标定/逻辑都不得随意互相复制。

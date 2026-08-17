@@ -25,18 +25,17 @@
         (APP_INDUCTOR_PREPROCESS_INDEX_CH4 == (i)))
 // car3 已彻底弃用 M 通道电感, 仅标定 CH1~CH4 四路
 // 锚点模式(CH1/CH4)实测标定: min/mid(车严格居中实测)/max
-//   CH1: min=750 mid=1873 max=2341; CH4: min=850 mid=1810 max=2177
-// 单段模式(CH2/CH3)仅用 min/max: CH2 1037/3200, CH3 1189/3200; mid 占位值不参与计算
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {750U, 1037U, 1189U, 850U};
-uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1873U, 1935U, 2070U, 1810U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2341U, 3200U, 3200U, 2177U};
+//   CH1: min=714 mid=1831 max=2265; CH4: min=853 mid=1720 max=2100
+// 单段模式(CH2/CH3)仅用 min/max: CH2 1007/3125, CH3 1175/3190; mid 占位值不参与计算
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {714U, 1007U, 1175U, 853U};
+uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1831U, 1935U, 2070U, 1720U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2265U, 3125U, 3190U, 2100U};
 
 static void app_inductor_update_precomputed(void);
 
 /* 锚点输出 X(全局共用, 无线可调): 锚点模式通道在 mid 处的归一化值, 默认 68
-   依据: 新标定(CH1 750/1873/2341, CH4 850/1810/2177)工作区1400~2200,
-   对称标准 X=62~72, 两段斜率均衡 X=70~72, 折中取 68: CH1两段斜率几乎均衡(0.061/0.068),
-   CH4上段 0.136->0.087 缓和(原50上段过陡易饱和); 实车可无线微调 64~72 */
+   依据: car3 标定(CH1 714/1831/2265, CH4 853/1720/2100), 两段斜率均衡 X=69.5~72 折中取 68:
+   CH1 下段0.061/上段0.074, CH4 下段0.078/上段0.084 均较均衡; 实车可无线微调 66~72 */
 static volatile float inductor_anchor_out = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
 static float inductor_anchor_out_last = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
 static uint16 inductor_mid_value[APP_INDUCTOR_CHANNEL_COUNT];
