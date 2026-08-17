@@ -19,23 +19,23 @@
    斜率 k = ceil(Δout<<16/区间宽), uint32 存; 区间内 Δv<=w => 乘积<=100<<16<2^32 无溢出 */
 #define APP_INDUCTOR_SLOPE_Q16_SHIFT          (16U)
 #define APP_INDUCTOR_NORM_UPPER_LIMIT_U16      (300U)
-#define APP_INDUCTOR_ANCHOR_OUT_DEFAULT        (68.0f)
+#define APP_INDUCTOR_ANCHOR_OUT_DEFAULT        (74.0f)
 /* 锚点模式通道判定: 仅 CH1/CH4 */
 #define APP_INDUCTOR_IS_ANCHOR_CHANNEL(i)      ((APP_INDUCTOR_PREPROCESS_INDEX_CH1 == (i)) || \
         (APP_INDUCTOR_PREPROCESS_INDEX_CH4 == (i)))
 // car4 已彻底弃用 M 通道电感, 仅标定 CH1~CH4 四路
 // 锚点模式(CH1/CH4)实测标定: min/mid(车严格居中实测)/max
-//   CH1: min=510 mid=1576 max=2131; CH4: min=558 mid=1619 max=1997
-// 单段模式(CH2/CH3)仅用 min/max: CH2 880/3100, CH3 957/3100; mid 占位值不参与计算
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {510U, 880U, 957U, 558U};
-uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1576U, 1935U, 2070U, 1619U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2131U, 3100U, 3100U, 1997U};
+//   CH1: min=762 mid=1650 max=2469; CH4: min=843 mid=1650 max=2323
+// 单段模式(CH2/CH3)仅用 min/max: CH2 1025/3100, CH3 1210/3100; mid 占位值不参与计算
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {762U, 1025U, 1210U, 843U};
+uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1650U, 1935U, 2070U, 1650U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2469U, 3100U, 3100U, 2323U};
 
 static void app_inductor_update_precomputed(void);
 
-/* 锚点输出 X(全局共用, 无线可调): 锚点模式通道在 mid 处的归一化值, 默认 68
-   依据: car4 标定(CH1 510/1576/2131, CH4 558/1619/1997), 两段斜率均衡 X=66~74 折中取 68:
-   CH1 下段0.064/上段0.058 均衡, CH4 下段0.064/上段0.085(上段略陡); 实车可无线微调 64~74 */
+/* 锚点输出 X(全局共用, 无线可调): 锚点模式通道在 mid 处的归一化值, 默认 74
+   依据: car4 标定(CH1 762/2046/2469, CH4 843/1914/2323), 两段斜率均衡 X≈72~75,
+   取 74: CH1 下/上 0.058/0.061、CH4 0.069/0.064 接近均衡, 缓解 68 时上段偏陡(0.076/0.078) */
 static volatile float inductor_anchor_out = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
 static float inductor_anchor_out_last = APP_INDUCTOR_ANCHOR_OUT_DEFAULT;
 static uint16 inductor_mid_value[APP_INDUCTOR_CHANNEL_COUNT];
