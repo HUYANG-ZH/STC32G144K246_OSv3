@@ -4,12 +4,16 @@
 #include "zf_common_typedef.h"
 #include "service_imu.h"
 
-#ifndef APP_ELEMENT_CYLINDER_YAW_LIMIT
-#define APP_ELEMENT_CYLINDER_YAW_LIMIT          (3.4907f)   // 圆筒元素触发后车体转向角速度限制，单位 rad/s，默认 200deg/s
+#ifndef APP_ELEMENT_CYLINDER_YAW_LIMIT_POS
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT_POS      (0.8f)      // 圆筒元素触发后车体转向角速度正方向限幅，单位 rad/s
+#endif
+
+#ifndef APP_ELEMENT_CYLINDER_YAW_LIMIT_NEG
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT_NEG      (1.5f)      // 圆筒元素触发后车体转向角速度负方向限幅，单位 rad/s
 #endif
 
 #ifndef APP_ELEMENT_ROUNDABOUT_BIAS_BLEND
-#define APP_ELEMENT_ROUNDABOUT_BIAS_BLEND       (0.5f)      // 环岛偏置融合系数，0=仅巡线 1=仅偏置
+#define APP_ELEMENT_ROUNDABOUT_BIAS_BLEND       (0.72f)      // 环岛偏置融合系数，0=仅巡线 1=仅偏置
 #endif
 
 #ifndef APP_ELEMENT_PIT
