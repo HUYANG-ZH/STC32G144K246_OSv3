@@ -11,6 +11,13 @@
 #define APP_SPEEDOUT_PERIOD_MS           (1U)
 #endif
 
+/* 速度环前馈增益(自car3移植): 目标速度(m/s) 直接折算成 PWM 叠加到速度环输出。
+   符号: 速度环 PID 为 REVERSE 方向(正目标=前进=>负PWM), 前馈取 -target*KFF
+   与反馈同向, 避免前馈与反馈互相抵消。默认 500(与car3当前一致): 1m/s => 500/10000 占空比 */
+#ifndef APP_SPEEDOUT_MOTOR_KFF
+#define APP_SPEEDOUT_MOTOR_KFF           (500.0f)
+#endif
+
 #define APP_SPEEDOUT_SAFETY_BATTERY       (0x01U)
 #define APP_SPEEDOUT_SAFETY_IMU           (0x02U)
 #define APP_SPEEDOUT_SAFETY_INDUCTOR      (0x04U)
