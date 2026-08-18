@@ -22,9 +22,7 @@
 #define APP_MOTION_POSTPROCESS_DEFAULT_OUTPUT_LIMIT    (5.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_ENABLE          (1.0f)
 #define APP_MOTION_POSTPROCESS_DEFAULT_RATE_LIMIT      (0.0f)      // 角速度目标变化率限幅 rad/s²，0表示关闭
-/* 角速度反馈 LPF: α=0.45 更强平滑(实车反馈: α=0.7 后出弯低频大晃动,
-   降低 α 平滑角速度反馈噪声/抖动, 代价是反馈略滞后) */
-#define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (0.45f)
+#define APP_MOTION_POSTPROCESS_GYRO_LPF_ALPHA_DEFAULT  (0.5f)
 #define APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD        (0.5f)
 #define APP_MOTION_POSTPROCESS_DT_SECOND               ((float)APP_MOTION_POSTPROCESS_PERIOD_MS / 1000.0f)
 #define APP_MOTION_POSTPROCESS_DEG_TO_RAD              (0.0174532925f)
@@ -234,6 +232,18 @@ void app_motion_postprocess_imu_step(void)
     /* 先发布本帧 Kalman 姿态，再交给元素模块使用当前 pitch 判定跷跷板。 */
     /* 元素识别恢复(与car2同步): 圆筒识别 + 环岛横滚抑制 gz_high */
     app_element_imu_task(&imu);
+
+    /* 环岛识别 500Hz: TIM7 1ms 中断内 2 拍分频调用检测(识别模式仅上报不动作),
+       独立于 5ms 控制链; 角速度环调试图关闭元素检测保持原门控 */
+    if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
+    {
+        static uint8 roundabout_detect_div = 0U;
+        roundabout_detect_div++;
+        if(0U == (roundabout_detect_div & 1U))
+        {
+            app_element_control_step();
+        }
+    }
 }
 
 void app_motion_postprocess_init(void)
@@ -318,8 +328,7 @@ void app_motion_postprocess_control_step(void)
     /* 角速度环调试模式下关闭电感元素检测 */
     if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
     {
-        /* 环岛识别开启(仅识别上报, 不触发动作): 判据与car2一致(TOF>650 + INT8模型) */
-        app_element_control_step();
+        /* 环岛识别已迁至 TIM7 imu_step 500Hz 分频调用, 不再在此 5ms 链执行 */
     }
     /* 两轮速度环调试模式: 跳过前馈与速度规划, 目标线速由无线直接指派 */
     if(motion_postprocess_speed_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)

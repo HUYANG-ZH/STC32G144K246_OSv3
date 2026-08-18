@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          static uint32 inductor_last_sequence = 0UL;
    52          static uint32 inductor_last_fresh_tick = 0UL;
    53          static uint32 inductor_start_tick = 0UL;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 2   
 
    54          static uint8 inductor_sensor_seen = 0U;
    55          static uint8 inductor_sensor_fault = 0U;
@@ -134,7 +134,7 @@ stmt  level    source
   117   4                      next_slope_low[i] = 0UL;
   118   4                  }
   119   3                  /* 锚点模式: 上段 [mid, max] -> [X, 100] */
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 3   
 
   120   3                  if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_mid_value[i])
   121   3                  {
@@ -202,7 +202,7 @@ stmt  level    source
   183   3              }
   184   2      
   185   2              min_val = values[0];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 4   
 
   186   2              max_val = values[0];
   187   2              sum = values[0];
@@ -270,7 +270,7 @@ stmt  level    source
   247   3                  else
   248   3                  {
   249   4                      normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]) *
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 5   
 
   250   4                              inductor_slope_full_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
   251   4                      if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
@@ -338,7 +338,7 @@ stmt  level    source
   312   2          }
   313   1      
   314   1          inductor_last_sequence = sequence;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 6   
 
   315   1          inductor_last_fresh_tick = now;
   316   1          inductor_sensor_seen = 1U;
@@ -406,7 +406,7 @@ stmt  level    source
   378   1          inductor_history_valid = 0U;
   379   1          inductor_last_sequence = 0UL;
   380   1          inductor_last_fresh_tick = service_timetick_what();
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 7   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 7   
 
   381   1          inductor_start_tick = inductor_last_fresh_tick;
   382   1          inductor_sensor_seen = 0U;
@@ -475,7 +475,7 @@ Module Information          Static   Overlayable
   ebit size            =    ------     ------
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  13:40:20  PAGE 8   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:32:34  PAGE 8   
 
   far data size        =    ------     ------
   huge data size       =    ------     ------
