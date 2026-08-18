@@ -4,7 +4,8 @@
 #include "zf_common_typedef.h"
 
 #ifndef SERVICE_PACKET_VARIABLE_MAX
-#define SERVICE_PACKET_VARIABLE_MAX        (48U)
+/* 无线变量槽扩容 48->64: 原48恰好满额(debuginfo为第48个), 新增变量会静默注册失败 */
+#define SERVICE_PACKET_VARIABLE_MAX        (64U)
 #endif
 
 #ifndef SERVICE_PACKET_ACTION_MAX

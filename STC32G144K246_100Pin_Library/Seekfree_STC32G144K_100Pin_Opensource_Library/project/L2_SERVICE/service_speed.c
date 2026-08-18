@@ -9,7 +9,7 @@
 #define SERVICE_SPEED_ENCODER_PULSE_PER_REV  (1024.0f)
 #define SERVICE_SPEED_ENCODER_GEAR_TEETH     (10.0f)
 #define SERVICE_SPEED_WHEEL_GEAR_TEETH       (41.0f)
-#define SERVICE_SPEED_WHEEL_DIAMETER_M       (0.024f)
+#define SERVICE_SPEED_WHEEL_DIAMETER_M       (0.0228f)
 #define SERVICE_SPEED_SAMPLE_PERIOD_MS       (1U)
 #define SERVICE_SPEED_SAMPLE_PERIOD_SECOND   (0.001f)
 
@@ -25,7 +25,7 @@
 
 #define SERVICE_SPEED_LPF_ALPHA              (0.2f)
 
-static volatile service_speed_data_t speed_data = {0.0f, 0.0f};
+static volatile service_speed_data_t speed_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 static shared_lpf_t speed_lpf_left;
 static shared_lpf_t speed_lpf_right;
 
@@ -34,6 +34,9 @@ void service_speed_init(void)
     bsp_encoder_init();
     speed_data.left_mps = 0.0f;
     speed_data.right_mps = 0.0f;
+    speed_data.odo_left_m = 0.0f;
+    speed_data.odo_right_m = 0.0f;
+    speed_data.odo_total_m = 0.0f;
     shared_lpf_init(&speed_lpf_left, SERVICE_SPEED_LPF_ALPHA, 0.0f);
     shared_lpf_init(&speed_lpf_right, SERVICE_SPEED_LPF_ALPHA, 0.0f);
     pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
@@ -61,6 +64,26 @@ void service_speed_update(void)
             tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_MPS_PER_PULSE));
     speed_data.right_mps = shared_lpf_update(&speed_lpf_right,
             tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_MPS_PER_PULSE));
+
+    /* 编码器积分里程: 用本周期原始脉冲数累加左右轮行进距离(米), 不受滤波影响 */
+    speed_data.odo_left_m = tfpu_add(speed_data.odo_left_m,
+            tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_DISTANCE_PER_PULSE_M));
+    speed_data.odo_right_m = tfpu_add(speed_data.odo_right_m,
+            tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_DISTANCE_PER_PULSE_M));
+    speed_data.odo_total_m = tfpu_mul(
+            tfpu_add(speed_data.odo_left_m, speed_data.odo_right_m), 0.5f);
+}
+
+void service_speed_odometer_reset(void)
+{
+    uint8 ea_backup;
+
+    ea_backup = EA;
+    EA = 0;
+    speed_data.odo_left_m = 0.0f;
+    speed_data.odo_right_m = 0.0f;
+    speed_data.odo_total_m = 0.0f;
+    EA = ea_backup;
 }
 
 void service_speed_get(service_speed_data_t *out_speed)

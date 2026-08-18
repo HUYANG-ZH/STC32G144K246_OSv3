@@ -23,6 +23,7 @@
 #include "app_boot_sequence.h"
 #include "app_battery_guard.h"
 #include "app_stall_guard.h"
+#include "app_odometer.h"
 #include "debugw.h"
 #include "service_boot_request.h"
 #include "service_button.h"
@@ -54,6 +55,7 @@ void main(void)
     app_boot_sequence_init();
     service_boot_request_init();
     service_button_init();
+    app_odometer_init();
     debugw_init();
 
     wdt_init();
@@ -78,6 +80,7 @@ void main(void)
         service_negative_pressure_task();
         service_led_task();
         service_button_task();
+        app_odometer_task();
         debugw_task();
     }
 }

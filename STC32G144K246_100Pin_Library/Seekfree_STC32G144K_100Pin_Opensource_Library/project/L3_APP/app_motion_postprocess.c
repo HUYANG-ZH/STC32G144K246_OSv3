@@ -412,16 +412,17 @@ static void app_motion_postprocess_compute_step(void)
             app_element_get_data(&element);
             if((APP_ELEMENT_TYPE_CYLINDER == element.type) && (element.active >= 0.5f))
             {
-                float limit = APP_ELEMENT_CYLINDER_YAW_LIMIT;
+                float limit_pos = APP_ELEMENT_CYLINDER_YAW_LIMIT_POS;
+                float limit_neg = APP_ELEMENT_CYLINDER_YAW_LIMIT_NEG;
 
                 feedback_yaw_rate_radps = tfpu_mul(12.0f, raw_error);
-                if(feedback_yaw_rate_radps > limit)
+                if(feedback_yaw_rate_radps > limit_pos)
                 {
-                    feedback_yaw_rate_radps = limit;
+                    feedback_yaw_rate_radps = limit_pos;
                 }
-                else if(feedback_yaw_rate_radps < -limit)
+                else if(feedback_yaw_rate_radps < -limit_neg)
                 {
-                    feedback_yaw_rate_radps = -limit;
+                    feedback_yaw_rate_radps = -limit_neg;
                 }
 
                 static_feedforward_speed = 0.0f;
