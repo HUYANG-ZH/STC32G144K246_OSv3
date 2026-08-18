@@ -316,7 +316,8 @@ void app_motion_postprocess_control_step(void)
     /* 角速度环调试模式下关闭电感元素检测 */
     if(motion_postprocess_yaw_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
     {
-        // app_element_control_step();   // 环岛检测暂时关闭, 仅保留圆筒识别
+        /* 环岛识别开启(仅识别上报, 不触发动作): 判据与car2一致(TOF>650 + INT8模型) */
+        app_element_control_step();
     }
     /* 两轮速度环调试模式: 跳过前馈与速度规划, 目标线速由无线直接指派 */
     if(motion_postprocess_speed_debug_enable < APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)

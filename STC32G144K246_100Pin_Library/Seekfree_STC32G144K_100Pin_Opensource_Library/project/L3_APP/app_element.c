@@ -584,15 +584,16 @@ static void app_element_roundabout_found(uint32 now)
     element_roundabout_event_count = (uint16)element_roundabout_count;
     element_roundabout_event_flags |= ELEMENT_RB_EVENT_FOUND;
 
-    /* 按第几个环岛加载偏置/前馈配置并进入 gz 角度积分,
-       退出由 imu_step 在角度达标时执行(第5环停车) */
-    app_element_roundabout_apply_runtime_config();
-    element_roundabout_bias_start_tick = now;
-    element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-    element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
-    element_roundabout_active_tick = now;
-    element_roundabout_gz_integrate = 1U;
-    element_roundabout_gz_angle_deg = 0.0f;
+    /* 识别模式(仅无线上报, 不触发动作): 跳过 gz 角度积分/偏置/停车状态机初始化,
+       fsm 保持 IDLE 使检测持续运行, 事件经 wprint 上报 roundabout,1.000,N;
+       (动作触发由注释段恢复: apply_runtime_config + fsm=ACTIVE + gz_integrate) */
+    /* app_element_roundabout_apply_runtime_config();
+       element_roundabout_bias_start_tick = now;
+       element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+       element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
+       element_roundabout_active_tick = now;
+       element_roundabout_gz_integrate = 1U;
+       element_roundabout_gz_angle_deg = 0.0f; */
 }
 
 void app_element_control_step(void)
