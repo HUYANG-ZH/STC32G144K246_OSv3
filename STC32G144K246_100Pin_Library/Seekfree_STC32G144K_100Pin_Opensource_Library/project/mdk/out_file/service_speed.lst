@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  service_speed                                                      18/08/26  13:37:33  PAGE 1   
+C251 COMPILER V5.60.0,  service_speed                                                      18/08/26  17:04:10  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE service_speed
@@ -22,7 +22,7 @@ stmt  level    source
     9          #define SERVICE_SPEED_ENCODER_PULSE_PER_REV  (1024.0f)
    10          #define SERVICE_SPEED_ENCODER_GEAR_TEETH     (10.0f)
    11          #define SERVICE_SPEED_WHEEL_GEAR_TEETH       (41.0f)
-   12          #define SERVICE_SPEED_WHEEL_DIAMETER_M       (0.024f)
+   12          #define SERVICE_SPEED_WHEEL_DIAMETER_M       (0.0228f)
    13          #define SERVICE_SPEED_SAMPLE_PERIOD_MS       (1U)
    14          #define SERVICE_SPEED_SAMPLE_PERIOD_SECOND   (0.001f)
    15          
@@ -38,7 +38,7 @@ stmt  level    source
    25          
    26          #define SERVICE_SPEED_LPF_ALPHA              (0.2f)
    27          
-   28          static volatile service_speed_data_t speed_data = {0.0f, 0.0f};
+   28          static volatile service_speed_data_t speed_data = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
    29          static shared_lpf_t speed_lpf_left;
    30          static shared_lpf_t speed_lpf_right;
    31          
@@ -47,61 +47,85 @@ stmt  level    source
    34   1          bsp_encoder_init();
    35   1          speed_data.left_mps = 0.0f;
    36   1          speed_data.right_mps = 0.0f;
-   37   1          shared_lpf_init(&speed_lpf_left, SERVICE_SPEED_LPF_ALPHA, 0.0f);
-   38   1          shared_lpf_init(&speed_lpf_right, SERVICE_SPEED_LPF_ALPHA, 0.0f);
-   39   1          pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
-   40   1          interrupt_set_priority(TIM3_IRQn, 3U);
-   41   1          #if __DBGFLAG__
-   42   1          printf(">>[service_speed_init]\r\n");
-   43   1          wprint(">>[service_speed_init]\r\n");
-   44   1          #endif
-   45   1      }
-   46          
-   47          void service_speed_debug(void)
-   48          {
-   49   1          service_speed_data_t testdata;
-   50   1      
-   51   1          service_speed_get(&testdata);
-   52   1          printf("[speed:] %f,%f\r\n",testdata.left_mps,testdata.right_mps);
-   53   1      }
-   54          
-   55          void service_speed_update(void)
-C251 COMPILER V5.60.0,  service_speed                                                      18/08/26  13:37:33  PAGE 2   
+   37   1          speed_data.odo_left_m = 0.0f;
+   38   1          speed_data.odo_right_m = 0.0f;
+   39   1          speed_data.odo_total_m = 0.0f;
+   40   1          shared_lpf_init(&speed_lpf_left, SERVICE_SPEED_LPF_ALPHA, 0.0f);
+   41   1          shared_lpf_init(&speed_lpf_right, SERVICE_SPEED_LPF_ALPHA, 0.0f);
+   42   1          pit_ms_init(TIM3_PIT, SERVICE_SPEED_SAMPLE_PERIOD_MS, service_speed_update);
+   43   1          interrupt_set_priority(TIM3_IRQn, 3U);
+   44   1          #if __DBGFLAG__
+   45   1          printf(">>[service_speed_init]\r\n");
+   46   1          wprint(">>[service_speed_init]\r\n");
+   47   1          #endif
+   48   1      }
+   49          
+   50          void service_speed_debug(void)
+   51          {
+   52   1          service_speed_data_t testdata;
+   53   1      
+   54   1          service_speed_get(&testdata);
+   55   1          printf("[speed:] %f,%f\r\n",testdata.left_mps,testdata.right_mps);
+C251 COMPILER V5.60.0,  service_speed                                                      18/08/26  17:04:10  PAGE 2   
 
-   56          {
-   57   1          bsp_encoder_count_t encoder_delta;
-   58   1      
-   59   1          bsp_encoder_get_delta(&encoder_delta);
-   60   1          speed_data.left_mps = shared_lpf_update(&speed_lpf_left,
-   61   1                  tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_MPS_PER_PULSE));
-   62   1          speed_data.right_mps = shared_lpf_update(&speed_lpf_right,
-   63   1                  tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_MPS_PER_PULSE));
-   64   1      }
-   65          
-   66          void service_speed_get(service_speed_data_t *out_speed)
-   67          {
-   68   1          uint8 ea_backup;
-   69   1      
-   70   1          if(NULL == out_speed)
-   71   1          {
-   72   2              return;
-   73   2          }
-   74   1      
-   75   1          ea_backup = EA;
-   76   1          EA = 0;
-   77   1          *out_speed = speed_data;
-   78   1          EA = ea_backup;
-   79   1      }
+   56   1      }
+   57          
+   58          void service_speed_update(void)
+   59          {
+   60   1          bsp_encoder_count_t encoder_delta;
+   61   1      
+   62   1          bsp_encoder_get_delta(&encoder_delta);
+   63   1          speed_data.left_mps = shared_lpf_update(&speed_lpf_left,
+   64   1                  tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_MPS_PER_PULSE));
+   65   1          speed_data.right_mps = shared_lpf_update(&speed_lpf_right,
+   66   1                  tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_MPS_PER_PULSE));
+   67   1      
+   68   1          /* 编码器积分里程: 用本周期原始脉冲数累加左右轮行进距离(米), 不受滤波�
+             -�响 */
+   69   1          speed_data.odo_left_m = tfpu_add(speed_data.odo_left_m,
+   70   1                  tfpu_mul(tfpu_int2float(encoder_delta.left), SERVICE_SPEED_DISTANCE_PER_PULSE_M));
+   71   1          speed_data.odo_right_m = tfpu_add(speed_data.odo_right_m,
+   72   1                  tfpu_mul(tfpu_int2float(encoder_delta.right), SERVICE_SPEED_DISTANCE_PER_PULSE_M));
+   73   1          speed_data.odo_total_m = tfpu_mul(
+   74   1                  tfpu_add(speed_data.odo_left_m, speed_data.odo_right_m), 0.5f);
+   75   1      }
+   76          
+   77          void service_speed_odometer_reset(void)
+   78          {
+   79   1          uint8 ea_backup;
+   80   1      
+   81   1          ea_backup = EA;
+   82   1          EA = 0;
+   83   1          speed_data.odo_left_m = 0.0f;
+   84   1          speed_data.odo_right_m = 0.0f;
+   85   1          speed_data.odo_total_m = 0.0f;
+   86   1          EA = ea_backup;
+   87   1      }
+   88          
+   89          void service_speed_get(service_speed_data_t *out_speed)
+   90          {
+   91   1          uint8 ea_backup;
+   92   1      
+   93   1          if(NULL == out_speed)
+   94   1          {
+   95   2              return;
+   96   2          }
+   97   1      
+   98   1          ea_backup = EA;
+   99   1          EA = 0;
+  100   1          *out_speed = speed_data;
+  101   1          EA = ea_backup;
+  102   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =       419     ------
+  ecode size           =       659     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =        41     ------
+  xdata size           =        66     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------
@@ -111,7 +135,9 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-  hconst size          =        55     ------
+C251 COMPILER V5.60.0,  service_speed                                                      18/08/26  17:04:10  PAGE 3   
+
+  hconst size          =        67     ------
 End of Module Information.
 
 
