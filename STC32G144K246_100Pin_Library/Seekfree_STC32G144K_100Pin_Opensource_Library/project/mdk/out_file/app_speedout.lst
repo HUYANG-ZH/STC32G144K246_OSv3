@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 1   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_speedout
@@ -66,7 +66,7 @@ stmt  level    source
    51              float left_mps;
    52              float right_mps;
    53              uint32 sequence;
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 2   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 2   
 
    54              uint8 owner;
    55          } app_speedout_target_mailbox_t;
@@ -134,7 +134,7 @@ stmt  level    source
   117   1          pid->ki = config->ki;
   118   1          pid->kd = config->kd;
   119   1          pid->output_limit_enable = ZF_ENABLE;
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 3   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 3   
 
   120   1          pid->output_min = -output_limit;
   121   1          pid->output_max = output_limit;
@@ -202,7 +202,7 @@ stmt  level    source
   178   1          (void)service_packet_add_variable_with_callback("SRI", (float *)&app_speedout_config.right.ki,
   179   1                  APP_SPEEDOUT_PACKET_SINGLE_COUNT, app_speedout_restart_right_pid);
   180   1          (void)service_packet_add_action("stop", app_speedout_stop_all_action, 0UL);
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 4   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 4   
 
   181   1          (void)service_packet_add_action("start", app_speedout_start_action, 0UL);
   182   1      }
@@ -270,7 +270,7 @@ stmt  level    source
   242   1          app_speedout_data.right_target_mps = 0.0f;
   243   1          app_speedout_data.left_pwm = 0.0f;
   244   1          app_speedout_data.right_pwm = 0.0f;
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 5   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 5   
 
   245   1          app_speedout_data.enabled = 0.0f;
   246   1          speedout_last_enabled = 0U;
@@ -338,7 +338,7 @@ stmt  level    source
   308   1      }
   309          
   310          static void app_speedout_start_action(void)
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 6   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 6   
 
   311          {
   312   1          app_speedout_request_start();
@@ -406,7 +406,7 @@ stmt  level    source
   374   1          snapshot.sequence = speedout_target_mailbox.sequence;
   375   1          snapshot.owner = speedout_target_mailbox.owner;
   376   1          EA = ea_backup;
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 7   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 7   
 
   377   1      
   378   1          if(snapshot.sequence != speedout_target_applied_sequence)
@@ -474,7 +474,7 @@ stmt  level    source
   440   2              app_speedout_data.enabled = 0.0f;
   441   2              return;
   442   2          }
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 8   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 8   
 
   443   1      
   444   1          left_pwm = (int32)shared_pos_pid_update(&speedout_left_pid,
@@ -542,7 +542,7 @@ stmt  level    source
   506   1      
   507   1          if(0U != safety_inhibit)
   508   1          {
-C251 COMPILER V5.60.0,  app_speedout                                                       18/08/26  18:54:52  PAGE 9   
+C251 COMPILER V5.60.0,  app_speedout                                                       19/08/26  02:19:44  PAGE 9   
 
   509   2              /* Safety faults dominate START and remain active until their owner
   510   2                 explicitly clears the relevant interlock bit. */

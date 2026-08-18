@@ -26,10 +26,10 @@
 // car3 已彻底弃用 M 通道电感, 仅标定 CH1~CH4 四路
 // 锚点模式(CH1/CH4)实测标定: min/mid(车严格居中实测)/max
 //   CH1: min=714 mid=1831 max=2265; CH4: min=853 mid=1720 max=2100
-// 单段模式(CH2/CH3)仅用 min/max: CH2 1007/3125, CH3 1175/3190; mid 占位值不参与计算
-uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {714U, 1007U, 1175U, 853U};
+// 单段模式(CH2/CH3)仅用 min/max: CH2 1061/3200, CH3 1135/3200; mid 占位值不参与计算
+uint16 app_inductor_preprocess_min_value[APP_INDUCTOR_CHANNEL_COUNT] = {714U, 1061U, 1135U, 853U};
 uint16 app_inductor_preprocess_mid_value[APP_INDUCTOR_CHANNEL_COUNT] = {1831U, 1935U, 2070U, 1720U};
-uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2265U, 3125U, 3190U, 2100U};
+uint16 app_inductor_preprocess_max_value[APP_INDUCTOR_CHANNEL_COUNT] = {2265U, 3200U, 3200U, 2100U};
 
 static void app_inductor_update_precomputed(void);
 

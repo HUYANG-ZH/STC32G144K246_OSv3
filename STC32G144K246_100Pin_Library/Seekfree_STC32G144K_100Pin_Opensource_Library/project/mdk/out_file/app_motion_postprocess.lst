@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 1   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_motion_postprocess
@@ -66,7 +66,7 @@ stmt  level    source
    51          };
    52          
    53          static shared_pos_pid_t motion_postprocess_yaw_pid;
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 2   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 2   
 
    54          static shared_lpf_t motion_postprocess_gyro_z_lpf;
    55          static volatile float motion_postprocess_gyro_z_filtered = 0.0f;
@@ -134,7 +134,7 @@ stmt  level    source
   117          
   118          static void app_motion_postprocess_restart_pid(void)
   119          {
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 3   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 3   
 
   120   1          uint8 ea_backup;
   121   1      
@@ -202,7 +202,7 @@ stmt  level    source
   183   1          imu_available = service_imu_get_latest_sample(&imu);
   184   1          imu_fresh = 0U;
   185   1          if(0U == imu_available)
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 4   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 4   
 
   186   1          {
   187   2              imu.gyro_x = 0.0f;
@@ -270,7 +270,7 @@ stmt  level    source
   246   2          }
   247   1      }
   248          
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 5   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 5   
 
   249          void app_motion_postprocess_init(void)
   250          {
@@ -338,7 +338,7 @@ stmt  level    source
   312   2              return;
   313   2          }
   314   1      
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 6   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 6   
 
   315   1          ea_backup = EA;
   316   1          EA = 0;
@@ -406,7 +406,7 @@ stmt  level    source
   375   2          }
   376   1      
   377   1          if(motion_postprocess_yaw_debug_enable >= APP_MOTION_POSTPROCESS_ENABLE_THRESHOLD)
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 7   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 7   
 
   378   1          {
   379   2              /* 角速度环调试模式: 关闭电感导航, 目标角速度由无线
@@ -474,7 +474,7 @@ stmt  level    source
   440   3                  feedback_yaw_rate_radps = target_yaw_rate_radps;
   441   3              }
   442   2          }
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 8   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 8   
 
   443   1      
   444   1          feedforward_differential_speed = tfpu_mul(APP_MOTION_POSTPROCESS_FEEDFORWARD_SIGN,
@@ -542,7 +542,7 @@ stmt  level    source
   504   1      }
 
 
-C251 COMPILER V5.60.0,  app_motion_postprocess                                             18/08/26  18:54:51  PAGE 9   
+C251 COMPILER V5.60.0,  app_motion_postprocess                                             19/08/26  02:19:43  PAGE 9   
 
 Module Information          Static   Overlayable
 ------------------------------------------------
