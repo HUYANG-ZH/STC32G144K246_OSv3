@@ -55,7 +55,8 @@
 #define APP_ELEMENT_SEESAW_SLOWDOWN_TICK        (APP_ELEMENT_SEESAW_SLOWDOWN_MS * APP_ELEMENT_TICK_PER_MS)
 #define APP_ELEMENT_SEESAW_SLOWDOWN_SPEED_MPS   (1.4f)
 
-#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (1U)
+/* 连续 3 帧(500Hz检测下~6ms)判据成立才确认环岛 */
+#define APP_ELEMENT_ROUNDABOUT_CONFIRM_COUNT    (3U)
 #define APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM (650U)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_MS          (200UL)
 #define APP_ELEMENT_ROUNDABOUT_DEAD_TICK        (APP_ELEMENT_ROUNDABOUT_DEAD_MS * APP_ELEMENT_TICK_PER_MS)
@@ -77,8 +78,8 @@
 #define APP_ELEMENT_ROUNDABOUT_3_FF_SCALE_DEFAULT (1.0f)
 #define APP_ELEMENT_ROUNDABOUT_4_FF_SCALE_DEFAULT (1.0f)
 #define APP_ELEMENT_ROUNDABOUT_5_FF_SCALE_DEFAULT (1.0f)
-#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (1300.0f)
-#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (600.0f)
+#define APP_ELEMENT_ROUNDABOUT_1_BIAS_DPS_DEFAULT (700.0f)
+#define APP_ELEMENT_ROUNDABOUT_2_BIAS_DPS_DEFAULT (1200.0f)
 #define APP_ELEMENT_ROUNDABOUT_3_BIAS_DPS_DEFAULT (-800.0f)
 #define APP_ELEMENT_ROUNDABOUT_4_BIAS_DPS_DEFAULT (600.0f)
 #define APP_ELEMENT_ROUNDABOUT_5_BIAS_DPS_DEFAULT (-500.0f)
@@ -584,16 +585,15 @@ static void app_element_roundabout_found(uint32 now)
     element_roundabout_event_count = (uint16)element_roundabout_count;
     element_roundabout_event_flags |= ELEMENT_RB_EVENT_FOUND;
 
-    /* 识别模式(仅无线上报, 不触发动作): 跳过 gz 角度积分/偏置/停车状态机初始化,
-       fsm 保持 IDLE 使检测持续运行, 事件经 wprint 上报 roundabout,1.000,N;
-       (动作触发由注释段恢复: apply_runtime_config + fsm=ACTIVE + gz_integrate) */
-    /* app_element_roundabout_apply_runtime_config();
-       element_roundabout_bias_start_tick = now;
-       element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
-       element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
-       element_roundabout_active_tick = now;
-       element_roundabout_gz_integrate = 1U;
-       element_roundabout_gz_angle_deg = 0.0f; */
+    /* 按第几个环岛加载偏置/前馈配置并进入 gz 角度积分,
+       退出由 imu_step 在角度达标时执行(第5环停车) */
+    app_element_roundabout_apply_runtime_config();
+    element_roundabout_bias_start_tick = now;
+    element_roundabout_bias_duration_tick = 0xFFFFFFFFU;
+    element_roundabout_fsm = APP_ELEMENT_ROUNDABOUT_FSM_ACTIVE;
+    element_roundabout_active_tick = now;
+    element_roundabout_gz_integrate = 1U;
+    element_roundabout_gz_angle_deg = 0.0f;
 }
 
 void app_element_control_step(void)
