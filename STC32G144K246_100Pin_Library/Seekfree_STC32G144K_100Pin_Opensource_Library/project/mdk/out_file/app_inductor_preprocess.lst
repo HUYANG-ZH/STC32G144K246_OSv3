@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 1   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_inductor_preprocess
@@ -66,7 +66,7 @@ stmt  level    source
    52          static uint32 inductor_last_fresh_tick = 0UL;
    53          static uint32 inductor_start_tick = 0UL;
    54          static uint8 inductor_sensor_seen = 0U;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 2   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 2   
 
    55          static uint8 inductor_sensor_fault = 0U;
    56          
@@ -134,7 +134,7 @@ stmt  level    source
   118   4                  }
   119   3                  /* 锚点模式: 上段 [mid, max] -> [X, 100] */
   120   3                  if(app_inductor_preprocess_max_value[i] > app_inductor_preprocess_mid_value[i])
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 3   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 3   
 
   121   3                  {
   122   4                      high_width = (uint16)(app_inductor_preprocess_max_value[i] -
@@ -202,7 +202,7 @@ stmt  level    source
   184   2      
   185   2              min_val = values[0];
   186   2              max_val = values[0];
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 4   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 4   
 
   187   2              sum = values[0];
   188   2              for(j = 1U; j < APP_INDUCTOR_HISTORY_COUNT; j++)
@@ -270,7 +270,7 @@ stmt  level    source
   248   3                  {
   249   4                      normalized[i] = (uint16)(((uint32)(filtered[i] - app_inductor_preprocess_min_value[i]) *
   250   4                              inductor_slope_full_q16[i]) >> APP_INDUCTOR_SLOPE_Q16_SHIFT);
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 5   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 5   
 
   251   4                      if(APP_INDUCTOR_NORM_UPPER_LIMIT_U16 < normalized[i])
   252   4                      {
@@ -338,7 +338,7 @@ stmt  level    source
   313   1      
   314   1          inductor_last_sequence = sequence;
   315   1          inductor_last_fresh_tick = now;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 6   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 6   
 
   316   1          inductor_sensor_seen = 1U;
   317   1          if(0U != inductor_sensor_fault)
@@ -406,7 +406,7 @@ stmt  level    source
   379   1          inductor_last_sequence = 0UL;
   380   1          inductor_last_fresh_tick = service_timetick_what();
   381   1          inductor_start_tick = inductor_last_fresh_tick;
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 7   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 7   
 
   382   1          inductor_sensor_seen = 0U;
   383   1          inductor_sensor_fault = 0U;
@@ -475,7 +475,7 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
-C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  14:56:25  PAGE 8   
+C251 COMPILER V5.60.0,  app_inductor_preprocess                                            18/08/26  18:54:51  PAGE 8   
 
   huge data size       =    ------     ------
   const size           =    ------     ------

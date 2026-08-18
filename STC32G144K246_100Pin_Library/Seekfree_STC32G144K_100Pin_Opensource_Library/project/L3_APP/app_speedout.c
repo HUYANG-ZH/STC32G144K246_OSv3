@@ -1,4 +1,5 @@
 #include "zf_common_headfile.h"
+#include "sys_tfpu.h"
 #include "shared_pos_pid.h"
 #include "service_motor.h"
 #include "service_negative_pressure.h"
@@ -444,6 +445,39 @@ static void app_speedout_tick(void)
             left_target, speed.left_mps, APP_SPEEDOUT_DT_SECOND);
     right_pwm = (int32)shared_pos_pid_update(&speedout_right_pid,
             right_target, speed.right_mps, APP_SPEEDOUT_DT_SECOND);
+
+    /* 速度环前馈: 目标速度直接折算 PWM 叠加到闭环输出。
+       符号: 本车速度环 PID 为 REVERSE 方向(正目标=前进=>负PWM), 故取 -target*KFF,
+       与反馈同向叠加, 避免前馈与反馈方向相反; 浮点转整形用 TFPU。 */
+    {
+        int32 ff_left;
+        int32 ff_right;
+
+        ff_left = (int32)tfpu_float2int(tfpu_mul(
+                tfpu_sub(0.0f, left_target), APP_SPEEDOUT_MOTOR_KFF));
+        ff_right = (int32)tfpu_float2int(tfpu_mul(
+                tfpu_sub(0.0f, right_target), APP_SPEEDOUT_MOTOR_KFF));
+        left_pwm += ff_left;
+        right_pwm += ff_right;
+    }
+
+    if(left_pwm > (int32)PWM_DUTY_MAX)
+    {
+        left_pwm = (int32)PWM_DUTY_MAX;
+    }
+    else if(left_pwm < -(int32)PWM_DUTY_MAX)
+    {
+        left_pwm = -(int32)PWM_DUTY_MAX;
+    }
+
+    if(right_pwm > (int32)PWM_DUTY_MAX)
+    {
+        right_pwm = (int32)PWM_DUTY_MAX;
+    }
+    else if(right_pwm < -(int32)PWM_DUTY_MAX)
+    {
+        right_pwm = -(int32)PWM_DUTY_MAX;
+    }
 
     service_motor_set_pwm(left_pwm, right_pwm);
 
