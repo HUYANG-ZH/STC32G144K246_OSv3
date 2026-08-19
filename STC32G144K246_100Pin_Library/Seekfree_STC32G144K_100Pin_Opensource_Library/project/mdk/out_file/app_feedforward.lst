@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  02:19:42  PAGE 1   
+C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  04:44:13  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE app_feedforward
@@ -23,8 +23,8 @@ stmt  level    source
    10          #define APP_FEEDFORWARD_DEFAULT_KFF              (0.0f)   // 默认前馈增益
    11          #define APP_FEEDFORWARD_DEFAULT_KD               (0.0f)      // 默认前馈微分增益
    12          #define APP_FEEDFORWARD_DEFAULT_DENOM_BIAS       (0.01f)     // 曲率分母偏置
-   13          #define APP_FEEDFORWARD_OUTPUT_LIMIT             (7.0f)      // 前馈输出限幅 m/s
-   14          #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (80.0f)     // CH1/CH2归一化强度达到该值时给�
+   13          #define APP_FEEDFORWARD_OUTPUT_LIMIT             (5.0f)      // 前馈输出限幅 m/s
+   14          #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM        (50.0f)     // CH1/CH2归一化强度达到该值时给�
              -��前馈
    15          #define APP_FEEDFORWARD_DYNAMIC_FULL_NORM_INV    (0.0125f)
    16          /* 曲率强度门控半强度点(car2抗干扰设计同步): 与 x_error 抗噪公式同构,
@@ -32,8 +32,8 @@ stmt  level    source
              -s0一致)
    18             实车修正: x_gate_s0 已降 20 缓解弯道延迟, 前馈门控同步降 20 保持一致放开节�
              -� */
-   19          #define APP_FEEDFORWARD_GATE_S0_DEFAULT          (20.0f)
-   20          #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (500U)      // 环岛触发前馈关闭斜坡时间
+   19          #define APP_FEEDFORWARD_GATE_S0_DEFAULT          (10.0f)
+   20          #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS       (50U)      // 环岛触发前馈关闭斜坡时间
    21          #define APP_FEEDFORWARD_ROUNDABOUT_RAMP_STEP     \
    22              (APP_FEEDFORWARD_PERIOD_MS / (float)APP_FEEDFORWARD_ROUNDABOUT_RAMP_MS)
    23          
@@ -66,7 +66,7 @@ stmt  level    source
    50          //-------------------------------------------------------------------------------------------------------
              -------------
    51          // 函数简介     前馈模块初始化
-C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  02:19:42  PAGE 2   
+C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  04:44:13  PAGE 2   
 
    52          // 参数说明     void
    53          // 返回参数     void
@@ -134,7 +134,7 @@ stmt  level    source
   111   1          float feedforward_p;
   112   1          float feedforward_d;
   113   1      
-C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  02:19:42  PAGE 3   
+C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  04:44:13  PAGE 3   
 
   114   1          app_inductor_preprocess_get_data(&inductor_data);
   115   1      
@@ -202,7 +202,7 @@ stmt  level    source
   176   3              }
   177   2          }
   178   1      
-C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  02:19:42  PAGE 4   
+C251 COMPILER V5.60.0,  app_feedforward                                                    19/08/26  04:44:13  PAGE 4   
 
   179   1          feedforward_data.curvature = curvature;
   180   1          feedforward_data.curvature_rate = curvature_rate;

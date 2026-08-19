@@ -5,11 +5,11 @@
 #include "service_imu.h"
 
 #ifndef APP_ELEMENT_CYLINDER_YAW_LIMIT_POS
-#define APP_ELEMENT_CYLINDER_YAW_LIMIT_POS      (0.8f)      // 圆筒元素触发后车体转向角速度正方向限幅，单位 rad/s
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT_POS      (5.0f)      // 圆筒元素触发后车体转向角速度正方向限幅，单位 rad/s
 #endif
 
 #ifndef APP_ELEMENT_CYLINDER_YAW_LIMIT_NEG
-#define APP_ELEMENT_CYLINDER_YAW_LIMIT_NEG      (1.5f)      // 圆筒元素触发后车体转向角速度负方向限幅，单位 rad/s
+#define APP_ELEMENT_CYLINDER_YAW_LIMIT_NEG      (5.0f)      // 圆筒元素触发后车体转向角速度负方向限幅，单位 rad/s
 #endif
 
 #ifndef APP_ELEMENT_ROUNDABOUT_BIAS_BLEND

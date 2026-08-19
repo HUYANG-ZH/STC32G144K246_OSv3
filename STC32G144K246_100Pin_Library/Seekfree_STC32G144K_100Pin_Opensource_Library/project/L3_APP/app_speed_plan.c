@@ -17,14 +17,14 @@
 #define APP_SPEED_PLAN_ERROR_MAX                (1.0f)
 #define APP_SPEED_PLAN_CURVATURE_MAX            (1.0f)
 
-/* 负压生效量接口: 无线 negative_pressure 为基础量, 触发时叠加增量, 上限 90 */
-#define APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT   (15.0f)     /* 触发时在基础量上增加的百分比 */
-#define APP_SPEED_PLAN_PRESSURE_MAX             (90.0f)     /* 生效量上限 */
+/* 负压生效量接口: 无线 negative_pressure 为基础量, TOF 接近障碍时衰减
+   APP_SPEED_PLAN_PRESSURE_DECAY, 结果低于 0 按 0 处理; 障碍解除后还原基础量。
+   衰减量为硬编码, 无无线参数。 */
+#define APP_SPEED_PLAN_PRESSURE_DECAY           (10.0f)     /* TOF 接近时负压衰减量(百分点) */
 #define APP_SPEED_PLAN_TOF_NEAR_DISTANCE_MM     (200U)      /* TOF 测距 <200mm 触发 */
 
 static volatile float speed_plan_min_ratio = APP_SPEED_PLAN_DEFAULT_MIN_RATIO;
-static volatile float speed_plan_pressure_boost = APP_SPEED_PLAN_PRESSURE_BOOST_DEFAULT;
-static uint8 speed_plan_pressure_boost_active = 0U;
+static uint8 speed_plan_pressure_decay_active = 0U;
 static volatile float speed_plan_linear_mps = 0.0f;
 
 void app_speed_plan_control_step(void);
@@ -100,11 +100,9 @@ static void app_speed_plan_register_packet(void)
 {
     (void)service_packet_add_variable("speed_plan_min_ratio",
             (float *)&speed_plan_min_ratio, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
-    (void)service_packet_add_variable("pressure_boost",
-            (float *)&speed_plan_pressure_boost, APP_SPEED_PLAN_PACKET_SINGLE_COUNT);
 }
 
-/* TOF 接近检测: 测距 <200mm 判定为接近障碍, 触发负压增量。
+/* TOF 接近检测: 测距 <200mm 判定为接近障碍, 触发负压衰减。
    TOF 未就绪/测距异常时 service_tof_get_distance_mm() 返回 8192/7777, 均 >200, 不会误触发 */
 static uint8 app_speed_plan_tof_near_obstacle(void)
 {
@@ -115,13 +113,13 @@ static uint8 app_speed_plan_tof_near_obstacle(void)
     return 0U;
 }
 
-/* 负压增量触发条件: TOF 接近(<200mm) */
-static uint8 app_speed_plan_pressure_boost_condition(void)
+/* 负压衰减触发条件: TOF 接近(<200mm) */
+static uint8 app_speed_plan_pressure_decay_condition(void)
 {
     return app_speed_plan_tof_near_obstacle();
 }
 
-/* 负压生效量计算: 基础量(无线 negative_pressure) + 触发增量, 上限 90。
+/* 负压生效量计算: 基础量(无线 negative_pressure) - 衰减量(硬编码 10), 低于 0 按 0。
    触发期间接管负压输出, 恢复后还原基础量。调用方为 TIM5 前的 5ms 控制链。 */
 static void app_speed_plan_update_pressure(void)
 {
@@ -133,35 +131,35 @@ static void app_speed_plan_update_pressure(void)
        这里再写入会把联锁击穿, 因此联锁期间直接放弃本周期负压管理 */
     if(0U != app_speedout_get_safety_inhibit())
     {
-        speed_plan_pressure_boost_active = 0U;
+        speed_plan_pressure_decay_active = 0U;
         return;
     }
 
     /* 车辆未启动(无线 stop/急停后 enabled=0)时不接管负压:
-       否则 stop 后触发条件(如 |pitch|>30°)成立时会每 5ms 把负压重新拉起 */
+       否则 stop 后触发条件成立时会每 5ms 把负压重新拉起 */
     app_speedout_get_data(&speedout);
     if(speedout.enabled < 0.5f)
     {
-        speed_plan_pressure_boost_active = 0U;
+        speed_plan_pressure_decay_active = 0U;
         return;
     }
 
-    active = app_speed_plan_pressure_boost_condition();
+    active = app_speed_plan_pressure_decay_condition();
     if(0U != active)
     {
-        effective = tfpu_add(tfpu_int2float((long)service_negative_pressure_get_config_percent()),
-                speed_plan_pressure_boost);
-        if(effective > APP_SPEED_PLAN_PRESSURE_MAX)
+        effective = tfpu_sub(tfpu_int2float((long)service_negative_pressure_get_config_percent()),
+                APP_SPEED_PLAN_PRESSURE_DECAY);
+        if(effective < 0.0f)
         {
-            effective = APP_SPEED_PLAN_PRESSURE_MAX;
+            effective = 0.0f;
         }
         service_negative_pressure_set_percent((uint8)(effective + 0.5f));
     }
-    else if(0U != speed_plan_pressure_boost_active)
+    else if(0U != speed_plan_pressure_decay_active)
     {
         service_negative_pressure_set_percent(service_negative_pressure_get_config_percent());
     }
-    speed_plan_pressure_boost_active = active;
+    speed_plan_pressure_decay_active = active;
 }
 
 void app_speed_plan_init(void)
@@ -216,6 +214,6 @@ void app_speed_plan_control_step(void)
         speed_plan_linear_mps = app_speed_plan_ramp(speed_plan_linear_mps, target_raw_mps);
     }
 
-    /* 负压生效量接口: 基础量 + 触发增量(上限90) */
+    /* 负压生效量接口: 基础量 - TOF 接近衰减量(硬编码10), 低于0按0 */
     app_speed_plan_update_pressure();
 }
