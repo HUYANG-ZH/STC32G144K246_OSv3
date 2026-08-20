@@ -1,5 +1,5 @@
 #ifndef APP_ELEMENT_H
-#define APP_ELEMENT_H
+#define APP_ELEMENT_H  
 
 #include "zf_common_typedef.h"
 #include "service_imu.h"
@@ -13,7 +13,7 @@
 #endif
 
 #ifndef APP_ELEMENT_ROUNDABOUT_BIAS_BLEND
-#define APP_ELEMENT_ROUNDABOUT_BIAS_BLEND       (0.72f)      // 环岛偏置融合系数，0=仅巡线 1=仅偏置
+#define APP_ELEMENT_ROUNDABOUT_BIAS_BLEND       (0.95f)      // 环岛偏置融合系数，0=仅巡线 1=仅偏置
 #endif
 
 #ifndef APP_ELEMENT_PIT
