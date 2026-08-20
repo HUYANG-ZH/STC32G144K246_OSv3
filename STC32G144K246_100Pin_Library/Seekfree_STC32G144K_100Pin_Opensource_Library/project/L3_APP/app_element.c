@@ -619,6 +619,7 @@ void app_element_control_step(void)
 
     /* 环岛判据: TOF 超出阈值 且 INT8 浅树模型(rapt, 14x7)判定: 输入 uint16 归一化值(内部钳位255) + TOF mm */
     tof_distance_mm = service_tof_get_distance_mm();
+    /* Active roundabout model: rapt_r16, 65 trees x depth 5. */
     app_inductor_preprocess_get_data(&inductor);
     roundabout_detected = ((tof_distance_mm > APP_ELEMENT_ROUNDABOUT_TOF_TRIGGER_DISTANCE_MM) &&
             (0U != roundabout_priority_tree_predict(
